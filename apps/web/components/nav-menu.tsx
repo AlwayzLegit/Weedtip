@@ -12,6 +12,8 @@ import { Button } from './ui/button';
 const LINKS = [
   { href: '/dispensaries', label: 'Dispensaries' },
   { href: '/products', label: 'Products' },
+  { href: '/strains', label: 'Strains' },
+  { href: '/deals', label: 'Deals' },
 ];
 
 export function NavMenu({

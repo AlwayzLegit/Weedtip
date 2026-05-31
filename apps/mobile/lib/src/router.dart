@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'screens/cart_screen.dart';
+import 'screens/deals_screen.dart';
 import 'screens/dispensary_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/favorites_screen.dart';
@@ -10,6 +11,8 @@ import 'screens/notifications_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/strain_screen.dart';
+import 'screens/strains_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -45,6 +48,12 @@ final appRouter = GoRouter(
     GoRoute(path: '/orders', builder: (_, __) => const OrdersScreen()),
     GoRoute(path: '/favorites', builder: (_, __) => const FavoritesScreen()),
     GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
+    GoRoute(path: '/strains', builder: (_, __) => const StrainsScreen()),
+    GoRoute(
+      path: '/strain/:slug',
+      builder: (_, state) => StrainScreen(slug: state.pathParameters['slug']!),
+    ),
+    GoRoute(path: '/deals', builder: (_, __) => const DealsScreen()),
   ],
 );
 

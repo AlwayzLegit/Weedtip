@@ -105,3 +105,21 @@ final unreadCountProvider = Provider<int>((ref) {
         orElse: () => 0,
       );
 });
+
+final strainsProvider = FutureProvider.family<List<Map<String, dynamic>>, String?>((ref, type) {
+  return ref.watch(repositoryProvider).strains(type: type);
+});
+
+final strainBySlugProvider =
+    FutureProvider.family<Map<String, dynamic>?, String>((ref, slug) {
+  return ref.watch(repositoryProvider).strainBySlug(slug);
+});
+
+final strainProductsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, strainId) {
+  return ref.watch(repositoryProvider).productsForStrain(strainId);
+});
+
+final dealsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(repositoryProvider).deals();
+});

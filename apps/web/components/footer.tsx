@@ -19,6 +19,12 @@ export function Footer() {
             <Link href="/products" className="text-muted hover:text-foreground">
               Products
             </Link>
+            <Link href="/strains" className="text-muted hover:text-foreground">
+              Strains
+            </Link>
+            <Link href="/deals" className="text-muted hover:text-foreground">
+              Deals
+            </Link>
             <Link href="/sign-up" className="text-muted hover:text-foreground">
               List your shop
             </Link>

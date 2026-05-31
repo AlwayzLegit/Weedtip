@@ -2,7 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { DEFAULT_MIN_AGE, DISPENSARY_STATUSES, type DispensaryStatus } from '@weedtip/shared';
+import {
+  DEFAULT_MIN_AGE,
+  DISPENSARY_STATUSES,
+  STRAIN_TYPES,
+  type DispensaryStatus,
+} from '@weedtip/shared';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import { bool, formError, fromZodError, numOpt, str, type FormState } from '@/lib/forms';
@@ -101,4 +106,65 @@ export async function upsertRegion(_prev: FormState, fd: FormData): Promise<Form
 
   revalidatePath('/admin/regions');
   redirect('/admin/regions');
+}
+
+// ─── Strains ─────────────────────────────────────────────────────────────────
+
+function splitList(raw: string | undefined): string[] {
+  return (raw ?? '')
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 20);
+}
+
+const strainSchema = z.object({
+  name: z.string().min(1).max(120),
+  slug: z
+    .string()
+    .min(2)
+    .max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Must be a lowercase, hyphen-separated slug'),
+  type: z.enum(STRAIN_TYPES),
+  description: z.string().max(5000).nullable(),
+  effects: z.array(z.string().max(40)).max(20),
+  flavors: z.array(z.string().max(40)).max(20),
+  thc_low: z.number().min(0).max(100).nullable(),
+  thc_high: z.number().min(0).max(100).nullable(),
+});
+
+export async function upsertStrain(_prev: FormState, fd: FormData): Promise<FormState> {
+  const name = str(fd, 'name') ?? '';
+  const parsed = strainSchema.safeParse({
+    name,
+    slug: str(fd, 'slug') ?? slugify(name),
+    type: str(fd, 'type') ?? 'hybrid',
+    description: str(fd, 'description') ?? null,
+    effects: splitList(str(fd, 'effects')),
+    flavors: splitList(str(fd, 'flavors')),
+    thc_low: numOpt(fd, 'thc_low') ?? null,
+    thc_high: numOpt(fd, 'thc_high') ?? null,
+  });
+  if (!parsed.success) return fromZodError(parsed.error);
+
+  const supabase = await createClient();
+  const id = str(fd, 'id');
+  const { error } = id
+    ? await supabase.from('strains').update(parsed.data).eq('id', id)
+    : await supabase.from('strains').insert(parsed.data);
+
+  if (error) {
+    return error.code === '23505'
+      ? formError('A strain with that name or slug already exists.')
+      : formError(error.message);
+  }
+  revalidatePath('/admin/strains');
+  revalidatePath('/strains');
+  redirect('/admin/strains');
+}
+
+export async function deleteStrain(id: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from('strains').delete().eq('id', id);
+  revalidatePath('/admin/strains');
 }

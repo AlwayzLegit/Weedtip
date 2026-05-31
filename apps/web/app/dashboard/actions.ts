@@ -146,6 +146,7 @@ export async function upsertProduct(_prev: FormState, fd: FormData): Promise<For
     brand: str(fd, 'brand') ?? null,
     description: str(fd, 'description') ?? null,
     image_urls: imageUrls,
+    strain_id: str(fd, 'strain_id') ?? null,
     strain_type: str(fd, 'strain_type') ?? null,
     thc_percentage: numOpt(fd, 'thc_percentage') ?? null,
     cbd_percentage: numOpt(fd, 'cbd_percentage') ?? null,

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapPin, Package, Shield, ShoppingBag, Store, Users } from 'lucide-react';
+import { Leaf, MapPin, Package, Shield, ShoppingBag, Store, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { requireAdmin } from '@/lib/admin';
 
@@ -7,6 +7,7 @@ const NAV = [
   { href: '/admin', label: 'Overview', icon: Shield },
   { href: '/admin/dispensaries', label: 'Dispensaries', icon: Store },
   { href: '/admin/categories', label: 'Categories', icon: Package },
+  { href: '/admin/strains', label: 'Strains', icon: Leaf },
   { href: '/admin/regions', label: 'Regions', icon: MapPin },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/users', label: 'Users', icon: Users },

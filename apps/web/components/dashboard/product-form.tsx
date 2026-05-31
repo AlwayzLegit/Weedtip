@@ -23,9 +23,11 @@ const STRAIN_LABELS: Record<string, string> = {
 export function ProductForm({
   product,
   categories,
+  strains,
 }: {
   product: Tables<'products'> | null;
   categories: { id: string; name: string }[];
+  strains: { id: string; name: string }[];
 }) {
   const [state, action] = useActionState(upsertProduct, EMPTY_FORM_STATE);
   const fe = state.fieldErrors ?? {};
@@ -91,6 +93,22 @@ export function ProductForm({
           defaultValue={p?.description ?? ''}
           rows={3}
         />
+      </Field>
+
+      <Field
+        label="Strain (library)"
+        htmlFor="strain_id"
+        error={fe.strain_id}
+        hint="Link to a strain so it shows on the strain page."
+      >
+        <Select id="strain_id" name="strain_id" defaultValue={p?.strain_id ?? ''}>
+          <option value="">None</option>
+          {strains.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </Select>
       </Field>
 
       <section className="grid gap-4 sm:grid-cols-3">

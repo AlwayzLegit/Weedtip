@@ -402,6 +402,7 @@ export type Database = {
           price_cents: number
           search_vector: unknown
           slug: string
+          strain_id: string | null
           strain_type: Database["public"]["Enums"]["strain_type"] | null
           thc_percentage: number | null
           unit: string | null
@@ -423,6 +424,7 @@ export type Database = {
           price_cents: number
           search_vector?: unknown
           slug: string
+          strain_id?: string | null
           strain_type?: Database["public"]["Enums"]["strain_type"] | null
           thc_percentage?: number | null
           unit?: string | null
@@ -444,6 +446,7 @@ export type Database = {
           price_cents?: number
           search_vector?: unknown
           slug?: string
+          strain_id?: string | null
           strain_type?: Database["public"]["Enums"]["strain_type"] | null
           thc_percentage?: number | null
           unit?: string | null
@@ -463,6 +466,13 @@ export type Database = {
             columns: ["dispensary_id"]
             isOneToOne: false
             referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_strain_id_fkey"
+            columns: ["strain_id"]
+            isOneToOne: false
+            referencedRelation: "strains"
             referencedColumns: ["id"]
           },
         ]
@@ -541,6 +551,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      strains: {
+        Row: {
+          created_at: string
+          description: string | null
+          effects: string[]
+          flavors: string[]
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          thc_high: number | null
+          thc_low: number | null
+          type: Database["public"]["Enums"]["strain_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          effects?: string[]
+          flavors?: string[]
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          thc_high?: number | null
+          thc_low?: number | null
+          type?: Database["public"]["Enums"]["strain_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          effects?: string[]
+          flavors?: string[]
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          thc_high?: number | null
+          thc_low?: number | null
+          type?: Database["public"]["Enums"]["strain_type"]
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

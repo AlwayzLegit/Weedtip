@@ -58,6 +58,24 @@ class HomeScreen extends ConsumerWidget {
                   prefixIcon: Icon(Icons.search),
                 ),
               ),
+              const SizedBox(height: 24),
+              Row(children: [
+                Expanded(
+                  child: _QuickLink(
+                    icon: Icons.eco_rounded,
+                    label: 'Strains',
+                    onTap: () => context.push('/strains'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _QuickLink(
+                    icon: Icons.local_offer_outlined,
+                    label: 'Deals',
+                    onTap: () => context.push('/deals'),
+                  ),
+                ),
+              ]),
               const SizedBox(height: 28),
 
               const _SectionTitle('Browse by category'),
@@ -117,4 +135,32 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Text(text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold));
+}
+
+class _QuickLink extends StatelessWidget {
+  const _QuickLink({required this.icon, required this.label, required this.onTap});
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: WeedtipColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: WeedtipColors.border),
+        ),
+        child: Row(children: [
+          Icon(icon, color: WeedtipColors.primary, size: 20),
+          const SizedBox(width: 10),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ]),
+      ),
+    );
+  }
 }

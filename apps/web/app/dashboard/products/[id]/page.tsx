@@ -11,7 +11,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const { dispensary } = await requireOwnerDispensary();
   const supabase = await createClient();
 
-  const [{ data: product }, { data: categories }] = await Promise.all([
+  const [{ data: product }, { data: categories }, { data: strains }] = await Promise.all([
     supabase
       .from('products')
       .select('*')
@@ -19,6 +19,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       .eq('dispensary_id', dispensary.id)
       .maybeSingle(),
     supabase.from('categories').select('id,name').order('sort_order'),
+    supabase.from('strains').select('id,name').order('name'),
   ]);
 
   if (!product) notFound();
@@ -26,7 +27,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Edit product</h1>
-      <ProductForm product={product} categories={categories ?? []} />
+      <ProductForm product={product} categories={categories ?? []} strains={strains ?? []} />
     </div>
   );
 }

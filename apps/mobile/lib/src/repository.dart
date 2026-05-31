@@ -199,6 +199,42 @@ class WeedtipRepository {
     await _c.from('notifications').update({'read': true}).eq('user_id', uid).eq('read', false);
   }
 
+  // ─── Strains & deals ────────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> strains({String? type}) async {
+    final base = _c.from('strains').select('slug,name,type,effects,thc_low,thc_high');
+    final rows = await (type != null ? base.eq('type', type) : base).order('name');
+    return rows.cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>?> strainBySlug(String slug) async {
+    return _c.from('strains').select().eq('slug', slug).maybeSingle();
+  }
+
+  /// Products carrying a strain at active dispensaries (raw rows incl. dispensary).
+  Future<List<Map<String, dynamic>>> productsForStrain(String strainId) async {
+    final rows = await _c
+        .from('products')
+        .select('id,name,price_cents,image_urls,dispensary:dispensaries!inner(slug,name,status)')
+        .eq('strain_id', strainId)
+        .eq('dispensary.status', 'active')
+        .order('price_cents');
+    return rows.cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> deals() async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final rows = await _c
+        .from('deals')
+        .select('*, dispensary:dispensaries!inner(slug,name,city,state,status)')
+        .eq('is_active', true)
+        .lte('start_date', now)
+        .gte('end_date', now)
+        .eq('dispensary.status', 'active')
+        .order('end_date');
+    return rows.cast<Map<String, dynamic>>();
+  }
+
   /// Native-push bridge: register an FCM/APNs token. Called by the Firebase
   /// messaging init on device (no-op on web). See the send-push edge function.
   Future<void> registerDeviceToken(String token, String platform) async {

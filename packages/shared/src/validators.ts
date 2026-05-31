@@ -92,6 +92,7 @@ export const productWriteSchema = z.object({
   brand: z.string().max(120).nullable().optional(),
   description: z.string().max(5000).nullable().optional(),
   image_urls: z.array(z.string().url()).max(10).default([]),
+  strain_id: z.string().uuid().nullable().optional(),
   strain_type: strainTypeSchema.nullable().optional(),
   thc_percentage: z.number().min(0).max(100).nullable().optional(),
   cbd_percentage: z.number().min(0).max(100).nullable().optional(),

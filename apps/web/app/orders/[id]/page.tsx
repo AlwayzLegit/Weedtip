@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { type OrderItem } from '@weedtip/shared';
+import { ReorderButton } from '@/components/cart/reorder-button';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
@@ -104,6 +105,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           Payment is collected at the dispensary. Bring a valid 21+ ID for pickup.
         </p>
       </div>
+
+      {dispensary && items.length > 0 && (
+        <div className="mt-4 flex justify-center">
+          <ReorderButton
+            dispensary={{ id: order.dispensary_id, slug: dispensary.slug, name: dispensary.name }}
+            items={items.map((it) => ({
+              productId: it.product_id,
+              name: it.name,
+              priceCents: it.unit_price_cents,
+              quantity: it.quantity,
+            }))}
+          />
+        </div>
+      )}
 
       <div className="mt-4 text-center">
         <Link href="/orders" className="text-primary text-sm hover:underline">
