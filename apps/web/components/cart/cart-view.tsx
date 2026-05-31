@@ -5,17 +5,26 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2, Minus, Plus, Trash2 } from 'lucide-react';
 import { ESTIMATED_TAX_RATE, type OrderType } from '@weedtip/shared';
-import { createOrder } from '@/app/actions/orders';
+import { startCheckout } from '@/app/actions/checkout';
 import { cn } from '@/lib/utils';
 import { formatPrice } from '@/lib/format';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { useCart } from './cart-provider';
 
-export function CartView({ isAuthenticated }: { isAuthenticated: boolean }) {
+export function CartView({
+  isAuthenticated,
+  stripeEnabled = false,
+}: {
+  isAuthenticated: boolean;
+  stripeEnabled?: boolean;
+}) {
   const { cart, subtotalCents, setQuantity, removeItem, clear } = useCart();
   const router = useRouter();
   const [orderType, setOrderType] = useState<OrderType>('pickup');
+  const [payMethod, setPayMethod] = useState<'card' | 'in_person'>(
+    stripeEnabled ? 'card' : 'in_person',
+  );
   const [notes, setNotes] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,19 +48,25 @@ export function CartView({ isAuthenticated }: { isAuthenticated: boolean }) {
     if (!cart) return;
     setPending(true);
     setError(null);
-    const res = await createOrder({
+    const res = await startCheckout({
       dispensary_id: cart.dispensaryId,
       order_type: orderType,
       notes: notes.trim() || undefined,
+      pay_now: stripeEnabled && payMethod === 'card',
       items: cart.items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
     });
-    if (res.ok) {
+    if (res.ok && res.mode === 'redirect') {
+      clear();
+      window.location.href = res.url; // hand off to Stripe Checkout
+      return;
+    }
+    if (res.ok && res.mode === 'order') {
       clear();
       router.push(`/orders/${res.orderId}`);
-    } else {
-      setError(res.error);
-      setPending(false);
+      return;
     }
+    setError(res.error);
+    setPending(false);
   }
 
   return (
@@ -149,6 +164,34 @@ export function CartView({ isAuthenticated }: { isAuthenticated: boolean }) {
             </div>
           </div>
 
+          {stripeEnabled && (
+            <div className="mt-4">
+              <p className="mb-1.5 text-sm font-medium">Payment</p>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    ['card', 'Pay now'],
+                    ['in_person', 'At dispensary'],
+                  ] as const
+                ).map(([m, label]) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setPayMethod(m)}
+                    className={cn(
+                      'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                      payMethod === m
+                        ? 'border-primary bg-primary-muted text-primary'
+                        : 'border-border text-muted hover:text-foreground',
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-4">
             <p className="mb-1.5 text-sm font-medium">Notes</p>
             <Textarea
@@ -168,7 +211,8 @@ export function CartView({ isAuthenticated }: { isAuthenticated: boolean }) {
           {isAuthenticated ? (
             <Button className="mt-4 w-full" size="lg" onClick={checkout} disabled={pending}>
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Place order · {formatPrice(totalCents)}
+              {stripeEnabled && payMethod === 'card' ? 'Pay' : 'Place order'} ·{' '}
+              {formatPrice(totalCents)}
             </Button>
           ) : (
             <Link href="/sign-in?next=/cart" className="mt-4 block">
@@ -178,7 +222,9 @@ export function CartView({ isAuthenticated }: { isAuthenticated: boolean }) {
             </Link>
           )}
           <p className="text-muted mt-2 text-center text-xs">
-            Payment is collected at the dispensary. Orders are subject to ID verification.
+            {stripeEnabled && payMethod === 'card'
+              ? 'Secure card payment via Stripe. Orders are subject to 21+ ID verification.'
+              : 'Payment is collected at the dispensary. Orders are subject to 21+ ID verification.'}
           </p>
         </div>
       </div>

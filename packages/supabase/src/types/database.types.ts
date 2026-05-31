@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       brands: {
@@ -364,7 +389,12 @@ export type Database = {
           items: Json
           notes: string | null
           order_type: Database["public"]["Enums"]["order_type"]
+          paid_at: string | null
+          payment_method: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
           status: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           subtotal_cents: number
           tax_cents: number
           total_cents: number
@@ -378,7 +408,12 @@ export type Database = {
           items: Json
           notes?: string | null
           order_type: Database["public"]["Enums"]["order_type"]
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
           status?: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal_cents?: number
           tax_cents?: number
           total_cents?: number
@@ -392,7 +427,12 @@ export type Database = {
           items?: Json
           notes?: string | null
           order_type?: Database["public"]["Enums"]["order_type"]
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
           status?: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal_cents?: number
           tax_cents?: number
           total_cents?: number
@@ -818,6 +858,7 @@ export type Database = {
         | "completed"
         | "cancelled"
       order_type: "pickup" | "delivery"
+      payment_status: "unpaid" | "paid" | "refunded"
       strain_type: "indica" | "sativa" | "hybrid" | "cbd"
       user_role: "consumer" | "dispensary_owner" | "admin"
     }
@@ -945,12 +986,16 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       discount_type: ["percentage", "fixed", "bogo"],
       dispensary_status: ["pending", "active", "suspended"],
       order_status: ["pending", "confirmed", "ready", "completed", "cancelled"],
       order_type: ["pickup", "delivery"],
+      payment_status: ["unpaid", "paid", "refunded"],
       strain_type: ["indica", "sativa", "hybrid", "cbd"],
       user_role: ["consumer", "dispensary_owner", "admin"],
     },

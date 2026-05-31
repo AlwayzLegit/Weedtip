@@ -55,7 +55,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </p>
             </div>
           </div>
-          <Badge tone={STATUS_TONE[order.status] ?? 'default'}>{order.status}</Badge>
+          <div className="flex flex-col items-end gap-1.5">
+            <Badge tone={STATUS_TONE[order.status] ?? 'default'}>{order.status}</Badge>
+            {order.payment_status === 'paid' ? (
+              <Badge tone="primary">Paid</Badge>
+            ) : order.payment_status === 'refunded' ? (
+              <Badge tone="muted">Refunded</Badge>
+            ) : (
+              <Badge tone="muted">
+                {order.payment_method === 'stripe' ? 'Payment pending' : 'Pay at pickup'}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {dispensary && (
@@ -102,7 +113,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         )}
 
         <p className="text-muted mt-6 text-center text-xs">
-          Payment is collected at the dispensary. Bring a valid 21+ ID for pickup.
+          {order.payment_status === 'paid'
+            ? `Paid online${order.paid_at ? ` on ${new Date(order.paid_at).toLocaleDateString()}` : ''}. Bring a valid 21+ ID for pickup.`
+            : 'Payment is collected at the dispensary. Bring a valid 21+ ID for pickup.'}
         </p>
       </div>
 
