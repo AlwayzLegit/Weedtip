@@ -13,6 +13,7 @@ const LINKS = [
   { href: '/dispensaries', label: 'Dispensaries' },
   { href: '/products', label: 'Products' },
   { href: '/strains', label: 'Strains' },
+  { href: '/brands', label: 'Brands' },
   { href: '/deals', label: 'Deals' },
 ];
 

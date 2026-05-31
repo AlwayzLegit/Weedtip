@@ -12,6 +12,7 @@ export interface ProductCardData {
   strainType: StrainType | null;
   thcPercentage: number | null;
   inStock: boolean;
+  productId?: string;
   dispensarySlug?: string;
 }
 
@@ -61,8 +62,14 @@ export function ProductCard({ p }: { p: ProductCardData }) {
     </div>
   );
 
-  return p.dispensarySlug ? (
-    <Link href={`/dispensary/${p.dispensarySlug}`} className={cn('block')}>
+  const href = p.productId
+    ? `/product/${p.productId}`
+    : p.dispensarySlug
+      ? `/dispensary/${p.dispensarySlug}`
+      : null;
+
+  return href ? (
+    <Link href={href} className={cn('block')}>
       {body}
     </Link>
   ) : (

@@ -112,6 +112,7 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
                     strainType: p.strain_type,
                     thcPercentage: p.thc_percentage,
                     inStock: p.in_stock,
+                    productId: p.id,
                     dispensarySlug: dispensary?.slug,
                   }}
                 />

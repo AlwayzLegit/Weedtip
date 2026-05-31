@@ -215,6 +215,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                                 strainType: p.strain_type,
                                 thcPercentage: p.thc_percentage,
                                 inStock: p.in_stock,
+                                productId: p.id,
                               }}
                             />
                             {p.in_stock && (

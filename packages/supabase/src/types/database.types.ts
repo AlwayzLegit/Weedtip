@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      brands: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           icon: string | null
@@ -386,9 +416,55 @@ export type Database = {
           },
         ]
       }
+      product_reviews: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          product_id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          product_id: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           brand: string | null
+          brand_id: string | null
           category_id: string
           cbd_percentage: number | null
           created_at: string
@@ -400,6 +476,8 @@ export type Database = {
           is_featured: boolean
           name: string
           price_cents: number
+          rating_avg: number
+          rating_count: number
           search_vector: unknown
           slug: string
           strain_id: string | null
@@ -411,6 +489,7 @@ export type Database = {
         }
         Insert: {
           brand?: string | null
+          brand_id?: string | null
           category_id: string
           cbd_percentage?: number | null
           created_at?: string
@@ -422,6 +501,8 @@ export type Database = {
           is_featured?: boolean
           name: string
           price_cents: number
+          rating_avg?: number
+          rating_count?: number
           search_vector?: unknown
           slug: string
           strain_id?: string | null
@@ -433,6 +514,7 @@ export type Database = {
         }
         Update: {
           brand?: string | null
+          brand_id?: string | null
           category_id?: string
           cbd_percentage?: number | null
           created_at?: string
@@ -444,6 +526,8 @@ export type Database = {
           is_featured?: boolean
           name?: string
           price_cents?: number
+          rating_avg?: number
+          rating_count?: number
           search_vector?: unknown
           slug?: string
           strain_id?: string | null
@@ -454,6 +538,13 @@ export type Database = {
           weight_grams?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_category_id_fkey"
             columns: ["category_id"]
@@ -628,6 +719,7 @@ export type Database = {
         Args: { target_id: string }
         Returns: undefined
       }
+      recalc_product_rating: { Args: { target_id: string }; Returns: undefined }
       search_dispensaries: {
         Args: {
           filter_category_slug?: string

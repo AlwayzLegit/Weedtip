@@ -24,10 +24,12 @@ export function ProductForm({
   product,
   categories,
   strains,
+  brands,
 }: {
   product: Tables<'products'> | null;
   categories: { id: string; name: string }[];
   strains: { id: string; name: string }[];
+  brands: { id: string; name: string }[];
 }) {
   const [state, action] = useActionState(upsertProduct, EMPTY_FORM_STATE);
   const fe = state.fieldErrors ?? {};
@@ -106,6 +108,22 @@ export function ProductForm({
           {strains.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
+            </option>
+          ))}
+        </Select>
+      </Field>
+
+      <Field
+        label="Brand (directory)"
+        htmlFor="brand_id"
+        error={fe.brand_id}
+        hint="Link to a brand page."
+      >
+        <Select id="brand_id" name="brand_id" defaultValue={p?.brand_id ?? ''}>
+          <option value="">None</option>
+          {brands.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
             </option>
           ))}
         </Select>

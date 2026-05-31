@@ -168,3 +168,48 @@ export async function deleteStrain(id: string): Promise<void> {
   await supabase.from('strains').delete().eq('id', id);
   revalidatePath('/admin/strains');
 }
+
+// ─── Brands ──────────────────────────────────────────────────────────────────
+
+const brandSchema = z.object({
+  name: z.string().min(1).max(120),
+  slug: z
+    .string()
+    .min(2)
+    .max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Must be a lowercase, hyphen-separated slug'),
+  description: z.string().max(2000).nullable(),
+  logo_url: z.string().url().nullable(),
+});
+
+export async function upsertBrand(_prev: FormState, fd: FormData): Promise<FormState> {
+  const name = str(fd, 'name') ?? '';
+  const parsed = brandSchema.safeParse({
+    name,
+    slug: str(fd, 'slug') ?? slugify(name),
+    description: str(fd, 'description') ?? null,
+    logo_url: str(fd, 'logo_url') ?? null,
+  });
+  if (!parsed.success) return fromZodError(parsed.error);
+
+  const supabase = await createClient();
+  const id = str(fd, 'id');
+  const { error } = id
+    ? await supabase.from('brands').update(parsed.data).eq('id', id)
+    : await supabase.from('brands').insert(parsed.data);
+
+  if (error) {
+    return error.code === '23505'
+      ? formError('A brand with that name or slug already exists.')
+      : formError(error.message);
+  }
+  revalidatePath('/admin/brands');
+  revalidatePath('/brands');
+  redirect('/admin/brands');
+}
+
+export async function deleteBrand(id: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from('brands').delete().eq('id', id);
+  revalidatePath('/admin/brands');
+}

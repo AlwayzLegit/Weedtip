@@ -80,6 +80,7 @@ export default async function ProductsPage({
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,
                 inStock: p.in_stock,
+                productId: p.id,
                 dispensarySlug: slugById.get(p.dispensary_id),
               }}
             />
