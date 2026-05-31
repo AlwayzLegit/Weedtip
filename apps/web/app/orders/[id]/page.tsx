@@ -1,0 +1,115 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound, redirect } from 'next/navigation';
+import { CheckCircle2 } from 'lucide-react';
+import { type OrderItem } from '@weedtip/shared';
+import { Badge } from '@/components/ui/badge';
+import { formatPrice } from '@/lib/format';
+import { getAuth } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
+
+export const metadata: Metadata = { title: 'Order' };
+
+const STATUS_TONE: Record<string, 'primary' | 'muted' | 'default'> = {
+  pending: 'default',
+  confirmed: 'primary',
+  ready: 'primary',
+  completed: 'muted',
+  cancelled: 'muted',
+};
+
+export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const { user } = await getAuth();
+  if (!user) redirect('/sign-in');
+
+  const supabase = await createClient();
+  const { data: order } = await supabase
+    .from('orders')
+    .select('*, dispensary:dispensaries(name,slug,address,city,state)')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!order) notFound();
+
+  const dispensary = order.dispensary as {
+    name: string;
+    slug: string;
+    address: string;
+    city: string;
+    state: string;
+  } | null;
+  const items = (order.items as OrderItem[]) ?? [];
+
+  return (
+    <main className="mx-auto max-w-2xl px-4 py-8">
+      <div className="rounded-card border-border bg-surface border p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="text-primary h-6 w-6" />
+            <div>
+              <h1 className="text-xl font-bold">Order placed</h1>
+              <p className="text-muted text-xs">
+                {new Date(order.created_at).toLocaleString()} · {order.order_type}
+              </p>
+            </div>
+          </div>
+          <Badge tone={STATUS_TONE[order.status] ?? 'default'}>{order.status}</Badge>
+        </div>
+
+        {dispensary && (
+          <p className="text-muted mt-4 text-sm">
+            From{' '}
+            <Link href={`/dispensary/${dispensary.slug}`} className="text-primary hover:underline">
+              {dispensary.name}
+            </Link>{' '}
+            · {dispensary.address}, {dispensary.city}, {dispensary.state}
+          </p>
+        )}
+
+        <ul className="border-border mt-5 space-y-2 border-t pt-4 text-sm">
+          {items.map((it, i) => (
+            <li key={i} className="flex justify-between">
+              <span>
+                {it.quantity}× {it.name}
+              </span>
+              <span>{formatPrice(it.unit_price_cents * it.quantity)}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="border-border mt-4 space-y-1.5 border-t pt-4 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted">Subtotal</span>
+            <span>{formatPrice(order.subtotal_cents)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted">Tax</span>
+            <span>{formatPrice(order.tax_cents)}</span>
+          </div>
+          <div className="flex justify-between font-semibold">
+            <span>Total</span>
+            <span>{formatPrice(order.total_cents)}</span>
+          </div>
+        </div>
+
+        {order.notes && (
+          <div className="border-border mt-4 border-t pt-4 text-sm">
+            <p className="font-medium">Notes</p>
+            <p className="text-muted mt-1">{order.notes}</p>
+          </div>
+        )}
+
+        <p className="text-muted mt-6 text-center text-xs">
+          Payment is collected at the dispensary. Bring a valid 21+ ID for pickup.
+        </p>
+      </div>
+
+      <div className="mt-4 text-center">
+        <Link href="/orders" className="text-primary text-sm hover:underline">
+          View all orders
+        </Link>
+      </div>
+    </main>
+  );
+}

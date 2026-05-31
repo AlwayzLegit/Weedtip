@@ -1,0 +1,78 @@
+# Supabase local development configuration.
+# Docs: https://supabase.com/docs/guides/cli/config
+project_id = "weedtip"
+
+# NOTE: ports are offset to the 555xx range to coexist with other local Supabase
+# projects on this machine (the default 543xx range is in use by other projects).
+[api]
+enabled = true
+port = 55521
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 55522
+shadow_port = 55523
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 55524
+pool_mode = "transaction"
+
+[studio]
+enabled = true
+port = 55525
+
+[inbucket]
+enabled = true
+port = 55526
+
+[analytics]
+enabled = true
+port = 55527
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[storage.buckets.avatars]
+public = true
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+
+[storage.buckets.dispensary-media]
+public = true
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+
+[storage.buckets.product-images]
+public = true
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+minimum_password_length = 8
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[edge_runtime]
+enabled = true
+inspector_port = 8084
+
+[functions.search-dispensaries]
+verify_jwt = false
+
+[functions.age-verify]
+verify_jwt = true

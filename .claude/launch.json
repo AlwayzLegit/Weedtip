@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@weedtip/web", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "web-prod",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@weedtip/web", "start"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "mobile",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "serve", "-s", "apps/mobile/build/web"],
+      "port": 4500,
+      "autoPort": true
+    }
+  ]
+}

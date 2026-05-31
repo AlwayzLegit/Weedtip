@@ -1,0 +1,10 @@
+node_modules
+dist
+.next
+.turbo
+out
+build
+pnpm-lock.yaml
+apps/mobile/.dart_tool
+apps/mobile/build
+packages/supabase/src/types/database.types.ts
