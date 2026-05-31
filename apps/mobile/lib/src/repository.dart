@@ -244,4 +244,54 @@ class WeedtipRepository {
         .from('device_tokens')
         .upsert({'user_id': uid, 'token': token, 'platform': platform}, onConflict: 'token');
   }
+
+  // ─── Product detail, product reviews, brands ────────────────────────────────
+
+  Future<Map<String, dynamic>?> productById(String id) async {
+    return _c
+        .from('products')
+        .select(
+          '*, dispensary:dispensaries(id,slug,name), strain:strains(slug,name), brand:brands(slug,name)',
+        )
+        .eq('id', id)
+        .maybeSingle();
+  }
+
+  Future<List<Map<String, dynamic>>> productReviews(String productId) async {
+    final rows = await _c
+        .from('product_reviews')
+        .select('id,rating,body,created_at')
+        .eq('product_id', productId)
+        .order('created_at', ascending: false);
+    return rows.cast<Map<String, dynamic>>();
+  }
+
+  Future<void> submitProductReview(String productId, int rating, String? body) async {
+    final uid = _c.auth.currentUser!.id;
+    await _c.from('product_reviews').upsert(
+      {'product_id': productId, 'user_id': uid, 'rating': rating, 'body': body},
+      onConflict: 'product_id,user_id',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> brands() async {
+    final rows = await _c.from('brands').select('slug,name,description').order('name');
+    return rows.cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>?> brandBySlug(String slug) async {
+    return _c.from('brands').select().eq('slug', slug).maybeSingle();
+  }
+
+  Future<List<Map<String, dynamic>>> brandProducts(String brandId) async {
+    final rows = await _c
+        .from('products')
+        .select(
+          'id,dispensary_id,name,price_cents,image_urls,strain_type,thc_percentage,in_stock,dispensary:dispensaries!inner(slug,name,status)',
+        )
+        .eq('brand_id', brandId)
+        .eq('dispensary.status', 'active')
+        .order('price_cents');
+    return rows.cast<Map<String, dynamic>>();
+  }
 }

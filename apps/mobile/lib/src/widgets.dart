@@ -261,7 +261,10 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: () => context.push('/product/${p.id}'),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
       decoration: BoxDecoration(
         color: WeedtipColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -314,6 +317,7 @@ class ProductCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -123,3 +123,27 @@ final strainProductsProvider =
 final dealsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(repositoryProvider).deals();
 });
+
+final productByIdProvider =
+    FutureProvider.family<Map<String, dynamic>?, String>((ref, id) {
+  return ref.watch(repositoryProvider).productById(id);
+});
+
+final productReviewsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, id) {
+  return ref.watch(repositoryProvider).productReviews(id);
+});
+
+final brandsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(repositoryProvider).brands();
+});
+
+final brandBySlugProvider =
+    FutureProvider.family<Map<String, dynamic>?, String>((ref, slug) {
+  return ref.watch(repositoryProvider).brandBySlug(slug);
+});
+
+final brandProductsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, brandId) {
+  return ref.watch(repositoryProvider).brandProducts(brandId);
+});

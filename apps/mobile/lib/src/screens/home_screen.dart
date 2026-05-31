@@ -67,7 +67,15 @@ class HomeScreen extends ConsumerWidget {
                     onTap: () => context.push('/strains'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _QuickLink(
+                    icon: Icons.workspace_premium_outlined,
+                    label: 'Brands',
+                    onTap: () => context.push('/brands'),
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _QuickLink(
                     icon: Icons.local_offer_outlined,
@@ -149,16 +157,20 @@ class _QuickLink extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
           color: WeedtipColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: WeedtipColors.border),
         ),
         child: Row(children: [
-          Icon(icon, color: WeedtipColors.primary, size: 20),
-          const SizedBox(width: 10),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Icon(icon, color: WeedtipColors.primary, size: 18),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
         ]),
       ),
     );
