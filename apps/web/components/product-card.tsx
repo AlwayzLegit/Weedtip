@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { StrainType } from '@weedtip/shared';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { MediaImage } from './media-image';
 import { RatingStars } from './rating-stars';
 import { Badge } from './ui/badge';
 
@@ -29,18 +30,7 @@ const STRAIN_LABEL: Record<StrainType, string> = {
 export function ProductCard({ p }: { p: ProductCardData }) {
   const body = (
     <div className="rounded-card border-border bg-surface hover:border-primary/50 overflow-hidden border transition-colors">
-      <div
-        className="from-surface-2 to-surface relative flex h-32 items-center justify-center bg-gradient-to-br"
-        style={
-          p.imageUrl
-            ? {
-                backgroundImage: `url(${p.imageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : undefined
-        }
-      >
+      <MediaImage url={p.imageUrl} className="h-32" iconClassName="h-10 w-10">
         {!p.inStock && (
           <Badge tone="muted" className="absolute left-2 top-2">
             Out of stock
@@ -51,7 +41,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
             {STRAIN_LABEL[p.strainType]}
           </Badge>
         )}
-      </div>
+      </MediaImage>
       <div className="space-y-1 p-3">
         {p.brand && <p className="text-muted truncate text-xs">{p.brand}</p>}
         <h3 className="truncate text-sm font-semibold">{p.name}</h3>

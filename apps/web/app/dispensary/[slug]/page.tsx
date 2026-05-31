@@ -5,6 +5,7 @@ import { Globe, Mail, MapPin, Phone, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { FavoriteButton } from '@/components/favorite-button';
+import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
 import { RatingStars } from '@/components/rating-stars';
 import { ReviewForm } from '@/components/review-form';
@@ -97,18 +98,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   return (
     <main>
       {/* Header */}
-      <div
-        className="from-primary/30 to-surface-2 h-48 bg-gradient-to-br sm:h-60"
-        style={
-          d.cover_image_url
-            ? {
-                backgroundImage: `url(${d.cover_image_url})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : undefined
-        }
-      />
+      <MediaImage url={d.cover_image_url} className="h-48 sm:h-60" iconClassName="h-16 w-16" />
       <div className="mx-auto max-w-7xl px-4">
         <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="rounded-card border-border bg-surface border p-5">

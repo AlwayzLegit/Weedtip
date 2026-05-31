@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Store } from 'lucide-react';
 import { AddToCart } from '@/components/cart/add-to-cart';
+import { MediaImage } from '@/components/media-image';
 import { ProductReviewForm } from '@/components/product-review-form';
 import { RatingStars } from '@/components/rating-stars';
 import { Badge } from '@/components/ui/badge';
@@ -58,17 +59,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <div className="grid gap-8 sm:grid-cols-2">
-        <div
-          className="rounded-card border-border from-surface-2 to-surface h-64 border bg-gradient-to-br"
-          style={
-            product.image_urls[0]
-              ? {
-                  backgroundImage: `url(${product.image_urls[0]})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }
-              : undefined
-          }
+        <MediaImage
+          url={product.image_urls[0]}
+          className="rounded-card border-border h-64 border"
+          iconClassName="h-16 w-16"
         />
         <div>
           <div className="flex flex-wrap items-center gap-2">

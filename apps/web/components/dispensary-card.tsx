@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { MapPin, Truck, Store } from 'lucide-react';
 import { formatDistance } from '@/lib/format';
 import { Badge } from './ui/badge';
+import { MediaImage } from './media-image';
 import { RatingStars } from './rating-stars';
 
 export interface DispensaryCardData {
@@ -28,18 +29,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       href={`/dispensary/${d.slug}`}
       className="rounded-card border-border bg-surface hover:border-primary/50 group block overflow-hidden border transition-colors"
     >
-      <div
-        className="from-primary/30 to-surface-2 relative h-36 bg-gradient-to-br"
-        style={
-          d.coverImageUrl
-            ? {
-                backgroundImage: `url(${d.coverImageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : undefined
-        }
-      >
+      <MediaImage url={d.coverImageUrl} className="h-36" iconClassName="h-12 w-12">
         {d.featured && (
           <Badge tone="primary" className="absolute left-3 top-3">
             Featured
@@ -51,7 +41,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
             {distance}
           </Badge>
         )}
-      </div>
+      </MediaImage>
 
       <div className="space-y-2 p-4">
         <h3 className="group-hover:text-primary truncate font-semibold">{d.name}</h3>
