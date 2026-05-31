@@ -36,7 +36,15 @@ export default async function ProductsPage({
     searchProducts(supabase, params),
   ]);
 
-  const rows = productsRes.data ?? [];
+  const rows = [...(productsRes.data ?? [])];
+
+  // Client-side sort over the page of results.
+  const sort = typeof sp.sort === 'string' ? sp.sort : '';
+  if (sort === 'price_asc') rows.sort((a, b) => a.price_cents - b.price_cents);
+  else if (sort === 'price_desc') rows.sort((a, b) => b.price_cents - a.price_cents);
+  else if (sort === 'name') rows.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sort === 'rating')
+    rows.sort((a, b) => b.rating_avg - a.rating_avg || b.rating_count - a.rating_count);
 
   // Resolve dispensary slugs for product → shop links.
   const dispensaryIds = [...new Set(rows.map((r) => r.dispensary_id))];
@@ -80,6 +88,8 @@ export default async function ProductsPage({
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,
                 inStock: p.in_stock,
+                rating: p.rating_avg,
+                reviewCount: p.rating_count,
                 productId: p.id,
                 dispensarySlug: slugById.get(p.dispensary_id),
               }}

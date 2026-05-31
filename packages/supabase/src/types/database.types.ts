@@ -796,6 +796,8 @@ export type Database = {
           name: string
           price_cents: number
           rank: number
+          rating_avg: number
+          rating_count: number
           slug: string
           strain_type: Database["public"]["Enums"]["strain_type"]
           thc_percentage: number

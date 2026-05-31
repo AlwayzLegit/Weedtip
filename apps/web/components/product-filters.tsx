@@ -30,7 +30,7 @@ export function ProductFilters({ categories }: { categories: FilterCategory[] })
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
       <div>
         <label className="text-muted mb-1 block text-xs">Category</label>
         <Select
@@ -74,7 +74,20 @@ export function ProductFilters({ categories }: { categories: FilterCategory[] })
         </Select>
       </div>
       <div>
-        <label className="text-muted mb-1 block text-xs">Sort / stock</label>
+        <label className="text-muted mb-1 block text-xs">Sort by</label>
+        <Select
+          value={searchParams.get('sort') ?? ''}
+          onChange={(e) => setParam('sort', e.target.value)}
+        >
+          <option value="">Relevance</option>
+          <option value="price_asc">Price: low to high</option>
+          <option value="price_desc">Price: high to low</option>
+          <option value="rating">Top rated</option>
+          <option value="name">Name (A–Z)</option>
+        </Select>
+      </div>
+      <div>
+        <label className="text-muted mb-1 block text-xs">Stock</label>
         <Select
           value={searchParams.get('in_stock') ?? 'true'}
           onChange={(e) => setParam('in_stock', e.target.value)}

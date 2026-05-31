@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { StrainType } from '@weedtip/shared';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { RatingStars } from './rating-stars';
 import { Badge } from './ui/badge';
 
 export interface ProductCardData {
@@ -12,6 +13,8 @@ export interface ProductCardData {
   strainType: StrainType | null;
   thcPercentage: number | null;
   inStock: boolean;
+  rating?: number | null;
+  reviewCount?: number;
   productId?: string;
   dispensarySlug?: string;
 }
@@ -58,6 +61,12 @@ export function ProductCard({ p }: { p: ProductCardData }) {
             <span className="text-muted text-xs">{p.thcPercentage}% THC</span>
           )}
         </div>
+        {typeof p.rating === 'number' && p.rating > 0 && (
+          <div className="flex items-center gap-1 pt-0.5">
+            <RatingStars rating={p.rating} size={12} />
+            {p.reviewCount ? <span className="text-muted text-xs">({p.reviewCount})</span> : null}
+          </div>
+        )}
       </div>
     </div>
   );

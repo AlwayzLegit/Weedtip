@@ -67,6 +67,18 @@ export function DispensaryFilters() {
           ))}
         </select>
       )}
+
+      <select
+        value={searchParams.get('sort') ?? ''}
+        onChange={(e) => setParam('sort', e.target.value || null)}
+        className="border-border bg-surface h-9 rounded-full border px-3 text-sm"
+        aria-label="Sort by"
+      >
+        <option value="">Sort: Relevance</option>
+        <option value="rating">Top rated</option>
+        {hasGeo && <option value="distance">Nearest</option>}
+        <option value="name">Name (A–Z)</option>
+      </select>
     </div>
   );
 }

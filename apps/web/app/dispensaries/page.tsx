@@ -43,8 +43,16 @@ export default async function DispensariesPage({
 
   const supabase = await createClient();
   const { data, error } = await searchDispensaries(supabase, params);
-  const rows = data ?? [];
+  const rows = [...(data ?? [])];
   const total = rows[0]?.total_count ?? 0;
+
+  // Client-side sort over the page of results.
+  const sort = typeof sp.sort === 'string' ? sp.sort : '';
+  if (sort === 'rating')
+    rows.sort((a, b) => b.rating_avg - a.rating_avg || b.rating_count - a.rating_count);
+  else if (sort === 'name') rows.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sort === 'distance')
+    rows.sort((a, b) => (a.distance_meters ?? Infinity) - (b.distance_meters ?? Infinity));
   const hasMore = (params.page + 1) * params.page_size < total;
 
   const points: MapPoint[] = rows.map((r) => ({
