@@ -76,3 +76,7 @@ verify_jwt = false
 
 [functions.age-verify]
 verify_jwt = true
+
+# Server-to-server; invoke with the service role key (or from a DB webhook).
+[functions.send-push]
+verify_jwt = true

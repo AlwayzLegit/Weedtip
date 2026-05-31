@@ -6,6 +6,7 @@ import 'screens/dispensary_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/notifications_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/profile_screen.dart';
@@ -43,6 +44,7 @@ final appRouter = GoRouter(
     GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
     GoRoute(path: '/orders', builder: (_, __) => const OrdersScreen()),
     GoRoute(path: '/favorites', builder: (_, __) => const FavoritesScreen()),
+    GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
   ],
 );
 

@@ -30,6 +30,7 @@ class HomeScreen extends ConsumerWidget {
                 SizedBox(width: 6),
                 Text('Weedtip', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 Spacer(),
+                NotificationBell(),
                 CartIconButton(),
               ]),
               const SizedBox(height: 20),

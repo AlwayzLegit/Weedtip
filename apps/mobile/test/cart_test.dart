@@ -41,4 +41,15 @@ void main() {
     n.clear();
     expect(n.state, isNull);
   });
+
+  test('cart survives JSON round-trip (persistence)', () {
+    final n = CartNotifier();
+    n.add(_shopA, _item('p1', 1000));
+    n.add(_shopA, _item('p2', 250));
+    final restored = Cart.fromJson(n.state!.toJson());
+    expect(restored.dispensaryId, 'a');
+    expect(restored.items.length, 2);
+    expect(restored.count, 2);
+    expect(restored.subtotalCents, 1250);
+  });
 }

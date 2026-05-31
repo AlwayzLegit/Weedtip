@@ -176,4 +176,36 @@ class WeedtipRepository {
         .update({'display_name': displayName, 'date_of_birth': dateOfBirth})
         .eq('id', uid);
   }
+
+  // ─── Notifications (live via Supabase Realtime) ─────────────────────────────
+
+  Stream<List<Map<String, dynamic>>> notificationsStream() {
+    final uid = _c.auth.currentUser?.id;
+    if (uid == null) return Stream.value(const []);
+    return _c
+        .from('notifications')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', uid)
+        .order('created_at');
+  }
+
+  Future<void> markNotificationRead(String id) async {
+    await _c.from('notifications').update({'read': true}).eq('id', id);
+  }
+
+  Future<void> markAllNotificationsRead() async {
+    final uid = _c.auth.currentUser?.id;
+    if (uid == null) return;
+    await _c.from('notifications').update({'read': true}).eq('user_id', uid).eq('read', false);
+  }
+
+  /// Native-push bridge: register an FCM/APNs token. Called by the Firebase
+  /// messaging init on device (no-op on web). See the send-push edge function.
+  Future<void> registerDeviceToken(String token, String platform) async {
+    final uid = _c.auth.currentUser?.id;
+    if (uid == null) return;
+    await _c
+        .from('device_tokens')
+        .upsert({'user_id': uid, 'token': token, 'platform': platform}, onConflict: 'token');
+  }
 }

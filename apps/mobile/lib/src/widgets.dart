@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'cart.dart';
 import 'models.dart';
+import 'providers.dart';
 import '../theme.dart';
 
 /// AppBar cart action with an item-count badge.
@@ -34,6 +35,41 @@ class CartIconButton extends ConsumerWidget {
               child: Text('$count',
                   style: const TextStyle(
                       fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF04140D))),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// AppBar bell with an unread-notifications badge (live via Realtime).
+class NotificationBell extends ConsumerWidget {
+  const NotificationBell({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(unreadCountProvider);
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          tooltip: 'Notifications',
+          onPressed: () => context.push('/notifications'),
+        ),
+        if (unread > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: WeedtipColors.danger,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text('$unread',
+                  style: const TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ),
       ],

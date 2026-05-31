@@ -92,3 +92,16 @@ final myProfileProvider = FutureProvider<Map<String, dynamic>?>((ref) {
   ref.watch(authStateProvider);
   return ref.watch(repositoryProvider).myProfile();
 });
+
+/// Live notifications for the signed-in user (Supabase Realtime).
+final notificationsStreamProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+  ref.watch(authStateProvider);
+  return ref.watch(repositoryProvider).notificationsStream();
+});
+
+final unreadCountProvider = Provider<int>((ref) {
+  return ref.watch(notificationsStreamProvider).maybeWhen(
+        data: (list) => list.where((n) => n['read'] != true).length,
+        orElse: () => 0,
+      );
+});
