@@ -78,7 +78,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         .order('end_date'),
       supabase
         .from('reviews')
-        .select('id,rating,body,created_at,author_name,user_id')
+        .select('id,rating,body,created_at,author_name,user_id,owner_reply,owner_reply_at')
         .eq('dispensary_id', d.id)
         .order('created_at', { ascending: false }),
       getAuth(),
@@ -379,6 +379,21 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         </span>
                       </div>
                       {r.body && <p className="text-muted mt-2 text-sm">{r.body}</p>}
+                      {r.owner_reply && (
+                        <div className="border-border bg-surface-2 mt-3 rounded-lg border-l-2 border-l-primary p-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground text-xs font-semibold">
+                              Response from {d.name}
+                            </span>
+                            {r.owner_reply_at && (
+                              <span className="text-muted text-xs">
+                                {new Date(r.owner_reply_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-muted mt-1 text-sm">{r.owner_reply}</p>
+                        </div>
+                      )}
                       {user && r.user_id === user.id && (
                         <div className="mt-2 flex items-center gap-2">
                           <Badge tone="muted">Your review</Badge>

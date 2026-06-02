@@ -696,6 +696,8 @@ export type Database = {
           created_at: string
           dispensary_id: string
           id: string
+          owner_reply: string | null
+          owner_reply_at: string | null
           rating: number
           updated_at: string
           user_id: string
@@ -706,6 +708,8 @@ export type Database = {
           created_at?: string
           dispensary_id: string
           id?: string
+          owner_reply?: string | null
+          owner_reply_at?: string | null
           rating: number
           updated_at?: string
           user_id: string
@@ -716,6 +720,8 @@ export type Database = {
           created_at?: string
           dispensary_id?: string
           id?: string
+          owner_reply?: string | null
+          owner_reply_at?: string | null
           rating?: number
           updated_at?: string
           user_id?: string
@@ -818,6 +824,10 @@ export type Database = {
         Returns: undefined
       }
       recalc_product_rating: { Args: { target_id: string }; Returns: undefined }
+      reply_to_review: {
+        Args: { p_reply: string; p_review_id: string }
+        Returns: undefined
+      }
       reject_ownership_request: {
         Args: { p_request_id: string }
         Returns: undefined

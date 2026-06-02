@@ -121,3 +121,37 @@ export async function deleteProductReview(reviewId: string, productId: string): 
   await supabase.from('product_reviews').delete().eq('id', reviewId).eq('user_id', user.id);
   revalidatePath(`/product/${productId}`);
 }
+
+// ─── Owner reply (Weedmaps-style review responses) ───────────────────────────
+
+const replySchema = z.object({
+  review_id: z.string().uuid(),
+  reply: z.string().max(4000).optional(),
+});
+
+export async function replyToReview(_prev: ReviewState, formData: FormData): Promise<ReviewState> {
+  const parsed = replySchema.safeParse({
+    review_id: formData.get('review_id'),
+    reply: formData.get('reply') || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0]?.message ?? 'Invalid reply' };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Please sign in.' };
+
+  const { error } = await supabase.rpc('reply_to_review', {
+    p_review_id: parsed.data.review_id,
+    p_reply: parsed.data.reply ?? '',
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath('/dashboard/reviews');
+  const slug = formData.get('dispensary_slug');
+  if (typeof slug === 'string' && slug) revalidatePath(`/dispensary/${slug}`);
+  return { message: parsed.data.reply ? 'Reply published.' : 'Reply removed.' };
+}
