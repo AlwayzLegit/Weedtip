@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Globe, Mail, MapPin, Phone, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { ClaimListing } from '@/components/claim-listing';
 import { FavoriteButton } from '@/components/favorite-button';
@@ -14,6 +15,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
+import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
@@ -26,10 +28,23 @@ export async function generateMetadata({
   const supabase = await createClient();
   const { data } = await supabase
     .from('dispensaries')
-    .select('name,city,state')
+    .select('name,city,state,description')
     .eq('slug', slug)
     .maybeSingle();
-  return { title: data ? `${data.name} — ${data.city}, ${data.state}` : 'Dispensary' };
+  if (!data) return { title: 'Dispensary' };
+
+  const title = `${data.name} — ${data.city}, ${data.state}`;
+  const description =
+    data.description?.slice(0, 160) ??
+    `${data.name} in ${data.city}, ${data.state}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
+  const canonical = `/dispensary/${slug}`;
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { type: 'website', title, description, url: canonical },
+    twitter: { card: 'summary_large_image', title, description },
+  };
 }
 
 export default async function DispensaryPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -111,6 +126,12 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
   const hours = d.hours as OperatingHours | null;
 
+  const prices = (products ?? []).map((p) => p.price_cents);
+  const priceRange = prices.length
+    ? `$${Math.round(Math.min(...prices) / 100)}–$${Math.round(Math.max(...prices) / 100)}`
+    : undefined;
+  const openingHours = openingHoursSpec(hours as Record<string, { open?: string; close?: string }> | null);
+
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Store',
@@ -120,6 +141,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     ...(d.description ? { description: d.description } : {}),
     ...(d.cover_image_url ? { image: d.cover_image_url } : {}),
     ...(d.phone ? { telephone: d.phone } : {}),
+    ...(d.website ? { sameAs: [d.website] } : {}),
     address: {
       '@type': 'PostalAddress',
       streetAddress: d.address,
@@ -131,6 +153,8 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     ...(d.latitude != null && d.longitude != null
       ? { geo: { '@type': 'GeoCoordinates', latitude: d.latitude, longitude: d.longitude } }
       : {}),
+    ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
+    ...(priceRange ? { priceRange } : {}),
     ...(reviews && reviews.length > 0
       ? {
           aggregateRating: {
@@ -142,9 +166,23 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       : {}),
   };
 
+  const crumbs = [
+    { name: 'Home', href: '/' },
+    { name: 'Dispensaries', href: '/dispensaries' },
+    { name: US_STATES[d.state] ?? d.state, href: `/dispensaries/${d.state.toLowerCase()}` },
+    {
+      name: d.city,
+      href: `/dispensaries/${d.state.toLowerCase()}/${citySlug(d.city)}`,
+    },
+    { name: d.name, href: `/dispensary/${d.slug}` },
+  ];
+
   return (
     <main>
       <JsonLd data={jsonLd} />
+      <div className="mx-auto max-w-7xl px-4 pt-4">
+        <Breadcrumbs items={crumbs} />
+      </div>
       {/* Header */}
       <MediaImage
         url={d.cover_image_url}

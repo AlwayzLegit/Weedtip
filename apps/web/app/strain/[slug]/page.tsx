@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Leaf } from 'lucide-react';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/server';
@@ -21,10 +22,22 @@ export async function generateMetadata({
   const supabase = await createClient();
   const { data } = await supabase
     .from('strains')
-    .select('name,type')
+    .select('name,type,description')
     .eq('slug', slug)
     .maybeSingle();
-  return { title: data ? `${data.name} — ${TYPE_LABEL[data.type]} strain` : 'Strain' };
+  if (!data) return { title: 'Strain' };
+  const title = `${data.name} — ${TYPE_LABEL[data.type]} strain`;
+  const description =
+    data.description?.slice(0, 160) ??
+    `${data.name} is a ${TYPE_LABEL[data.type]} cannabis strain. Explore its effects, flavors, THC range, and which dispensaries carry it on Weedtip.`;
+  const canonical = `/strain/${slug}`;
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { type: 'website', title, description, url: canonical },
+    twitter: { card: 'summary_large_image', title, description },
+  };
 }
 
 export default async function StrainPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -48,6 +61,13 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <Breadcrumbs
+        items={[
+          { name: 'Home', href: '/' },
+          { name: 'Strains', href: '/strains' },
+          { name: strain.name, href: `/strain/${strain.slug}` },
+        ]}
+      />
       <div className="flex items-center gap-2">
         <Leaf className="text-primary h-6 w-6" />
         <h1 className="text-3xl font-bold">{strain.name}</h1>

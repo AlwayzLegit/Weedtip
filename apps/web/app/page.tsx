@@ -3,7 +3,9 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import { CategoryPills } from '@/components/category-pills';
 import { DispensaryCard } from '@/components/dispensary-card';
 import { SearchBar } from '@/components/search-bar';
+import { JsonLd } from '@/components/seo/json-ld';
 import { Button } from '@/components/ui/button';
+import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function HomePage() {
@@ -24,6 +26,8 @@ export default async function HomePage() {
 
   return (
     <main>
+      <JsonLd data={organizationJsonLd()} />
+      <JsonLd data={websiteJsonLd()} />
       {/* Hero */}
       <section className="border-border relative overflow-hidden border-b">
         <div

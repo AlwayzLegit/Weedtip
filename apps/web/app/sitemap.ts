@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { citySlug } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
@@ -29,13 +30,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const supabase = await createClient();
     const [dispensaries, products, strains, brands] = await Promise.all([
-      supabase.from('dispensaries').select('slug, updated_at'),
+      supabase.from('dispensaries').select('slug, city, state, updated_at'),
       supabase.from('products').select('id, updated_at'),
       supabase.from('strains').select('slug, updated_at'),
       supabase.from('brands').select('slug, updated_at'),
     ]);
 
+    // Local SEO landing pages: distinct states and state+city combinations.
+    const stateSet = new Set<string>();
+    const citySet = new Set<string>();
+    for (const d of dispensaries.data ?? []) {
+      const st = d.state.toLowerCase();
+      stateSet.add(st);
+      citySet.add(`${st}/${citySlug(d.city)}`);
+    }
+    const locationRoutes: MetadataRoute.Sitemap = [
+      ...[...stateSet].map((st) => ({
+        url: `${SITE_URL}/dispensaries/${st}`,
+        lastModified: now,
+        changeFrequency: 'daily' as const,
+        priority: 0.7,
+      })),
+      ...[...citySet].map((loc) => ({
+        url: `${SITE_URL}/dispensaries/${loc}`,
+        lastModified: now,
+        changeFrequency: 'daily' as const,
+        priority: 0.7,
+      })),
+    ];
+
     const dynamicRoutes: MetadataRoute.Sitemap = [
+      ...locationRoutes,
       ...(dispensaries.data ?? []).map((d) => ({
         url: `${SITE_URL}/dispensary/${d.slug}`,
         lastModified: new Date(d.updated_at),
