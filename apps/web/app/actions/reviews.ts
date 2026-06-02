@@ -30,6 +30,12 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Please sign in to leave a review.' };
 
+  const { data: dispProfile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .maybeSingle();
+
   // One review per user per dispensary — upsert on the unique constraint.
   const { error } = await supabase.from('reviews').upsert(
     {
@@ -37,6 +43,7 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
       user_id: user.id,
       rating: parsed.data.rating,
       body: parsed.data.body ?? null,
+      author_name: dispProfile?.display_name ?? 'Weedtip member',
     },
     { onConflict: 'dispensary_id,user_id' },
   );
@@ -71,12 +78,19 @@ export async function submitProductReview(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Please sign in to leave a review.' };
 
+  const { data: prodProfile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .maybeSingle();
+
   const { error } = await supabase.from('product_reviews').upsert(
     {
       product_id: parsed.data.product_id,
       user_id: user.id,
       rating: parsed.data.rating,
       body: parsed.data.body ?? null,
+      author_name: prodProfile?.display_name ?? 'Weedtip member',
     },
     { onConflict: 'product_id,user_id' },
   );

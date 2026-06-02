@@ -66,7 +66,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const [{ data: reviews }, { user }] = await Promise.all([
     supabase
       .from('product_reviews')
-      .select('id,rating,body,created_at')
+      .select('id,rating,body,created_at,author_name')
       .eq('product_id', id)
       .order('created_at', { ascending: false }),
     getAuth(),
@@ -102,6 +102,22 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             ratingValue: Number(product.rating_avg.toFixed(1)),
             reviewCount: product.rating_count,
           },
+        }
+      : {}),
+    ...(reviews && reviews.length > 0
+      ? {
+          review: reviews.slice(0, 10).map((r) => ({
+            '@type': 'Review',
+            reviewRating: {
+              '@type': 'Rating',
+              ratingValue: r.rating,
+              bestRating: 5,
+              worstRating: 1,
+            },
+            author: { '@type': 'Person', name: r.author_name ?? 'Weedtip member' },
+            datePublished: new Date(r.created_at).toISOString().slice(0, 10),
+            ...(r.body ? { reviewBody: r.body } : {}),
+          })),
         }
       : {}),
   };
@@ -217,8 +233,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className="space-y-4">
             {reviews.map((r) => (
               <div key={r.id} className="rounded-card border-border bg-surface border p-4">
-                <div className="flex items-center justify-between">
-                  <RatingStars rating={r.rating} />
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <RatingStars rating={r.rating} />
+                    <span className="text-sm font-medium">{r.author_name ?? 'Weedtip member'}</span>
+                  </div>
                   <span className="text-muted text-xs">
                     {new Date(r.created_at).toLocaleDateString()}
                   </span>
