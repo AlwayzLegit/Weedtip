@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import type Stripe from 'stripe';
+import { rateLimit } from '@/lib/rate-limit';
 import { isStripeConfigured, stripe } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase/service';
 
@@ -16,6 +17,13 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   if (!isStripeConfigured || !stripe) {
     return new Response('Stripe is not configured.', { status: 503 });
+  }
+
+  // Throttle the public endpoint by source IP (generous — Stripe sends from many
+  // IPs and retries, so this deters abuse without dropping legitimate events).
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'stripe-webhook';
+  if (!(await rateLimit('stripe-webhook', { limit: 60, window: '60 s' }, ip)).success) {
+    return new Response('Too many requests.', { status: 429 });
   }
 
   const signature = req.headers.get('stripe-signature');

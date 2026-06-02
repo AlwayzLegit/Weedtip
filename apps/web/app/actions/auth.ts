@@ -4,9 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { USER_ROLES } from '@weedtip/shared';
+import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 
 export type AuthState = { error?: string; message?: string };
+
+const TOO_MANY = 'Too many attempts. Please wait a minute and try again.';
 
 const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
@@ -16,6 +19,9 @@ const signInSchema = z.object({
 });
 
 export async function signIn(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  if (!(await rateLimit('auth-signin', { limit: 10, window: '60 s' })).success) {
+    return { error: TOO_MANY };
+  }
   const parsed = signInSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -46,6 +52,9 @@ const signUpSchema = z.object({
 });
 
 export async function signUp(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  if (!(await rateLimit('auth-signup', { limit: 5, window: '60 s' })).success) {
+    return { error: TOO_MANY };
+  }
   const parsed = signUpSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -98,6 +107,9 @@ export async function signOut(): Promise<void> {
 const resetSchema = z.object({ email: z.string().email('Enter a valid email') });
 
 export async function sendPasswordReset(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  if (!(await rateLimit('auth-reset', { limit: 5, window: '60 s' })).success) {
+    return { error: TOO_MANY };
+  }
   const parsed = resetSchema.safeParse({ email: formData.get('email') });
   if (!parsed.success) {
     return { error: parsed.error.errors[0]?.message ?? 'Invalid input' };
