@@ -1,7 +1,7 @@
 'use client';
 
 import { updateOrderStatus } from '@/app/dashboard/actions';
-import { Button } from '../ui/button';
+import { SubmitButton } from '../auth/submit-button';
 
 // Valid forward transitions an owner can apply.
 const NEXT: Record<string, string[]> = {
@@ -27,9 +27,9 @@ export function OrderStatusControl({ orderId, status }: { orderId: string; statu
     <div className="flex flex-wrap gap-2">
       {transitions.map((next) => (
         <form key={next} action={updateOrderStatus.bind(null, orderId, next)}>
-          <Button type="submit" size="sm" variant={next === 'cancelled' ? 'outline' : 'primary'}>
+          <SubmitButton size="sm" variant={next === 'cancelled' ? 'outline' : 'primary'}>
             {LABEL[next]}
-          </Button>
+          </SubmitButton>
         </form>
       ))}
     </div>

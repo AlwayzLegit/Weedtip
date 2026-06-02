@@ -7,6 +7,7 @@ import { EMPTY_FORM_STATE } from '@/lib/forms';
 import { FormMessage } from '../auth/form-message';
 import { SubmitButton } from '../auth/submit-button';
 import { Field } from '../dashboard/field';
+import { ImageUpload } from '../dashboard/image-upload';
 import { Input } from '../ui/input';
 
 export function ProfileForm({ profile, email }: { profile: Tables<'profiles'>; email: string }) {
@@ -31,14 +32,12 @@ export function ProfileForm({ profile, email }: { profile: Tables<'profiles'>; e
       <Field label="Display name" htmlFor="display_name" error={fe.display_name}>
         <Input id="display_name" name="display_name" defaultValue={profile.display_name ?? ''} />
       </Field>
-      <Field label="Avatar URL" htmlFor="avatar_url" error={fe.avatar_url}>
-        <Input
-          id="avatar_url"
-          name="avatar_url"
-          defaultValue={profile.avatar_url ?? ''}
-          placeholder="https://"
-        />
-      </Field>
+      <ImageUpload
+        bucket="avatars"
+        name="avatar_url"
+        label="Avatar"
+        defaultUrl={profile.avatar_url}
+      />
       <Field
         label="Date of birth"
         htmlFor="date_of_birth"
