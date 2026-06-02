@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatPrice } from '@/lib/format';
 import { getOwnerContext } from '@/lib/owner';
 import { createClient } from '@/lib/supabase/server';
 
@@ -51,11 +52,20 @@ export default async function DashboardOverview() {
         .eq('is_active', true)
         .lte('start_date', nowIso)
         .gte('end_date', nowIso),
-      supabase.from('orders').select('status').eq('dispensary_id', dispensary.id),
+      supabase
+        .from('orders')
+        .select('id,status,total_cents,created_at')
+        .eq('dispensary_id', dispensary.id)
+        .order('created_at', { ascending: false }),
       supabase.from('reviews').select('rating').eq('dispensary_id', dispensary.id),
     ]);
 
-  const pendingOrders = (orders ?? []).filter((o) => o.status === 'pending').length;
+  const orderList = orders ?? [];
+  const pendingOrders = orderList.filter((o) => o.status === 'pending').length;
+  const revenue = orderList
+    .filter((o) => o.status !== 'cancelled')
+    .reduce((s, o) => s + o.total_cents, 0);
+  const recentOrders = orderList.slice(0, 5);
   const avgRating = reviews?.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : '—';
@@ -79,11 +89,38 @@ export default async function DashboardOverview() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <Stat label="Revenue" value={formatPrice(revenue)} />
         <Stat label="Products" value={productCount ?? 0} />
         <Stat label="Active deals" value={dealCount ?? 0} />
         <Stat label="Pending orders" value={pendingOrders} />
         <Stat label="Avg rating" value={avgRating} />
+      </div>
+
+      <div className="rounded-card border-border bg-surface border p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Recent orders</h2>
+          <Link href="/dashboard/orders" className="text-primary text-sm hover:underline">
+            View all
+          </Link>
+        </div>
+        {recentOrders.length === 0 ? (
+          <p className="text-muted mt-2 text-sm">No orders yet.</p>
+        ) : (
+          <ul className="divide-border mt-3 divide-y">
+            {recentOrders.map((o) => (
+              <li key={o.id} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-muted">{new Date(o.created_at).toLocaleDateString()}</span>
+                <span className="flex items-center gap-3">
+                  <span className="font-medium">{formatPrice(o.total_cents)}</span>
+                  <Badge tone={o.status === 'completed' || o.status === 'cancelled' ? 'muted' : 'primary'}>
+                    {o.status}
+                  </Badge>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="rounded-card border-border bg-surface border p-6">
@@ -101,6 +138,11 @@ export default async function DashboardOverview() {
           <Link href="/dashboard/orders">
             <Button variant="outline" size="sm">
               View orders
+            </Button>
+          </Link>
+          <Link href="/dashboard/analytics">
+            <Button variant="outline" size="sm">
+              Analytics
             </Button>
           </Link>
           <Link href="/dashboard/listing">
