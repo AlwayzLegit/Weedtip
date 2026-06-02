@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Tag } from 'lucide-react';
+import { PlacementBeacon } from '@/components/placement-beacon';
 import { Badge } from '@/components/ui/badge';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
@@ -28,13 +29,22 @@ type DealRow = {
   dispensary: DealDispensary;
 };
 
-function DealTile({ deal, sponsored }: { deal: DealRow; sponsored?: boolean }) {
+function DealTile({
+  deal,
+  sponsored,
+  placementId,
+}: {
+  deal: DealRow;
+  sponsored?: boolean;
+  placementId?: string;
+}) {
   const dispensary = deal.dispensary;
   return (
     <Link
       href={dispensary ? `/dispensary/${dispensary.slug}` : '#'}
       className="rounded-card border-primary/30 bg-primary-muted hover:border-primary flex items-start justify-between gap-3 border p-5 transition-colors"
     >
+      {placementId && <PlacementBeacon placementId={placementId} />}
       <div className="min-w-0">
         {sponsored && (
           <Badge tone="outline" className="mb-1.5">
@@ -74,7 +84,7 @@ export default async function DealsPage() {
   // Live promoted-deal placements → the sponsored rail.
   const { data: promos } = await supabase
     .from('placements')
-    .select('target_id, priority')
+    .select('id, target_id, priority')
     .eq('type', 'promoted_deal')
     .eq('is_active', true)
     .lte('starts_at', nowIso)
@@ -106,6 +116,9 @@ export default async function DealsPage() {
 
   // Order sponsored by placement priority and keep them out of the main grid.
   const priorityOf = new Map((promos ?? []).map((p) => [p.target_id, p.priority] as const));
+  const placementOf = new Map(
+    (promos ?? []).map((p) => [p.target_id, p.id] as const),
+  );
   const sponsored = ((sponsoredDeals as DealRow[]) ?? []).sort(
     (a, b) => (priorityOf.get(b.id) ?? 0) - (priorityOf.get(a.id) ?? 0),
   );
@@ -122,7 +135,12 @@ export default async function DealsPage() {
       {sponsored.length > 0 && (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {sponsored.map((deal) => (
-            <DealTile key={deal.id} deal={deal} sponsored />
+            <DealTile
+              key={deal.id}
+              deal={deal}
+              sponsored
+              placementId={placementOf.get(deal.id) ?? undefined}
+            />
           ))}
         </div>
       )}

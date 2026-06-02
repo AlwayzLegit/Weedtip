@@ -3,6 +3,7 @@ import { MapPin, Truck, Store } from 'lucide-react';
 import { formatDistance } from '@/lib/format';
 import { Badge } from './ui/badge';
 import { MediaImage } from './media-image';
+import { PlacementBeacon } from './placement-beacon';
 import { RatingStars } from './rating-stars';
 
 export interface DispensaryCardData {
@@ -17,6 +18,8 @@ export interface DispensaryCardData {
   isRecreational: boolean;
   featured?: boolean;
   sponsored?: boolean;
+  /** When set, records placement impression/click analytics for this card. */
+  placementId?: string;
   distanceMeters?: number | null;
   rating?: number | null;
   reviewCount?: number;
@@ -30,6 +33,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       href={`/dispensary/${d.slug}`}
       className="rounded-card border-border bg-surface hover:border-primary/50 group block overflow-hidden border transition-colors"
     >
+      {d.placementId && <PlacementBeacon placementId={d.placementId} />}
       <MediaImage url={d.coverImageUrl} alt={d.name} className="h-36" iconClassName="h-12 w-12">
         {d.sponsored ? (
           <Badge tone="primary" className="absolute left-3 top-3">

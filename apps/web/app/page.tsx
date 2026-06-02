@@ -40,8 +40,11 @@ export default async function HomePage() {
 
   // Live hero spotlights backed by paid placements (active dispensaries only).
   const spotlights = (heroPlacements ?? [])
-    .map((p) => p.dispensary as Record<string, unknown> | null)
-    .filter((d): d is Record<string, unknown> => !!d && d.status === 'active');
+    .map((p) => ({ placementId: p.id, d: p.dispensary as Record<string, unknown> | null }))
+    .filter(
+      (s): s is { placementId: string; d: Record<string, unknown> } =>
+        !!s.d && s.d.status === 'active',
+    );
 
   return (
     <main>
@@ -86,9 +89,9 @@ export default async function HomePage() {
               <Badge tone="outline">Sponsored</Badge>
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {spotlights.map((d) => (
+              {spotlights.map(({ placementId, d }) => (
                 <DispensaryCard
-                  key={String(d.slug)}
+                  key={placementId}
                   d={{
                     slug: String(d.slug),
                     name: String(d.name),
@@ -100,6 +103,7 @@ export default async function HomePage() {
                     isMedical: Boolean(d.is_medical),
                     isRecreational: Boolean(d.is_recreational),
                     sponsored: true,
+                    placementId,
                     rating: (d.rating_avg as number | null) ?? null,
                     reviewCount: (d.rating_count as number) ?? 0,
                   }}

@@ -714,6 +714,35 @@ export type Database = {
           },
         ]
       }
+      placement_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: number
+          placement_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: never
+          placement_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: never
+          placement_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_events_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "placements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       placements: {
         Row: {
           created_at: string
@@ -1126,6 +1155,22 @@ export type Database = {
           },
         ]
       }
+      placement_stats: {
+        Row: {
+          clicks: number | null
+          impressions: number | null
+          placement_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_events_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "placements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       approve_ownership_request: {
@@ -1168,6 +1213,10 @@ export type Database = {
         Returns: undefined
       }
       recalc_product_rating: { Args: { target_id: string }; Returns: undefined }
+      record_placement_event: {
+        Args: { p_placement_id: string; p_type: string }
+        Returns: undefined
+      }
       reply_to_review: {
         Args: { p_reply: string; p_review_id: string }
         Returns: undefined

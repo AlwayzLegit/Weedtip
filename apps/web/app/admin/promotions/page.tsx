@@ -29,7 +29,7 @@ function isLive(p: { is_active: boolean; starts_at: string; ends_at: string | nu
 export default async function AdminPromotions() {
   const supabase = await createClient();
 
-  const [{ data: dispensaries }, { data: plans }, { data: placements }, { data: subs }] =
+  const [{ data: dispensaries }, { data: plans }, { data: placements }, { data: subs }, { data: stats }] =
     await Promise.all([
       supabase.from('dispensaries').select('id,name').order('name'),
       supabase.from('plans').select('*').order('sort_order'),
@@ -40,10 +40,14 @@ export default async function AdminPromotions() {
       supabase
         .from('dispensary_subscriptions')
         .select('*, dispensary:dispensaries(name), plan:plans(name)'),
+      supabase.from('placement_stats').select('*'),
     ]);
 
   const disp = dispensaries ?? [];
   const planList = plans ?? [];
+  const statsByPlacement = new Map(
+    (stats ?? []).map((s) => [s.placement_id, s] as const),
+  );
 
   return (
     <div className="space-y-10">
@@ -71,6 +75,7 @@ export default async function AdminPromotions() {
                   <th className="px-4 py-2 font-medium">Type</th>
                   <th className="hidden px-4 py-2 font-medium sm:table-cell">Scope</th>
                   <th className="hidden px-4 py-2 font-medium sm:table-cell">Window</th>
+                  <th className="px-4 py-2 font-medium">Performance</th>
                   <th className="px-4 py-2 font-medium">State</th>
                   <th className="px-4 py-2" />
                 </tr>
@@ -79,6 +84,10 @@ export default async function AdminPromotions() {
                 {placements.map((p) => {
                   const dispensary = p.dispensary as { name: string } | null;
                   const live = isLive(p);
+                  const stat = statsByPlacement.get(p.id);
+                  const impressions = stat?.impressions ?? 0;
+                  const clicks = stat?.clicks ?? 0;
+                  const ctr = impressions ? Math.round((clicks / impressions) * 1000) / 10 : 0;
                   return (
                     <tr key={p.id} className="bg-surface">
                       <td className="px-4 py-3 font-medium">{dispensary?.name ?? '—'}</td>
@@ -90,6 +99,10 @@ export default async function AdminPromotions() {
                       <td className="text-muted hidden px-4 py-3 text-xs sm:table-cell">
                         {new Date(p.starts_at).toLocaleDateString()} –{' '}
                         {p.ends_at ? new Date(p.ends_at).toLocaleDateString() : '∞'}
+                      </td>
+                      <td className="text-muted px-4 py-3 text-xs">
+                        {impressions.toLocaleString()} impr · {clicks.toLocaleString()} clk
+                        {impressions > 0 && ` · ${ctr}% CTR`}
                       </td>
                       <td className="px-4 py-3">
                         <Badge tone={live ? 'primary' : 'muted'}>

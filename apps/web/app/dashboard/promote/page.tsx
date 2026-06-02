@@ -27,22 +27,25 @@ export default async function PromotePage() {
   const { dispensary } = await requireOwnerDispensary();
   const supabase = await createClient();
 
-  const [{ data: sub }, { data: placements }, { data: plans }] = await Promise.all([
-    supabase
-      .from('dispensary_subscriptions')
-      .select('status, plan:plans(name, price_cents)')
-      .eq('dispensary_id', dispensary.id)
-      .maybeSingle(),
-    supabase
-      .from('placements')
-      .select('*')
-      .eq('dispensary_id', dispensary.id)
-      .order('created_at', { ascending: false }),
-    supabase.from('plans').select('*').eq('is_active', true).order('sort_order'),
-  ]);
+  const [{ data: sub }, { data: placements }, { data: plans }, { data: stats }] =
+    await Promise.all([
+      supabase
+        .from('dispensary_subscriptions')
+        .select('status, plan:plans(name, price_cents)')
+        .eq('dispensary_id', dispensary.id)
+        .maybeSingle(),
+      supabase
+        .from('placements')
+        .select('*')
+        .eq('dispensary_id', dispensary.id)
+        .order('created_at', { ascending: false }),
+      supabase.from('plans').select('*').eq('is_active', true).order('sort_order'),
+      supabase.from('placement_stats').select('*'),
+    ]);
 
   const plan = sub?.plan as { name: string; price_cents: number } | null;
   const live = (placements ?? []).filter(isLive);
+  const statsByPlacement = new Map((stats ?? []).map((s) => [s.placement_id, s] as const));
 
   return (
     <div className="space-y-8">
@@ -92,6 +95,17 @@ export default async function PromotePage() {
                     {new Date(p.starts_at).toLocaleDateString()} –{' '}
                     {p.ends_at ? new Date(p.ends_at).toLocaleDateString() : 'open-ended'}
                   </p>
+                  {(() => {
+                    const stat = statsByPlacement.get(p.id);
+                    const impr = stat?.impressions ?? 0;
+                    const clk = stat?.clicks ?? 0;
+                    return (
+                      <p className="text-muted mt-1 text-xs">
+                        {impr.toLocaleString()} impressions · {clk.toLocaleString()} clicks
+                        {impr > 0 && ` · ${Math.round((clk / impr) * 1000) / 10}% CTR`}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <Badge tone={isLive(p) ? 'primary' : 'muted'}>
                   {isLive(p) ? 'Live' : p.is_active ? 'Scheduled' : 'Paused'}
