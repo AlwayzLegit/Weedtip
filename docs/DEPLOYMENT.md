@@ -23,6 +23,44 @@ add those keys later.
 
 ---
 
+## ✅ LIVE — production deployment (2026-06-02)
+
+Weedtip is deployed and smoke-tested green. Live coordinates for future sessions:
+
+| Thing | Value |
+|-------|-------|
+| Production URL | **https://weedtip-web.vercel.app** |
+| Supabase project | `weedtip-prod` — ref **`ggpnghpcclngqkyelkes`** — `https://ggpnghpcclngqkyelkes.supabase.co` |
+| Supabase org (actual) | **Weed Tip** — `qswbzagyhhprhubtbnzj` — region `us-east-1` |
+| Vercel project | `weedtip-web` — `prj_A4mKkRrOnkI3OK2OSoMYTGNrr8Jh` — team `alwayzlegits-projects` (`team_di6oiEhCIT17lNXsonHt3mSc`) — Root Directory `apps/web`, region `iad1` |
+| DB | 16 migrations applied · 14 tables · 7 enums · 3 public storage buckets · seed verified (8 dispensaries / 40 products / 6 deals / 8 categories / 51 regions) |
+| Auth | email confirmation **OFF** (launch choice) · Site URL + `/auth/callback` redirect URLs set |
+| First admin | `alwayzlegit@gmail.com` (promoted via SQL) |
+| Vercel env set | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
+
+> ⚠️ **Org note:** the connected Supabase MCP token reaches only the **Weed Tip** org
+> (`qswbzagyhhprhubtbnzj`), not the "Jetnine" org named in the locked table above —
+> so production lives in Weed Tip.
+
+**Not yet configured (optional, degrade gracefully):** `NEXT_PUBLIC_SITE_URL` (only needed
+for Stripe redirect URLs), Stripe keys + webhook (Phase 3 — needs a cannabis-friendly
+processor for real payments), `NEXT_PUBLIC_MAPBOX_TOKEN`, custom domain.
+
+**Deployment gotchas hit this round (for next time):**
+- The MCP `deploy_to_vercel` is a zero-arg "deploy current project" and the MCP can't set
+  Root Directory / env vars — so the Vercel project was created + configured in the
+  dashboard. The Vercel CLI needs a valid account token (`vcp_…`) to drive it headless.
+- A deploy **builds fine without env vars** (Supabase-backed pages are dynamic, not run at
+  build), then **500s at runtime** with `MIDDLEWARE_INVOCATION_FAILED` /
+  `Missing required environment variable` because the middleware calls
+  `getPublicSupabaseConfig()`. Fix: set the `NEXT_PUBLIC_*` vars and **redeploy**
+  (env vars only apply to new builds).
+- Promoting the first admin over the MCP connection is blocked by the
+  `enforce_profile_role` trigger (`auth.uid()` is null → `is_admin()` false). Wrap the
+  `update` in `begin; set local session_replication_role = replica; … commit;`.
+
+---
+
 ## Phase 1 — Cloud Supabase
 
 ### 1.1 Create the project
