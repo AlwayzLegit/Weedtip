@@ -87,10 +87,18 @@ export async function upsertCategory(_prev: FormState, fd: FormData): Promise<Fo
   redirect('/admin/categories');
 }
 
-export async function deleteCategory(id: string): Promise<void> {
+export async function deleteCategory(id: string): Promise<{ error?: string } | void> {
   const supabase = await createClient();
   // FK on products.category_id is ON DELETE RESTRICT — deletion fails if in use.
-  await supabase.from('categories').delete().eq('id', id);
+  const { error } = await supabase.from('categories').delete().eq('id', id);
+  if (error) {
+    return {
+      error:
+        error.code === '23503'
+          ? 'Cannot delete — products still use this category. Reassign them first.'
+          : error.message,
+    };
+  }
   revalidatePath('/admin/categories');
 }
 
@@ -199,9 +207,10 @@ export async function upsertStrain(_prev: FormState, fd: FormData): Promise<Form
   redirect('/admin/strains');
 }
 
-export async function deleteStrain(id: string): Promise<void> {
+export async function deleteStrain(id: string): Promise<{ error?: string } | void> {
   const supabase = await createClient();
-  await supabase.from('strains').delete().eq('id', id);
+  const { error } = await supabase.from('strains').delete().eq('id', id);
+  if (error) return { error: error.message };
   revalidatePath('/admin/strains');
 }
 
@@ -244,8 +253,9 @@ export async function upsertBrand(_prev: FormState, fd: FormData): Promise<FormS
   redirect('/admin/brands');
 }
 
-export async function deleteBrand(id: string): Promise<void> {
+export async function deleteBrand(id: string): Promise<{ error?: string } | void> {
   const supabase = await createClient();
-  await supabase.from('brands').delete().eq('id', id);
+  const { error } = await supabase.from('brands').delete().eq('id', id);
+  if (error) return { error: error.message };
   revalidatePath('/admin/brands');
 }

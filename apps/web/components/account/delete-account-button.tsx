@@ -1,24 +1,11 @@
 'use client';
 
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useEffect, useState, useTransition } from 'react';
+import { deleteAccount } from '@/app/account/actions';
 import { Button } from '../ui/button';
 
-/**
- * Delete control bound to a pre-bound Server Action (e.g. deleteProduct.bind(null, id)).
- * Opens a styled, accessible confirmation dialog (not the native confirm()) and
- * surfaces any error the action returns (e.g. a foreign-key "still in use" message)
- * instead of failing silently. Actions returning void simply close on success.
- */
-export function DeleteButton({
-  action,
-  label = 'Delete',
-  confirmText = 'Delete this item? This cannot be undone.',
-}: {
-  action: () => Promise<{ error?: string } | void>;
-  label?: string;
-  confirmText?: string;
-}) {
+export function DeleteAccountButton() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -35,9 +22,9 @@ export function DeleteButton({
   function confirm() {
     setError(null);
     startTransition(async () => {
-      const res = await action();
+      const res = await deleteAccount();
+      // On success the action redirects; only an error returns here.
       if (res && 'error' in res && res.error) setError(res.error);
-      else setOpen(false);
     });
   }
 
@@ -45,30 +32,32 @@ export function DeleteButton({
     <>
       <Button
         type="button"
-        variant="ghost"
+        variant="danger"
         size="sm"
-        className="text-danger hover:bg-danger/10"
         onClick={() => {
           setError(null);
           setOpen(true);
         }}
       >
-        <Trash2 className="h-4 w-4" />
-        <span className="sr-only sm:not-sr-only">{label}</span>
+        Delete account
       </Button>
 
       {open && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Confirm deletion"
+          aria-label="Delete account"
           className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget && !pending) setOpen(false);
           }}
         >
           <div className="rounded-card border-border bg-surface w-full max-w-sm border p-5 shadow-xl">
-            <p className="font-medium">{confirmText}</p>
+            <p className="font-medium">Delete your account?</p>
+            <p className="text-muted mt-1 text-sm">
+              This permanently removes your profile, reviews, favorites, and notifications, and
+              unlinks any dispensaries you own. This cannot be undone.
+            </p>
             {error && (
               <p className="border-danger/40 bg-danger/10 text-danger mt-3 rounded-lg border px-3 py-2 text-sm">
                 {error}
@@ -86,7 +75,7 @@ export function DeleteButton({
               </Button>
               <Button type="button" variant="danger" size="sm" disabled={pending} onClick={confirm}>
                 {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {label}
+                Delete account
               </Button>
             </div>
           </div>
