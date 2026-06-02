@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Pencil } from 'lucide-react';
+import { deleteRegion } from '@/app/admin/actions';
+import { DeleteButton } from '@/components/dashboard/delete-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
@@ -47,12 +49,18 @@ export default async function AdminRegions() {
                   </div>
                 </td>
                 <td className="text-muted hidden px-4 py-3 sm:table-cell">{r.min_age}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/admin/regions/${r.state}`}>
-                    <Button variant="ghost" size="sm">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <Link href={`/admin/regions/${r.state}`}>
+                      <Button variant="ghost" size="sm">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <DeleteButton
+                      action={deleteRegion.bind(null, r.state)}
+                      confirmText={`Delete the ${r.state} region? This cannot be undone.`}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}

@@ -124,6 +124,12 @@ export async function upsertRegion(_prev: FormState, fd: FormData): Promise<Form
   redirect('/admin/regions');
 }
 
+export async function deleteRegion(state: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from('operating_regions').delete().eq('state', state);
+  revalidatePath('/admin/regions');
+}
+
 // ─── Strains ─────────────────────────────────────────────────────────────────
 
 function splitList(raw: string | undefined): string[] {

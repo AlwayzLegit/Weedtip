@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { type OrderItem } from '@weedtip/shared';
+import { CancelOrderButton } from '@/components/cancel-order-button';
 import { ReorderButton } from '@/components/cart/reorder-button';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
@@ -41,6 +42,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     state: string;
   } | null;
   const items = (order.items as OrderItem[]) ?? [];
+  const canCancel =
+    order.user_id === user.id &&
+    (order.status === 'pending' || order.status === 'confirmed');
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
@@ -130,6 +134,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               quantity: it.quantity,
             }))}
           />
+        </div>
+      )}
+
+      {canCancel && (
+        <div className="mt-4 flex justify-center">
+          <CancelOrderButton orderId={order.id} />
         </div>
       )}
 
