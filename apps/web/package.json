@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "e2e": "playwright test",
     "clean": "rimraf .next .turbo *.tsbuildinfo"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.4",
