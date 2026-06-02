@@ -61,3 +61,16 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
   revalidatePath(`/dispensary/${parsed.data.slug}`);
   return formSuccess('Claim submitted — an admin will review it shortly.');
 }
+
+/** Owner withdraws their own (not-yet-approved) claim. RLS enforces author + status. */
+export async function withdrawOwnership(dispensaryId: string, slug: string): Promise<void> {
+  const { user } = await getAuth();
+  if (!user) return;
+  const supabase = await createClient();
+  await supabase
+    .from('ownership_requests')
+    .delete()
+    .eq('dispensary_id', dispensaryId)
+    .eq('user_id', user.id);
+  revalidatePath(`/dispensary/${slug}`);
+}
