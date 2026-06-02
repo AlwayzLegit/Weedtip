@@ -16,6 +16,7 @@ export interface DispensaryCardData {
   isMedical: boolean;
   isRecreational: boolean;
   featured?: boolean;
+  sponsored?: boolean;
   distanceMeters?: number | null;
   rating?: number | null;
   reviewCount?: number;
@@ -30,10 +31,16 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       className="rounded-card border-border bg-surface hover:border-primary/50 group block overflow-hidden border transition-colors"
     >
       <MediaImage url={d.coverImageUrl} alt={d.name} className="h-36" iconClassName="h-12 w-12">
-        {d.featured && (
+        {d.sponsored ? (
           <Badge tone="primary" className="absolute left-3 top-3">
-            Featured
+            Sponsored
           </Badge>
+        ) : (
+          d.featured && (
+            <Badge tone="primary" className="absolute left-3 top-3">
+              Featured
+            </Badge>
+          )
         )}
         {distance && (
           <Badge className="bg-background/80 absolute right-3 top-3">

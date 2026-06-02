@@ -4,14 +4,19 @@ import { CategoryPills } from '@/components/category-pills';
 import { DispensaryCard } from '@/components/dispensary-card';
 import { SearchBar } from '@/components/search-bar';
 import { JsonLd } from '@/components/seo/json-ld';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
+const DISP_FIELDS =
+  'slug,name,city,state,cover_image_url,is_delivery,is_pickup,is_medical,is_recreational,rating_avg,rating_count,status';
+
 export default async function HomePage() {
   const supabase = await createClient();
+  const nowIso = new Date().toISOString();
 
-  const [{ data: featured }, { data: categories }] = await Promise.all([
+  const [{ data: featured }, { data: categories }, { data: heroPlacements }] = await Promise.all([
     supabase
       .from('dispensaries')
       .select(
@@ -22,7 +27,21 @@ export default async function HomePage() {
       .order('created_at', { ascending: false })
       .limit(8),
     supabase.from('categories').select('name,slug').order('sort_order'),
+    supabase
+      .from('placements')
+      .select(`id,priority,dispensary:dispensaries(${DISP_FIELDS})`)
+      .eq('type', 'hero')
+      .eq('is_active', true)
+      .lte('starts_at', nowIso)
+      .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+      .order('priority', { ascending: false })
+      .limit(4),
   ]);
+
+  // Live hero spotlights backed by paid placements (active dispensaries only).
+  const spotlights = (heroPlacements ?? [])
+    .map((p) => p.dispensary as Record<string, unknown> | null)
+    .filter((d): d is Record<string, unknown> => !!d && d.status === 'active');
 
   return (
     <main>
@@ -58,6 +77,37 @@ export default async function HomePage() {
           <h2 className="mb-5 text-xl font-semibold">Browse by category</h2>
           <CategoryPills categories={categories ?? []} />
         </section>
+
+        {/* Spotlight — paid homepage hero placements */}
+        {spotlights.length > 0 && (
+          <section>
+            <div className="mb-5 flex items-center gap-2">
+              <h2 className="text-xl font-semibold">Spotlight</h2>
+              <Badge tone="outline">Sponsored</Badge>
+            </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {spotlights.map((d) => (
+                <DispensaryCard
+                  key={String(d.slug)}
+                  d={{
+                    slug: String(d.slug),
+                    name: String(d.name),
+                    city: String(d.city),
+                    state: String(d.state),
+                    coverImageUrl: (d.cover_image_url as string | null) ?? null,
+                    isDelivery: Boolean(d.is_delivery),
+                    isPickup: Boolean(d.is_pickup),
+                    isMedical: Boolean(d.is_medical),
+                    isRecreational: Boolean(d.is_recreational),
+                    sponsored: true,
+                    rating: (d.rating_avg as number | null) ?? null,
+                    reviewCount: (d.rating_count as number) ?? 0,
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Featured dispensaries */}
         <section>

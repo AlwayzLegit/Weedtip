@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import {
   BarChart3,
   LayoutDashboard,
+  Megaphone,
   Package,
   ShoppingBag,
   Star,
@@ -19,6 +20,7 @@ const NAV = [
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/dashboard/reviews', label: 'Reviews', icon: Star },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/dashboard/promote', label: 'Promote', icon: Megaphone },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
