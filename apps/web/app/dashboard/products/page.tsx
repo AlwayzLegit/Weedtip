@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus, Upload } from 'lucide-react';
 import { deleteProduct } from '@/app/dashboard/actions';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { Badge } from '@/components/ui/badge';
@@ -22,13 +22,20 @@ export default async function DashboardProducts() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Products</h1>
-        <Link href="/dashboard/products/new">
-          <Button size="sm">
-            <Plus className="h-4 w-4" /> Add product
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard/products/import">
+            <Button size="sm" variant="outline">
+              <Upload className="h-4 w-4" /> Import CSV
+            </Button>
+          </Link>
+          <Link href="/dashboard/products/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4" /> Add product
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {!products || products.length === 0 ? (
