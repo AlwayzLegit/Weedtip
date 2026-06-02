@@ -99,3 +99,25 @@ export async function submitProductReview(
   revalidatePath(`/product/${parsed.data.product_id}`);
   return { message: 'Thanks for your review!' };
 }
+
+// ─── Deletes (author-only; RLS also enforces) ────────────────────────────────
+
+export async function deleteReview(reviewId: string, dispensarySlug: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from('reviews').delete().eq('id', reviewId).eq('user_id', user.id);
+  revalidatePath(`/dispensary/${dispensarySlug}`);
+}
+
+export async function deleteProductReview(reviewId: string, productId: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from('product_reviews').delete().eq('id', reviewId).eq('user_id', user.id);
+  revalidatePath(`/product/${productId}`);
+}

@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Store } from 'lucide-react';
+import { deleteProductReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
+import { DeleteButton } from '@/components/dashboard/delete-button';
 import { MediaImage } from '@/components/media-image';
 import { ProductReviewForm } from '@/components/product-review-form';
 import { RatingStars } from '@/components/rating-stars';
@@ -66,7 +68,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const [{ data: reviews }, { user }] = await Promise.all([
     supabase
       .from('product_reviews')
-      .select('id,rating,body,created_at,author_name')
+      .select('id,rating,body,created_at,author_name,user_id')
       .eq('product_id', id)
       .order('created_at', { ascending: false }),
     getAuth(),
@@ -75,6 +77,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const dispensary = product.dispensary as { id: string; slug: string; name: string } | null;
   const strain = product.strain as { slug: string; name: string } | null;
   const brand = product.brand as { slug: string; name: string } | null;
+  const myReview = user ? (reviews ?? []).find((r) => r.user_id === user.id) : undefined;
 
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -217,8 +220,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
         {user ? (
           <div className="rounded-card border-border bg-surface mb-6 border p-4">
-            <p className="mb-3 text-sm font-medium">Review this product</p>
-            <ProductReviewForm productId={product.id} />
+            <p className="mb-3 text-sm font-medium">
+              {myReview ? 'Edit your review' : 'Review this product'}
+            </p>
+            <ProductReviewForm
+              productId={product.id}
+              initialRating={myReview?.rating ?? 0}
+              initialBody={myReview?.body ?? ''}
+            />
           </div>
         ) : (
           <p className="text-muted mb-6 text-sm">
@@ -243,6 +252,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   </span>
                 </div>
                 {r.body && <p className="text-muted mt-2 text-sm">{r.body}</p>}
+                {user && r.user_id === user.id && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Badge tone="muted">Your review</Badge>
+                    <DeleteButton
+                      action={deleteProductReview.bind(null, r.id, product.id)}
+                      label="Delete"
+                      confirmText="Delete your review? This cannot be undone."
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>

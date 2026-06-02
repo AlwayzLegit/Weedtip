@@ -3,9 +3,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Globe, Mail, MapPin, Phone, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
+import { deleteReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { ClaimListing } from '@/components/claim-listing';
+import { DeleteButton } from '@/components/dashboard/delete-button';
 import { FavoriteButton } from '@/components/favorite-button';
 import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
@@ -76,7 +78,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         .order('end_date'),
       supabase
         .from('reviews')
-        .select('id,rating,body,created_at,author_name')
+        .select('id,rating,body,created_at,author_name,user_id')
         .eq('dispensary_id', d.id)
         .order('created_at', { ascending: false }),
       getAuth(),
@@ -85,6 +87,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   const avgRating = reviews?.length
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
     : 0;
+  const myReview = user ? (reviews ?? []).find((r) => r.user_id === user.id) : undefined;
 
   let isFavorite = false;
   if (user) {
@@ -341,8 +344,15 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
               {user && !isOwner && (
                 <div className="rounded-card border-border bg-surface mb-6 border p-4">
-                  <p className="mb-3 text-sm font-medium">Leave a review</p>
-                  <ReviewForm dispensaryId={d.id} dispensarySlug={d.slug} />
+                  <p className="mb-3 text-sm font-medium">
+                    {myReview ? 'Edit your review' : 'Leave a review'}
+                  </p>
+                  <ReviewForm
+                    dispensaryId={d.id}
+                    dispensarySlug={d.slug}
+                    initialRating={myReview?.rating ?? 0}
+                    initialBody={myReview?.body ?? ''}
+                  />
                 </div>
               )}
               {!user && (
@@ -369,6 +379,16 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         </span>
                       </div>
                       {r.body && <p className="text-muted mt-2 text-sm">{r.body}</p>}
+                      {user && r.user_id === user.id && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <Badge tone="muted">Your review</Badge>
+                          <DeleteButton
+                            action={deleteReview.bind(null, r.id, d.slug)}
+                            label="Delete"
+                            confirmText="Delete your review? This cannot be undone."
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

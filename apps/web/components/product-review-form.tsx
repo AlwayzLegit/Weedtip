@@ -8,9 +8,17 @@ import { FormMessage } from './auth/form-message';
 import { SubmitButton } from './auth/submit-button';
 import { Textarea } from './ui/textarea';
 
-export function ProductReviewForm({ productId }: { productId: string }) {
+export function ProductReviewForm({
+  productId,
+  initialRating = 0,
+  initialBody = '',
+}: {
+  productId: string;
+  initialRating?: number;
+  initialBody?: string;
+}) {
   const [state, action] = useActionState<ReviewState, FormData>(submitProductReview, {});
-  const [rating, setRating] = useState(0);
+  const [rating, setRating] = useState(initialRating);
   const [hover, setHover] = useState(0);
 
   return (
@@ -41,8 +49,15 @@ export function ProductReviewForm({ productId }: { productId: string }) {
         ))}
       </div>
 
-      <Textarea name="body" placeholder="How was this product? (optional)" maxLength={4000} />
-      <SubmitButton disabled={rating === 0}>Submit review</SubmitButton>
+      <Textarea
+        name="body"
+        placeholder="How was this product? (optional)"
+        defaultValue={initialBody}
+        maxLength={4000}
+      />
+      <SubmitButton disabled={rating === 0}>
+        {initialRating > 0 ? 'Update review' : 'Submit review'}
+      </SubmitButton>
     </form>
   );
 }
