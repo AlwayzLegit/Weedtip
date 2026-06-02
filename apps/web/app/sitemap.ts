@@ -1,4 +1,6 @@
 import type { MetadataRoute } from 'next';
+import { PRODUCT_CATEGORIES } from '@weedtip/shared';
+import { ARTICLES } from '@/lib/learn';
 import { citySlug } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
@@ -17,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/strains', priority: 0.6, freq: 'weekly' as const },
     { path: '/brands', priority: 0.6, freq: 'weekly' as const },
     { path: '/deals', priority: 0.7, freq: 'daily' as const },
+    { path: '/learn', priority: 0.6, freq: 'weekly' as const },
     { path: '/terms', priority: 0.2, freq: 'yearly' as const },
     { path: '/privacy', priority: 0.2, freq: 'yearly' as const },
     { path: '/disclaimer', priority: 0.2, freq: 'yearly' as const },
@@ -58,6 +61,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'daily' as const,
         priority: 0.7,
       })),
+      // Deals by location.
+      ...[...stateSet].map((st) => ({
+        url: `${SITE_URL}/deals/${st}`,
+        lastModified: now,
+        changeFrequency: 'daily' as const,
+        priority: 0.6,
+      })),
+      ...[...citySet].map((loc) => ({
+        url: `${SITE_URL}/deals/${loc}`,
+        lastModified: now,
+        changeFrequency: 'daily' as const,
+        priority: 0.6,
+      })),
+      // Category × city long-tail (e.g. /dispensaries/co/denver/flower).
+      ...[...citySet].flatMap((loc) =>
+        PRODUCT_CATEGORIES.map((c) => ({
+          url: `${SITE_URL}/dispensaries/${loc}/${c.slug}`,
+          lastModified: now,
+          changeFrequency: 'weekly' as const,
+          priority: 0.6,
+        })),
+      ),
     ];
 
     const dynamicRoutes: MetadataRoute.Sitemap = [
@@ -91,6 +116,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: now,
         changeFrequency: 'weekly' as const,
         priority: 0.7,
+      })),
+      ...ARTICLES.map((a) => ({
+        url: `${SITE_URL}/learn/${a.slug}`,
+        lastModified: new Date(a.dateModified),
+        changeFrequency: 'monthly' as const,
+        priority: 0.5,
       })),
     ];
 
