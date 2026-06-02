@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { createClient } from '@/lib/supabase/server';
 
@@ -10,8 +11,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data } = await supabase.from('brands').select('name').eq('slug', slug).maybeSingle();
-  return { title: data?.name ?? 'Brand' };
+  const { data } = await supabase
+    .from('brands')
+    .select('name,description')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (!data) return { title: 'Brand' };
+  const title = data.name;
+  const description =
+    data.description?.slice(0, 160) ??
+    `Shop ${data.name} cannabis products and find which dispensaries carry them, with prices and reviews, on Weedtip.`;
+  const canonical = `/brand/${slug}`;
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { type: 'website', title, description, url: canonical },
+    twitter: { card: 'summary_large_image', title, description },
+  };
 }
 
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -30,6 +47,13 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <Breadcrumbs
+        items={[
+          { name: 'Home', href: '/' },
+          { name: 'Brands', href: '/brands' },
+          { name: brand.name, href: `/brand/${brand.slug}` },
+        ]}
+      />
       <h1 className="text-3xl font-bold">{brand.name}</h1>
       {brand.description && <p className="text-muted mt-2 max-w-2xl">{brand.description}</p>}
 

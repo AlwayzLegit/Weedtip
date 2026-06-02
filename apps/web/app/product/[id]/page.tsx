@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Store } from 'lucide-react';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { MediaImage } from '@/components/media-image';
 import { ProductReviewForm } from '@/components/product-review-form';
@@ -27,8 +28,25 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const supabase = await createClient();
-  const { data } = await supabase.from('products').select('name').eq('id', id).maybeSingle();
-  return { title: data?.name ?? 'Product' };
+  const { data } = await supabase
+    .from('products')
+    .select('name, brand, description, strain_type')
+    .eq('id', id)
+    .maybeSingle();
+  if (!data) return { title: 'Product' };
+
+  const title = data.brand ? `${data.name} by ${data.brand}` : data.name;
+  const description =
+    data.description?.slice(0, 160) ??
+    `Buy ${data.name}${data.brand ? ` by ${data.brand}` : ''} — browse price, THC/CBD, reviews, and which dispensaries carry it on Weedtip.`;
+  const canonical = `/product/${id}`;
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { type: 'website', title, description, url: canonical },
+    twitter: { card: 'summary_large_image', title, description },
+  };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -88,9 +106,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       : {}),
   };
 
+  const crumbs = [
+    { name: 'Home', href: '/' },
+    { name: 'Products', href: '/products' },
+    { name: product.name, href: `/product/${product.id}` },
+  ];
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <JsonLd data={jsonLd} />
+      <Breadcrumbs items={crumbs} />
       <div className="grid gap-8 sm:grid-cols-2">
         <MediaImage
           url={product.image_urls[0]}

@@ -2,14 +2,22 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { dispensarySearchSchema } from '@weedtip/shared';
 import { searchDispensaries } from '@weedtip/supabase/queries';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DispensaryCard } from '@/components/dispensary-card';
 import { DispensaryFilters } from '@/components/dispensary-filters';
 import { DispensaryMap, type MapPoint } from '@/components/dispensary-map';
 import { SearchBar } from '@/components/search-bar';
+import { JsonLd } from '@/components/seo/json-ld';
 import { Button } from '@/components/ui/button';
+import { itemListJsonLd } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = { title: 'Dispensaries' };
+export const metadata: Metadata = {
+  title: 'Dispensaries',
+  description:
+    'Browse licensed cannabis dispensaries near you. Filter by pickup, delivery, open now, and category, then view menus, deals, and reviews on Weedtip.',
+  alternates: { canonical: '/dispensaries' },
+};
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -73,6 +81,13 @@ export default async function DispensariesPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
+      <JsonLd data={itemListJsonLd(rows.map((r) => `/dispensary/${r.slug}`))} />
+      <Breadcrumbs
+        items={[
+          { name: 'Home', href: '/' },
+          { name: 'Dispensaries', href: '/dispensaries' },
+        ]}
+      />
       <div className="mb-6 space-y-4">
         <h1 className="text-2xl font-bold">Dispensaries</h1>
         <SearchBar />
