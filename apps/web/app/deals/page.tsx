@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageSeo({
   title: 'Deals',
-  description: 'Live cannabis deals and discounts from dispensaries near you.',
-};
+  description: 'Live cannabis deals and discounts from licensed dispensaries near you on Weedtip.',
+  path: '/deals',
+});
 
 function discountLabel(type: string, value: number): string {
   if (type === 'percentage') return `${value}% off`;

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from './site';
 
 /** Absolute URL for a site-relative path. */
@@ -5,6 +6,47 @@ export const absoluteUrl = (path: string): string =>
   `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
 type Json = Record<string, unknown>;
+
+/** Default social-share image (the site-wide branded OG card). */
+export const DEFAULT_OG_IMAGE = '/opengraph-image';
+
+/**
+ * Standard per-page metadata: title, description, canonical, and OG/Twitter with
+ * the default share image. Use on pages WITHOUT their own opengraph-image file
+ * (dispensary/product pages have dedicated cards and shouldn't pass an image here).
+ */
+export function pageSeo({
+  title,
+  description,
+  path,
+  image = DEFAULT_OG_IMAGE,
+}: {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+}): Metadata {
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { type: 'website', title, description, url: path, images: [image] },
+    twitter: { card: 'summary_large_image', title, description, images: [image] },
+  };
+}
+
+/** FAQPage schema from question/answer pairs. */
+export function faqJsonLd(items: { question: string; answer: string }[]): Json {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((it) => ({
+      '@type': 'Question',
+      name: it.question,
+      acceptedAnswer: { '@type': 'Answer', text: it.answer },
+    })),
+  };
+}
 
 /** Organization schema for the brand (home page). */
 export function organizationJsonLd(): Json {

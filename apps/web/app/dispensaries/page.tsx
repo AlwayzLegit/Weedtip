@@ -9,15 +9,15 @@ import { DispensaryMap, type MapPoint } from '@/components/dispensary-map';
 import { SearchBar } from '@/components/search-bar';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Button } from '@/components/ui/button';
-import { itemListJsonLd } from '@/lib/seo';
+import { itemListJsonLd, pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageSeo({
   title: 'Dispensaries',
   description:
     'Browse licensed cannabis dispensaries near you. Filter by pickup, delivery, open now, and category, then view menus, deals, and reviews on Weedtip.',
-  alternates: { canonical: '/dispensaries' },
-};
+  path: '/dispensaries',
+});
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
