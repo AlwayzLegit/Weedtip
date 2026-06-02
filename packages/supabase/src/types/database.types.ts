@@ -456,6 +456,54 @@ export type Database = {
           },
         ]
       }
+      ownership_requests: {
+        Row: {
+          created_at: string
+          dispensary_id: string
+          id: string
+          license_number: string | null
+          message: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dispensary_id: string
+          id?: string
+          license_number?: string | null
+          message?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dispensary_id?: string
+          id?: string
+          license_number?: string | null
+          message?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_requests_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           body: string | null
@@ -733,6 +781,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_ownership_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       auth_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -760,6 +812,10 @@ export type Database = {
         Returns: undefined
       }
       recalc_product_rating: { Args: { target_id: string }; Returns: undefined }
+      reject_ownership_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       search_dispensaries: {
         Args: {
           filter_category_slug?: string

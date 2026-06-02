@@ -30,7 +30,7 @@ const STRAIN_LABEL: Record<StrainType, string> = {
 export function ProductCard({ p }: { p: ProductCardData }) {
   const body = (
     <div className="rounded-card border-border bg-surface hover:border-primary/50 overflow-hidden border transition-colors">
-      <MediaImage url={p.imageUrl} className="h-32" iconClassName="h-10 w-10">
+      <MediaImage url={p.imageUrl} alt={p.name} className="h-32" iconClassName="h-10 w-10">
         {!p.inStock && (
           <Badge tone="muted" className="absolute left-2 top-2">
             Out of stock

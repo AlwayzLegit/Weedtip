@@ -4,14 +4,17 @@ import { notFound } from 'next/navigation';
 import { Globe, Mail, MapPin, Phone, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { AddToCart } from '@/components/cart/add-to-cart';
+import { ClaimListing } from '@/components/claim-listing';
 import { FavoriteButton } from '@/components/favorite-button';
 import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
 import { RatingStars } from '@/components/rating-stars';
 import { ReviewForm } from '@/components/review-form';
+import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
+import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
 export async function generateMetadata({
@@ -81,6 +84,19 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   // The actual owner of THIS shop — admins manage via /admin, not the owner dashboard.
   const isOwner = profile?.role === 'dispensary_owner' && d.owner_id === user?.id;
 
+  // Unclaimed, active listings can be claimed by dispensary-owner accounts.
+  const canClaim = !d.owner_id && profile?.role === 'dispensary_owner' && !!user;
+  let ownershipStatus: 'pending' | 'approved' | 'rejected' | null = null;
+  if (canClaim && user) {
+    const { data: req } = await supabase
+      .from('ownership_requests')
+      .select('status')
+      .eq('dispensary_id', d.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    ownershipStatus = (req?.status as 'pending' | 'approved' | 'rejected' | undefined) ?? null;
+  }
+
   // Group menu by category, preserving sort_order.
   const sections = new Map<string, { name: string; sort: number; items: typeof products }>();
   for (const p of products ?? []) {
@@ -95,10 +111,47 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
   const hours = d.hours as OperatingHours | null;
 
+  const jsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    '@id': `${SITE_URL}/dispensary/${d.slug}`,
+    name: d.name,
+    url: `${SITE_URL}/dispensary/${d.slug}`,
+    ...(d.description ? { description: d.description } : {}),
+    ...(d.cover_image_url ? { image: d.cover_image_url } : {}),
+    ...(d.phone ? { telephone: d.phone } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: d.address,
+      addressLocality: d.city,
+      addressRegion: d.state,
+      postalCode: d.zip,
+      addressCountry: 'US',
+    },
+    ...(d.latitude != null && d.longitude != null
+      ? { geo: { '@type': 'GeoCoordinates', latitude: d.latitude, longitude: d.longitude } }
+      : {}),
+    ...(reviews && reviews.length > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Number(avgRating.toFixed(1)),
+            reviewCount: reviews.length,
+          },
+        }
+      : {}),
+  };
+
   return (
     <main>
+      <JsonLd data={jsonLd} />
       {/* Header */}
-      <MediaImage url={d.cover_image_url} className="h-48 sm:h-60" iconClassName="h-16 w-16" />
+      <MediaImage
+        url={d.cover_image_url}
+        alt={d.name}
+        className="h-48 sm:h-60"
+        iconClassName="h-16 w-16"
+      />
       <div className="mx-auto max-w-7xl px-4">
         <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="rounded-card border-border bg-surface border p-5">
@@ -142,6 +195,12 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             )}
           </div>
         </div>
+
+        {canClaim && (
+          <div className="mt-6">
+            <ClaimListing dispensaryId={d.id} slug={d.slug} existingStatus={ownershipStatus} />
+          </div>
+        )}
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">

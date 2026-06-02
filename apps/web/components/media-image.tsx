@@ -11,17 +11,22 @@ import { cn } from '@/lib/utils';
  */
 export function MediaImage({
   url,
+  alt,
   className,
   iconClassName,
   children,
 }: {
   url?: string | null;
+  /** Accessible label describing the media (e.g. the dispensary or product name). */
+  alt?: string;
   className?: string;
   iconClassName?: string;
   children?: ReactNode;
 }) {
   return (
     <div
+      role={alt ? 'img' : undefined}
+      aria-label={alt || undefined}
       className={cn(
         'from-primary/25 via-primary/[0.07] to-surface-2 relative bg-gradient-to-br',
         className,
