@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Store, Tag } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Package, ShoppingBag, Store, Tag } from 'lucide-react';
 import { getAuth } from '@/lib/auth';
 
 const NAV = [
@@ -9,6 +9,7 @@ const NAV = [
   { href: '/dashboard/products', label: 'Products', icon: Package },
   { href: '/dashboard/deals', label: 'Deals', icon: Tag },
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
