@@ -1,8 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import type Stripe from 'stripe';
 import { z } from 'zod';
 import { orderTypeSchema, type OrderItem } from '@weedtip/shared';
+import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { isStripeConfigured, stripe } from '@/lib/stripe';
 
@@ -38,6 +40,10 @@ const inputSchema = z.object({
 export type StartCheckoutInput = z.infer<typeof inputSchema>;
 
 export async function startCheckout(rawInput: StartCheckoutInput): Promise<StartCheckoutResult> {
+  if (!(await rateLimit('checkout', { limit: 15, window: '60 s' })).success) {
+    return { ok: false, error: 'Too many checkout attempts. Please wait a moment and try again.' };
+  }
+
   const parsed = inputSchema.safeParse(rawInput);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid order' };
@@ -82,7 +88,7 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
   const items = (order.items as OrderItem[]) ?? [];
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
-  const lineItems: import('stripe').Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(
+  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(
     (it) => ({
       quantity: it.quantity,
       price_data: {
