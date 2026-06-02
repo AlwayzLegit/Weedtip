@@ -1,11 +1,22 @@
 import Link from 'next/link';
-import { Award, Leaf, MapPin, Package, Shield, ShoppingBag, Store, Users } from 'lucide-react';
+import {
+  Award,
+  BadgeCheck,
+  Leaf,
+  MapPin,
+  Package,
+  Shield,
+  ShoppingBag,
+  Store,
+  Users,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { requireAdmin } from '@/lib/admin';
 
 const NAV = [
   { href: '/admin', label: 'Overview', icon: Shield },
   { href: '/admin/dispensaries', label: 'Dispensaries', icon: Store },
+  { href: '/admin/claims', label: 'Claims', icon: BadgeCheck },
   { href: '/admin/categories', label: 'Categories', icon: Package },
   { href: '/admin/strains', label: 'Strains', icon: Leaf },
   { href: '/admin/brands', label: 'Brands', icon: Award },

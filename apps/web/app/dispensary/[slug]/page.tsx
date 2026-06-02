@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Globe, Mail, MapPin, Phone, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { AddToCart } from '@/components/cart/add-to-cart';
+import { ClaimListing } from '@/components/claim-listing';
 import { FavoriteButton } from '@/components/favorite-button';
 import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
@@ -82,6 +83,19 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   }
   // The actual owner of THIS shop — admins manage via /admin, not the owner dashboard.
   const isOwner = profile?.role === 'dispensary_owner' && d.owner_id === user?.id;
+
+  // Unclaimed, active listings can be claimed by dispensary-owner accounts.
+  const canClaim = !d.owner_id && profile?.role === 'dispensary_owner' && !!user;
+  let ownershipStatus: 'pending' | 'approved' | 'rejected' | null = null;
+  if (canClaim && user) {
+    const { data: req } = await supabase
+      .from('ownership_requests')
+      .select('status')
+      .eq('dispensary_id', d.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    ownershipStatus = (req?.status as 'pending' | 'approved' | 'rejected' | undefined) ?? null;
+  }
 
   // Group menu by category, preserving sort_order.
   const sections = new Map<string, { name: string; sort: number; items: typeof products }>();
@@ -181,6 +195,12 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             )}
           </div>
         </div>
+
+        {canClaim && (
+          <div className="mt-6">
+            <ClaimListing dispensaryId={d.id} slug={d.slug} existingStatus={ownershipStatus} />
+          </div>
+        )}
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">

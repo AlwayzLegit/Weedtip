@@ -33,6 +33,22 @@ export async function setDispensaryFeatured(id: string, featured: boolean): Prom
   revalidatePath('/admin/dispensaries');
 }
 
+// ─── Ownership claims ────────────────────────────────────────────────────────
+
+export async function approveOwnershipRequest(id: string): Promise<void> {
+  const supabase = await createClient();
+  // SECURITY DEFINER RPC: verifies admin, sets dispensaries.owner_id, auto-rejects rivals.
+  await supabase.rpc('approve_ownership_request', { p_request_id: id });
+  revalidatePath('/admin/claims');
+  revalidatePath('/admin');
+}
+
+export async function rejectOwnershipRequest(id: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.rpc('reject_ownership_request', { p_request_id: id });
+  revalidatePath('/admin/claims');
+}
+
 // ─── Categories ──────────────────────────────────────────────────────────────
 
 const categorySchema = z.object({
