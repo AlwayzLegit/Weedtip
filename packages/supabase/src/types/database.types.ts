@@ -173,6 +173,8 @@ export type Database = {
       dispensaries: {
         Row: {
           address: string
+          amenities: string[]
+          announcement: string | null
           city: string
           cover_image_url: string | null
           created_at: string
@@ -205,6 +207,8 @@ export type Database = {
         }
         Insert: {
           address: string
+          amenities?: string[]
+          announcement?: string | null
           city: string
           cover_image_url?: string | null
           created_at?: string
@@ -237,6 +241,8 @@ export type Database = {
         }
         Update: {
           address?: string
+          amenities?: string[]
+          announcement?: string | null
           city?: string
           cover_image_url?: string | null
           created_at?: string

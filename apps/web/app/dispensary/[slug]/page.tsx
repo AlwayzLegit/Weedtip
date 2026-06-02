@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Globe, Mail, MapPin, Phone, Store, Truck } from 'lucide-react';
-import type { OperatingHours } from '@weedtip/shared';
+import { Check, Globe, Mail, MapPin, Megaphone, Phone, Store, Truck } from 'lucide-react';
+import { AMENITY_LABELS, type Amenity, type OperatingHours } from '@weedtip/shared';
 import { deleteReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
@@ -255,12 +255,36 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           </div>
         )}
 
+        {d.announcement && (
+          <div className="rounded-card border-primary/30 bg-primary-muted mt-6 flex items-start gap-2 border p-4">
+            <Megaphone className="text-primary mt-0.5 h-5 w-5 shrink-0" />
+            <p className="text-foreground text-sm">{d.announcement}</p>
+          </div>
+        )}
+
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
             {d.description && (
               <section>
                 <h2 className="mb-2 text-lg font-semibold">About</h2>
                 <p className="text-muted">{d.description}</p>
+              </section>
+            )}
+
+            {d.amenities && d.amenities.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-lg font-semibold">Amenities</h2>
+                <div className="flex flex-wrap gap-2">
+                  {d.amenities.map((a) => (
+                    <span
+                      key={a}
+                      className="border-border bg-surface text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm"
+                    >
+                      <Check className="text-primary h-3.5 w-3.5" />
+                      {AMENITY_LABELS[a as Amenity] ?? a}
+                    </span>
+                  ))}
+                </div>
               </section>
             )}
 

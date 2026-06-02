@@ -61,6 +61,51 @@ export const profileUpdateSchema = z.object({
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 
 // ─── Dispensary ──────────────────────────────────────────────────────────────
+
+/**
+ * Curated amenity tags a dispensary can advertise on its listing (Weedmaps-style).
+ * Stored as a `text[]`; the canonical set is enforced here so the menu of choices
+ * stays consistent across web and mobile.
+ */
+export const AMENITIES = [
+  'atm',
+  'accessible',
+  'curbside_pickup',
+  'parking',
+  'security',
+  'storefront',
+  'veteran_discount',
+  'senior_discount',
+  'first_time_discount',
+  'cash_only',
+  'credit_cards',
+  'wheelchair_accessible',
+  'restroom',
+  'photo_id_required',
+  'online_ordering',
+] as const;
+export type Amenity = (typeof AMENITIES)[number];
+
+export const AMENITY_LABELS: Record<Amenity, string> = {
+  atm: 'ATM',
+  accessible: 'ADA accessible',
+  curbside_pickup: 'Curbside pickup',
+  parking: 'Parking',
+  security: 'Security on site',
+  storefront: 'Storefront',
+  veteran_discount: 'Veteran discount',
+  senior_discount: 'Senior discount',
+  first_time_discount: 'First-time discount',
+  cash_only: 'Cash only',
+  credit_cards: 'Credit cards accepted',
+  wheelchair_accessible: 'Wheelchair accessible',
+  restroom: 'Restroom',
+  photo_id_required: 'Photo ID required',
+  online_ordering: 'Online ordering',
+};
+
+const amenitySchema = z.enum(AMENITIES);
+
 export const dispensaryWriteSchema = z.object({
   name: z.string().min(2).max(120),
   slug: slugSchema,
@@ -80,6 +125,8 @@ export const dispensaryWriteSchema = z.object({
   is_delivery: z.boolean().default(false),
   is_pickup: z.boolean().default(true),
   hours: operatingHoursSchema.nullable().optional(),
+  announcement: z.string().max(500).nullable().optional(),
+  amenities: z.array(amenitySchema).max(AMENITIES.length).default([]),
   location: coordinatesSchema,
 });
 export type DispensaryWriteInput = z.infer<typeof dispensaryWriteSchema>;

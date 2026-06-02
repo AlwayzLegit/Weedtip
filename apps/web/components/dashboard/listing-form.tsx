@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import type { OperatingHours } from '@weedtip/shared';
+import { AMENITIES, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
 import type { Tables } from '@weedtip/supabase/types';
 import { upsertDispensary } from '@/app/dashboard/actions';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
@@ -18,6 +18,7 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
   const fe = state.fieldErrors ?? {};
   const d = dispensary;
   const hours = (d?.hours as OperatingHours | null) ?? null;
+  const amenities = new Set(d?.amenities ?? []);
 
   return (
     <form action={action} className="space-y-6">
@@ -43,6 +44,21 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
           name="description"
           defaultValue={d?.description ?? ''}
           rows={3}
+        />
+      </Field>
+
+      <Field
+        label="Announcement"
+        htmlFor="announcement"
+        error={fe.announcement}
+        hint="A short banner pinned to the top of your listing (deals, holiday hours, etc.). Leave blank to hide."
+      >
+        <Textarea
+          id="announcement"
+          name="announcement"
+          defaultValue={d?.announcement ?? ''}
+          rows={2}
+          maxLength={500}
         />
       </Field>
 
@@ -137,6 +153,22 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
           <Checkbox name="is_medical" label="Medical" defaultChecked={d?.is_medical ?? false} />
           <Checkbox name="is_pickup" label="Pickup" defaultChecked={d?.is_pickup ?? true} />
           <Checkbox name="is_delivery" label="Delivery" defaultChecked={d?.is_delivery ?? false} />
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded-card border-border border p-4">
+        <legend className="px-1 text-sm font-medium">Amenities</legend>
+        <p className="text-muted mb-3 text-xs">Highlight what customers can expect at your shop.</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {AMENITIES.map((a) => (
+            <Checkbox
+              key={a}
+              name="amenities"
+              value={a}
+              label={AMENITY_LABELS[a]}
+              defaultChecked={amenities.has(a)}
+            />
+          ))}
         </div>
       </fieldset>
 

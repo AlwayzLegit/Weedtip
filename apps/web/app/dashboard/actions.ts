@@ -99,6 +99,8 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
     is_delivery: bool(fd, 'is_delivery'),
     is_pickup: bool(fd, 'is_pickup'),
     hours: parseHours(fd),
+    announcement: str(fd, 'announcement') ?? null,
+    amenities: fd.getAll('amenities').filter((v): v is string => typeof v === 'string'),
     location: { lat: numOpt(fd, 'latitude') ?? NaN, lng: numOpt(fd, 'longitude') ?? NaN },
   };
 

@@ -27,10 +27,12 @@ export function Field({
 export function Checkbox({
   name,
   label,
+  value,
   defaultChecked,
 }: {
   name: string;
   label: string;
+  value?: string;
   defaultChecked?: boolean;
 }) {
   return (
@@ -38,6 +40,7 @@ export function Checkbox({
       <input
         type="checkbox"
         name={name}
+        value={value}
         defaultChecked={defaultChecked}
         className="border-border bg-surface text-primary focus:ring-primary h-4 w-4 rounded"
       />
