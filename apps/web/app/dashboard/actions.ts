@@ -216,6 +216,7 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
   const input = {
     title: str(fd, 'title') ?? '',
     description: str(fd, 'description') ?? null,
+    code: str(fd, 'code') ?? null,
     discount_type: str(fd, 'discount_type') ?? '',
     discount_value: numOpt(fd, 'discount_value') ?? NaN,
     start_date: toIso(str(fd, 'start_date')) ?? '',
@@ -231,7 +232,11 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
     ? await supabase.from('deals').update(payload).eq('id', id).eq('dispensary_id', dispensaryId)
     : await supabase.from('deals').insert(payload);
 
-  if (error) return formError(error.message);
+  if (error) {
+    return isUniqueViolation(error)
+      ? formError('That promo code is already in use on another deal.')
+      : formError(error.message);
+  }
 
   revalidatePath('/dashboard/deals');
   redirect('/dashboard/deals');

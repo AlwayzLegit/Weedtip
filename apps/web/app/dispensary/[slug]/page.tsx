@@ -303,6 +303,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         {deal.description && (
                           <p className="text-muted mt-1 text-sm">{deal.description}</p>
                         )}
+                        {deal.code && (
+                          <p className="mt-2 text-xs">
+                            <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono font-medium">
+                              Use code {deal.code}
+                            </span>
+                          </p>
+                        )}
                       </div>
                       <Badge tone="primary">
                         {deal.discount_type === 'percentage'

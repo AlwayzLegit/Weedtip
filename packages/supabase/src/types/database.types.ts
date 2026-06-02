@@ -88,8 +88,71 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_redemptions: {
+        Row: {
+          code: string
+          created_at: string
+          deal_id: string
+          discount_cents: number
+          dispensary_id: string
+          id: string
+          order_id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          deal_id: string
+          discount_cents: number
+          dispensary_id: string
+          id?: string
+          order_id: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          deal_id?: string
+          discount_cents?: number
+          dispensary_id?: string
+          id?: string
+          order_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_redemptions_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_redemptions_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
+          code: string | null
           created_at: string
           description: string | null
           discount_type: Database["public"]["Enums"]["discount_type"]
@@ -103,6 +166,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          code?: string | null
           created_at?: string
           description?: string | null
           discount_type: Database["public"]["Enums"]["discount_type"]
@@ -116,6 +180,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          code?: string | null
           created_at?: string
           description?: string | null
           discount_type?: Database["public"]["Enums"]["discount_type"]
@@ -390,6 +455,8 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          deal_id: string | null
+          discount_cents: number
           dispensary_id: string
           id: string
           items: Json
@@ -409,6 +476,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deal_id?: string | null
+          discount_cents?: number
           dispensary_id: string
           id?: string
           items: Json
@@ -428,6 +497,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deal_id?: string | null
+          discount_cents?: number
           dispensary_id?: string
           id?: string
           items?: Json
@@ -446,6 +517,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_dispensary_id_fkey"
             columns: ["dispensary_id"]
@@ -807,12 +885,21 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      compute_promo_discount: {
+        Args: { p_code: string; p_dispensary_id: string; p_subtotal_cents: number }
+        Returns: {
+          deal_id: string
+          discount_cents: number
+          title: string
+        }[]
+      }
       create_order: {
         Args: {
           p_dispensary_id: string
           p_items: Json
           p_notes?: string
           p_order_type: Database["public"]["Enums"]["order_type"]
+          p_promo_code?: string
         }
         Returns: string
       }

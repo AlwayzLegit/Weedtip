@@ -14,6 +14,7 @@ type DealRow = {
   id: string;
   title: string;
   description: string | null;
+  code: string | null;
   discount_type: string;
   discount_value: number;
   dispensary: { slug: string; name: string; city: string; state: string } | null;
@@ -108,6 +109,7 @@ export default async function StateDealsPage({
                 deal={{
                   title: deal.title,
                   description: deal.description,
+                  code: deal.code,
                   discountType: deal.discount_type,
                   discountValue: deal.discount_value,
                   dispensarySlug: deal.dispensary.slug,

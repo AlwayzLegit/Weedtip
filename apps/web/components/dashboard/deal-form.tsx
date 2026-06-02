@@ -46,6 +46,21 @@ export function DealForm({ deal }: { deal: Tables<'deals'> | null }) {
         />
       </Field>
 
+      <Field
+        label="Promo code"
+        htmlFor="code"
+        error={fe.code}
+        hint="Optional. Customers enter this at checkout to apply the discount (e.g. SAVE20)."
+      >
+        <Input
+          id="code"
+          name="code"
+          defaultValue={d?.code ?? ''}
+          placeholder="SAVE20"
+          className="uppercase"
+        />
+      </Field>
+
       <section className="grid gap-4 sm:grid-cols-2">
         <Field label="Discount type" htmlFor="discount_type" error={fe.discount_type}>
           <Select

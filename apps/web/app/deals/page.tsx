@@ -62,6 +62,13 @@ export default async function DealsPage() {
                   {deal.description && (
                     <p className="text-muted mt-1 line-clamp-2 text-sm">{deal.description}</p>
                   )}
+                  {deal.code && (
+                    <p className="mt-2 text-xs">
+                      <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono font-medium">
+                        {deal.code}
+                      </span>
+                    </p>
+                  )}
                   {dispensary && (
                     <p className="text-muted mt-2 text-xs">
                       {dispensary.name} · {dispensary.city}, {dispensary.state}

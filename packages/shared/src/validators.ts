@@ -153,10 +153,19 @@ export const productWriteSchema = z.object({
 export type ProductWriteInput = z.infer<typeof productWriteSchema>;
 
 // ─── Deal ────────────────────────────────────────────────────────────────────
+/** Promo code: letters, digits, dashes; stored uppercased. Empty → no code. */
+export const promoCodeSchema = z
+  .string()
+  .trim()
+  .max(40)
+  .regex(/^[A-Za-z0-9-]+$/, 'Use letters, numbers, and dashes only')
+  .transform((s) => s.toUpperCase());
+
 export const dealWriteSchema = z
   .object({
     title: z.string().min(1).max(160),
     description: z.string().max(2000).nullable().optional(),
+    code: promoCodeSchema.nullable().optional(),
     discount_type: discountTypeSchema,
     discount_value: z.number().nonnegative(),
     start_date: z.string().datetime(),
