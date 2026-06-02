@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Bell,
   ChevronDown,
   Heart,
   LogOut,
@@ -33,11 +34,13 @@ export function NavMenu({
   displayName,
   isOwner,
   isAdmin,
+  unreadCount = 0,
 }: {
   email: string | null;
   displayName: string | null;
   isOwner: boolean;
   isAdmin: boolean;
+  unreadCount?: number;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -93,6 +96,7 @@ export function NavMenu({
       {isAdmin && <MenuItem href="/admin" icon={Shield} label="Admin console" />}
       {isOwner && <MenuItem href="/dashboard" icon={Store} label="Owner dashboard" />}
       {(isAdmin || isOwner) && <div className="border-border my-1 border-t" />}
+      <MenuItem href="/notifications" icon={Bell} label="Notifications" />
       <MenuItem href="/orders" icon={Receipt} label="Your orders" />
       <MenuItem href="/account/favorites" icon={Heart} label="Favorites" />
       <MenuItem href="/account" icon={Settings} label="Account settings" />
@@ -118,6 +122,20 @@ export function NavMenu({
       <nav className="hidden items-center gap-6 md:flex">
         {browseLinks}
         <CartButton />
+        {email && (
+          <Link
+            href="/notifications"
+            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+            className="text-foreground hover:bg-surface-2 relative inline-flex h-10 w-10 items-center justify-center rounded-lg"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="bg-primary text-primary-foreground absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Link>
+        )}
         {email ? (
           <div className="relative" ref={menuRef}>
             <button
