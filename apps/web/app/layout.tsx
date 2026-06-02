@@ -4,6 +4,7 @@ import { AgeGate } from '@/components/age-gate';
 import { CartProvider } from '@/components/cart/cart-provider';
 import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import './globals.css';
 
 const manrope = Manrope({
@@ -12,13 +13,45 @@ const manrope = Manrope({
   display: 'swap',
 });
 
+const TITLE_DEFAULT = `${SITE_NAME} — Find dispensaries near you`;
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Weedtip — Find dispensaries near you',
-    template: '%s · Weedtip',
+    default: TITLE_DEFAULT,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    'Discover dispensaries, browse menus, read reviews, find deals, and order for pickup or delivery.',
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    'dispensaries',
+    'cannabis',
+    'weed',
+    'marijuana',
+    'dispensary near me',
+    'cannabis delivery',
+    'cannabis pickup',
+    'strains',
+    'cannabis deals',
+  ],
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    title: TITLE_DEFAULT,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE_DEFAULT,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
+  },
 };
 
 export const viewport: Viewport = {

@@ -34,6 +34,17 @@ export function Footer() {
           </nav>
         </div>
         <div className="border-border text-muted mt-8 border-t pt-6 text-xs">
+          <nav className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
+            <Link href="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link href="/disclaimer" className="hover:text-foreground">
+              Disclaimer
+            </Link>
+          </nav>
           <p>
             For use by adults 21 and older. Cannabis products have not been evaluated by the FDA.
           </p>
