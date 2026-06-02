@@ -9,9 +9,11 @@ import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
 import { RatingStars } from '@/components/rating-stars';
 import { ReviewForm } from '@/components/review-form';
+import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
+import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
 export async function generateMetadata({
@@ -95,10 +97,47 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
   const hours = d.hours as OperatingHours | null;
 
+  const jsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    '@id': `${SITE_URL}/dispensary/${d.slug}`,
+    name: d.name,
+    url: `${SITE_URL}/dispensary/${d.slug}`,
+    ...(d.description ? { description: d.description } : {}),
+    ...(d.cover_image_url ? { image: d.cover_image_url } : {}),
+    ...(d.phone ? { telephone: d.phone } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: d.address,
+      addressLocality: d.city,
+      addressRegion: d.state,
+      postalCode: d.zip,
+      addressCountry: 'US',
+    },
+    ...(d.latitude != null && d.longitude != null
+      ? { geo: { '@type': 'GeoCoordinates', latitude: d.latitude, longitude: d.longitude } }
+      : {}),
+    ...(reviews && reviews.length > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Number(avgRating.toFixed(1)),
+            reviewCount: reviews.length,
+          },
+        }
+      : {}),
+  };
+
   return (
     <main>
+      <JsonLd data={jsonLd} />
       {/* Header */}
-      <MediaImage url={d.cover_image_url} className="h-48 sm:h-60" iconClassName="h-16 w-16" />
+      <MediaImage
+        url={d.cover_image_url}
+        alt={d.name}
+        className="h-48 sm:h-60"
+        iconClassName="h-16 w-16"
+      />
       <div className="mx-auto max-w-7xl px-4">
         <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="rounded-card border-border bg-surface border p-5">

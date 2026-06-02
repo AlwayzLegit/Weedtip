@@ -29,7 +29,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       href={`/dispensary/${d.slug}`}
       className="rounded-card border-border bg-surface hover:border-primary/50 group block overflow-hidden border transition-colors"
     >
-      <MediaImage url={d.coverImageUrl} className="h-36" iconClassName="h-12 w-12">
+      <MediaImage url={d.coverImageUrl} alt={d.name} className="h-36" iconClassName="h-12 w-12">
         {d.featured && (
           <Badge tone="primary" className="absolute left-3 top-3">
             Featured

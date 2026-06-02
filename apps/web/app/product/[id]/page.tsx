@@ -6,9 +6,11 @@ import { AddToCart } from '@/components/cart/add-to-cart';
 import { MediaImage } from '@/components/media-image';
 import { ProductReviewForm } from '@/components/product-review-form';
 import { RatingStars } from '@/components/rating-stars';
+import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
+import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
 const STRAIN_LABEL: Record<string, string> = {
@@ -56,11 +58,43 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const strain = product.strain as { slug: string; name: string } | null;
   const brand = product.brand as { slug: string; name: string } | null;
 
+  const jsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    ...(product.description ? { description: product.description } : {}),
+    ...(product.image_urls?.[0] ? { image: product.image_urls[0] } : {}),
+    ...(brand?.name || product.brand
+      ? { brand: { '@type': 'Brand', name: brand?.name ?? product.brand } }
+      : {}),
+    offers: {
+      '@type': 'Offer',
+      price: (product.price_cents / 100).toFixed(2),
+      priceCurrency: 'USD',
+      availability: product.in_stock
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      url: `${SITE_URL}/product/${product.id}`,
+      ...(dispensary ? { seller: { '@type': 'Organization', name: dispensary.name } } : {}),
+    },
+    ...(product.rating_count > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Number(product.rating_avg.toFixed(1)),
+            reviewCount: product.rating_count,
+          },
+        }
+      : {}),
+  };
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
+      <JsonLd data={jsonLd} />
       <div className="grid gap-8 sm:grid-cols-2">
         <MediaImage
           url={product.image_urls[0]}
+          alt={product.name}
           className="rounded-card border-border h-64 border"
           iconClassName="h-16 w-16"
         />
