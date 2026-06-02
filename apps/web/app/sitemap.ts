@@ -29,11 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const supabase = await createClient();
-    const [dispensaries, products, strains, brands] = await Promise.all([
+    const [dispensaries, products, strains, brands, categories] = await Promise.all([
       supabase.from('dispensaries').select('slug, city, state, updated_at'),
       supabase.from('products').select('id, updated_at'),
       supabase.from('strains').select('slug, updated_at'),
       supabase.from('brands').select('slug, updated_at'),
+      supabase.from('categories').select('slug'),
     ]);
 
     // Local SEO landing pages: distinct states and state+city combinations.
@@ -84,6 +85,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(b.updated_at),
         changeFrequency: 'monthly' as const,
         priority: 0.5,
+      })),
+      ...(categories.data ?? []).map((c) => ({
+        url: `${SITE_URL}/products/${c.slug}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
       })),
     ];
 

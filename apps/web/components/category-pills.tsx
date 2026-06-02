@@ -37,7 +37,7 @@ export function CategoryPills({ categories }: { categories: CategoryPill[] }) {
         return (
           <Link
             key={c.slug}
-            href={`/products?category=${c.slug}`}
+            href={`/products/${c.slug}`}
             className="border-border bg-surface hover:border-primary/50 hover:text-primary group flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
           >
             <Icon className="text-muted group-hover:text-primary h-4 w-4 transition-colors" />
