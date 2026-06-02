@@ -1,14 +1,17 @@
+import { withSentryConfig } from '@sentry/nextjs';
+
 // Content Security Policy. Scoped to the origins the app actually talks to:
-// Supabase (REST/Realtime/Storage), Mapbox (tiles/GL worker), and Stripe (Checkout).
+// Supabase (REST/Realtime/Storage), Mapbox (tiles/GL worker), Stripe (Checkout),
+// and PostHog (analytics). Sentry events are tunneled same-origin via /monitoring.
 // 'unsafe-inline' is retained for scripts/styles because Next's runtime injects inline
 // bootstrap/styles; tightening to nonces is a follow-up once verified against the live app.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://js.stripe.com https://api.mapbox.com",
+  "script-src 'self' 'unsafe-inline' https://js.stripe.com https://api.mapbox.com https://us-assets.i.posthog.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co https://*.mapbox.com https://api.mapbox.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com https://us.i.posthog.com https://us-assets.i.posthog.com",
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
@@ -49,4 +52,12 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: 'weed-tip',
+  project: 'weedtip-web',
+  // Quiet build logs; source-map upload runs only when SENTRY_AUTH_TOKEN is set.
+  silent: true,
+  // Route browser events through a same-origin path so CSP/ad-blockers don't drop them.
+  tunnelRoute: '/monitoring',
+  disableLogger: true,
+});

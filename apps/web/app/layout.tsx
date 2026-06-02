@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
 import { AgeGate } from '@/components/age-gate';
+import { PostHogProvider } from '@/components/analytics/posthog-provider';
 import { CartProvider } from '@/components/cart/cart-provider';
 import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
@@ -70,14 +71,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <CartProvider>
-          <Navbar />
-          <div id="main-content" className="flex-1">
-            {children}
-          </div>
-          <Footer />
-        </CartProvider>
-        <AgeGate />
+        <PostHogProvider>
+          <CartProvider>
+            <Navbar />
+            <div id="main-content" className="flex-1">
+              {children}
+            </div>
+            <Footer />
+          </CartProvider>
+          <AgeGate />
+        </PostHogProvider>
       </body>
     </html>
   );
