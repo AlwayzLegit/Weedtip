@@ -1,0 +1,41 @@
+name: E2E smoke
+
+# Runs the Playwright storefront smoke suite against the live site as a monitor.
+# Manual dispatch (optionally targeting a preview URL) + a daily schedule.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Base URL to test
+        required: false
+        default: https://weedtip-web.vercel.app
+  schedule:
+    - cron: '0 13 * * *'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm --filter @weedtip/web exec playwright install --with-deps chromium
+
+      - name: Run E2E smoke
+        run: pnpm --filter @weedtip/web e2e
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ github.event.inputs.base_url || 'https://weedtip-web.vercel.app' }}
