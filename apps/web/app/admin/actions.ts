@@ -130,6 +130,20 @@ export async function deleteRegion(state: string): Promise<void> {
   revalidatePath('/admin/regions');
 }
 
+// ─── Review moderation (admin can remove any review; RLS permits is_admin) ────
+
+export async function adminDeleteReview(id: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from('reviews').delete().eq('id', id);
+  revalidatePath('/admin/reviews');
+}
+
+export async function adminDeleteProductReview(id: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from('product_reviews').delete().eq('id', id);
+  revalidatePath('/admin/reviews');
+}
+
 // ─── Strains ─────────────────────────────────────────────────────────────────
 
 function splitList(raw: string | undefined): string[] {

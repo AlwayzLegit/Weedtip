@@ -7,6 +7,7 @@ import {
   Package,
   Shield,
   ShoppingBag,
+  Star,
   Store,
   Users,
 } from 'lucide-react';
@@ -21,6 +22,7 @@ const NAV = [
   { href: '/admin/strains', label: 'Strains', icon: Leaf },
   { href: '/admin/brands', label: 'Brands', icon: Award },
   { href: '/admin/regions', label: 'Regions', icon: MapPin },
+  { href: '/admin/reviews', label: 'Reviews', icon: Star },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/users', label: 'Users', icon: Users },
 ];

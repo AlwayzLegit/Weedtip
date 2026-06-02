@@ -2,7 +2,7 @@
 
 import { Store } from 'lucide-react';
 import { useActionState, useState } from 'react';
-import { requestOwnership } from '@/app/actions/ownership';
+import { requestOwnership, withdrawOwnership } from '@/app/actions/ownership';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
 import { SubmitButton } from './auth/submit-button';
 import { Button } from './ui/button';
@@ -33,6 +33,11 @@ export function ClaimListing({
         <p className="text-muted mt-1">
           An admin will review your claim and attach this listing to your dashboard once approved.
         </p>
+        <form action={withdrawOwnership.bind(null, dispensaryId, slug)} className="mt-3">
+          <Button type="submit" size="sm" variant="ghost">
+            Withdraw claim
+          </Button>
+        </form>
       </div>
     );
   }
