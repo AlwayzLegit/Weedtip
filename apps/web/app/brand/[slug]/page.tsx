@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
+import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 export async function generateMetadata({
@@ -21,14 +22,7 @@ export async function generateMetadata({
   const description =
     data.description?.slice(0, 160) ??
     `Shop ${data.name} cannabis products and find which dispensaries carry them, with prices and reviews, on Weedtip.`;
-  const canonical = `/brand/${slug}`;
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: { type: 'website', title, description, url: canonical },
-    twitter: { card: 'summary_large_image', title, description },
-  };
+  return pageSeo({ title, description, path: `/brand/${slug}` });
 }
 
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {

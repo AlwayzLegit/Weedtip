@@ -3,9 +3,15 @@ import { productSearchSchema, type StrainType } from '@weedtip/shared';
 import { searchProducts } from '@weedtip/supabase/queries';
 import { ProductCard } from '@/components/product-card';
 import { ProductFilters } from '@/components/product-filters';
+import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = { title: 'Products' };
+export const metadata: Metadata = pageSeo({
+  title: 'Products',
+  description:
+    'Browse cannabis products across dispensaries — flower, vapes, edibles, concentrates and more — with prices, THC/CBD, and reviews on Weedtip.',
+  path: '/products',
+});
 
 type SearchParams = Record<string, string | string[] | undefined>;
 const str = (v: string | string[] | undefined) => (typeof v === 'string' && v ? v : undefined);

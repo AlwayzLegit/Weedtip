@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageSeo({
   title: 'Brands',
-  description: 'Browse cannabis brands and find their products near you.',
-};
+  description: 'Browse cannabis brands and find their products at dispensaries near you on Weedtip.',
+  path: '/brands',
+});
 
 export default async function BrandsPage() {
   const supabase = await createClient();

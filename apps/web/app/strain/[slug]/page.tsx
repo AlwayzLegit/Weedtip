@@ -4,6 +4,7 @@ import { Leaf } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { Badge } from '@/components/ui/badge';
+import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -30,14 +31,7 @@ export async function generateMetadata({
   const description =
     data.description?.slice(0, 160) ??
     `${data.name} is a ${TYPE_LABEL[data.type]} cannabis strain. Explore its effects, flavors, THC range, and which dispensaries carry it on Weedtip.`;
-  const canonical = `/strain/${slug}`;
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: { type: 'website', title, description, url: canonical },
-    twitter: { card: 'summary_large_image', title, description },
-  };
+  return pageSeo({ title, description, path: `/strain/${slug}` });
 }
 
 export default async function StrainPage({ params }: { params: Promise<{ slug: string }> }) {

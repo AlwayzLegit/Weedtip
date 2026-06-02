@@ -2,13 +2,16 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { STRAIN_TYPES, type StrainType } from '@weedtip/shared';
 import { StrainCard } from '@/components/strain-card';
+import { pageSeo } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageSeo({
   title: 'Strains',
-  description: 'Explore cannabis strains — effects, flavors, and where to buy.',
-};
+  description:
+    'Explore cannabis strains — effects, flavors, THC ranges, and which dispensaries carry them on Weedtip.',
+  path: '/strains',
+});
 
 const TYPE_LABEL: Record<string, string> = {
   indica: 'Indica',

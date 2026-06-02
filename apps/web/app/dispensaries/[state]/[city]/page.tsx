@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DispensaryCard } from '@/components/dispensary-card';
+import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
-import { citySlug, itemListJsonLd, US_STATES } from '@/lib/seo';
+import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 const LOCATION_SELECT =
@@ -36,14 +37,11 @@ export async function generateMetadata({
   if (!found) return { title: 'Dispensaries' };
   const title = `Dispensaries in ${found.cityName}, ${state.toUpperCase()}`;
   const description = `Find licensed cannabis dispensaries in ${found.cityName}, ${found.stateName}. Compare menus, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
-  const canonical = `/dispensaries/${state.toLowerCase()}/${city.toLowerCase()}`;
-  return {
+  return pageSeo({
     title,
     description,
-    alternates: { canonical },
-    openGraph: { type: 'website', title, description, url: canonical },
-    twitter: { card: 'summary_large_image', title, description },
-  };
+    path: `/dispensaries/${state.toLowerCase()}/${city.toLowerCase()}`,
+  });
 }
 
 export default async function CityDispensariesPage({
@@ -55,6 +53,21 @@ export default async function CityDispensariesPage({
   const found = await loadCity(state, city);
   if (!found) notFound();
   const { stateName, cityName, shops } = found;
+
+  const faqs = [
+    {
+      question: `How many cannabis dispensaries are in ${cityName}?`,
+      answer: `Weedtip lists ${shops.length} licensed ${shops.length === 1 ? 'dispensary' : 'dispensaries'} in ${cityName}, ${stateName}, each with menus, deals, and reviews.`,
+    },
+    {
+      question: `Can I order cannabis for pickup or delivery in ${cityName}?`,
+      answer: `Many ${cityName} dispensaries on Weedtip offer in-store pickup, and some offer delivery. Each dispensary's page shows the options it supports.`,
+    },
+    {
+      question: `Do I need to be 21 to buy cannabis in ${cityName}?`,
+      answer: `You must be 21 or older (or a qualifying medical patient where permitted) and present a valid government-issued ID at pickup or delivery.`,
+    },
+  ];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
@@ -95,6 +108,19 @@ export default async function CityDispensariesPage({
           />
         ))}
       </div>
+
+      <section className="mt-12 max-w-3xl">
+        <h2 className="mb-2 text-lg font-semibold">
+          About cannabis dispensaries in {cityName}
+        </h2>
+        <p className="text-muted text-sm leading-relaxed">
+          Find and compare licensed cannabis dispensaries in {cityName}, {stateName} on Weedtip.
+          Browse menus, prices, and deals, read reviews, and order online for pickup or delivery.
+          Bring a valid 21+ ID and check local regulations before ordering.
+        </p>
+      </section>
+
+      <FaqSection items={faqs} />
     </main>
   );
 }
