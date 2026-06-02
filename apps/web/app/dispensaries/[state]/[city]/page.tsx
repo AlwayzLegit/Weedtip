@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { PRODUCT_CATEGORIES } from '@weedtip/shared';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DispensaryCard } from '@/components/dispensary-card';
 import { FaqSection } from '@/components/seo/faq-section';
@@ -108,6 +110,27 @@ export default async function CityDispensariesPage({
           />
         ))}
       </div>
+
+      <section className="mt-10">
+        <h2 className="mb-3 text-lg font-semibold">Browse {cityName} by category</h2>
+        <div className="flex flex-wrap gap-2">
+          {PRODUCT_CATEGORIES.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/dispensaries/${state.toLowerCase()}/${city.toLowerCase()}/${c.slug}`}
+              className="border-border bg-surface hover:border-primary/50 hover:text-primary rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+            >
+              {c.name}
+            </Link>
+          ))}
+          <Link
+            href={`/deals/${state.toLowerCase()}/${city.toLowerCase()}`}
+            className="border-primary/30 bg-primary-muted text-primary rounded-full border px-4 py-2 text-sm font-medium hover:underline"
+          >
+            Deals in {cityName}
+          </Link>
+        </div>
+      </section>
 
       <section className="mt-12 max-w-3xl">
         <h2 className="mb-2 text-lg font-semibold">

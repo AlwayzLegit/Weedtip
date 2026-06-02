@@ -76,7 +76,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         .order('end_date'),
       supabase
         .from('reviews')
-        .select('id,rating,body,created_at')
+        .select('id,rating,body,created_at,author_name')
         .eq('dispensary_id', d.id)
         .order('created_at', { ascending: false }),
       getAuth(),
@@ -162,6 +162,18 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             ratingValue: Number(avgRating.toFixed(1)),
             reviewCount: reviews.length,
           },
+          review: reviews.slice(0, 10).map((r) => ({
+            '@type': 'Review',
+            reviewRating: {
+              '@type': 'Rating',
+              ratingValue: r.rating,
+              bestRating: 5,
+              worstRating: 1,
+            },
+            author: { '@type': 'Person', name: r.author_name ?? 'Weedtip member' },
+            datePublished: new Date(r.created_at).toISOString().slice(0, 10),
+            ...(r.body ? { reviewBody: r.body } : {}),
+          })),
         }
       : {}),
   };
@@ -345,8 +357,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 <div className="space-y-4">
                   {reviews.map((r) => (
                     <div key={r.id} className="rounded-card border-border bg-surface border p-4">
-                      <div className="flex items-center justify-between">
-                        <RatingStars rating={r.rating} />
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <RatingStars rating={r.rating} />
+                          <span className="text-sm font-medium">
+                            {r.author_name ?? 'Weedtip member'}
+                          </span>
+                        </div>
                         <span className="text-muted text-xs">
                           {new Date(r.created_at).toLocaleDateString()}
                         </span>
