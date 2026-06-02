@@ -152,45 +152,117 @@ export type Database = {
       }
       deals: {
         Row: {
+          auto_apply: boolean
+          buy_quantity: number | null
           code: string | null
           created_at: string
+          days_of_week: number[]
           description: string | null
           discount_type: Database["public"]["Enums"]["discount_type"]
           discount_value: number
           dispensary_id: string
           end_date: string
+          exclude_product_ids: string[]
+          featured: boolean
+          get_discount_percent: number | null
+          get_quantity: number | null
           id: string
+          image_url: string | null
           is_active: boolean
+          kind: Database["public"]["Enums"]["deal_kind"]
+          max_discount_cents: number | null
+          min_subtotal_cents: number | null
+          new_customers_only: boolean
+          order_types: Database["public"]["Enums"]["order_type"][]
+          per_customer_limit: number | null
+          sort_priority: number
           start_date: string
+          stackable: boolean
+          target_brand_ids: string[]
+          target_category_ids: string[]
+          target_product_ids: string[]
+          target_scope: Database["public"]["Enums"]["deal_target_scope"]
+          terms: string | null
+          time_end: string | null
+          time_start: string | null
           title: string
+          total_limit: number | null
           updated_at: string
         }
         Insert: {
+          auto_apply?: boolean
+          buy_quantity?: number | null
           code?: string | null
           created_at?: string
+          days_of_week?: number[]
           description?: string | null
           discount_type: Database["public"]["Enums"]["discount_type"]
           discount_value: number
           dispensary_id: string
           end_date: string
+          exclude_product_ids?: string[]
+          featured?: boolean
+          get_discount_percent?: number | null
+          get_quantity?: number | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
+          kind?: Database["public"]["Enums"]["deal_kind"]
+          max_discount_cents?: number | null
+          min_subtotal_cents?: number | null
+          new_customers_only?: boolean
+          order_types?: Database["public"]["Enums"]["order_type"][]
+          per_customer_limit?: number | null
+          sort_priority?: number
           start_date: string
+          stackable?: boolean
+          target_brand_ids?: string[]
+          target_category_ids?: string[]
+          target_product_ids?: string[]
+          target_scope?: Database["public"]["Enums"]["deal_target_scope"]
+          terms?: string | null
+          time_end?: string | null
+          time_start?: string | null
           title: string
+          total_limit?: number | null
           updated_at?: string
         }
         Update: {
+          auto_apply?: boolean
+          buy_quantity?: number | null
           code?: string | null
           created_at?: string
+          days_of_week?: number[]
           description?: string | null
           discount_type?: Database["public"]["Enums"]["discount_type"]
           discount_value?: number
           dispensary_id?: string
           end_date?: string
+          exclude_product_ids?: string[]
+          featured?: boolean
+          get_discount_percent?: number | null
+          get_quantity?: number | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
+          kind?: Database["public"]["Enums"]["deal_kind"]
+          max_discount_cents?: number | null
+          min_subtotal_cents?: number | null
+          new_customers_only?: boolean
+          order_types?: Database["public"]["Enums"]["order_type"][]
+          per_customer_limit?: number | null
+          sort_priority?: number
           start_date?: string
+          stackable?: boolean
+          target_brand_ids?: string[]
+          target_category_ids?: string[]
+          target_product_ids?: string[]
+          target_scope?: Database["public"]["Enums"]["deal_target_scope"]
+          terms?: string | null
+          time_end?: string | null
+          time_start?: string | null
           title?: string
+          total_limit?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1014,6 +1086,15 @@ export type Database = {
       }
     }
     Enums: {
+      deal_kind:
+        | "percentage"
+        | "fixed_amount"
+        | "price_target"
+        | "bogo"
+        | "bundle"
+        | "gift"
+        | "spend_threshold"
+      deal_target_scope: "menu" | "category" | "brand" | "products"
       discount_type: "percentage" | "fixed" | "bogo"
       dispensary_status: "pending" | "active" | "suspended"
       order_status:
@@ -1156,6 +1237,16 @@ export const Constants = {
   },
   public: {
     Enums: {
+      deal_kind: [
+        "percentage",
+        "fixed_amount",
+        "price_target",
+        "bogo",
+        "bundle",
+        "gift",
+        "spend_threshold",
+      ],
+      deal_target_scope: ["menu", "category", "brand", "products"],
       discount_type: ["percentage", "fixed", "bogo"],
       dispensary_status: ["pending", "active", "suspended"],
       order_status: ["pending", "confirmed", "ready", "completed", "cancelled"],
