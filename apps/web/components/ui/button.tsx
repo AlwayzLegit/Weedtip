@@ -5,11 +5,13 @@ type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg' | 'icon';
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-primary text-primary-foreground hover:bg-primary-hover',
-  secondary: 'bg-surface-2 text-foreground hover:bg-border',
-  outline: 'border border-border bg-transparent text-foreground hover:bg-surface-2',
+  primary:
+    'bg-primary-grad text-primary-foreground shadow-glow-sm hover:shadow-glow hover:brightness-[1.05]',
+  secondary: 'bg-surface-2 text-foreground border border-border-strong/60 hover:bg-surface-3',
+  outline:
+    'border border-border bg-transparent text-foreground hover:bg-surface-2 hover:border-border-strong',
   ghost: 'bg-transparent text-foreground hover:bg-surface-2',
-  danger: 'bg-danger text-white hover:bg-danger/90',
+  danger: 'bg-danger text-white shadow-sm hover:bg-danger/90',
 };
 
 const SIZES: Record<Size, string> = {
@@ -28,7 +30,8 @@ export function Button({ className, variant = 'primary', size = 'md', ...props }
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-medium',
+        'transition-all duration-200 active:scale-[0.97]',
         'focus-visible:ring-primary focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50',
         VARIANTS[variant],

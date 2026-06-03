@@ -18,7 +18,7 @@ export async function Navbar() {
   }
 
   return (
-    <header className="border-border bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
+    <header className="border-border/70 bg-background/70 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" aria-label="Weedtip home">
           <Logo />

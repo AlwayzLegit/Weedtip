@@ -42,7 +42,7 @@ function DealTile({
   return (
     <Link
       href={dispensary ? `/dispensary/${dispensary.slug}` : '#'}
-      className="rounded-card border-primary/30 bg-primary-muted hover:border-primary flex items-start justify-between gap-3 border p-5 transition-colors"
+      className="rounded-card border-primary/25 bg-primary-subtle hover:border-primary/60 hover:shadow-card-hover flex items-start justify-between gap-3 border p-5 transition-all duration-200 hover:-translate-y-0.5"
     >
       {placementId && <PlacementBeacon placementId={placementId} />}
       <div className="min-w-0">
@@ -128,7 +128,8 @@ export default async function DealsPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Deals</h1>
+        <p className="eyebrow mb-1">Save today</p>
+        <h1 className="text-2xl font-bold sm:text-3xl">Deals</h1>
         <p className="text-muted mt-1">Live discounts from dispensaries near you.</p>
       </div>
 

@@ -240,13 +240,18 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       <MediaImage
         url={d.cover_image_url}
         alt={d.name}
-        className="h-48 sm:h-60"
+        className="h-48 sm:h-72"
         iconClassName="h-16 w-16"
-      />
+      >
+        <div
+          className="from-background absolute inset-0 bg-gradient-to-t via-transparent to-transparent"
+          aria-hidden
+        />
+      </MediaImage>
       <div className="mx-auto max-w-7xl px-4">
         <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="rounded-card border-border bg-surface border p-5">
-            <h1 className="text-2xl font-bold">{d.name}</h1>
+          <div className="rounded-card border-border bg-surface shadow-card-hover sheen border p-5">
+            <h1 className="text-2xl font-bold sm:text-3xl">{d.name}</h1>
             <p className="text-muted mt-1 flex items-center gap-1 text-sm">
               <MapPin className="h-4 w-4" /> {d.address}, {d.city}, {d.state} {d.zip}
             </p>
@@ -337,7 +342,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   {deals.map((deal) => (
                     <div
                       key={deal.id}
-                      className="rounded-card border-primary/30 bg-primary-muted flex items-start justify-between border p-4"
+                      className="rounded-card border-primary/25 bg-primary-subtle flex items-start justify-between border p-4"
                     >
                       <div>
                         <p className="text-primary font-semibold">{deal.title}</p>
@@ -471,8 +476,8 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           </div>
 
           {/* Sidebar: hours + contact */}
-          <aside className="space-y-6">
-            <div className="rounded-card border-border bg-surface border p-5">
+          <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+            <div className="rounded-card border-border bg-surface shadow-card border p-5">
               <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
                 Hours
               </h2>
@@ -495,7 +500,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               )}
             </div>
 
-            <div className="rounded-card border-border bg-surface border p-5">
+            <div className="rounded-card border-border bg-surface shadow-card border p-5">
               <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
                 Contact
               </h2>

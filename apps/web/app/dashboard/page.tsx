@@ -9,11 +9,11 @@ import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+function Stat({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
   return (
-    <div className="rounded-card border-border bg-surface border p-4">
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-muted text-sm">{label}</p>
+    <div className="card sheen p-5">
+      <p className={`text-2xl font-bold tracking-tight ${accent ? 'text-primary' : ''}`}>{value}</p>
+      <p className="text-muted mt-0.5 text-sm">{label}</p>
     </div>
   );
 }
@@ -25,7 +25,7 @@ export default async function DashboardOverview() {
 
   if (!dispensary) {
     return (
-      <div className="rounded-card border-border bg-surface border p-10 text-center">
+      <div className="card p-10 text-center">
         <h1 className="text-xl font-bold">Welcome to Weedtip</h1>
         <p className="text-muted mx-auto mt-2 max-w-md">
           You don&apos;t have a dispensary listing yet. Listings start in{' '}
@@ -74,7 +74,8 @@ export default async function DashboardOverview() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{dispensary.name}</h1>
+          <p className="eyebrow mb-1">Dashboard</p>
+          <h1 className="text-2xl font-bold sm:text-3xl">{dispensary.name}</h1>
           <p className="text-muted text-sm">
             Status:{' '}
             <Badge tone={dispensary.status === 'active' ? 'primary' : 'muted'}>
@@ -90,14 +91,14 @@ export default async function DashboardOverview() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <Stat label="Revenue" value={formatPrice(revenue)} />
+        <Stat label="Revenue" value={formatPrice(revenue)} accent />
         <Stat label="Products" value={productCount ?? 0} />
         <Stat label="Active deals" value={dealCount ?? 0} />
         <Stat label="Pending orders" value={pendingOrders} />
         <Stat label="Avg rating" value={avgRating} />
       </div>
 
-      <div className="rounded-card border-border bg-surface border p-6">
+      <div className="card p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Recent orders</h2>
           <Link href="/dashboard/orders" className="text-primary text-sm hover:underline">
@@ -123,7 +124,7 @@ export default async function DashboardOverview() {
         )}
       </div>
 
-      <div className="rounded-card border-border bg-surface border p-6">
+      <div className="card p-6">
         <h2 className="text-lg font-semibold">Quick actions</h2>
         <p className="text-muted mt-1 text-sm">Manage your menu, deals, and orders.</p>
         <div className="mt-4 flex flex-wrap gap-2">

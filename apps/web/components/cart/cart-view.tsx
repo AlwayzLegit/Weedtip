@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Loader2, Minus, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { ESTIMATED_TAX_RATE, type OrderType } from '@weedtip/shared';
 import { previewPromo, startCheckout } from '@/app/actions/checkout';
 import { cn } from '@/lib/utils';
@@ -38,10 +38,13 @@ export function CartView({
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="rounded-card border-border bg-surface border p-10 text-center">
-        <p className="font-medium">Your cart is empty</p>
+      <div className="card p-12 text-center">
+        <div className="bg-surface-2 text-muted mx-auto flex h-14 w-14 items-center justify-center rounded-full">
+          <ShoppingCart className="h-7 w-7" />
+        </div>
+        <p className="mt-4 font-medium">Your cart is empty</p>
         <p className="text-muted mt-1 text-sm">Browse dispensaries to start an order.</p>
-        <Link href="/dispensaries" className="mt-4 inline-block">
+        <Link href="/dispensaries" className="mt-5 inline-block">
           <Button>Find dispensaries</Button>
         </Link>
       </div>
@@ -113,7 +116,7 @@ export function CartView({
         {cart.items.map((item) => (
           <div
             key={item.productId}
-            className="rounded-card border-border bg-surface flex items-center gap-4 border p-4"
+            className="rounded-card border-border bg-surface shadow-card flex items-center gap-4 border p-4"
           >
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{item.name}</p>
@@ -156,7 +159,7 @@ export function CartView({
 
       {/* Summary */}
       <div className="space-y-4">
-        <div className="rounded-card border-border bg-surface border p-5">
+        <div className="card sheen p-5 lg:sticky lg:top-20">
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted">Subtotal</span>

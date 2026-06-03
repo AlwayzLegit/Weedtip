@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { MapPin } from 'lucide-react';
 import { dispensarySearchSchema } from '@weedtip/shared';
 import { searchDispensaries } from '@weedtip/supabase/queries';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -90,7 +91,10 @@ export default async function DispensariesPage({
         ]}
       />
       <div className="mb-6 space-y-4">
-        <h1 className="text-2xl font-bold">Dispensaries</h1>
+        <div>
+          <p className="eyebrow mb-1">Find your shop</p>
+          <h1 className="text-2xl font-bold sm:text-3xl">Dispensaries</h1>
+        </div>
         <SearchBar />
         <DispensaryFilters />
       </div>
@@ -107,8 +111,11 @@ export default async function DispensariesPage({
             </p>
 
             {rows.length === 0 ? (
-              <div className="rounded-card border-border bg-surface border p-10 text-center">
-                <p className="font-medium">No dispensaries found</p>
+              <div className="rounded-card border-border bg-surface shadow-card border p-12 text-center">
+                <div className="bg-surface-2 text-muted mx-auto flex h-12 w-12 items-center justify-center rounded-full">
+                  <MapPin className="h-6 w-6" />
+                </div>
+                <p className="mt-3 font-medium">No dispensaries found</p>
                 <p className="text-muted mt-1 text-sm">
                   Try widening your search or clearing filters.
                 </p>
@@ -165,7 +172,7 @@ export default async function DispensariesPage({
 
           {/* Map */}
           <div className="hidden lg:block">
-            <div className="rounded-card border-border sticky top-20 h-[70vh] overflow-hidden border">
+            <div className="rounded-card border-border shadow-card sticky top-20 h-[70vh] overflow-hidden border">
               <DispensaryMap
                 points={points}
                 center={params.lat && params.lng ? { lat: params.lat, lng: params.lng } : undefined}

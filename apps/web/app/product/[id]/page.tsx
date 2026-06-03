@@ -6,7 +6,7 @@ import { deleteProductReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { DeleteButton } from '@/components/dashboard/delete-button';
-import { MediaImage } from '@/components/media-image';
+import { ProductGallery } from '@/components/product-gallery';
 import { ProductReviewForm } from '@/components/product-review-form';
 import { RatingStars } from '@/components/rating-stars';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -142,12 +142,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <JsonLd data={jsonLd} />
       <Breadcrumbs items={crumbs} />
       <div className="grid gap-8 sm:grid-cols-2">
-        <MediaImage
-          url={product.image_urls[0]}
-          alt={product.name}
-          className="rounded-card border-border h-64 border"
-          iconClassName="h-16 w-16"
-        />
+        <ProductGallery images={product.image_urls ?? []} alt={product.name} />
         <div>
           <div className="flex flex-wrap items-center gap-2">
             {product.strain_type && (

@@ -67,7 +67,7 @@ export default async function AdminPromotions() {
             No placements yet.
           </div>
         ) : (
-          <div className="rounded-card border-border overflow-hidden border">
+          <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
             <table className="w-full text-sm">
               <thead className="bg-surface-2 text-muted text-left">
                 <tr>
@@ -185,7 +185,7 @@ export default async function AdminPromotions() {
         </div>
 
         {subs && subs.length > 0 && (
-          <div className="rounded-card border-border overflow-hidden border">
+          <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
             <table className="w-full text-sm">
               <thead className="bg-surface-2 text-muted text-left">
                 <tr>

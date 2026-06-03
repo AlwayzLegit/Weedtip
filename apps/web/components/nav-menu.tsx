@@ -154,7 +154,7 @@ export function NavMenu({
             {menuOpen && (
               <div
                 role="menu"
-                className="rounded-card border-border bg-surface absolute right-0 top-12 z-50 w-64 border p-2 shadow-xl"
+                className="rounded-card border-border bg-surface shadow-card-hover sheen animate-slide-up absolute right-0 top-12 z-50 w-64 border p-2"
               >
                 <div className="px-3 py-2">
                   <p className="truncate text-sm font-medium">{displayName ?? 'Your account'}</p>
@@ -198,9 +198,31 @@ export function NavMenu({
 
       {/* Mobile drawer */}
       {drawerOpen && (
-        <div className="border-border bg-background absolute inset-x-0 top-16 z-50 border-b p-4 md:hidden">
-          <nav className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">{browseLinks}</div>
+        <>
+          <button
+            aria-hidden
+            tabIndex={-1}
+            onClick={() => setDrawerOpen(false)}
+            className="bg-background/60 animate-fade-in fixed inset-0 top-16 z-40 md:hidden"
+          />
+          <div className="glass animate-slide-up shadow-card-hover absolute inset-x-0 top-16 z-50 border-b p-4 md:hidden">
+            <nav className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                {BROWSE.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      'rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      pathname.startsWith(link.href)
+                        ? 'bg-primary-muted text-primary'
+                        : 'text-muted hover:bg-surface-2 hover:text-foreground',
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
 
             <div className="border-border border-t pt-4">
               {email ? (
@@ -228,8 +250,9 @@ export function NavMenu({
                 signedOutButtons
               )}
             </div>
-          </nav>
-        </div>
+            </nav>
+          </div>
+        </>
       )}
     </>
   );
