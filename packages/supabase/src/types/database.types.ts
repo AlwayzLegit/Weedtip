@@ -1250,6 +1250,15 @@ export type Database = {
         Args: { p_reply: string; p_review_id: string }
         Returns: undefined
       }
+      sale_prices_for: {
+        Args: { p_product_ids: string[] }
+        Returns: {
+          product_id: string
+          sale_cents: number
+          deal_id: string
+          deal_title: string
+        }[]
+      }
       reject_ownership_request: {
         Args: { p_request_id: string }
         Returns: undefined

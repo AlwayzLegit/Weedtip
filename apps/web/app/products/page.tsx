@@ -117,6 +117,14 @@ export default async function ProductsPage({
   const sponsoredIds = new Set(sponsored.map((p) => p.id));
   const organic = rows.filter((r) => !sponsoredIds.has(r.id));
 
+  // Resolve active storefront sale prices for everything on the page.
+  const shownIds = [...new Set([...sponsored.map((p) => p.id), ...organic.map((r) => r.id)])];
+  const saleMap = new Map<string, number>();
+  if (shownIds.length > 0) {
+    const { data: sales } = await supabase.rpc('sale_prices_for', { p_product_ids: shownIds });
+    for (const s of sales ?? []) saleMap.set(s.product_id, s.sale_cents);
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-6 space-y-4">
@@ -136,7 +144,8 @@ export default async function ProductsPage({
               p={{
                 name: p.name,
                 brand: p.brand,
-                priceCents: p.price_cents,
+                priceCents: saleMap.get(p.id) ?? p.price_cents,
+                originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
                 imageUrl: p.image_urls[0] ?? null,
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,
@@ -166,7 +175,8 @@ export default async function ProductsPage({
               p={{
                 name: p.name,
                 brand: p.brand,
-                priceCents: p.price_cents,
+                priceCents: saleMap.get(p.id) ?? p.price_cents,
+                originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
                 imageUrl: p.image_urls[0] ?? null,
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,

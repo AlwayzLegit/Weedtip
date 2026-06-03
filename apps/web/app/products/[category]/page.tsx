@@ -49,6 +49,15 @@ export default async function CategoryPage({
     .order('price_cents');
   const products = productData ?? [];
 
+  // Active storefront sale prices for the listed products.
+  const saleMap = new Map<string, number>();
+  if (products.length > 0) {
+    const { data: sales } = await supabase.rpc('sale_prices_for', {
+      p_product_ids: products.map((p) => p.id),
+    });
+    for (const s of sales ?? []) saleMap.set(s.product_id, s.sale_cents);
+  }
+
   const label = category.name.toLowerCase();
   const faqs = [
     {
@@ -93,7 +102,8 @@ export default async function CategoryPage({
               p={{
                 name: p.name,
                 brand: p.brand,
-                priceCents: p.price_cents,
+                priceCents: saleMap.get(p.id) ?? p.price_cents,
+                originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
                 imageUrl: p.image_urls[0] ?? null,
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,
