@@ -27,6 +27,8 @@ export interface DispensaryCardData {
 
 export function DispensaryCard({ d }: { d: DispensaryCardData }) {
   const distance = formatDistance(d.distanceMeters ?? null);
+  // Best-of style trust signal: highly rated with enough reviews to be credible.
+  const topRated = (d.rating ?? 0) >= 4.5 && (d.reviewCount ?? 0) >= 10;
 
   return (
     <Link
@@ -67,6 +69,11 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
               {d.rating.toFixed(1)}
               {d.reviewCount ? ` (${d.reviewCount})` : ''}
             </span>
+            {topRated && (
+              <Badge tone="primary" className="ml-0.5">
+                Top Rated
+              </Badge>
+            )}
           </div>
         )}
 

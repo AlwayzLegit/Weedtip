@@ -259,6 +259,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   </span>
                 </span>
               )}
+              {avgRating >= 4.5 && reviews && reviews.length >= 10 && (
+                <Badge tone="primary">Top Rated</Badge>
+              )}
               {d.is_pickup && (
                 <Badge tone="outline">
                   <Store className="h-3 w-3" /> Pickup
