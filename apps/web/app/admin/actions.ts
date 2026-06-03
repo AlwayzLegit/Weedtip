@@ -333,11 +333,15 @@ export async function upsertBrand(_prev: FormState, fd: FormData): Promise<FormS
   });
   if (!parsed.success) return fromZodError(parsed.error);
 
+  // website isn't part of the shared brandSchema; merge it in (nullable column).
+  const websiteRaw = str(fd, 'website');
+  const payload = { ...parsed.data, website: websiteRaw ?? null };
+
   const supabase = await createClient();
   const id = str(fd, 'id');
   const { error } = id
-    ? await supabase.from('brands').update(parsed.data).eq('id', id)
-    : await supabase.from('brands').insert(parsed.data);
+    ? await supabase.from('brands').update(payload).eq('id', id)
+    : await supabase.from('brands').insert(payload);
 
   if (error) {
     return error.code === '23505'
