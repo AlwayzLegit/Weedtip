@@ -284,8 +284,19 @@ const strainSchema = z.object({
   description: z.string().max(5000).nullable(),
   effects: z.array(z.string().max(40)).max(20),
   flavors: z.array(z.string().max(40)).max(20),
+  terpenes: z.array(z.string().max(40)).max(20),
+  negative_effects: z.array(z.string().max(40)).max(20),
+  medical_uses: z.array(z.string().max(60)).max(20),
+  parents: z.array(z.string().max(60)).max(10),
   thc_low: z.number().min(0).max(100).nullable(),
   thc_high: z.number().min(0).max(100).nullable(),
+  cbd_low: z.number().min(0).max(100).nullable(),
+  cbd_high: z.number().min(0).max(100).nullable(),
+  grow_difficulty: z.string().max(40).nullable(),
+  flowering_days_min: z.number().int().min(0).max(365).nullable(),
+  flowering_days_max: z.number().int().min(0).max(365).nullable(),
+  yield_note: z.string().max(120).nullable(),
+  grow_notes: z.string().max(2000).nullable(),
 });
 
 export async function upsertStrain(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -297,8 +308,19 @@ export async function upsertStrain(_prev: FormState, fd: FormData): Promise<Form
     description: str(fd, 'description') ?? null,
     effects: splitList(str(fd, 'effects')),
     flavors: splitList(str(fd, 'flavors')),
+    terpenes: splitList(str(fd, 'terpenes')),
+    negative_effects: splitList(str(fd, 'negative_effects')),
+    medical_uses: splitList(str(fd, 'medical_uses')),
+    parents: splitList(str(fd, 'parents')),
     thc_low: numOpt(fd, 'thc_low') ?? null,
     thc_high: numOpt(fd, 'thc_high') ?? null,
+    cbd_low: numOpt(fd, 'cbd_low') ?? null,
+    cbd_high: numOpt(fd, 'cbd_high') ?? null,
+    grow_difficulty: str(fd, 'grow_difficulty') ?? null,
+    flowering_days_min: numOpt(fd, 'flowering_days_min') ?? null,
+    flowering_days_max: numOpt(fd, 'flowering_days_max') ?? null,
+    yield_note: str(fd, 'yield_note') ?? null,
+    grow_notes: str(fd, 'grow_notes') ?? null,
   });
   if (!parsed.success) return fromZodError(parsed.error);
 
