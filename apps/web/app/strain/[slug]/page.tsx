@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Leaf } from 'lucide-react';
+import { Leaf, Sprout } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
+import { StrainFavoriteButton } from '@/components/strain/strain-favorite-button';
 import { Badge } from '@/components/ui/badge';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
@@ -61,6 +63,30 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
     for (const s of sales ?? []) saleMap.set(s.product_id, s.sale_cents);
   }
 
+  // Is the current user signed in / has they saved this strain?
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let saved = false;
+  if (user) {
+    const { data: fav } = await supabase
+      .from('strain_favorites')
+      .select('strain_id')
+      .eq('strain_id', strain.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    saved = !!fav;
+  }
+
+  // Calming ↔ energizing lean, derived from the strain family (Leafly-style meter).
+  const energizing = strain.type === 'sativa' ? 78 : strain.type === 'indica' ? 22 : 50;
+  const hasGrow =
+    strain.grow_difficulty ||
+    strain.flowering_days_min ||
+    strain.flowering_days_max ||
+    strain.yield_note ||
+    strain.grow_notes;
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <Breadcrumbs
@@ -70,17 +96,48 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
           { name: strain.name, href: `/strain/${strain.slug}` },
         ]}
       />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Leaf className="text-primary h-6 w-6" />
         <h1 className="text-3xl font-bold">{strain.name}</h1>
         <Badge tone="primary">{TYPE_LABEL[strain.type]}</Badge>
+        <div className="ml-auto">
+          <StrainFavoriteButton
+            strainId={strain.id}
+            slug={strain.slug}
+            initialSaved={saved}
+            initialCount={strain.saves_count}
+            isAuthed={!!user}
+          />
+        </div>
       </div>
 
-      {strain.thc_low != null && strain.thc_high != null && (
-        <p className="text-muted mt-2">
-          THC {strain.thc_low}–{strain.thc_high}%
+      {(strain.thc_low != null || strain.cbd_low != null) && (
+        <p className="text-muted mt-2 flex flex-wrap gap-x-4">
+          {strain.thc_low != null && strain.thc_high != null && (
+            <span>
+              THC {strain.thc_low}–{strain.thc_high}%
+            </span>
+          )}
+          {strain.cbd_low != null && strain.cbd_high != null && (
+            <span>
+              CBD {strain.cbd_low}–{strain.cbd_high}%
+            </span>
+          )}
         </p>
       )}
+
+      <div className="mt-4 max-w-md">
+        <div className="text-muted flex justify-between text-xs">
+          <span>Calming</span>
+          <span>Energizing</span>
+        </div>
+        <div className="bg-surface-2 relative mt-1 h-2 rounded-full">
+          <span
+            className="bg-primary absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-background"
+            style={{ left: `${energizing}%` }}
+          />
+        </div>
+      </div>
 
       {strain.description && <p className="text-muted mt-4 max-w-2xl">{strain.description}</p>}
 
@@ -113,7 +170,102 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
             </div>
           </section>
         )}
+        {strain.terpenes.length > 0 && (
+          <section>
+            <h2 className="text-muted mb-2 text-sm font-semibold uppercase tracking-wide">
+              Terpenes
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {strain.terpenes.map((t) => (
+                <Badge key={t} tone="outline">
+                  {t}
+                </Badge>
+              ))}
+            </div>
+          </section>
+        )}
+        {strain.negative_effects.length > 0 && (
+          <section>
+            <h2 className="text-muted mb-2 text-sm font-semibold uppercase tracking-wide">
+              May cause
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {strain.negative_effects.map((e) => (
+                <Badge key={e} tone="muted">
+                  {e}
+                </Badge>
+              ))}
+            </div>
+          </section>
+        )}
+        {strain.medical_uses.length > 0 && (
+          <section>
+            <h2 className="text-muted mb-2 text-sm font-semibold uppercase tracking-wide">
+              May help with
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {strain.medical_uses.map((m) => (
+                <Badge key={m} tone="primary">
+                  {m}
+                </Badge>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
+
+      {strain.parents.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-muted mb-2 text-sm font-semibold uppercase tracking-wide">
+            Genetics
+          </h2>
+          <p className="text-sm">
+            A cross of{' '}
+            {strain.parents.map((p, i) => (
+              <span key={p}>
+                {i > 0 && ' × '}
+                <Link href={`/search?q=${encodeURIComponent(p)}`} className="text-primary hover:underline">
+                  {p}
+                </Link>
+              </span>
+            ))}
+            .
+          </p>
+        </section>
+      )}
+
+      {hasGrow && (
+        <section className="card mt-8 p-5">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+            <Sprout className="text-primary h-5 w-5" /> Grow info
+          </h2>
+          <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
+            {strain.grow_difficulty && (
+              <div>
+                <dt className="text-muted text-xs uppercase tracking-wide">Difficulty</dt>
+                <dd className="font-medium">{strain.grow_difficulty}</dd>
+              </div>
+            )}
+            {(strain.flowering_days_min || strain.flowering_days_max) && (
+              <div>
+                <dt className="text-muted text-xs uppercase tracking-wide">Flowering</dt>
+                <dd className="font-medium">
+                  {strain.flowering_days_min && strain.flowering_days_max
+                    ? `${strain.flowering_days_min}–${strain.flowering_days_max} days`
+                    : `${strain.flowering_days_min ?? strain.flowering_days_max} days`}
+                </dd>
+              </div>
+            )}
+            {strain.yield_note && (
+              <div>
+                <dt className="text-muted text-xs uppercase tracking-wide">Yield</dt>
+                <dd className="font-medium">{strain.yield_note}</dd>
+              </div>
+            )}
+          </dl>
+          {strain.grow_notes && <p className="text-muted mt-3 text-sm">{strain.grow_notes}</p>}
+        </section>
+      )}
 
       <section className="mt-10">
         <h2 className="mb-3 text-lg font-semibold">Where to buy</h2>

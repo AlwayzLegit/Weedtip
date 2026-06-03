@@ -1152,48 +1152,110 @@ export type Database = {
       }
       strains: {
         Row: {
+          cbd_high: number | null
+          cbd_low: number | null
           created_at: string
           description: string | null
           effects: string[]
           flavors: string[]
+          flowering_days_max: number | null
+          flowering_days_min: number | null
+          grow_difficulty: string | null
+          grow_notes: string | null
           id: string
           image_url: string | null
+          medical_uses: string[]
           name: string
+          negative_effects: string[]
+          parents: string[]
+          saves_count: number
           slug: string
+          terpenes: string[]
           thc_high: number | null
           thc_low: number | null
           type: Database["public"]["Enums"]["strain_type"]
           updated_at: string
+          yield_note: string | null
+        }
+        Insert: {
+          cbd_high?: number | null
+          cbd_low?: number | null
+          created_at?: string
+          description?: string | null
+          effects?: string[]
+          flavors?: string[]
+          flowering_days_max?: number | null
+          flowering_days_min?: number | null
+          grow_difficulty?: string | null
+          grow_notes?: string | null
+          id?: string
+          image_url?: string | null
+          medical_uses?: string[]
+          name: string
+          negative_effects?: string[]
+          parents?: string[]
+          saves_count?: number
+          slug: string
+          terpenes?: string[]
+          thc_high?: number | null
+          thc_low?: number | null
+          type?: Database["public"]["Enums"]["strain_type"]
+          updated_at?: string
+          yield_note?: string | null
+        }
+        Update: {
+          cbd_high?: number | null
+          cbd_low?: number | null
+          created_at?: string
+          description?: string | null
+          effects?: string[]
+          flavors?: string[]
+          flowering_days_max?: number | null
+          flowering_days_min?: number | null
+          grow_difficulty?: string | null
+          grow_notes?: string | null
+          id?: string
+          image_url?: string | null
+          medical_uses?: string[]
+          name?: string
+          negative_effects?: string[]
+          parents?: string[]
+          saves_count?: number
+          slug?: string
+          terpenes?: string[]
+          thc_high?: number | null
+          thc_low?: number | null
+          type?: Database["public"]["Enums"]["strain_type"]
+          updated_at?: string
+          yield_note?: string | null
+        }
+        Relationships: []
+      }
+      strain_favorites: {
+        Row: {
+          created_at: string
+          strain_id: string
+          user_id: string
         }
         Insert: {
           created_at?: string
-          description?: string | null
-          effects?: string[]
-          flavors?: string[]
-          id?: string
-          image_url?: string | null
-          name: string
-          slug: string
-          thc_high?: number | null
-          thc_low?: number | null
-          type?: Database["public"]["Enums"]["strain_type"]
-          updated_at?: string
+          strain_id: string
+          user_id: string
         }
         Update: {
           created_at?: string
-          description?: string | null
-          effects?: string[]
-          flavors?: string[]
-          id?: string
-          image_url?: string | null
-          name?: string
-          slug?: string
-          thc_high?: number | null
-          thc_low?: number | null
-          type?: Database["public"]["Enums"]["strain_type"]
-          updated_at?: string
+          strain_id?: string
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "strain_favorites_strain_id_fkey"
+            columns: ["strain_id"]
+            isOneToOne: false
+            referencedRelation: "strains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
