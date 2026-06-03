@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { Logo } from './brand/logo';
+import { GlobalSearch } from './global-search';
 import { NavMenu } from './nav-menu';
 
 export async function Navbar() {
@@ -20,9 +21,10 @@ export async function Navbar() {
   return (
     <header className="border-border/70 bg-background/70 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <Link href="/" aria-label="Weedtip home">
+        <Link href="/" aria-label="Weedtip home" className="shrink-0">
           <Logo />
         </Link>
+        <GlobalSearch className="mx-4 hidden max-w-md flex-1 md:block" />
         <NavMenu
           email={user?.email ?? null}
           displayName={profile?.display_name ?? null}
