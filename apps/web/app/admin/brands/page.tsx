@@ -1,57 +1,89 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus, Search } from 'lucide-react';
 import { deleteBrand } from '@/app/admin/actions';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Brands · Admin' };
 
-export default async function AdminBrands() {
+export default async function AdminBrands({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const search = (q ?? '').trim();
+
   const supabase = await createClient();
-  const { data: brands } = await supabase.from('brands').select('id,name,slug').order('name');
+  let query = supabase.from('brands').select('id,name,slug').order('name');
+  if (search) query = query.ilike('name', `%${search}%`);
+  const { data: brands } = await query;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Brands</h2>
-        <Link href="/admin/brands/new">
-          <Button size="sm">
-            <Plus className="h-4 w-4" /> Add brand
-          </Button>
-        </Link>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="eyebrow mb-1">Catalog</p>
+          <h2 className="text-2xl font-bold">Brands</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <form className="relative w-44 sm:w-56">
+            <Search className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+            <Input name="q" defaultValue={search} placeholder="Search brands…" className="pl-9" />
+          </form>
+          <Link href="/admin/brands/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4" /> Add
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      <p className="text-muted text-sm">
+        {brands?.length ?? 0} {brands?.length === 1 ? 'brand' : 'brands'}
+        {search ? ` for “${search}”` : ''}
+      </p>
 
       <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
         <table className="w-full text-sm">
-          <thead className="bg-surface-2 text-muted text-left">
+          <thead className="bg-surface-2 text-muted text-left text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-2 font-medium">Name</th>
-              <th className="px-4 py-2 font-medium">Slug</th>
-              <th className="px-4 py-2" />
+              <th className="px-4 py-2.5 font-medium">Name</th>
+              <th className="px-4 py-2.5 font-medium">Slug</th>
+              <th className="px-4 py-2.5" />
             </tr>
           </thead>
           <tbody className="divide-border divide-y">
-            {(brands ?? []).map((b) => (
-              <tr key={b.id} className="bg-surface">
-                <td className="px-4 py-3 font-medium">{b.name}</td>
-                <td className="text-muted px-4 py-3">{b.slug}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    <Link href={`/admin/brands/${b.id}`}>
-                      <Button variant="ghost" size="sm">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <DeleteButton
-                      action={deleteBrand.bind(null, b.id)}
-                      confirmText={`Delete "${b.name}"?`}
-                    />
-                  </div>
+            {(brands ?? []).length === 0 ? (
+              <tr className="bg-surface">
+                <td colSpan={3} className="text-muted px-4 py-8 text-center">
+                  No brands found.
                 </td>
               </tr>
-            ))}
+            ) : (
+              (brands ?? []).map((b) => (
+                <tr key={b.id} className="bg-surface hover:bg-surface-2/50 transition-colors">
+                  <td className="px-4 py-3 font-medium">{b.name}</td>
+                  <td className="text-muted px-4 py-3">{b.slug}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <Link href={`/admin/brands/${b.id}`}>
+                        <Button variant="ghost" size="sm">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <DeleteButton
+                        action={deleteBrand.bind(null, b.id)}
+                        confirmText={`Delete "${b.name}"?`}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
