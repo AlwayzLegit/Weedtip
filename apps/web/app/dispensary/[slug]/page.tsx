@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Check, Globe, Mail, MapPin, Megaphone, Phone, Store, Truck } from 'lucide-react';
+import { Check, Globe, Mail, MapPin, Megaphone, Phone, Store, Tag, Truck } from 'lucide-react';
 import { AMENITY_LABELS, type Amenity, type OperatingHours } from '@weedtip/shared';
 import { deleteReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -134,6 +134,36 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     sections.get(key)!.items!.push(p);
   }
   const menu = [...sections.values()].sort((a, b) => a.sort - b.sort);
+  const saleItems = (products ?? []).filter((p) => saleByProduct.has(p.id));
+
+  // Shared menu tile so the "Sale" section and category sections render identically.
+  const renderTile = (p: NonNullable<typeof products>[number]) => {
+    const sale = saleByProduct.get(p.id);
+    const effectivePrice = sale?.sale_cents ?? p.price_cents;
+    return (
+      <div key={p.id} className="space-y-2">
+        <ProductCard
+          p={{
+            name: p.name,
+            brand: p.brand,
+            priceCents: effectivePrice,
+            originalPriceCents: sale ? p.price_cents : null,
+            imageUrl: p.image_urls[0] ?? null,
+            strainType: p.strain_type,
+            thcPercentage: p.thc_percentage,
+            inStock: p.in_stock,
+            productId: p.id,
+          }}
+        />
+        {p.in_stock && (
+          <AddToCart
+            dispensary={{ id: d.id, slug: d.slug, name: d.name }}
+            product={{ productId: p.id, name: p.name, priceCents: effectivePrice }}
+          />
+        )}
+      </div>
+    );
+  };
 
   const hours = d.hours as OperatingHours | null;
 
@@ -339,43 +369,23 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 <p className="text-muted">No products listed yet.</p>
               ) : (
                 <div className="space-y-8">
+                  {saleItems.length > 0 && (
+                    <div>
+                      <h3 className="text-primary mb-3 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide">
+                        <Tag className="h-4 w-4" /> Sale
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                        {saleItems.map(renderTile)}
+                      </div>
+                    </div>
+                  )}
                   {menu.map((section) => (
                     <div key={section.name}>
                       <h3 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
                         {section.name}
                       </h3>
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                        {section.items!.map((p) => {
-                          const sale = saleByProduct.get(p.id);
-                          const effectivePrice = sale?.sale_cents ?? p.price_cents;
-                          return (
-                            <div key={p.id} className="space-y-2">
-                              <ProductCard
-                                p={{
-                                  name: p.name,
-                                  brand: p.brand,
-                                  priceCents: effectivePrice,
-                                  originalPriceCents: sale ? p.price_cents : null,
-                                  imageUrl: p.image_urls[0] ?? null,
-                                  strainType: p.strain_type,
-                                  thcPercentage: p.thc_percentage,
-                                  inStock: p.in_stock,
-                                  productId: p.id,
-                                }}
-                              />
-                              {p.in_stock && (
-                                <AddToCart
-                                  dispensary={{ id: d.id, slug: d.slug, name: d.name }}
-                                  product={{
-                                    productId: p.id,
-                                    name: p.name,
-                                    priceCents: effectivePrice,
-                                  }}
-                                />
-                              )}
-                            </div>
-                          );
-                        })}
+                        {section.items!.map(renderTile)}
                       </div>
                     </div>
                   ))}
