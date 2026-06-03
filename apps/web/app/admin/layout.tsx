@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   Leaf,
   MapPin,
+  Megaphone,
   Package,
   Shield,
   ShoppingBag,
@@ -17,6 +18,7 @@ import { requireAdmin } from '@/lib/admin';
 const NAV = [
   { href: '/admin', label: 'Overview', icon: Shield },
   { href: '/admin/dispensaries', label: 'Dispensaries', icon: Store },
+  { href: '/admin/promotions', label: 'Promotions', icon: Megaphone },
   { href: '/admin/claims', label: 'Claims', icon: BadgeCheck },
   { href: '/admin/categories', label: 'Categories', icon: Package },
   { href: '/admin/strains', label: 'Strains', icon: Leaf },

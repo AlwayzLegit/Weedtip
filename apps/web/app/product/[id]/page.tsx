@@ -79,6 +79,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const brand = product.brand as { slug: string; name: string } | null;
   const myReview = user ? (reviews ?? []).find((r) => r.user_id === user.id) : undefined;
 
+  // Active auto-apply storefront sale → the price shown and charged.
+  const { data: eff } = await supabase.rpc('effective_unit_price', { p_product_id: id });
+  const effRow = eff?.[0];
+  const onSale = !!effRow?.deal_id && effRow.unit_cents < product.price_cents;
+  const priceCents = onSale ? effRow!.unit_cents : product.price_cents;
+
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -90,7 +96,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       : {}),
     offers: {
       '@type': 'Offer',
-      price: (product.price_cents / 100).toFixed(2),
+      price: (priceCents / 100).toFixed(2),
       priceCurrency: 'USD',
       availability: product.in_stock
         ? 'https://schema.org/InStock'
@@ -161,9 +167,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </p>
           )}
           <h1 className="mt-1 text-3xl font-bold">{product.name}</h1>
-          <p className="text-primary mt-2 text-2xl font-semibold">
-            {formatPrice(product.price_cents)}
-            {product.unit && <span className="text-muted ml-1 text-sm">/ {product.unit}</span>}
+          <p className="mt-2 flex items-baseline gap-2">
+            <span className="text-primary text-2xl font-semibold">{formatPrice(priceCents)}</span>
+            {onSale && (
+              <>
+                <span className="text-muted text-lg line-through">
+                  {formatPrice(product.price_cents)}
+                </span>
+                <Badge tone="primary">Sale</Badge>
+              </>
+            )}
+            {product.unit && <span className="text-muted text-sm">/ {product.unit}</span>}
           </p>
 
           {product.rating_count > 0 && (
@@ -201,7 +215,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 product={{
                   productId: product.id,
                   name: product.name,
-                  priceCents: product.price_cents,
+                  priceCents,
                 }}
               />
             </div>

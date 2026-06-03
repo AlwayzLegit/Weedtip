@@ -13,6 +13,13 @@ import { slugify } from '@/lib/utils';
 import { bool, formError, fromZodError, numOpt, str, type FormState } from '@/lib/forms';
 import { z } from 'zod';
 
+/** datetime-local string → ISO, or undefined if blank/invalid. */
+function toIso(local: string | undefined): string | undefined {
+  if (!local) return undefined;
+  const d = new Date(local);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
 // ─── Dispensary moderation ───────────────────────────────────────────────────
 
 export async function setDispensaryStatus(id: string, status: string): Promise<void> {
@@ -29,8 +36,97 @@ export async function setDispensaryStatus(id: string, status: string): Promise<v
 
 export async function setDispensaryFeatured(id: string, featured: boolean): Promise<void> {
   const supabase = await createClient();
-  await supabase.from('dispensaries').update({ featured }).eq('id', id);
+  // featured_manual is the admin's intent; sync_featured_flags recomputes the
+  // effective `featured` flag (manual OR a live featured placement).
+  await supabase.from('dispensaries').update({ featured_manual: featured }).eq('id', id);
+  await supabase.rpc('sync_featured_flags', { p_dispensary_id: id });
   revalidatePath('/admin/dispensaries');
+  revalidatePath('/');
+}
+
+// ─── Monetization: paid placements ───────────────────────────────────────────
+
+const placementSchema = z.object({
+  dispensary_id: z.string().uuid(),
+  type: z.enum(['featured', 'hero', 'promoted_deal', 'promoted_product']),
+  target_id: z.string().uuid().nullable(),
+  scope_state: z.string().length(2).nullable(),
+  scope_city: z.string().max(100).nullable(),
+  priority: z.number().int().min(0).max(1000),
+  starts_at: z.string().datetime(),
+  ends_at: z.string().datetime().nullable(),
+  price_cents: z.number().int().min(0),
+  notes: z.string().max(500).nullable(),
+});
+
+export async function createPlacement(_prev: FormState, fd: FormData): Promise<FormState> {
+  const type = str(fd, 'type') ?? '';
+  const needsTarget = type === 'promoted_deal' || type === 'promoted_product';
+  const parsed = placementSchema.safeParse({
+    dispensary_id: str(fd, 'dispensary_id') ?? '',
+    type,
+    target_id: needsTarget ? (str(fd, 'target_id') ?? null) : null,
+    scope_state: str(fd, 'scope_state')?.toUpperCase() ?? null,
+    scope_city: str(fd, 'scope_city') ?? null,
+    priority: numOpt(fd, 'priority') ?? 0,
+    starts_at: toIso(str(fd, 'starts_at')) ?? new Date().toISOString(),
+    ends_at: toIso(str(fd, 'ends_at')) ?? null,
+    price_cents: Math.round((numOpt(fd, 'price') ?? 0) * 100),
+    notes: str(fd, 'notes') ?? null,
+  });
+  if (!parsed.success) return fromZodError(parsed.error);
+  if (needsTarget && !parsed.data.target_id) {
+    return formError('Pick a target deal/product for a promoted placement.');
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('placements').insert(parsed.data);
+  if (error) return formError(error.message);
+
+  if (parsed.data.type === 'featured') {
+    await supabase.rpc('sync_featured_flags', { p_dispensary_id: parsed.data.dispensary_id });
+  }
+  revalidatePath('/admin/promotions');
+  revalidatePath('/');
+  redirect('/admin/promotions');
+}
+
+export async function setPlacementActive(
+  id: string,
+  isActive: boolean,
+  dispensaryId: string,
+): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from('placements').update({ is_active: isActive }).eq('id', id);
+  await supabase.rpc('sync_featured_flags', { p_dispensary_id: dispensaryId });
+  revalidatePath('/admin/promotions');
+  revalidatePath('/');
+}
+
+export async function deletePlacement(id: string, dispensaryId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from('placements').delete().eq('id', id);
+  await supabase.rpc('sync_featured_flags', { p_dispensary_id: dispensaryId });
+  revalidatePath('/admin/promotions');
+  revalidatePath('/');
+}
+
+// ─── Monetization: subscriptions ─────────────────────────────────────────────
+
+export async function setDispensaryPlan(_prev: FormState, fd: FormData): Promise<FormState> {
+  const dispensary_id = str(fd, 'dispensary_id') ?? '';
+  const plan_id = str(fd, 'plan_id') ?? null;
+  const status = str(fd, 'status') ?? 'active';
+  if (!dispensary_id) return formError('Missing dispensary.');
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('dispensary_subscriptions').upsert(
+    { dispensary_id, plan_id, status, updated_at: new Date().toISOString() },
+    { onConflict: 'dispensary_id' },
+  );
+  if (error) return formError(error.message);
+  revalidatePath('/admin/promotions');
+  return { status: 'success', message: 'Subscription updated.' };
 }
 
 // ─── Ownership claims ────────────────────────────────────────────────────────

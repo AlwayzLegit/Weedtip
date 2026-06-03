@@ -19,11 +19,22 @@ function discountLabel(type: string, value: number): string {
 export default async function DashboardDeals() {
   const { dispensary } = await requireOwnerDispensary();
   const supabase = await createClient();
-  const { data: deals } = await supabase
-    .from('deals')
-    .select('*')
-    .eq('dispensary_id', dispensary.id)
-    .order('end_date', { ascending: false });
+  const [{ data: deals }, { data: redemptions }] = await Promise.all([
+    supabase
+      .from('deals')
+      .select('*')
+      .eq('dispensary_id', dispensary.id)
+      .order('end_date', { ascending: false }),
+    supabase
+      .from('deal_redemptions')
+      .select('deal_id')
+      .eq('dispensary_id', dispensary.id),
+  ]);
+
+  const redemptionCount = new Map<string, number>();
+  for (const r of redemptions ?? []) {
+    redemptionCount.set(r.deal_id, (redemptionCount.get(r.deal_id) ?? 0) + 1);
+  }
 
   const now = Date.now();
 
@@ -64,6 +75,17 @@ export default async function DashboardDeals() {
                     {new Date(deal.start_date).toLocaleDateString()} –{' '}
                     {new Date(deal.end_date).toLocaleDateString()}
                   </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    {deal.code && (
+                      <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono text-xs font-medium">
+                        {deal.code}
+                      </span>
+                    )}
+                    <span className="text-muted text-xs">
+                      {redemptionCount.get(deal.id) ?? 0} redemption
+                      {(redemptionCount.get(deal.id) ?? 0) === 1 ? '' : 's'}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <Link href={`/dashboard/deals/${deal.id}`}>

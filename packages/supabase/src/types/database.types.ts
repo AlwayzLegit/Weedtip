@@ -88,44 +88,184 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_redemptions: {
+        Row: {
+          code: string
+          created_at: string
+          deal_id: string
+          discount_cents: number
+          dispensary_id: string
+          id: string
+          order_id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          deal_id: string
+          discount_cents: number
+          dispensary_id: string
+          id?: string
+          order_id: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          deal_id?: string
+          discount_cents?: number
+          dispensary_id?: string
+          id?: string
+          order_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_redemptions_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_redemptions_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
+          auto_apply: boolean
+          buy_quantity: number | null
+          code: string | null
           created_at: string
+          days_of_week: number[]
           description: string | null
           discount_type: Database["public"]["Enums"]["discount_type"]
           discount_value: number
           dispensary_id: string
           end_date: string
+          exclude_product_ids: string[]
+          featured: boolean
+          get_discount_percent: number | null
+          get_quantity: number | null
           id: string
+          image_url: string | null
           is_active: boolean
+          kind: Database["public"]["Enums"]["deal_kind"]
+          max_discount_cents: number | null
+          min_subtotal_cents: number | null
+          new_customers_only: boolean
+          order_types: Database["public"]["Enums"]["order_type"][]
+          per_customer_limit: number | null
+          sort_priority: number
           start_date: string
+          stackable: boolean
+          target_brand_ids: string[]
+          target_category_ids: string[]
+          target_price_cents: number | null
+          target_product_ids: string[]
+          target_scope: Database["public"]["Enums"]["deal_target_scope"]
+          terms: string | null
+          time_end: string | null
+          time_start: string | null
           title: string
+          total_limit: number | null
           updated_at: string
         }
         Insert: {
+          auto_apply?: boolean
+          buy_quantity?: number | null
+          code?: string | null
           created_at?: string
+          days_of_week?: number[]
           description?: string | null
           discount_type: Database["public"]["Enums"]["discount_type"]
           discount_value: number
           dispensary_id: string
           end_date: string
+          exclude_product_ids?: string[]
+          featured?: boolean
+          get_discount_percent?: number | null
+          get_quantity?: number | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
+          kind?: Database["public"]["Enums"]["deal_kind"]
+          max_discount_cents?: number | null
+          min_subtotal_cents?: number | null
+          new_customers_only?: boolean
+          order_types?: Database["public"]["Enums"]["order_type"][]
+          per_customer_limit?: number | null
+          sort_priority?: number
           start_date: string
+          stackable?: boolean
+          target_brand_ids?: string[]
+          target_category_ids?: string[]
+          target_price_cents?: number | null
+          target_product_ids?: string[]
+          target_scope?: Database["public"]["Enums"]["deal_target_scope"]
+          terms?: string | null
+          time_end?: string | null
+          time_start?: string | null
           title: string
+          total_limit?: number | null
           updated_at?: string
         }
         Update: {
+          auto_apply?: boolean
+          buy_quantity?: number | null
+          code?: string | null
           created_at?: string
+          days_of_week?: number[]
           description?: string | null
           discount_type?: Database["public"]["Enums"]["discount_type"]
           discount_value?: number
           dispensary_id?: string
           end_date?: string
+          exclude_product_ids?: string[]
+          featured?: boolean
+          get_discount_percent?: number | null
+          get_quantity?: number | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
+          kind?: Database["public"]["Enums"]["deal_kind"]
+          max_discount_cents?: number | null
+          min_subtotal_cents?: number | null
+          new_customers_only?: boolean
+          order_types?: Database["public"]["Enums"]["order_type"][]
+          per_customer_limit?: number | null
+          sort_priority?: number
           start_date?: string
+          stackable?: boolean
+          target_brand_ids?: string[]
+          target_category_ids?: string[]
+          target_price_cents?: number | null
+          target_product_ids?: string[]
+          target_scope?: Database["public"]["Enums"]["deal_target_scope"]
+          terms?: string | null
+          time_end?: string | null
+          time_start?: string | null
           title?: string
+          total_limit?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -173,12 +313,15 @@ export type Database = {
       dispensaries: {
         Row: {
           address: string
+          amenities: string[]
+          announcement: string | null
           city: string
           cover_image_url: string | null
           created_at: string
           description: string | null
           email: string | null
           featured: boolean
+          featured_manual: boolean
           hours: Json | null
           id: string
           is_delivery: boolean
@@ -205,12 +348,15 @@ export type Database = {
         }
         Insert: {
           address: string
+          amenities?: string[]
+          announcement?: string | null
           city: string
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
           featured?: boolean
+          featured_manual?: boolean
           hours?: Json | null
           id?: string
           is_delivery?: boolean
@@ -237,12 +383,15 @@ export type Database = {
         }
         Update: {
           address?: string
+          amenities?: string[]
+          announcement?: string | null
           city?: string
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
           featured?: boolean
+          featured_manual?: boolean
           hours?: Json | null
           id?: string
           is_delivery?: boolean
@@ -273,6 +422,57 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispensary_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          dispensary_id: string
+          id: string
+          plan_id: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          dispensary_id: string
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          dispensary_id?: string
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispensary_subscriptions_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: true
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispensary_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
             referencedColumns: ["id"]
           },
         ]
@@ -384,6 +584,8 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          deal_id: string | null
+          discount_cents: number
           dispensary_id: string
           id: string
           items: Json
@@ -392,6 +594,8 @@ export type Database = {
           paid_at: string | null
           payment_method: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
+          platform_fee_bps: number
+          platform_fee_cents: number
           status: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -403,6 +607,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deal_id?: string | null
+          discount_cents?: number
           dispensary_id: string
           id?: string
           items: Json
@@ -411,6 +617,8 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          platform_fee_bps?: number
+          platform_fee_cents?: number
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -422,6 +630,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deal_id?: string | null
+          discount_cents?: number
           dispensary_id?: string
           id?: string
           items?: Json
@@ -430,6 +640,8 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          platform_fee_bps?: number
+          platform_fee_cents?: number
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -440,6 +652,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_dispensary_id_fkey"
             columns: ["dispensary_id"]
@@ -503,6 +722,136 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      placement_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: number
+          placement_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: never
+          placement_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: never
+          placement_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_events_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "placements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placements: {
+        Row: {
+          created_at: string
+          dispensary_id: string
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          price_cents: number
+          priority: number
+          scope_city: string | null
+          scope_state: string | null
+          starts_at: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          target_id: string | null
+          type: Database["public"]["Enums"]["placement_type"]
+        }
+        Insert: {
+          created_at?: string
+          dispensary_id: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          price_cents?: number
+          priority?: number
+          scope_city?: string | null
+          scope_state?: string | null
+          starts_at?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          target_id?: string | null
+          type: Database["public"]["Enums"]["placement_type"]
+        }
+        Update: {
+          created_at?: string
+          dispensary_id?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          price_cents?: number
+          priority?: number
+          scope_city?: string | null
+          scope_state?: string | null
+          starts_at?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          target_id?: string | null
+          type?: Database["public"]["Enums"]["placement_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placements_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          commission_bps: number
+          created_at: string
+          description: string | null
+          features: Json
+          id: string
+          is_active: boolean
+          name: string
+          price_cents: number
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          commission_bps?: number
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          price_cents?: number
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          commission_bps?: number
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
       }
       product_reviews: {
         Row: {
@@ -696,6 +1045,8 @@ export type Database = {
           created_at: string
           dispensary_id: string
           id: string
+          owner_reply: string | null
+          owner_reply_at: string | null
           rating: number
           updated_at: string
           user_id: string
@@ -706,6 +1057,8 @@ export type Database = {
           created_at?: string
           dispensary_id: string
           id?: string
+          owner_reply?: string | null
+          owner_reply_at?: string | null
           rating: number
           updated_at?: string
           user_id: string
@@ -716,6 +1069,8 @@ export type Database = {
           created_at?: string
           dispensary_id?: string
           id?: string
+          owner_reply?: string | null
+          owner_reply_at?: string | null
           rating?: number
           updated_at?: string
           user_id?: string
@@ -784,7 +1139,50 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      active_placements: {
+        Row: {
+          created_at: string | null
+          dispensary_id: string | null
+          ends_at: string | null
+          id: string | null
+          is_active: boolean | null
+          notes: string | null
+          price_cents: number | null
+          priority: number | null
+          scope_city: string | null
+          scope_state: string | null
+          starts_at: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          target_id: string | null
+          type: Database["public"]["Enums"]["placement_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placements_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placement_stats: {
+        Row: {
+          clicks: number | null
+          impressions: number | null
+          placement_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_events_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "placements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       approve_ownership_request: {
@@ -795,14 +1193,40 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      compute_promo_discount: {
+        Args: { p_code: string; p_dispensary_id: string; p_subtotal_cents: number }
+        Returns: {
+          deal_id: string
+          discount_cents: number
+          title: string
+        }[]
+      }
       create_order: {
         Args: {
           p_dispensary_id: string
           p_items: Json
           p_notes?: string
           p_order_type: Database["public"]["Enums"]["order_type"]
+          p_promo_code?: string
         }
         Returns: string
+      }
+      dispensary_sale_prices: {
+        Args: { p_dispensary_id: string }
+        Returns: {
+          product_id: string
+          sale_cents: number
+          deal_id: string
+          deal_title: string
+        }[]
+      }
+      effective_unit_price: {
+        Args: { p_product_id: string }
+        Returns: {
+          unit_cents: number
+          deal_id: string
+          deal_title: string
+        }[]
       }
       is_admin: { Args: never; Returns: boolean }
       is_dispensary_open: {
@@ -818,6 +1242,23 @@ export type Database = {
         Returns: undefined
       }
       recalc_product_rating: { Args: { target_id: string }; Returns: undefined }
+      record_placement_event: {
+        Args: { p_placement_id: string; p_type: string }
+        Returns: undefined
+      }
+      reply_to_review: {
+        Args: { p_reply: string; p_review_id: string }
+        Returns: undefined
+      }
+      sale_prices_for: {
+        Args: { p_product_ids: string[] }
+        Returns: {
+          product_id: string
+          sale_cents: number
+          deal_id: string
+          deal_title: string
+        }[]
+      }
       reject_ownership_request: {
         Args: { p_request_id: string }
         Returns: undefined
@@ -909,8 +1350,21 @@ export type Database = {
           weight_grams: number
         }[]
       }
+      sync_featured_flags: {
+        Args: { p_dispensary_id?: string }
+        Returns: undefined
+      }
     }
     Enums: {
+      deal_kind:
+        | "percentage"
+        | "fixed_amount"
+        | "price_target"
+        | "bogo"
+        | "bundle"
+        | "gift"
+        | "spend_threshold"
+      deal_target_scope: "menu" | "category" | "brand" | "products"
       discount_type: "percentage" | "fixed" | "bogo"
       dispensary_status: "pending" | "active" | "suspended"
       order_status:
@@ -921,6 +1375,7 @@ export type Database = {
         | "cancelled"
       order_type: "pickup" | "delivery"
       payment_status: "unpaid" | "paid" | "refunded"
+      placement_type: "featured" | "hero" | "promoted_deal" | "promoted_product"
       strain_type: "indica" | "sativa" | "hybrid" | "cbd"
       user_role: "consumer" | "dispensary_owner" | "admin"
     }
@@ -1053,11 +1508,22 @@ export const Constants = {
   },
   public: {
     Enums: {
+      deal_kind: [
+        "percentage",
+        "fixed_amount",
+        "price_target",
+        "bogo",
+        "bundle",
+        "gift",
+        "spend_threshold",
+      ],
+      deal_target_scope: ["menu", "category", "brand", "products"],
       discount_type: ["percentage", "fixed", "bogo"],
       dispensary_status: ["pending", "active", "suspended"],
       order_status: ["pending", "confirmed", "ready", "completed", "cancelled"],
       order_type: ["pickup", "delivery"],
       payment_status: ["unpaid", "paid", "refunded"],
+      placement_type: ["featured", "hero", "promoted_deal", "promoted_product"],
       strain_type: ["indica", "sativa", "hybrid", "cbd"],
       user_role: ["consumer", "dispensary_owner", "admin"],
     },

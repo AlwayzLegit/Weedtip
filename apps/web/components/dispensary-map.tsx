@@ -11,6 +11,8 @@ export interface MapPoint {
   name: string;
   lat: number;
   lng: number;
+  /** Featured/paid listings get a distinct gold pin (Weedmaps-style tiering). */
+  featured?: boolean;
 }
 
 /**
@@ -59,13 +61,22 @@ export function DispensaryMap({
       mapStyle="mapbox://styles/mapbox/dark-v11"
       style={{ width: '100%', height: '100%' }}
     >
-      {points.map((p) => (
-        <Marker key={p.slug} latitude={p.lat} longitude={p.lng} anchor="bottom">
-          <Link href={`/dispensary/${p.slug}`} title={p.name}>
-            <MapPin className="fill-primary/30 text-primary h-7 w-7" />
-          </Link>
-        </Marker>
-      ))}
+      {/* Render featured pins last so their gold markers sit on top. */}
+      {[...points]
+        .sort((a, b) => Number(!!a.featured) - Number(!!b.featured))
+        .map((p) => (
+          <Marker key={p.slug} latitude={p.lat} longitude={p.lng} anchor="bottom">
+            <Link href={`/dispensary/${p.slug}`} title={p.featured ? `${p.name} (Featured)` : p.name}>
+              <MapPin
+                className={
+                  p.featured
+                    ? 'h-8 w-8 fill-amber-400/40 text-amber-400 drop-shadow'
+                    : 'fill-primary/30 text-primary h-7 w-7'
+                }
+              />
+            </Link>
+          </Marker>
+        ))}
     </Map>
   );
 }

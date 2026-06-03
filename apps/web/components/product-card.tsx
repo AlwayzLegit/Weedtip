@@ -3,6 +3,7 @@ import type { StrainType } from '@weedtip/shared';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { MediaImage } from './media-image';
+import { PlacementBeacon } from './placement-beacon';
 import { RatingStars } from './rating-stars';
 import { Badge } from './ui/badge';
 
@@ -18,6 +19,11 @@ export interface ProductCardData {
   reviewCount?: number;
   productId?: string;
   dispensarySlug?: string;
+  sponsored?: boolean;
+  /** Original list price when an auto-apply sale is active (priceCents is the sale price). */
+  originalPriceCents?: number | null;
+  /** When set, records placement impression/click analytics for this card. */
+  placementId?: string;
 }
 
 const STRAIN_LABEL: Record<StrainType, string> = {
@@ -28,13 +34,24 @@ const STRAIN_LABEL: Record<StrainType, string> = {
 };
 
 export function ProductCard({ p }: { p: ProductCardData }) {
+  const onSale = typeof p.originalPriceCents === 'number' && p.originalPriceCents > p.priceCents;
   const body = (
     <div className="rounded-card border-border bg-surface hover:border-primary/50 overflow-hidden border transition-colors">
       <MediaImage url={p.imageUrl} alt={p.name} className="h-32" iconClassName="h-10 w-10">
-        {!p.inStock && (
-          <Badge tone="muted" className="absolute left-2 top-2">
-            Out of stock
+        {p.sponsored ? (
+          <Badge tone="primary" className="absolute left-2 top-2">
+            Sponsored
           </Badge>
+        ) : onSale ? (
+          <Badge tone="primary" className="absolute left-2 top-2">
+            Sale
+          </Badge>
+        ) : (
+          !p.inStock && (
+            <Badge tone="muted" className="absolute left-2 top-2">
+              Out of stock
+            </Badge>
+          )
         )}
         {p.strainType && (
           <Badge tone="primary" className="absolute right-2 top-2">
@@ -46,7 +63,14 @@ export function ProductCard({ p }: { p: ProductCardData }) {
         {p.brand && <p className="text-muted truncate text-xs">{p.brand}</p>}
         <h3 className="truncate text-sm font-semibold">{p.name}</h3>
         <div className="flex items-center justify-between pt-1">
-          <span className="text-primary font-semibold">{formatPrice(p.priceCents)}</span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-primary font-semibold">{formatPrice(p.priceCents)}</span>
+            {onSale && (
+              <span className="text-muted text-xs line-through">
+                {formatPrice(p.originalPriceCents!)}
+              </span>
+            )}
+          </span>
           {typeof p.thcPercentage === 'number' && (
             <span className="text-muted text-xs">{p.thcPercentage}% THC</span>
           )}
@@ -69,6 +93,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
 
   return href ? (
     <Link href={href} className={cn('block')}>
+      {p.placementId && <PlacementBeacon placementId={p.placementId} />}
       {body}
     </Link>
   ) : (

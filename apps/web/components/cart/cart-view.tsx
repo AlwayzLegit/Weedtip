@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2, Minus, Plus, Trash2 } from 'lucide-react';
 import { ESTIMATED_TAX_RATE, type OrderType } from '@weedtip/shared';
-import { startCheckout } from '@/app/actions/checkout';
+import { previewPromo, startCheckout } from '@/app/actions/checkout';
 import { cn } from '@/lib/utils';
 import { formatPrice } from '@/lib/format';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { useCart } from './cart-provider';
 
@@ -28,6 +29,12 @@ export function CartView({
   const [notes, setNotes] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState<{ code: string; discountCents: number; title: string } | null>(
+    null,
+  );
+  const [promoPending, setPromoPending] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -41,8 +48,29 @@ export function CartView({
     );
   }
 
-  const taxCents = Math.round(subtotalCents * ESTIMATED_TAX_RATE);
-  const totalCents = subtotalCents + taxCents;
+  const discountCents = promo ? Math.min(promo.discountCents, subtotalCents) : 0;
+  const taxCents = Math.round((subtotalCents - discountCents) * ESTIMATED_TAX_RATE);
+  const totalCents = subtotalCents - discountCents + taxCents;
+
+  async function applyPromo() {
+    if (!cart || !promoInput.trim()) return;
+    setPromoPending(true);
+    setPromoError(null);
+    const res = await previewPromo(cart.dispensaryId, promoInput, subtotalCents);
+    if (res.ok) {
+      setPromo({ code: promoInput.trim().toUpperCase(), discountCents: res.discountCents, title: res.title });
+    } else {
+      setPromo(null);
+      setPromoError(res.error);
+    }
+    setPromoPending(false);
+  }
+
+  function removePromo() {
+    setPromo(null);
+    setPromoInput('');
+    setPromoError(null);
+  }
 
   async function checkout() {
     if (!cart) return;
@@ -52,6 +80,7 @@ export function CartView({
       dispensary_id: cart.dispensaryId,
       order_type: orderType,
       notes: notes.trim() || undefined,
+      promo_code: promo?.code,
       pay_now: stripeEnabled && payMethod === 'card',
       items: cart.items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
     });
@@ -133,6 +162,12 @@ export function CartView({
               <span className="text-muted">Subtotal</span>
               <span>{formatPrice(subtotalCents)}</span>
             </div>
+            {discountCents > 0 && promo && (
+              <div className="text-primary flex justify-between">
+                <span>Discount ({promo.code})</span>
+                <span>−{formatPrice(discountCents)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted">Estimated tax</span>
               <span>{formatPrice(taxCents)}</span>
@@ -141,6 +176,41 @@ export function CartView({
               <span>Total</span>
               <span>{formatPrice(totalCents)}</span>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="mb-1.5 text-sm font-medium">Promo code</p>
+            {promo ? (
+              <div className="border-primary/40 bg-primary-muted flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
+                <span className="text-primary font-medium">{promo.code} applied</span>
+                <button
+                  type="button"
+                  onClick={removePromo}
+                  className="text-muted hover:text-foreground text-xs underline"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  value={promoInput}
+                  onChange={(e) => setPromoInput(e.target.value)}
+                  placeholder="Enter code"
+                  className="uppercase"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={applyPromo}
+                  disabled={promoPending || !promoInput.trim()}
+                >
+                  {promoPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Apply
+                </Button>
+              </div>
+            )}
+            {promoError && <p className="text-danger mt-1.5 text-xs">{promoError}</p>}
           </div>
 
           <div className="mt-4">

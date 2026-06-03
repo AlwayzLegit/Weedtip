@@ -23,10 +23,16 @@ export default async function AnalyticsPage() {
   const { dispensary } = await requireOwnerDispensary();
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from('orders')
-    .select('status,total_cents,created_at,items')
-    .eq('dispensary_id', dispensary.id);
+  const [{ data }, { data: redemptions }] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('status,total_cents,platform_fee_cents,platform_fee_bps,created_at,items')
+      .eq('dispensary_id', dispensary.id),
+    supabase
+      .from('deal_redemptions')
+      .select('code, discount_cents, deal:deals(title)')
+      .eq('dispensary_id', dispensary.id),
+  ]);
 
   const orders = data ?? [];
   const live = orders.filter((o) => o.status !== 'cancelled');
@@ -34,6 +40,11 @@ export default async function AnalyticsPage() {
   const aov = live.length ? totalRevenue / live.length : 0;
   const cancelled = orders.filter((o) => o.status === 'cancelled').length;
   const cancelRate = orders.length ? Math.round((cancelled / orders.length) * 100) : 0;
+
+  // Platform commission across non-cancelled orders, and the current take-rate.
+  const platformFees = live.reduce((s, o) => s + (o.platform_fee_cents ?? 0), 0);
+  const feeBps = live.find((o) => o.platform_fee_bps > 0)?.platform_fee_bps ?? 0;
+  const netRevenue = totalRevenue - platformFees;
 
   const byStatus = orders.reduce<Record<string, number>>((acc, o) => {
     acc[o.status] = (acc[o.status] ?? 0) + 1;
@@ -77,6 +88,20 @@ export default async function AnalyticsPage() {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 10);
 
+  // ─── Promo code performance ──────────────────────────────────────────────
+  const promoAgg = new Map<string, { title: string; uses: number; discount: number }>();
+  for (const r of redemptions ?? []) {
+    const deal = r.deal as { title: string } | null;
+    const cur = promoAgg.get(r.code) ?? { title: deal?.title ?? r.code, uses: 0, discount: 0 };
+    cur.uses += 1;
+    cur.discount += r.discount_cents;
+    promoAgg.set(r.code, cur);
+  }
+  const promoRows = [...promoAgg.entries()]
+    .map(([code, v]) => ({ code, ...v }))
+    .sort((a, b) => b.uses - a.uses);
+  const totalDiscount = promoRows.reduce((s, p) => s + p.discount, 0);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -96,6 +121,15 @@ export default async function AnalyticsPage() {
         <Stat label="Orders" value={String(orders.length)} sub={`${live.length} active`} />
         <Stat label="Avg order value" value={formatPrice(Math.round(aov))} />
         <Stat label="Cancellation rate" value={`${cancelRate}%`} sub={`${cancelled} cancelled`} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <Stat
+          label="Platform fees"
+          value={formatPrice(platformFees)}
+          sub={feeBps ? `${(feeBps / 100).toFixed(feeBps % 100 ? 2 : 0)}% commission` : 'commission'}
+        />
+        <Stat label="Net revenue" value={formatPrice(netRevenue)} sub="after platform fees" />
       </div>
 
       <section>
@@ -179,6 +213,49 @@ export default async function AnalyticsPage() {
                     <td className="px-4 py-3 font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-right">{p.units}</td>
                     <td className="px-4 py-3 text-right">{formatPrice(p.revenue)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Promo codes</h2>
+          {totalDiscount > 0 && (
+            <span className="text-muted text-sm">{formatPrice(totalDiscount)} discounted</span>
+          )}
+        </div>
+        <div className="rounded-card border-border overflow-hidden border">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-2 text-muted text-left">
+              <tr>
+                <th className="px-4 py-2 font-medium">Code</th>
+                <th className="hidden px-4 py-2 font-medium sm:table-cell">Deal</th>
+                <th className="px-4 py-2 text-right font-medium">Redemptions</th>
+                <th className="px-4 py-2 text-right font-medium">Discount given</th>
+              </tr>
+            </thead>
+            <tbody className="divide-border divide-y">
+              {promoRows.length === 0 ? (
+                <tr className="bg-surface">
+                  <td colSpan={4} className="text-muted px-4 py-6 text-center">
+                    No promo codes redeemed yet.
+                  </td>
+                </tr>
+              ) : (
+                promoRows.map((p) => (
+                  <tr key={p.code} className="bg-surface">
+                    <td className="px-4 py-3">
+                      <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono text-xs font-medium">
+                        {p.code}
+                      </span>
+                    </td>
+                    <td className="text-muted hidden px-4 py-3 sm:table-cell">{p.title}</td>
+                    <td className="px-4 py-3 text-right">{p.uses}</td>
+                    <td className="px-4 py-3 text-right">{formatPrice(p.discount)}</td>
                   </tr>
                 ))
               )}

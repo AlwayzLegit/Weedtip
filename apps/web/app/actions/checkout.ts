@@ -26,6 +26,7 @@ const inputSchema = z.object({
   dispensary_id: z.string().uuid(),
   order_type: orderTypeSchema,
   notes: z.string().max(1000).optional(),
+  promo_code: z.string().max(40).optional(),
   pay_now: z.boolean().optional(),
   items: z
     .array(
@@ -38,6 +39,35 @@ const inputSchema = z.object({
 });
 
 export type StartCheckoutInput = z.infer<typeof inputSchema>;
+
+export type PromoPreview =
+  | { ok: true; discountCents: number; title: string }
+  | { ok: false; error: string };
+
+/** Validates a promo code against the live deal and returns the discount it yields. */
+export async function previewPromo(
+  dispensaryId: string,
+  code: string,
+  subtotalCents: number,
+): Promise<PromoPreview> {
+  const trimmed = code.trim();
+  if (!trimmed) return { ok: false, error: 'Enter a code.' };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .rpc('compute_promo_discount', {
+      p_dispensary_id: dispensaryId,
+      p_code: trimmed,
+      p_subtotal_cents: Math.max(0, Math.round(subtotalCents)),
+    })
+    .maybeSingle();
+
+  if (error) return { ok: false, error: 'Could not check that code.' };
+  if (!data || data.discount_cents <= 0) {
+    return { ok: false, error: 'That code is not valid for this order.' };
+  }
+  return { ok: true, discountCents: data.discount_cents, title: data.title };
+}
 
 export async function startCheckout(rawInput: StartCheckoutInput): Promise<StartCheckoutResult> {
   if (!(await rateLimit('checkout', { limit: 15, window: '60 s' })).success) {
@@ -64,6 +94,7 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
     p_order_type: input.order_type,
     p_items: input.items,
     p_notes: input.notes ?? undefined,
+    p_promo_code: input.promo_code?.trim() || undefined,
   });
   if (rpcError || !orderId) return { ok: false, error: rpcError?.message ?? 'Could not create order.' };
 
@@ -79,7 +110,7 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
   // 2b. Online prepay via Stripe Checkout.
   const { data: order } = await supabase
     .from('orders')
-    .select('items, tax_cents')
+    .select('items, tax_cents, discount_cents')
     .eq('id', orderId as string)
     .single();
 
@@ -109,10 +140,29 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
     });
   }
 
+  // Apply any promo discount as a one-off Stripe coupon so the charge matches
+  // the server-authoritative total.
+  let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
+  if (order.discount_cents > 0) {
+    try {
+      const coupon = await stripe!.coupons.create({
+        amount_off: order.discount_cents,
+        currency: 'usd',
+        duration: 'once',
+        name: 'Promo discount',
+      });
+      discounts = [{ coupon: coupon.id }];
+    } catch {
+      // If coupon creation fails, fall back to charging the undiscounted lines.
+      discounts = undefined;
+    }
+  }
+
   try {
     const session = await stripe!.checkout.sessions.create({
       mode: 'payment',
       line_items: lineItems,
+      ...(discounts ? { discounts } : {}),
       client_reference_id: orderId as string,
       metadata: { order_id: orderId as string },
       success_url: `${siteUrl}/orders/${orderId}?paid=1`,

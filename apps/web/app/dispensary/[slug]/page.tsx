@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Globe, Mail, MapPin, Phone, Store, Truck } from 'lucide-react';
-import type { OperatingHours } from '@weedtip/shared';
+import { Check, Globe, Mail, MapPin, Megaphone, Phone, Store, Tag, Truck } from 'lucide-react';
+import { AMENITY_LABELS, type Amenity, type OperatingHours } from '@weedtip/shared';
 import { deleteReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
@@ -78,7 +78,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         .order('end_date'),
       supabase
         .from('reviews')
-        .select('id,rating,body,created_at,author_name,user_id')
+        .select('id,rating,body,created_at,author_name,user_id,owner_reply,owner_reply_at')
         .eq('dispensary_id', d.id)
         .order('created_at', { ascending: false }),
       getAuth(),
@@ -115,6 +115,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     ownershipStatus = (req?.status as 'pending' | 'approved' | 'rejected' | undefined) ?? null;
   }
 
+  // Active auto-apply storefront sales → effective price per product.
+  const { data: salePrices } = await supabase.rpc('dispensary_sale_prices', {
+    p_dispensary_id: d.id,
+  });
+  const saleByProduct = new Map(
+    (salePrices ?? []).map((s) => [s.product_id, s] as const),
+  );
+
   // Group menu by category, preserving sort_order.
   const sections = new Map<string, { name: string; sort: number; items: typeof products }>();
   for (const p of products ?? []) {
@@ -126,6 +134,36 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     sections.get(key)!.items!.push(p);
   }
   const menu = [...sections.values()].sort((a, b) => a.sort - b.sort);
+  const saleItems = (products ?? []).filter((p) => saleByProduct.has(p.id));
+
+  // Shared menu tile so the "Sale" section and category sections render identically.
+  const renderTile = (p: NonNullable<typeof products>[number]) => {
+    const sale = saleByProduct.get(p.id);
+    const effectivePrice = sale?.sale_cents ?? p.price_cents;
+    return (
+      <div key={p.id} className="space-y-2">
+        <ProductCard
+          p={{
+            name: p.name,
+            brand: p.brand,
+            priceCents: effectivePrice,
+            originalPriceCents: sale ? p.price_cents : null,
+            imageUrl: p.image_urls[0] ?? null,
+            strainType: p.strain_type,
+            thcPercentage: p.thc_percentage,
+            inStock: p.in_stock,
+            productId: p.id,
+          }}
+        />
+        {p.in_stock && (
+          <AddToCart
+            dispensary={{ id: d.id, slug: d.slug, name: d.name }}
+            product={{ productId: p.id, name: p.name, priceCents: effectivePrice }}
+          />
+        )}
+      </div>
+    );
+  };
 
   const hours = d.hours as OperatingHours | null;
 
@@ -221,6 +259,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   </span>
                 </span>
               )}
+              {avgRating >= 4.5 && reviews && reviews.length >= 10 && (
+                <Badge tone="primary">Top Rated</Badge>
+              )}
               {d.is_pickup && (
                 <Badge tone="outline">
                   <Store className="h-3 w-3" /> Pickup
@@ -255,12 +296,36 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           </div>
         )}
 
+        {d.announcement && (
+          <div className="rounded-card border-primary/30 bg-primary-muted mt-6 flex items-start gap-2 border p-4">
+            <Megaphone className="text-primary mt-0.5 h-5 w-5 shrink-0" />
+            <p className="text-foreground text-sm">{d.announcement}</p>
+          </div>
+        )}
+
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
             {d.description && (
               <section>
                 <h2 className="mb-2 text-lg font-semibold">About</h2>
                 <p className="text-muted">{d.description}</p>
+              </section>
+            )}
+
+            {d.amenities && d.amenities.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-lg font-semibold">Amenities</h2>
+                <div className="flex flex-wrap gap-2">
+                  {d.amenities.map((a) => (
+                    <span
+                      key={a}
+                      className="border-border bg-surface text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm"
+                    >
+                      <Check className="text-primary h-3.5 w-3.5" />
+                      {AMENITY_LABELS[a as Amenity] ?? a}
+                    </span>
+                  ))}
+                </div>
               </section>
             )}
 
@@ -278,6 +343,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         <p className="text-primary font-semibold">{deal.title}</p>
                         {deal.description && (
                           <p className="text-muted mt-1 text-sm">{deal.description}</p>
+                        )}
+                        {deal.code && (
+                          <p className="mt-2 text-xs">
+                            <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono font-medium">
+                              Use code {deal.code}
+                            </span>
+                          </p>
                         )}
                       </div>
                       <Badge tone="primary">
@@ -300,38 +372,23 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 <p className="text-muted">No products listed yet.</p>
               ) : (
                 <div className="space-y-8">
+                  {saleItems.length > 0 && (
+                    <div>
+                      <h3 className="text-primary mb-3 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide">
+                        <Tag className="h-4 w-4" /> Sale
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                        {saleItems.map(renderTile)}
+                      </div>
+                    </div>
+                  )}
                   {menu.map((section) => (
                     <div key={section.name}>
                       <h3 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
                         {section.name}
                       </h3>
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                        {section.items!.map((p) => (
-                          <div key={p.id} className="space-y-2">
-                            <ProductCard
-                              p={{
-                                name: p.name,
-                                brand: p.brand,
-                                priceCents: p.price_cents,
-                                imageUrl: p.image_urls[0] ?? null,
-                                strainType: p.strain_type,
-                                thcPercentage: p.thc_percentage,
-                                inStock: p.in_stock,
-                                productId: p.id,
-                              }}
-                            />
-                            {p.in_stock && (
-                              <AddToCart
-                                dispensary={{ id: d.id, slug: d.slug, name: d.name }}
-                                product={{
-                                  productId: p.id,
-                                  name: p.name,
-                                  priceCents: p.price_cents,
-                                }}
-                              />
-                            )}
-                          </div>
-                        ))}
+                        {section.items!.map(renderTile)}
                       </div>
                     </div>
                   ))}
@@ -379,6 +436,21 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         </span>
                       </div>
                       {r.body && <p className="text-muted mt-2 text-sm">{r.body}</p>}
+                      {r.owner_reply && (
+                        <div className="border-border bg-surface-2 mt-3 rounded-lg border-l-2 border-l-primary p-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground text-xs font-semibold">
+                              Response from {d.name}
+                            </span>
+                            {r.owner_reply_at && (
+                              <span className="text-muted text-xs">
+                                {new Date(r.owner_reply_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-muted mt-1 text-sm">{r.owner_reply}</p>
+                        </div>
+                      )}
                       {user && r.user_id === user.id && (
                         <div className="mt-2 flex items-center gap-2">
                           <Badge tone="muted">Your review</Badge>

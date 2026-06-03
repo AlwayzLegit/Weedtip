@@ -3,6 +3,7 @@ import { MapPin, Truck, Store } from 'lucide-react';
 import { formatDistance } from '@/lib/format';
 import { Badge } from './ui/badge';
 import { MediaImage } from './media-image';
+import { PlacementBeacon } from './placement-beacon';
 import { RatingStars } from './rating-stars';
 
 export interface DispensaryCardData {
@@ -16,6 +17,9 @@ export interface DispensaryCardData {
   isMedical: boolean;
   isRecreational: boolean;
   featured?: boolean;
+  sponsored?: boolean;
+  /** When set, records placement impression/click analytics for this card. */
+  placementId?: string;
   distanceMeters?: number | null;
   rating?: number | null;
   reviewCount?: number;
@@ -23,17 +27,26 @@ export interface DispensaryCardData {
 
 export function DispensaryCard({ d }: { d: DispensaryCardData }) {
   const distance = formatDistance(d.distanceMeters ?? null);
+  // Best-of style trust signal: highly rated with enough reviews to be credible.
+  const topRated = (d.rating ?? 0) >= 4.5 && (d.reviewCount ?? 0) >= 10;
 
   return (
     <Link
       href={`/dispensary/${d.slug}`}
       className="rounded-card border-border bg-surface hover:border-primary/50 group block overflow-hidden border transition-colors"
     >
+      {d.placementId && <PlacementBeacon placementId={d.placementId} />}
       <MediaImage url={d.coverImageUrl} alt={d.name} className="h-36" iconClassName="h-12 w-12">
-        {d.featured && (
+        {d.sponsored ? (
           <Badge tone="primary" className="absolute left-3 top-3">
-            Featured
+            Sponsored
           </Badge>
+        ) : (
+          d.featured && (
+            <Badge tone="primary" className="absolute left-3 top-3">
+              Featured
+            </Badge>
+          )
         )}
         {distance && (
           <Badge className="bg-background/80 absolute right-3 top-3">
@@ -56,6 +69,11 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
               {d.rating.toFixed(1)}
               {d.reviewCount ? ` (${d.reviewCount})` : ''}
             </span>
+            {topRated && (
+              <Badge tone="primary" className="ml-0.5">
+                Top Rated
+              </Badge>
+            )}
           </div>
         )}
 

@@ -99,6 +99,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <span className="text-muted">Subtotal</span>
             <span>{formatPrice(order.subtotal_cents)}</span>
           </div>
+          {order.discount_cents > 0 && (
+            <div className="text-primary flex justify-between">
+              <span>Discount</span>
+              <span>−{formatPrice(order.discount_cents)}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className="text-muted">Tax</span>
             <span>{formatPrice(order.tax_cents)}</span>

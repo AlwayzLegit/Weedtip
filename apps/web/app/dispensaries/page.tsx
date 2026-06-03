@@ -68,6 +68,7 @@ export default async function DispensariesPage({
     name: r.name,
     lat: r.latitude,
     lng: r.longitude,
+    featured: r.featured,
   }));
 
   const pageHref = (page: number) => {

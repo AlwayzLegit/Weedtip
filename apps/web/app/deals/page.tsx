@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Tag } from 'lucide-react';
+import { PlacementBeacon } from '@/components/placement-beacon';
 import { Badge } from '@/components/ui/badge';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
@@ -17,17 +18,112 @@ function discountLabel(type: string, value: number): string {
   return 'BOGO';
 }
 
+type DealDispensary = { slug: string; name: string; city: string; state: string } | null;
+type DealRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  code: string | null;
+  discount_type: string;
+  discount_value: number;
+  dispensary: DealDispensary;
+};
+
+function DealTile({
+  deal,
+  sponsored,
+  placementId,
+}: {
+  deal: DealRow;
+  sponsored?: boolean;
+  placementId?: string;
+}) {
+  const dispensary = deal.dispensary;
+  return (
+    <Link
+      href={dispensary ? `/dispensary/${dispensary.slug}` : '#'}
+      className="rounded-card border-primary/30 bg-primary-muted hover:border-primary flex items-start justify-between gap-3 border p-5 transition-colors"
+    >
+      {placementId && <PlacementBeacon placementId={placementId} />}
+      <div className="min-w-0">
+        {sponsored && (
+          <Badge tone="outline" className="mb-1.5">
+            Sponsored
+          </Badge>
+        )}
+        <p className="text-primary font-semibold">{deal.title}</p>
+        {deal.description && (
+          <p className="text-muted mt-1 line-clamp-2 text-sm">{deal.description}</p>
+        )}
+        {deal.code && (
+          <p className="mt-2 text-xs">
+            <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono font-medium">
+              {deal.code}
+            </span>
+          </p>
+        )}
+        {dispensary && (
+          <p className="text-muted mt-2 text-xs">
+            {dispensary.name} · {dispensary.city}, {dispensary.state}
+          </p>
+        )}
+      </div>
+      <Badge tone="primary" className="shrink-0">
+        {discountLabel(deal.discount_type, deal.discount_value)}
+      </Badge>
+    </Link>
+  );
+}
+
 export default async function DealsPage() {
   const supabase = await createClient();
   const nowIso = new Date().toISOString();
-  const { data: deals } = await supabase
-    .from('deals')
-    .select('*, dispensary:dispensaries!inner(slug,name,city,state,status)')
+
+  const DEAL_SELECT = '*, dispensary:dispensaries!inner(slug,name,city,state,status)';
+
+  // Live promoted-deal placements → the sponsored rail.
+  const { data: promos } = await supabase
+    .from('placements')
+    .select('id, target_id, priority')
+    .eq('type', 'promoted_deal')
     .eq('is_active', true)
-    .lte('start_date', nowIso)
-    .gte('end_date', nowIso)
-    .eq('dispensary.status', 'active')
-    .order('end_date');
+    .lte('starts_at', nowIso)
+    .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+    .order('priority', { ascending: false });
+
+  const promoIds = (promos ?? []).map((p) => p.target_id).filter((id): id is string => !!id);
+
+  const [{ data: sponsoredDeals }, { data: deals }] = await Promise.all([
+    promoIds.length
+      ? supabase
+          .from('deals')
+          .select(DEAL_SELECT)
+          .in('id', promoIds)
+          .eq('is_active', true)
+          .lte('start_date', nowIso)
+          .gte('end_date', nowIso)
+          .eq('dispensary.status', 'active')
+      : Promise.resolve({ data: [] as DealRow[] }),
+    supabase
+      .from('deals')
+      .select(DEAL_SELECT)
+      .eq('is_active', true)
+      .lte('start_date', nowIso)
+      .gte('end_date', nowIso)
+      .eq('dispensary.status', 'active')
+      .order('end_date'),
+  ]);
+
+  // Order sponsored by placement priority and keep them out of the main grid.
+  const priorityOf = new Map((promos ?? []).map((p) => [p.target_id, p.priority] as const));
+  const placementOf = new Map(
+    (promos ?? []).map((p) => [p.target_id, p.id] as const),
+  );
+  const sponsored = ((sponsoredDeals as DealRow[]) ?? []).sort(
+    (a, b) => (priorityOf.get(b.id) ?? 0) - (priorityOf.get(a.id) ?? 0),
+  );
+  const sponsoredIds = new Set(sponsored.map((d) => d.id));
+  const rest = ((deals as DealRow[]) ?? []).filter((d) => !sponsoredIds.has(d.id));
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -36,7 +132,20 @@ export default async function DealsPage() {
         <p className="text-muted mt-1">Live discounts from dispensaries near you.</p>
       </div>
 
-      {!deals || deals.length === 0 ? (
+      {sponsored.length > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {sponsored.map((deal) => (
+            <DealTile
+              key={deal.id}
+              deal={deal}
+              sponsored
+              placementId={placementOf.get(deal.id) ?? undefined}
+            />
+          ))}
+        </div>
+      )}
+
+      {rest.length === 0 && sponsored.length === 0 ? (
         <div className="rounded-card border-border bg-surface border p-10 text-center">
           <Tag className="text-muted mx-auto h-8 w-8" />
           <p className="mt-2 font-medium">No active deals right now</p>
@@ -44,36 +153,9 @@ export default async function DealsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {deals.map((deal) => {
-            const dispensary = deal.dispensary as {
-              slug: string;
-              name: string;
-              city: string;
-              state: string;
-            } | null;
-            return (
-              <Link
-                key={deal.id}
-                href={dispensary ? `/dispensary/${dispensary.slug}` : '#'}
-                className="rounded-card border-primary/30 bg-primary-muted hover:border-primary flex items-start justify-between gap-3 border p-5 transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className="text-primary font-semibold">{deal.title}</p>
-                  {deal.description && (
-                    <p className="text-muted mt-1 line-clamp-2 text-sm">{deal.description}</p>
-                  )}
-                  {dispensary && (
-                    <p className="text-muted mt-2 text-xs">
-                      {dispensary.name} · {dispensary.city}, {dispensary.state}
-                    </p>
-                  )}
-                </div>
-                <Badge tone="primary" className="shrink-0">
-                  {discountLabel(deal.discount_type, deal.discount_value)}
-                </Badge>
-              </Link>
-            );
-          })}
+          {rest.map((deal) => (
+            <DealTile key={deal.id} deal={deal} />
+          ))}
         </div>
       )}
     </main>
