@@ -3,6 +3,7 @@ import type { StrainType } from '@weedtip/shared';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { MediaImage } from './media-image';
+import { PlacementBeacon } from './placement-beacon';
 import { RatingStars } from './rating-stars';
 import { Badge } from './ui/badge';
 
@@ -18,6 +19,9 @@ export interface ProductCardData {
   reviewCount?: number;
   productId?: string;
   dispensarySlug?: string;
+  sponsored?: boolean;
+  /** When set, records placement impression/click analytics for this card. */
+  placementId?: string;
 }
 
 const STRAIN_LABEL: Record<StrainType, string> = {
@@ -31,10 +35,16 @@ export function ProductCard({ p }: { p: ProductCardData }) {
   const body = (
     <div className="rounded-card border-border bg-surface hover:border-primary/50 overflow-hidden border transition-colors">
       <MediaImage url={p.imageUrl} alt={p.name} className="h-32" iconClassName="h-10 w-10">
-        {!p.inStock && (
-          <Badge tone="muted" className="absolute left-2 top-2">
-            Out of stock
+        {p.sponsored ? (
+          <Badge tone="primary" className="absolute left-2 top-2">
+            Sponsored
           </Badge>
+        ) : (
+          !p.inStock && (
+            <Badge tone="muted" className="absolute left-2 top-2">
+              Out of stock
+            </Badge>
+          )
         )}
         {p.strainType && (
           <Badge tone="primary" className="absolute right-2 top-2">
@@ -69,6 +79,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
 
   return href ? (
     <Link href={href} className={cn('block')}>
+      {p.placementId && <PlacementBeacon placementId={p.placementId} />}
       {body}
     </Link>
   ) : (

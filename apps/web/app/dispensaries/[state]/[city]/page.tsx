@@ -26,7 +26,41 @@ async function loadCity(state: string, city: string) {
   const shops = (data ?? []).filter((s) => citySlug(s.city) === city.toLowerCase());
   const first = shops[0];
   if (!first) return null;
-  return { stateName, cityName: first.city, shops };
+
+  // Geo-scoped featured: live featured placements whose scope matches this
+  // location, for shops located here. Pins them to the top with tracking.
+  const nowIso = new Date().toISOString();
+  const shopIds = shops.map((s) => s.id);
+  const { data: featured } = await supabase
+    .from('placements')
+    .select('id, dispensary_id, priority')
+    .eq('type', 'featured')
+    .eq('is_active', true)
+    .in('dispensary_id', shopIds)
+    .lte('starts_at', nowIso)
+    .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+    .or(`scope_state.is.null,scope_state.eq.${code}`)
+    .or(`scope_city.is.null,scope_city.ilike.${first.city}`);
+
+  const featuredByDispensary = new Map<string, { placementId: string; priority: number }>();
+  for (const f of featured ?? []) {
+    const prev = featuredByDispensary.get(f.dispensary_id);
+    if (!prev || f.priority > prev.priority) {
+      featuredByDispensary.set(f.dispensary_id, { placementId: f.id, priority: f.priority });
+    }
+  }
+
+  // Pin featured shops first (by placement priority), keep the rest A→Z.
+  const ordered = [...shops].sort((a, b) => {
+    const fa = featuredByDispensary.get(a.id);
+    const fb = featuredByDispensary.get(b.id);
+    if (fa && fb) return fb.priority - fa.priority;
+    if (fa) return -1;
+    if (fb) return 1;
+    return 0;
+  });
+
+  return { stateName, cityName: first.city, shops: ordered, featuredByDispensary };
 }
 
 export async function generateMetadata({
@@ -54,7 +88,7 @@ export default async function CityDispensariesPage({
   const { state, city } = await params;
   const found = await loadCity(state, city);
   if (!found) notFound();
-  const { stateName, cityName, shops } = found;
+  const { stateName, cityName, shops, featuredByDispensary } = found;
 
   const faqs = [
     {
@@ -90,25 +124,29 @@ export default async function CityDispensariesPage({
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {shops.map((s) => (
-          <DispensaryCard
-            key={s.id}
-            d={{
-              slug: s.slug,
-              name: s.name,
-              city: s.city,
-              state: s.state,
-              coverImageUrl: s.cover_image_url,
-              isDelivery: s.is_delivery,
-              isPickup: s.is_pickup,
-              isMedical: s.is_medical,
-              isRecreational: s.is_recreational,
-              featured: s.featured,
-              rating: s.rating_avg,
-              reviewCount: s.rating_count,
-            }}
-          />
-        ))}
+        {shops.map((s) => {
+          const promo = featuredByDispensary.get(s.id);
+          return (
+            <DispensaryCard
+              key={s.id}
+              d={{
+                slug: s.slug,
+                name: s.name,
+                city: s.city,
+                state: s.state,
+                coverImageUrl: s.cover_image_url,
+                isDelivery: s.is_delivery,
+                isPickup: s.is_pickup,
+                isMedical: s.is_medical,
+                isRecreational: s.is_recreational,
+                featured: s.featured || !!promo,
+                placementId: promo?.placementId,
+                rating: s.rating_avg,
+                reviewCount: s.rating_count,
+              }}
+            />
+          );
+        })}
       </div>
 
       <section className="mt-10">

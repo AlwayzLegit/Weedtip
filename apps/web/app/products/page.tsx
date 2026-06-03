@@ -65,6 +65,58 @@ export default async function ProductsPage({
 
   const total = rows[0]?.total_count ?? 0;
 
+  // Sponsored products: live promoted_product placements, shown on the first
+  // page only and de-duped from the organic results.
+  type SponsoredProduct = {
+    id: string;
+    name: string;
+    brand: string | null;
+    price_cents: number;
+    image_urls: string[];
+    strain_type: StrainType | null;
+    thc_percentage: number | null;
+    in_stock: boolean;
+    rating_avg: number;
+    rating_count: number;
+    dispensary: { slug: string; status: string } | null;
+    placementId: string;
+  };
+  let sponsored: SponsoredProduct[] = [];
+  if ((params.page ?? 1) === 1) {
+    const nowIso = new Date().toISOString();
+    const { data: promos } = await supabase
+      .from('placements')
+      .select('id, target_id, priority')
+      .eq('type', 'promoted_product')
+      .eq('is_active', true)
+      .lte('starts_at', nowIso)
+      .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+      .order('priority', { ascending: false });
+    const promoIds = (promos ?? [])
+      .map((p) => p.target_id)
+      .filter((id): id is string => !!id);
+    if (promoIds.length > 0) {
+      const placementOf = new Map(
+        (promos ?? []).map((p) => [p.target_id, { id: p.id, priority: p.priority }] as const),
+      );
+      const { data: prods } = await supabase
+        .from('products')
+        .select(
+          'id,name,brand,price_cents,image_urls,strain_type,thc_percentage,in_stock,rating_avg,rating_count,dispensary:dispensaries!inner(slug,status)',
+        )
+        .in('id', promoIds)
+        .eq('dispensary.status', 'active');
+      sponsored = ((prods as Omit<SponsoredProduct, 'placementId'>[]) ?? [])
+        .map((p) => ({ ...p, placementId: placementOf.get(p.id)?.id ?? '' }))
+        .sort(
+          (a, b) =>
+            (placementOf.get(b.id)?.priority ?? 0) - (placementOf.get(a.id)?.priority ?? 0),
+        );
+    }
+  }
+  const sponsoredIds = new Set(sponsored.map((p) => p.id));
+  const organic = rows.filter((r) => !sponsoredIds.has(r.id));
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-6 space-y-4">
@@ -76,14 +128,39 @@ export default async function ProductsPage({
         {total} {total === 1 ? 'product' : 'products'}
       </p>
 
-      {rows.length === 0 ? (
+      {sponsored.length > 0 && (
+        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {sponsored.map((p) => (
+            <ProductCard
+              key={p.id}
+              p={{
+                name: p.name,
+                brand: p.brand,
+                priceCents: p.price_cents,
+                imageUrl: p.image_urls[0] ?? null,
+                strainType: p.strain_type,
+                thcPercentage: p.thc_percentage,
+                inStock: p.in_stock,
+                rating: p.rating_avg,
+                reviewCount: p.rating_count,
+                productId: p.id,
+                dispensarySlug: p.dispensary?.slug,
+                sponsored: true,
+                placementId: p.placementId || undefined,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {organic.length === 0 && sponsored.length === 0 ? (
         <div className="rounded-card border-border bg-surface border p-10 text-center">
           <p className="font-medium">No products found</p>
           <p className="text-muted mt-1 text-sm">Try adjusting your filters.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {rows.map((p) => (
+          {organic.map((p) => (
             <ProductCard
               key={p.id}
               p={{
