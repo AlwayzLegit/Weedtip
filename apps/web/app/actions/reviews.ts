@@ -6,10 +6,13 @@ import { createClient } from '@/lib/supabase/server';
 
 export type ReviewState = { error?: string; message?: string };
 
+const star = z.coerce.number().int().min(1).max(5);
 const schema = z.object({
   dispensary_id: z.string().uuid(),
   dispensary_slug: z.string().min(1),
-  rating: z.coerce.number().int().min(1).max(5),
+  quality: star,
+  service: star,
+  atmosphere: star,
   body: z.string().max(4000).optional(),
 });
 
@@ -17,11 +20,13 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
   const parsed = schema.safeParse({
     dispensary_id: formData.get('dispensary_id'),
     dispensary_slug: formData.get('dispensary_slug'),
-    rating: formData.get('rating'),
+    quality: formData.get('quality'),
+    service: formData.get('service'),
+    atmosphere: formData.get('atmosphere'),
     body: formData.get('body') || undefined,
   });
   if (!parsed.success) {
-    return { error: parsed.error.errors[0]?.message ?? 'Invalid review' };
+    return { error: parsed.error.errors[0]?.message ?? 'Please rate all three categories.' };
   }
 
   const supabase = await createClient();
@@ -36,12 +41,19 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
     .eq('id', user.id)
     .maybeSingle();
 
+  const { quality, service, atmosphere } = parsed.data;
+  // Overall rating is the average of the three dimensions (verified is set by trigger).
+  const rating = Math.round((quality + service + atmosphere) / 3);
+
   // One review per user per dispensary — upsert on the unique constraint.
   const { error } = await supabase.from('reviews').upsert(
     {
       dispensary_id: parsed.data.dispensary_id,
       user_id: user.id,
-      rating: parsed.data.rating,
+      rating,
+      quality,
+      service,
+      atmosphere,
       body: parsed.data.body ?? null,
       author_name: dispProfile?.display_name ?? 'Weedtip member',
     },
@@ -51,6 +63,33 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
 
   revalidatePath(`/dispensary/${parsed.data.dispensary_slug}`);
   return { message: 'Thanks for your review!' };
+}
+
+const disputeSchema = z.object({
+  review_id: z.string().uuid(),
+  dispensary_slug: z.string().min(1),
+  reason: z.string().max(2000).optional(),
+});
+
+/** Owner/admin disputes (or clears the dispute on) a review. */
+export async function disputeReview(_prev: ReviewState, formData: FormData): Promise<ReviewState> {
+  const parsed = disputeSchema.safeParse({
+    review_id: formData.get('review_id'),
+    dispensary_slug: formData.get('dispensary_slug'),
+    reason: formData.get('reason') || undefined,
+  });
+  if (!parsed.success) return { error: 'Invalid request.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('dispute_review', {
+    p_review_id: parsed.data.review_id,
+    p_reason: parsed.data.reason ?? '',
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath('/dashboard/reviews');
+  revalidatePath(`/dispensary/${parsed.data.dispensary_slug}`);
+  return { message: parsed.data.reason ? 'Review disputed — our team will review it.' : 'Dispute withdrawn.' };
 }
 
 const productReviewSchema = z.object({

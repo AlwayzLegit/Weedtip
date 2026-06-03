@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { BadgeCheck } from 'lucide-react';
 import { adminDeleteProductReview, adminDeleteReview } from '@/app/admin/actions';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { RatingStars } from '@/components/rating-stars';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
 
@@ -15,11 +17,14 @@ export default async function AdminReviews({
 }) {
   const { filter } = await searchParams;
   const lowOnly = filter === 'low';
+  const disputedOnly = filter === 'disputed';
 
   const supabase = await createClient();
   const reviewsQuery = supabase
     .from('reviews')
-    .select('id,rating,body,author_name,created_at, dispensary:dispensaries(name,slug)')
+    .select(
+      'id,rating,verified,dispute_reason,disputed_at,body,author_name,created_at, dispensary:dispensaries(name,slug)',
+    )
     .order('created_at', { ascending: false })
     .limit(50);
   const productQuery = supabase
@@ -31,11 +36,13 @@ export default async function AdminReviews({
     reviewsQuery.lte('rating', 2);
     productQuery.lte('rating', 2);
   }
+  if (disputedOnly) reviewsQuery.not('disputed_at', 'is', null);
   const [{ data: reviews }, { data: productReviews }] = await Promise.all([reviewsQuery, productQuery]);
 
   const tabs = [
     { key: undefined, label: 'All recent' },
     { key: 'low', label: 'Low ratings (≤2★)' },
+    { key: 'disputed', label: 'Disputed' },
   ];
 
   return (
@@ -53,7 +60,7 @@ export default async function AdminReviews({
               href={t.key ? `/admin/reviews?filter=${t.key}` : '/admin/reviews'}
               className={cn(
                 'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-                lowOnly === (t.key === 'low')
+                (filter ?? undefined) === t.key
                   ? 'border-primary bg-primary-muted text-primary'
                   : 'border-border text-muted hover:text-foreground',
               )}
@@ -78,9 +85,15 @@ export default async function AdminReviews({
                   className="rounded-card border-border bg-surface shadow-card flex items-start justify-between gap-3 border p-4"
                 >
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <RatingStars rating={r.rating} />
                       <span className="text-sm font-medium">{r.author_name ?? 'Member'}</span>
+                      {r.verified && (
+                        <Badge tone="primary">
+                          <BadgeCheck className="mr-0.5 h-3 w-3" /> Verified
+                        </Badge>
+                      )}
+                      {r.disputed_at && <Badge tone="muted">Disputed</Badge>}
                       {d && (
                         <Link
                           href={`/dispensary/${d.slug}`}
@@ -91,6 +104,11 @@ export default async function AdminReviews({
                       )}
                     </div>
                     {r.body && <p className="text-muted mt-1 text-sm">{r.body}</p>}
+                    {r.dispute_reason && (
+                      <p className="border-danger/40 bg-danger/10 text-danger mt-2 rounded-md border px-2 py-1 text-xs">
+                        Owner dispute: {r.dispute_reason}
+                      </p>
+                    )}
                     <p className="text-muted mt-1 text-xs">
                       {new Date(r.created_at).toLocaleDateString()}
                     </p>

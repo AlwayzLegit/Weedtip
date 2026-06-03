@@ -1,7 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Check, Globe, Mail, MapPin, Megaphone, Phone, Store, Tag, Truck } from 'lucide-react';
+import {
+  BadgeCheck,
+  Check,
+  Globe,
+  Mail,
+  MapPin,
+  Megaphone,
+  Phone,
+  Store,
+  Tag,
+  Truck,
+} from 'lucide-react';
 import { AMENITY_LABELS, type Amenity, type OperatingHours } from '@weedtip/shared';
 import { deleteReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -78,7 +89,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         .order('end_date'),
       supabase
         .from('reviews')
-        .select('id,rating,body,created_at,author_name,user_id,owner_reply,owner_reply_at')
+        .select(
+          'id,rating,quality,service,atmosphere,verified,body,created_at,author_name,user_id,owner_reply,owner_reply_at',
+        )
         .eq('dispensary_id', d.id)
         .order('created_at', { ascending: false }),
       getAuth(),
@@ -404,6 +417,23 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             {/* Reviews */}
             <section>
               <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
+              {d.rating_count > 0 &&
+                (d.rating_quality > 0 || d.rating_service > 0 || d.rating_atmosphere > 0) && (
+                  <div className="rounded-card border-border bg-surface mb-4 grid grid-cols-3 gap-2 border p-4 text-center">
+                    {(
+                      [
+                        ['Quality', d.rating_quality],
+                        ['Service', d.rating_service],
+                        ['Atmosphere', d.rating_atmosphere],
+                      ] as const
+                    ).map(([label, val]) => (
+                      <div key={label}>
+                        <p className="text-xl font-bold">{val.toFixed(1)}</p>
+                        <p className="text-muted text-xs uppercase tracking-wide">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               {user && !isOwner && (
                 <div className="rounded-card border-border bg-surface mb-6 border p-4">
                   <p className="mb-3 text-sm font-medium">
@@ -412,7 +442,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   <ReviewForm
                     dispensaryId={d.id}
                     dispensarySlug={d.slug}
-                    initialRating={myReview?.rating ?? 0}
+                    initialQuality={myReview?.quality ?? 0}
+                    initialService={myReview?.service ?? 0}
+                    initialAtmosphere={myReview?.atmosphere ?? 0}
                     initialBody={myReview?.body ?? ''}
                   />
                 </div>
@@ -430,16 +462,28 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   {reviews.map((r) => (
                     <div key={r.id} className="rounded-card border-border bg-surface border p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <RatingStars rating={r.rating} />
                           <span className="text-sm font-medium">
                             {r.author_name ?? 'Weedtip member'}
                           </span>
+                          {r.verified && (
+                            <Badge tone="primary">
+                              <BadgeCheck className="mr-0.5 h-3 w-3" /> Verified shopper
+                            </Badge>
+                          )}
                         </div>
                         <span className="text-muted text-xs">
                           {new Date(r.created_at).toLocaleDateString()}
                         </span>
                       </div>
+                      {(r.quality || r.service || r.atmosphere) && (
+                        <div className="text-muted mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
+                          {r.quality != null && <span>Quality {r.quality.toFixed(1)}</span>}
+                          {r.service != null && <span>Service {r.service.toFixed(1)}</span>}
+                          {r.atmosphere != null && <span>Atmosphere {r.atmosphere.toFixed(1)}</span>}
+                        </div>
+                      )}
                       {r.body && <p className="text-muted mt-2 text-sm">{r.body}</p>}
                       {r.owner_reply && (
                         <div className="border-border bg-surface-2 mt-3 rounded-lg border-l-2 border-l-primary p-3">
