@@ -43,22 +43,22 @@ export default async function DashboardProducts() {
           No products yet. Add your first one.
         </div>
       ) : (
-        <div className="rounded-card border-border overflow-hidden border">
+        <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
           <table className="w-full text-sm">
-            <thead className="bg-surface-2 text-muted text-left">
+            <thead className="bg-surface-2 text-muted text-left text-xs uppercase tracking-wide">
               <tr>
-                <th className="px-4 py-2 font-medium">Name</th>
-                <th className="hidden px-4 py-2 font-medium sm:table-cell">Category</th>
-                <th className="px-4 py-2 font-medium">Price</th>
-                <th className="px-4 py-2 font-medium">Stock</th>
-                <th className="px-4 py-2" />
+                <th className="px-4 py-2.5 font-medium">Name</th>
+                <th className="hidden px-4 py-2.5 font-medium sm:table-cell">Category</th>
+                <th className="px-4 py-2.5 font-medium">Price</th>
+                <th className="px-4 py-2.5 font-medium">Stock</th>
+                <th className="px-4 py-2.5" />
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
               {products.map((p) => {
                 const category = p.category as { name: string } | null;
                 return (
-                  <tr key={p.id} className="bg-surface">
+                  <tr key={p.id} className="bg-surface hover:bg-surface-2/50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-medium">{p.name}</div>
                       {p.brand && <div className="text-muted text-xs">{p.brand}</div>}

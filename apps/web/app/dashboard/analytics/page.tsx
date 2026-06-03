@@ -191,7 +191,7 @@ export default async function AnalyticsPage() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Top products</h2>
-        <div className="rounded-card border-border overflow-hidden border">
+        <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-muted text-left">
               <tr>
@@ -202,14 +202,14 @@ export default async function AnalyticsPage() {
             </thead>
             <tbody className="divide-border divide-y">
               {topProducts.length === 0 ? (
-                <tr className="bg-surface">
+                <tr className="bg-surface hover:bg-surface-2/50 transition-colors">
                   <td colSpan={3} className="text-muted px-4 py-6 text-center">
                     No sales yet.
                   </td>
                 </tr>
               ) : (
                 topProducts.map((p) => (
-                  <tr key={p.name} className="bg-surface">
+                  <tr key={p.name} className="bg-surface hover:bg-surface-2/50 transition-colors">
                     <td className="px-4 py-3 font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-right">{p.units}</td>
                     <td className="px-4 py-3 text-right">{formatPrice(p.revenue)}</td>
@@ -228,7 +228,7 @@ export default async function AnalyticsPage() {
             <span className="text-muted text-sm">{formatPrice(totalDiscount)} discounted</span>
           )}
         </div>
-        <div className="rounded-card border-border overflow-hidden border">
+        <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-muted text-left">
               <tr>
@@ -240,14 +240,14 @@ export default async function AnalyticsPage() {
             </thead>
             <tbody className="divide-border divide-y">
               {promoRows.length === 0 ? (
-                <tr className="bg-surface">
+                <tr className="bg-surface hover:bg-surface-2/50 transition-colors">
                   <td colSpan={4} className="text-muted px-4 py-6 text-center">
                     No promo codes redeemed yet.
                   </td>
                 </tr>
               ) : (
                 promoRows.map((p) => (
-                  <tr key={p.code} className="bg-surface">
+                  <tr key={p.code} className="bg-surface hover:bg-surface-2/50 transition-colors">
                     <td className="px-4 py-3">
                       <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono text-xs font-medium">
                         {p.code}

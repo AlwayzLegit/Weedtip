@@ -22,18 +22,18 @@ export default async function AdminUsers() {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Users</h2>
-      <div className="rounded-card border-border overflow-hidden border">
+      <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
         <table className="w-full text-sm">
-          <thead className="bg-surface-2 text-muted text-left">
+          <thead className="bg-surface-2 text-muted text-left text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-2 font-medium">Name</th>
-              <th className="px-4 py-2 font-medium">Role</th>
-              <th className="hidden px-4 py-2 font-medium sm:table-cell">Joined</th>
+              <th className="px-4 py-2.5 font-medium">Name</th>
+              <th className="px-4 py-2.5 font-medium">Role</th>
+              <th className="hidden px-4 py-2.5 font-medium sm:table-cell">Joined</th>
             </tr>
           </thead>
           <tbody className="divide-border divide-y">
             {(users ?? []).map((u) => (
-              <tr key={u.id} className="bg-surface">
+              <tr key={u.id} className="bg-surface hover:bg-surface-2/50 transition-colors">
                 <td className="px-4 py-3 font-medium">{u.display_name ?? '—'}</td>
                 <td className="px-4 py-3">
                   <Badge tone={ROLE_TONE[u.role] ?? 'default'}>{u.role.replace('_', ' ')}</Badge>
