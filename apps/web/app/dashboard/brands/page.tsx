@@ -1,16 +1,41 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Store } from 'lucide-react';
+import { Megaphone, Store } from 'lucide-react';
 import { BrandManageForm } from '@/components/dashboard/brand-manage-form';
+import { BrandPromote } from '@/components/dashboard/brand-promote';
+import { Badge } from '@/components/ui/badge';
 import { getAuth } from '@/lib/auth';
+import { formatPrice } from '@/lib/format';
+import { isStripeConfigured } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Brands' };
 
-export default async function DashboardBrands() {
+const BILLING_BANNER: Record<string, string> = {
+  placement: 'Payment received — your brand promotion goes live momentarily.',
+  cancel: 'Checkout canceled. No charge was made.',
+};
+
+function isLive(p: { is_active: boolean; starts_at: string; ends_at: string | null }): boolean {
+  const now = Date.now();
+  return (
+    p.is_active &&
+    new Date(p.starts_at).getTime() <= now &&
+    (!p.ends_at || new Date(p.ends_at).getTime() >= now)
+  );
+}
+
+export default async function DashboardBrands({
+  searchParams,
+}: {
+  searchParams: Promise<{ billing?: string }>;
+}) {
   const { user } = await getAuth();
   if (!user) redirect('/sign-in');
+
+  const { billing } = await searchParams;
+  const banner = billing ? BILLING_BANNER[billing] : undefined;
 
   const supabase = await createClient();
   const { data: brands } = await supabase
@@ -20,6 +45,24 @@ export default async function DashboardBrands() {
     .order('name');
 
   const ids = (brands ?? []).map((b) => b.id);
+  const promos = ids.length
+    ? (
+        await supabase
+          .from('placements')
+          .select('id,brand_id,is_active,starts_at,ends_at,price_cents')
+          .eq('type', 'promoted_brand')
+          .in('brand_id', ids)
+          .order('created_at', { ascending: false })
+      ).data
+    : null;
+  type BrandPromo = NonNullable<typeof promos>[number];
+  const promosByBrand = new Map<string, BrandPromo[]>();
+  for (const p of promos ?? []) {
+    if (!p.brand_id) continue;
+    const list = promosByBrand.get(p.brand_id) ?? [];
+    list.push(p);
+    promosByBrand.set(p.brand_id, list);
+  }
   const { data: prods } = ids.length
     ? await supabase
         .from('products')
@@ -48,6 +91,12 @@ export default async function DashboardBrands() {
           Manage the brands you own — your profile enriches every menu that carries you.
         </p>
       </div>
+
+      {banner && (
+        <p className="border-primary/40 bg-primary-muted text-primary rounded-card border px-4 py-2 text-sm">
+          {banner}
+        </p>
+      )}
 
       {!brands || brands.length === 0 ? (
         <div className="card text-muted p-10 text-center text-sm">
@@ -93,14 +142,30 @@ export default async function DashboardBrands() {
               </div>
 
               <div className="border-border border-t pt-4">
-                <h3 className="text-muted mb-1 text-sm font-semibold uppercase tracking-wide">
-                  Promote
+                <h3 className="text-muted mb-2 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide">
+                  <Megaphone className="h-4 w-4" /> Promote
                 </h3>
-                <p className="text-muted text-sm">
-                  Brand-level promotion (sponsored brand placements) is coming soon. In the meantime,
-                  dispensaries carrying your products can run promoted placements from their own
-                  dashboards.
-                </p>
+                {(() => {
+                  const live = (promosByBrand.get(b.id) ?? []).filter(isLive);
+                  return (
+                    <div className="space-y-3">
+                      {live.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <Badge tone="primary">Live</Badge>
+                          {live.map((p) => (
+                            <span key={p.id} className="text-muted">
+                              {formatPrice(p.price_cents)}
+                              {p.ends_at
+                                ? ` · until ${new Date(p.ends_at).toLocaleDateString()}`
+                                : ''}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <BrandPromote brandId={b.id} stripeEnabled={isStripeConfigured} />
+                    </div>
+                  );
+                })()}
               </div>
             </section>
           );

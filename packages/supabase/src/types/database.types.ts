@@ -802,8 +802,9 @@ export type Database = {
       }
       placements: {
         Row: {
+          brand_id: string | null
           created_at: string
-          dispensary_id: string
+          dispensary_id: string | null
           ends_at: string | null
           id: string
           is_active: boolean
@@ -819,8 +820,9 @@ export type Database = {
           type: Database["public"]["Enums"]["placement_type"]
         }
         Insert: {
+          brand_id?: string | null
           created_at?: string
-          dispensary_id: string
+          dispensary_id?: string | null
           ends_at?: string | null
           id?: string
           is_active?: boolean
@@ -836,8 +838,9 @@ export type Database = {
           type: Database["public"]["Enums"]["placement_type"]
         }
         Update: {
+          brand_id?: string | null
           created_at?: string
-          dispensary_id?: string
+          dispensary_id?: string | null
           ends_at?: string | null
           id?: string
           is_active?: boolean
@@ -858,6 +861,13 @@ export type Database = {
             columns: ["dispensary_id"]
             isOneToOne: false
             referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placements_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
             referencedColumns: ["id"]
           },
         ]
@@ -1189,6 +1199,7 @@ export type Database = {
     Views: {
       active_placements: {
         Row: {
+          brand_id: string | null
           created_at: string | null
           dispensary_id: string | null
           ends_at: string | null
@@ -1211,6 +1222,13 @@ export type Database = {
             columns: ["dispensary_id"]
             isOneToOne: false
             referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placements_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
             referencedColumns: ["id"]
           },
         ]
@@ -1312,6 +1330,10 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_dispensary_open: {
         Args: { at_ts?: string; hours: Json }
+        Returns: boolean
+      }
+      owns_brand: {
+        Args: { p_brand_id: string }
         Returns: boolean
       }
       owns_dispensary: {
@@ -1456,7 +1478,7 @@ export type Database = {
         | "cancelled"
       order_type: "pickup" | "delivery"
       payment_status: "unpaid" | "paid" | "refunded"
-      placement_type: "featured" | "hero" | "promoted_deal" | "promoted_product"
+      placement_type: "featured" | "hero" | "promoted_deal" | "promoted_product" | "promoted_brand"
       strain_type: "indica" | "sativa" | "hybrid" | "cbd"
       user_role: "consumer" | "dispensary_owner" | "admin"
     }
@@ -1604,7 +1626,7 @@ export const Constants = {
       order_status: ["pending", "confirmed", "ready", "completed", "cancelled"],
       order_type: ["pickup", "delivery"],
       payment_status: ["unpaid", "paid", "refunded"],
-      placement_type: ["featured", "hero", "promoted_deal", "promoted_product"],
+      placement_type: ["featured", "hero", "promoted_deal", "promoted_product", "promoted_brand"],
       strain_type: ["indica", "sativa", "hybrid", "cbd"],
       user_role: ["consumer", "dispensary_owner", "admin"],
     },

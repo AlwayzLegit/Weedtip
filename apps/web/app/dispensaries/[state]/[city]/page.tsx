@@ -44,6 +44,7 @@ async function loadCity(state: string, city: string) {
 
   const featuredByDispensary = new Map<string, { placementId: string; priority: number }>();
   for (const f of featured ?? []) {
+    if (!f.dispensary_id) continue;
     const prev = featuredByDispensary.get(f.dispensary_id);
     if (!prev || f.priority > prev.priority) {
       featuredByDispensary.set(f.dispensary_id, { placementId: f.id, priority: f.priority });

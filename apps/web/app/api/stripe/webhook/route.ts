@@ -57,7 +57,7 @@ async function activatePlacement(
     .eq('id', placementId)
     .select('dispensary_id, type')
     .single();
-  if (placement?.type === 'featured') {
+  if (placement?.type === 'featured' && placement.dispensary_id) {
     await service.rpc('sync_featured_flags', { p_dispensary_id: placement.dispensary_id });
   }
 }
