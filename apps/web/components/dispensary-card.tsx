@@ -33,7 +33,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
   return (
     <Link
       href={`/dispensary/${d.slug}`}
-      className="rounded-card border-border bg-surface hover:border-primary/50 group block overflow-hidden border transition-colors"
+      className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group block overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
       {d.placementId && <PlacementBeacon placementId={d.placementId} />}
       <MediaImage url={d.coverImageUrl} alt={d.name} className="h-36" iconClassName="h-12 w-12">

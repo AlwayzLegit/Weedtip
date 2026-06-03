@@ -4,8 +4,8 @@ import { type HTMLAttributes } from 'react';
 type Tone = 'default' | 'primary' | 'outline' | 'muted';
 
 const TONES: Record<Tone, string> = {
-  default: 'bg-surface-2 text-foreground',
-  primary: 'bg-primary-muted text-primary',
+  default: 'bg-surface-2 text-foreground ring-1 ring-inset ring-border/60',
+  primary: 'bg-primary-muted text-primary ring-1 ring-inset ring-primary/25',
   outline: 'border border-border text-muted',
   muted: 'bg-surface-2 text-muted',
 };
