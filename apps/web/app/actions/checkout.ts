@@ -73,21 +73,33 @@ export type AutoDiscountPreview =
   | { ok: true; discountCents: number; title: string }
   | { ok: false };
 
-/** Best auto-applied "spend & save" order discount for the current subtotal. */
+/**
+ * Best auto-applied order discount for the current cart — the larger of a
+ * "spend & save" threshold (subtotal-based) and a BOGO offer (item-based),
+ * mirroring create_order's precedence when no promo code is entered.
+ */
 export async function previewAutoDiscount(
   dispensaryId: string,
   subtotalCents: number,
+  items: { product_id: string; quantity: number }[] = [],
 ): Promise<AutoDiscountPreview> {
   const supabase = await createClient();
-  const { data } = await supabase.rpc('compute_auto_order_discount', {
-    p_dispensary_id: dispensaryId,
-    p_subtotal_cents: Math.max(0, Math.round(subtotalCents)),
-  });
-  const row = data?.[0];
-  if (row && row.discount_cents > 0) {
-    return { ok: true, discountCents: row.discount_cents, title: row.title };
-  }
-  return { ok: false };
+  const [spend, bogo] = await Promise.all([
+    supabase.rpc('compute_auto_order_discount', {
+      p_dispensary_id: dispensaryId,
+      p_subtotal_cents: Math.max(0, Math.round(subtotalCents)),
+    }),
+    items.length
+      ? supabase.rpc('compute_bogo_discount', { p_dispensary_id: dispensaryId, p_items: items })
+      : Promise.resolve({ data: null }),
+  ]);
+  const candidates = [spend.data?.[0], bogo.data?.[0]].filter(
+    (r): r is { deal_id: string; discount_cents: number; title: string } =>
+      !!r && r.discount_cents > 0,
+  );
+  if (candidates.length === 0) return { ok: false };
+  const best = candidates.sort((a, b) => b.discount_cents - a.discount_cents)[0]!;
+  return { ok: true, discountCents: best.discount_cents, title: best.title };
 }
 
 export async function startCheckout(rawInput: StartCheckoutInput): Promise<StartCheckoutResult> {

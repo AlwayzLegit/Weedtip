@@ -47,7 +47,11 @@ export function CartView({
       return;
     }
     let cancelled = false;
-    previewAutoDiscount(dispensaryId, subtotalCents).then((res) => {
+    const items = (cart?.items ?? []).map((it) => ({
+      product_id: it.productId,
+      quantity: it.quantity,
+    }));
+    previewAutoDiscount(dispensaryId, subtotalCents, items).then((res) => {
       if (!cancelled) {
         setAutoDiscount(res.ok ? { discountCents: res.discountCents, title: res.title } : null);
       }
@@ -55,7 +59,7 @@ export function CartView({
     return () => {
       cancelled = true;
     };
-  }, [dispensaryId, promo, subtotalCents]);
+  }, [dispensaryId, promo, subtotalCents, cart]);
 
   if (!cart || cart.items.length === 0) {
     return (
