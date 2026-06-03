@@ -94,19 +94,20 @@ export async function createPlacement(_prev: FormState, fd: FormData): Promise<F
 export async function setPlacementActive(
   id: string,
   isActive: boolean,
-  dispensaryId: string,
+  dispensaryId: string | null,
 ): Promise<void> {
   const supabase = await createClient();
   await supabase.from('placements').update({ is_active: isActive }).eq('id', id);
-  await supabase.rpc('sync_featured_flags', { p_dispensary_id: dispensaryId });
+  // Only dispensary placements drive the featured flag; brand promos don't.
+  if (dispensaryId) await supabase.rpc('sync_featured_flags', { p_dispensary_id: dispensaryId });
   revalidatePath('/admin/promotions');
   revalidatePath('/');
 }
 
-export async function deletePlacement(id: string, dispensaryId: string): Promise<void> {
+export async function deletePlacement(id: string, dispensaryId: string | null): Promise<void> {
   const supabase = await createClient();
   await supabase.from('placements').delete().eq('id', id);
-  await supabase.rpc('sync_featured_flags', { p_dispensary_id: dispensaryId });
+  if (dispensaryId) await supabase.rpc('sync_featured_flags', { p_dispensary_id: dispensaryId });
   revalidatePath('/admin/promotions');
   revalidatePath('/');
 }

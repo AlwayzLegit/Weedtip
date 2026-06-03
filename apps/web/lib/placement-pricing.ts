@@ -14,6 +14,7 @@ const BASE_DAILY_CENTS: Record<PlacementType, number> = {
   promoted_deal: 1000,
   promoted_product: 1000,
   featured: 1500,
+  promoted_brand: 2000,
   hero: 4000,
 };
 
@@ -32,6 +33,7 @@ export const PLACEMENT_TYPE_LABEL: Record<PlacementType, string> = {
   hero: 'Homepage spotlight',
   promoted_deal: 'Promoted deal',
   promoted_product: 'Promoted product',
+  promoted_brand: 'Promoted brand',
 };
 
 export const PLACEMENT_SCOPE_LABEL: Record<PlacementScope, string> = {

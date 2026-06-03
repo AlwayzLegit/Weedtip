@@ -199,5 +199,96 @@ export async function startPlacementCheckout(raw: StartPlacementInput): Promise<
   }
 }
 
+const brandPlacementSchema = z.object({
+  brand_id: z.string().uuid(),
+  days: z.number().int().min(PLACEMENT_MIN_DAYS).max(PLACEMENT_MAX_DAYS),
+});
+export type StartBrandPlacementInput = z.infer<typeof brandPlacementSchema>;
+
+/**
+ * Buy a one-time, nationwide brand promotion. Verifies the caller owns the brand,
+ * creates a PENDING `promoted_brand` placement, then a Stripe Checkout session;
+ * the shared webhook activates it on payment.
+ */
+export async function startBrandPlacementCheckout(
+  raw: StartBrandPlacementInput,
+): Promise<CheckoutResult> {
+  if (!(await rateLimit('billing', { limit: 15, window: '60 s' })).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
+  if (!isStripeConfigured || !stripe) {
+    return { ok: false, error: 'Online billing is not enabled yet.' };
+  }
+
+  const parsed = brandPlacementSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
+  }
+  const input = parsed.data;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Please sign in.' };
+
+  const { data: brand } = await supabase
+    .from('brands')
+    .select('id, name, owner_id')
+    .eq('id', input.brand_id)
+    .maybeSingle();
+  if (!brand || brand.owner_id !== user.id) {
+    return { ok: false, error: 'You do not own this brand.' };
+  }
+
+  // Brands aren't geo-scoped, so brand promotions are always nationwide.
+  const priceCents = placementPriceCents('promoted_brand', 'nationwide', input.days);
+
+  const service = createServiceClient();
+  const { data: placement, error: insErr } = await service
+    .from('placements')
+    .insert({
+      brand_id: brand.id,
+      type: 'promoted_brand',
+      is_active: false,
+      price_cents: priceCents,
+      notes: `Self-serve brand promo · ${input.days} day${input.days === 1 ? '' : 's'}`,
+    })
+    .select('id')
+    .single();
+  if (insErr || !placement) return { ok: false, error: 'Could not create the placement.' };
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: 'usd',
+            unit_amount: priceCents,
+            product_data: { name: `Promoted brand: ${brand.name} — ${input.days} days` },
+          },
+        },
+      ],
+      client_reference_id: placement.id,
+      metadata: { placement_id: placement.id, days: String(input.days) },
+      payment_intent_data: { metadata: { placement_id: placement.id } },
+      success_url: `${siteUrl()}/dashboard/brands?billing=placement`,
+      cancel_url: `${siteUrl()}/dashboard/brands?billing=cancel`,
+    });
+    if (!session.url) {
+      await service.from('placements').delete().eq('id', placement.id);
+      return { ok: false, error: 'Could not start checkout.' };
+    }
+    await service.from('placements').update({ stripe_session_id: session.id }).eq('id', placement.id);
+    revalidatePath('/dashboard/brands');
+    return { ok: true, url: session.url };
+  } catch (e) {
+    await service.from('placements').delete().eq('id', placement.id);
+    return { ok: false, error: e instanceof Error ? e.message : 'Checkout failed.' };
+  }
+}
+
 // Re-export the type for callers that map over placement types.
 export type { PlacementType };

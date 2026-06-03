@@ -148,7 +148,14 @@ export function PromoteBilling({
   );
 }
 
-const PLACEMENT_TYPES: PlacementType[] = ['featured', 'hero', 'promoted_deal', 'promoted_product'];
+// Brand promotions are bought from the brand dashboard, not here.
+type DispensaryPlacementType = Exclude<PlacementType, 'promoted_brand'>;
+const PLACEMENT_TYPES: DispensaryPlacementType[] = [
+  'featured',
+  'hero',
+  'promoted_deal',
+  'promoted_product',
+];
 const SCOPES: PlacementScope[] = ['city', 'state', 'nationwide'];
 
 function PlacementPurchase({
@@ -168,7 +175,7 @@ function PlacementPurchase({
   deals: Target[];
   products: Target[];
 }) {
-  const [type, setType] = useState<PlacementType>('featured');
+  const [type, setType] = useState<DispensaryPlacementType>('featured');
   const [scope, setScope] = useState<PlacementScope>('city');
   const [days, setDays] = useState(30);
   const [targetId, setTargetId] = useState('');
@@ -197,7 +204,7 @@ function PlacementPurchase({
               className="border-border bg-background w-full rounded-md border px-3 py-2"
               value={type}
               onChange={(e) => {
-                setType(e.target.value as PlacementType);
+                setType(e.target.value as DispensaryPlacementType);
                 setTargetId('');
               }}
             >
