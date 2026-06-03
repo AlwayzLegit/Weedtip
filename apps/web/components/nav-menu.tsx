@@ -23,6 +23,7 @@ import { Button } from './ui/button';
 
 const BROWSE = [
   { href: '/dispensaries', label: 'Dispensaries' },
+  { href: '/deliveries', label: 'Delivery' },
   { href: '/products', label: 'Products' },
   { href: '/strains', label: 'Strains' },
   { href: '/brands', label: 'Brands' },
