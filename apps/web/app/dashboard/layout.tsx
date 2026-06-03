@@ -1,27 +1,6 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import {
-  BarChart3,
-  LayoutDashboard,
-  Megaphone,
-  Package,
-  ShoppingBag,
-  Star,
-  Store,
-  Tag,
-} from 'lucide-react';
+import { DashboardNav } from '@/components/dashboard/dashboard-nav';
 import { getAuth } from '@/lib/auth';
-
-const NAV = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/listing', label: 'Listing', icon: Store },
-  { href: '/dashboard/products', label: 'Products', icon: Package },
-  { href: '/dashboard/deals', label: 'Deals', icon: Tag },
-  { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
-  { href: '/dashboard/reviews', label: 'Reviews', icon: Star },
-  { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/dashboard/promote', label: 'Promote', icon: Megaphone },
-];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, profile } = await getAuth();
@@ -30,22 +9,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="grid gap-8 lg:grid-cols-[200px_1fr]">
-        <aside>
-          <nav className="flex gap-2 lg:flex-col">
-            {NAV.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="text-muted hover:bg-surface-2 hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            ))}
-          </nav>
+      <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
+        <aside className="lg:sticky lg:top-20 lg:self-start">
+          <DashboardNav variant="owner" />
         </aside>
-        <div>{children}</div>
+        <div className="min-w-0">{children}</div>
       </div>
     </div>
   );

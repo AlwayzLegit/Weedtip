@@ -9,9 +9,9 @@ export const metadata: Metadata = { title: 'Admin' };
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-card border-border bg-surface border p-4">
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-muted text-sm">{label}</p>
+    <div className="card sheen p-5">
+      <p className="text-2xl font-bold tracking-tight">{value}</p>
+      <p className="text-muted mt-0.5 text-sm">{label}</p>
     </div>
   );
 }
