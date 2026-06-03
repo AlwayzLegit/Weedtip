@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { BrandClaimButtons } from '@/components/admin/brand-claim-buttons';
 import { ClaimButtons } from '@/components/admin/claim-buttons';
 import { createClient } from '@/lib/supabase/server';
 
@@ -7,13 +8,20 @@ export const metadata: Metadata = { title: 'Ownership claims · Admin' };
 
 export default async function AdminClaims() {
   const supabase = await createClient();
-  const { data: requests } = await supabase
-    .from('ownership_requests')
-    .select(
-      'id, status, message, license_number, created_at, dispensary:dispensaries(name,slug,city,state), requester:profiles(display_name)',
-    )
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true });
+  const [{ data: requests }, { data: brandClaims }] = await Promise.all([
+    supabase
+      .from('ownership_requests')
+      .select(
+        'id, status, message, license_number, created_at, dispensary:dispensaries(name,slug,city,state), requester:profiles(display_name)',
+      )
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('brand_claims')
+      .select('id, message, created_at, brand:brands(name,slug), requester:profiles(display_name)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true }),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -72,6 +80,46 @@ export default async function AdminClaims() {
                   {r.message && <p className="text-muted mt-1 text-sm">“{r.message}”</p>}
                 </div>
                 <ClaimButtons id={r.id} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <h2 className="pt-4 text-2xl font-bold">Brand claims</h2>
+      <p className="text-muted text-sm">
+        Owners requesting to manage a brand. Approving assigns the brand to their account and
+        declines competing claims.
+      </p>
+      {!brandClaims || brandClaims.length === 0 ? (
+        <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
+          No pending brand claims.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {brandClaims.map((c) => {
+            const brand = c.brand as { name: string; slug: string } | null;
+            const requester = c.requester as { display_name: string | null } | null;
+            return (
+              <div
+                key={c.id}
+                className="rounded-card border-border bg-surface flex flex-col gap-3 border p-4 sm:flex-row sm:items-start sm:justify-between"
+              >
+                <div className="min-w-0">
+                  {brand ? (
+                    <Link href={`/brand/${brand.slug}`} className="hover:text-primary font-medium">
+                      {brand.name}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">Unknown brand</span>
+                  )}
+                  <p className="text-muted mt-1 text-xs">
+                    Requested by {requester?.display_name ?? 'an owner'} ·{' '}
+                    {new Date(c.created_at).toLocaleDateString()}
+                  </p>
+                  {c.message && <p className="text-muted mt-1 text-sm">“{c.message}”</p>}
+                </div>
+                <BrandClaimButtons id={c.id} />
               </div>
             );
           })}

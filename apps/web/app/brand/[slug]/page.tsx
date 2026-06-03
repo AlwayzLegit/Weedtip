@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { ClaimBrandButton } from '@/components/brand/claim-brand-button';
 import { ProductCard } from '@/components/product-card';
+import { getAuth } from '@/lib/auth';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -41,6 +43,12 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
 
   const { data: brand } = await supabase.from('brands').select('*').eq('slug', slug).maybeSingle();
   if (!brand) notFound();
+
+  const { user, profile } = await getAuth();
+  const canClaim =
+    !!user &&
+    !brand.owner_id &&
+    (profile?.role === 'dispensary_owner' || profile?.role === 'admin');
 
   const { data: products } = await supabase
     .from('products')
@@ -111,6 +119,11 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
             >
               Visit website →
             </a>
+          )}
+          {canClaim && (
+            <div className="mt-3">
+              <ClaimBrandButton brandId={brand.id} />
+            </div>
           )}
         </div>
         <div className="flex gap-6 sm:flex-col sm:gap-3">
