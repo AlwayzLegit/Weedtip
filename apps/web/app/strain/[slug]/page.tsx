@@ -53,6 +53,14 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
     .eq('dispensary.status', 'active')
     .order('price_cents');
 
+  const saleMap = new Map<string, number>();
+  if (products && products.length) {
+    const { data: sales } = await supabase.rpc('sale_prices_for', {
+      p_product_ids: products.map((p) => p.id),
+    });
+    for (const s of sales ?? []) saleMap.set(s.product_id, s.sale_cents);
+  }
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <Breadcrumbs
@@ -121,7 +129,8 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
                   p={{
                     name: p.name,
                     brand: p.brand ?? dispensary?.name ?? null,
-                    priceCents: p.price_cents,
+                    priceCents: saleMap.get(p.id) ?? p.price_cents,
+                    originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
                     imageUrl: p.image_urls[0] ?? null,
                     strainType: p.strain_type,
                     thcPercentage: p.thc_percentage,
