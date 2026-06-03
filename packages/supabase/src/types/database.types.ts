@@ -1366,6 +1366,18 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      search_global: {
+        Args: { search_query: string; per_kind_limit?: number }
+        Returns: {
+          kind: string
+          id: string
+          slug: string
+          name: string
+          subtitle: string | null
+          image_url: string | null
+          rank: number
+        }[]
+      }
       search_dispensaries: {
         Args: {
           filter_category_slug?: string

@@ -18,6 +18,7 @@ import {
 import { signOut } from '@/app/actions/auth';
 import { cn } from '@/lib/utils';
 import { CartButton } from './cart/cart-button';
+import { GlobalSearch } from './global-search';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 
@@ -208,6 +209,7 @@ export function NavMenu({
           />
           <div className="glass animate-slide-up shadow-card-hover absolute inset-x-0 top-16 z-50 border-b p-4 md:hidden">
             <nav className="flex flex-col gap-4">
+              <GlobalSearch />
               <div className="flex flex-col gap-1">
                 {BROWSE.map((link) => (
                   <Link
