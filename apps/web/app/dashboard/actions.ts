@@ -220,10 +220,17 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
     | 'percentage'
     | 'fixed_amount'
     | 'price_target'
+    | 'spend_threshold'
     | 'bogo';
-  const autoApply = bool(fd, 'auto_apply');
+  // spend_threshold is inherently an auto-applied, order-level discount.
+  const autoApply = bool(fd, 'auto_apply') || kind === 'spend_threshold';
   const rawValue = numOpt(fd, 'discount_value') ?? 0;
-  const legacyType = kind === 'percentage' ? 'percentage' : kind === 'bogo' ? 'bogo' : 'fixed';
+  const legacyType =
+    kind === 'percentage' || kind === 'spend_threshold'
+      ? 'percentage'
+      : kind === 'bogo'
+        ? 'bogo'
+        : 'fixed';
   const legacyValue = kind === 'price_target' || kind === 'bogo' ? 0 : rawValue;
 
   const input = {
@@ -265,6 +272,8 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
     target_category_ids: catIds,
     target_product_ids: prodIds,
     target_price_cents: kind === 'price_target' ? Math.round(rawValue * 100) : null,
+    min_subtotal_cents:
+      kind === 'spend_threshold' ? Math.round((numOpt(fd, 'min_subtotal') ?? 0) * 100) : null,
     days_of_week: daysOfWeek,
     featured: autoApply ? bool(fd, 'featured') : false,
   };

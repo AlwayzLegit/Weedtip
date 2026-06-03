@@ -17,6 +17,7 @@ const KINDS = [
   { value: 'percentage', label: 'Percentage off' },
   { value: 'fixed_amount', label: 'Fixed amount off' },
   { value: 'price_target', label: 'Set price to' },
+  { value: 'spend_threshold', label: 'Spend & save (% off order)' },
   { value: 'bogo', label: 'Buy one get one' },
 ] as const;
 type Kind = (typeof KINDS)[number]['value'];
@@ -25,12 +26,14 @@ const VALUE_HINT: Record<Kind, string> = {
   percentage: 'Percent off (≤100).',
   fixed_amount: 'Dollar amount off each item.',
   price_target: 'New per-item price, in dollars.',
+  spend_threshold: 'Percent off the whole order once the minimum spend is met.',
   bogo: 'Not used for BOGO.',
 };
 const VALUE_LABEL: Record<Kind, string> = {
   percentage: 'Percent off',
   fixed_amount: 'Amount off ($)',
   price_target: 'Sale price ($)',
+  spend_threshold: 'Percent off order',
   bogo: 'Value',
 };
 
@@ -120,8 +123,29 @@ export function DealForm({
         </Field>
       </section>
 
-      {/* Storefront sale: auto-apply targeting + scheduling */}
-      <section className="rounded-card border-border space-y-4 border p-4">
+      {/* Order-level "spend & save" vs item-level storefront sale */}
+      {kind === 'spend_threshold' ? (
+        <section className="rounded-card border-border space-y-3 border p-4">
+          <Field
+            label="Minimum spend ($)"
+            htmlFor="min_subtotal"
+            hint="Once the cart subtotal reaches this, the percentage above comes off the whole order automatically — no code needed."
+          >
+            <Input
+              id="min_subtotal"
+              name="min_subtotal"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={
+                d?.min_subtotal_cents != null ? String(d.min_subtotal_cents / 100) : ''
+              }
+            />
+          </Field>
+        </section>
+      ) : (
+        /* Storefront sale: auto-apply targeting + scheduling */
+        <section className="rounded-card border-border space-y-4 border p-4">
         <Checkbox
           name="auto_apply"
           label="Apply automatically as a storefront sale (no promo code needed)"
@@ -218,7 +242,8 @@ export function DealForm({
             />
           </Field>
         )}
-      </section>
+        </section>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2">
         <Field label="Starts" htmlFor="start_date" error={fe.start_date}>
