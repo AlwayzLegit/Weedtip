@@ -1201,6 +1201,14 @@ export type Database = {
           title: string
         }[]
       }
+      compute_bogo_discount: {
+        Args: { p_dispensary_id: string; p_items: Json }
+        Returns: {
+          deal_id: string
+          discount_cents: number
+          title: string
+        }[]
+      }
       compute_promo_discount: {
         Args: { p_code: string; p_dispensary_id: string; p_subtotal_cents: number }
         Returns: {

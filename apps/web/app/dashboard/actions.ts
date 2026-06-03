@@ -274,6 +274,9 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
     target_price_cents: kind === 'price_target' ? Math.round(rawValue * 100) : null,
     min_subtotal_cents:
       kind === 'spend_threshold' ? Math.round((numOpt(fd, 'min_subtotal') ?? 0) * 100) : null,
+    buy_quantity: kind === 'bogo' ? Math.max(1, Math.round(numOpt(fd, 'buy_quantity') ?? 1)) : null,
+    get_quantity: kind === 'bogo' ? Math.max(1, Math.round(numOpt(fd, 'get_quantity') ?? 1)) : null,
+    get_discount_percent: kind === 'bogo' ? (numOpt(fd, 'get_discount_percent') ?? 100) : null,
     days_of_week: daysOfWeek,
     featured: autoApply ? bool(fd, 'featured') : false,
   };

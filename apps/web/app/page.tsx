@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, MapPin, ShoppingBag, Sparkles, Store, Tag, Truck } from 'lucide-react';
 import { CategoryPills } from '@/components/category-pills';
 import { DispensaryCard } from '@/components/dispensary-card';
+import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -105,12 +106,22 @@ export default async function HomePage() {
     supabase.from('dispensaries').select('state').eq('status', 'active'),
   ]);
 
-  const spotlights = (heroPlacements ?? [])
+  const heroSlides: HeroSlide[] = (heroPlacements ?? [])
     .map((p) => ({ placementId: p.id, d: p.dispensary as Record<string, unknown> | null }))
     .filter(
       (s): s is { placementId: string; d: Record<string, unknown> } =>
         !!s.d && s.d.status === 'active',
-    );
+    )
+    .map(({ placementId, d }) => ({
+      placementId,
+      slug: String(d.slug),
+      name: String(d.name),
+      city: String(d.city),
+      state: String(d.state),
+      coverUrl: (d.cover_image_url as string | null) ?? null,
+      rating: (d.rating_avg as number | null) ?? null,
+      reviewCount: (d.rating_count as number) ?? 0,
+    }));
 
   const stateCount = new Set((cityRows.data ?? []).map((r) => r.state)).size;
   const nf = new Intl.NumberFormat('en-US');
@@ -159,48 +170,19 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Promoted hero banner carousel (paid hero placements) */}
+      {heroSlides.length > 0 && (
+        <div className="mx-auto max-w-7xl px-4 pt-10">
+          <HeroCarousel slides={heroSlides} />
+        </div>
+      )}
+
       <div className="mx-auto max-w-7xl space-y-16 px-4 py-16">
         {/* Browse by category */}
         <section>
           <SectionHeading eyebrow="Explore" title="Browse by category" />
           <CategoryPills categories={categories ?? []} />
         </section>
-
-        {/* Spotlight — paid homepage hero placements */}
-        {spotlights.length > 0 && (
-          <section>
-            <div className="mb-5 flex items-end justify-between gap-4">
-              <div>
-                <p className="eyebrow mb-1">Featured partners</p>
-                <h2 className="flex items-center gap-2 text-xl font-semibold sm:text-2xl">
-                  Spotlight <Badge tone="outline">Sponsored</Badge>
-                </h2>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {spotlights.map(({ placementId, d }) => (
-                <DispensaryCard
-                  key={placementId}
-                  d={{
-                    slug: String(d.slug),
-                    name: String(d.name),
-                    city: String(d.city),
-                    state: String(d.state),
-                    coverImageUrl: (d.cover_image_url as string | null) ?? null,
-                    isDelivery: Boolean(d.is_delivery),
-                    isPickup: Boolean(d.is_pickup),
-                    isMedical: Boolean(d.is_medical),
-                    isRecreational: Boolean(d.is_recreational),
-                    sponsored: true,
-                    placementId,
-                    rating: (d.rating_avg as number | null) ?? null,
-                    reviewCount: (d.rating_count as number) ?? 0,
-                  }}
-                />
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Featured dispensaries */}
         <section>

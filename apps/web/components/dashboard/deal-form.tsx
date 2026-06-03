@@ -123,6 +123,27 @@ export function DealForm({
         </Field>
       </section>
 
+      {kind === 'bogo' && (
+        <section className="rounded-card border-border grid gap-4 border p-4 sm:grid-cols-3">
+          <Field label="Buy quantity" htmlFor="buy_quantity">
+            <Input id="buy_quantity" name="buy_quantity" type="number" min="1" defaultValue={d?.buy_quantity ?? 1} />
+          </Field>
+          <Field label="Get quantity" htmlFor="get_quantity">
+            <Input id="get_quantity" name="get_quantity" type="number" min="1" defaultValue={d?.get_quantity ?? 1} />
+          </Field>
+          <Field label="Get % off" htmlFor="get_discount_percent" hint="100 = free">
+            <Input
+              id="get_discount_percent"
+              name="get_discount_percent"
+              type="number"
+              min="0"
+              max="100"
+              defaultValue={d?.get_discount_percent ?? 100}
+            />
+          </Field>
+        </section>
+      )}
+
       {/* Order-level "spend & save" vs item-level storefront sale */}
       {kind === 'spend_threshold' ? (
         <section className="rounded-card border-border space-y-3 border p-4">
