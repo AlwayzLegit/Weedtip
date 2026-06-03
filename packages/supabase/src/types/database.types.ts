@@ -591,6 +591,8 @@ export type Database = {
           paid_at: string | null
           payment_method: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
+          platform_fee_bps: number
+          platform_fee_cents: number
           status: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -612,6 +614,8 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          platform_fee_bps?: number
+          platform_fee_cents?: number
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -633,6 +637,8 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          platform_fee_bps?: number
+          platform_fee_cents?: number
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -807,6 +813,7 @@ export type Database = {
       }
       plans: {
         Row: {
+          commission_bps: number
           created_at: string
           description: string | null
           features: Json
@@ -818,6 +825,7 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          commission_bps?: number
           created_at?: string
           description?: string | null
           features?: Json
@@ -829,6 +837,7 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          commission_bps?: number
           created_at?: string
           description?: string | null
           features?: Json

@@ -26,7 +26,7 @@ export default async function AnalyticsPage() {
   const [{ data }, { data: redemptions }] = await Promise.all([
     supabase
       .from('orders')
-      .select('status,total_cents,created_at,items')
+      .select('status,total_cents,platform_fee_cents,platform_fee_bps,created_at,items')
       .eq('dispensary_id', dispensary.id),
     supabase
       .from('deal_redemptions')
@@ -40,6 +40,11 @@ export default async function AnalyticsPage() {
   const aov = live.length ? totalRevenue / live.length : 0;
   const cancelled = orders.filter((o) => o.status === 'cancelled').length;
   const cancelRate = orders.length ? Math.round((cancelled / orders.length) * 100) : 0;
+
+  // Platform commission across non-cancelled orders, and the current take-rate.
+  const platformFees = live.reduce((s, o) => s + (o.platform_fee_cents ?? 0), 0);
+  const feeBps = live.find((o) => o.platform_fee_bps > 0)?.platform_fee_bps ?? 0;
+  const netRevenue = totalRevenue - platformFees;
 
   const byStatus = orders.reduce<Record<string, number>>((acc, o) => {
     acc[o.status] = (acc[o.status] ?? 0) + 1;
@@ -116,6 +121,15 @@ export default async function AnalyticsPage() {
         <Stat label="Orders" value={String(orders.length)} sub={`${live.length} active`} />
         <Stat label="Avg order value" value={formatPrice(Math.round(aov))} />
         <Stat label="Cancellation rate" value={`${cancelRate}%`} sub={`${cancelled} cancelled`} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <Stat
+          label="Platform fees"
+          value={formatPrice(platformFees)}
+          sub={feeBps ? `${(feeBps / 100).toFixed(feeBps % 100 ? 2 : 0)}% commission` : 'commission'}
+        />
+        <Stat label="Net revenue" value={formatPrice(netRevenue)} sub="after platform fees" />
       </div>
 
       <section>
