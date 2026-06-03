@@ -123,7 +123,7 @@ export default async function DashboardOrders() {
               <h2 className="text-muted text-sm font-semibold uppercase tracking-wide">
                 Recently closed
               </h2>
-              <div className="rounded-card border-border overflow-hidden border">
+              <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
                 <table className="w-full text-sm">
                   <thead className="bg-surface-2 text-muted text-left">
                     <tr>

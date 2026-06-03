@@ -27,7 +27,7 @@ export default async function AdminStrains() {
         </Link>
       </div>
 
-      <div className="rounded-card border-border overflow-hidden border">
+      <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-muted text-left">
             <tr>
