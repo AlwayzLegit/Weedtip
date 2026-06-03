@@ -13,7 +13,7 @@ export const metadata: Metadata = pageSeo({
 export default async function BrandsPage() {
   const supabase = await createClient();
   const [{ data: brands }, { data: prodBrands }] = await Promise.all([
-    supabase.from('brands').select('id,slug,name,description').order('name'),
+    supabase.from('brands').select('id,slug,name,description,logo_url').order('name'),
     supabase
       .from('products')
       .select('brand_id, dispensary:dispensaries!inner(status)')
@@ -48,9 +48,17 @@ export default async function BrandsPage() {
               href={`/brand/${b.slug}`}
               className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover flex items-start gap-4 border p-5 transition-all duration-200 hover:-translate-y-0.5"
             >
-              <span className="bg-primary-muted text-primary ring-primary/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold ring-1">
-                {b.name.charAt(0).toUpperCase()}
-              </span>
+              {b.logo_url ? (
+                <img
+                  src={b.logo_url}
+                  alt={b.name}
+                  className="bg-surface-2 border-border h-12 w-12 shrink-0 rounded-xl border object-contain p-1"
+                />
+              ) : (
+                <span className="bg-primary-muted text-primary ring-primary/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold ring-1">
+                  {b.name.charAt(0).toUpperCase()}
+                </span>
+              )}
               <div className="min-w-0">
                 <h2 className="font-semibold">{b.name}</h2>
                 {b.description && (

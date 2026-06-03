@@ -41,8 +41,10 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          owner_id: string | null
           slug: string
           updated_at: string
+          website: string | null
         }
         Insert: {
           created_at?: string
@@ -50,8 +52,10 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          owner_id?: string | null
           slug: string
           updated_at?: string
+          website?: string | null
         }
         Update: {
           created_at?: string
@@ -59,10 +63,54 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          owner_id?: string | null
           slug?: string
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
+      }
+      brand_claims: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          message: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_claims_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
@@ -1187,6 +1235,23 @@ export type Database = {
     Functions: {
       approve_ownership_request: {
         Args: { p_request_id: string }
+        Returns: undefined
+      }
+      approve_brand_claim: {
+        Args: { p_claim_id: string }
+        Returns: undefined
+      }
+      reject_brand_claim: {
+        Args: { p_claim_id: string }
+        Returns: undefined
+      }
+      update_owned_brand: {
+        Args: {
+          p_brand_id: string
+          p_description: string
+          p_logo_url: string
+          p_website: string
+        }
         Returns: undefined
       }
       auth_role: {

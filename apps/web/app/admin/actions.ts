@@ -145,6 +145,20 @@ export async function rejectOwnershipRequest(id: string): Promise<void> {
   revalidatePath('/admin/claims');
 }
 
+export async function approveBrandClaim(id: string): Promise<void> {
+  const supabase = await createClient();
+  // SECURITY DEFINER RPC: verifies admin, sets brands.owner_id, auto-rejects rivals.
+  await supabase.rpc('approve_brand_claim', { p_claim_id: id });
+  revalidatePath('/admin/claims');
+  revalidatePath('/brands');
+}
+
+export async function rejectBrandClaim(id: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.rpc('reject_brand_claim', { p_claim_id: id });
+  revalidatePath('/admin/claims');
+}
+
 // ─── Categories ──────────────────────────────────────────────────────────────
 
 const categorySchema = z.object({
@@ -333,11 +347,15 @@ export async function upsertBrand(_prev: FormState, fd: FormData): Promise<FormS
   });
   if (!parsed.success) return fromZodError(parsed.error);
 
+  // website isn't part of the shared brandSchema; merge it in (nullable column).
+  const websiteRaw = str(fd, 'website');
+  const payload = { ...parsed.data, website: websiteRaw ?? null };
+
   const supabase = await createClient();
   const id = str(fd, 'id');
   const { error } = id
-    ? await supabase.from('brands').update(parsed.data).eq('id', id)
-    : await supabase.from('brands').insert(parsed.data);
+    ? await supabase.from('brands').update(payload).eq('id', id)
+    : await supabase.from('brands').insert(payload);
 
   if (error) {
     return error.code === '23505'

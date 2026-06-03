@@ -41,6 +41,9 @@ export function BrandForm({ brand }: { brand: Tables<'brands'> | null }) {
           placeholder="https://"
         />
       </Field>
+      <Field label="Website" htmlFor="website" error={fe.website}>
+        <Input id="website" name="website" defaultValue={b?.website ?? ''} placeholder="https://" />
+      </Field>
       <SubmitButton size="lg">{b ? 'Save brand' : 'Add brand'}</SubmitButton>
     </form>
   );
