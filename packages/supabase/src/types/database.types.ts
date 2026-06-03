@@ -384,8 +384,11 @@ export type Database = {
           name: string
           owner_id: string | null
           phone: string | null
+          rating_atmosphere: number
           rating_avg: number
           rating_count: number
+          rating_quality: number
+          rating_service: number
           search_vector: unknown
           slug: string
           state: string
@@ -419,8 +422,11 @@ export type Database = {
           name: string
           owner_id?: string | null
           phone?: string | null
+          rating_atmosphere?: number
           rating_avg?: number
           rating_count?: number
+          rating_quality?: number
+          rating_service?: number
           search_vector?: unknown
           slug: string
           state: string
@@ -454,8 +460,11 @@ export type Database = {
           name?: string
           owner_id?: string | null
           phone?: string | null
+          rating_atmosphere?: number
           rating_avg?: number
           rating_count?: number
+          rating_quality?: number
+          rating_service?: number
           search_vector?: unknown
           slug?: string
           state?: string
@@ -1098,40 +1107,58 @@ export type Database = {
       }
       reviews: {
         Row: {
+          atmosphere: number | null
           author_name: string | null
           body: string | null
           created_at: string
           dispensary_id: string
+          dispute_reason: string | null
+          disputed_at: string | null
           id: string
           owner_reply: string | null
           owner_reply_at: string | null
+          quality: number | null
           rating: number
+          service: number | null
           updated_at: string
           user_id: string
+          verified: boolean
         }
         Insert: {
+          atmosphere?: number | null
           author_name?: string | null
           body?: string | null
           created_at?: string
           dispensary_id: string
+          dispute_reason?: string | null
+          disputed_at?: string | null
           id?: string
           owner_reply?: string | null
           owner_reply_at?: string | null
+          quality?: number | null
           rating: number
+          service?: number | null
           updated_at?: string
           user_id: string
+          verified?: boolean
         }
         Update: {
+          atmosphere?: number | null
           author_name?: string | null
           body?: string | null
           created_at?: string
           dispensary_id?: string
+          dispute_reason?: string | null
+          disputed_at?: string | null
           id?: string
           owner_reply?: string | null
           owner_reply_at?: string | null
+          quality?: number | null
           rating?: number
+          service?: number | null
           updated_at?: string
           user_id?: string
+          verified?: boolean
         }
         Relationships: [
           {
@@ -1401,6 +1428,10 @@ export type Database = {
       owns_dispensary: {
         Args: { target_dispensary_id: string }
         Returns: boolean
+      }
+      dispute_review: {
+        Args: { p_review_id: string; p_reason: string }
+        Returns: undefined
       }
       recalc_dispensary_rating: {
         Args: { target_id: string }
