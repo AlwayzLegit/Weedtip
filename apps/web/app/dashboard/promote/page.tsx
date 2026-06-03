@@ -1,11 +1,18 @@
 import type { Metadata } from 'next';
-import { Check } from 'lucide-react';
+import { PromoteBilling } from '@/components/dashboard/promote-billing';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { isStripeConfigured } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Promote' };
+
+const BILLING_BANNER: Record<string, { tone: 'primary' | 'muted'; text: string }> = {
+  subscribed: { tone: 'primary', text: 'Subscription active — thanks! It may take a moment to reflect.' },
+  placement: { tone: 'primary', text: 'Payment received — your placement goes live momentarily.' },
+  cancel: { tone: 'muted', text: 'Checkout canceled. No charge was made.' },
+};
 
 const TYPE_LABEL: Record<string, string> = {
   featured: 'Featured placement',
@@ -23,39 +30,78 @@ function isLive(p: { is_active: boolean; starts_at: string; ends_at: string | nu
   );
 }
 
-export default async function PromotePage() {
+export default async function PromotePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ billing?: string }>;
+}) {
   const { dispensary } = await requireOwnerDispensary();
   const supabase = await createClient();
+  const { billing } = await searchParams;
+  const banner = billing ? BILLING_BANNER[billing] : undefined;
 
-  const [{ data: sub }, { data: placements }, { data: plans }, { data: stats }] =
-    await Promise.all([
-      supabase
-        .from('dispensary_subscriptions')
-        .select('status, plan:plans(name, price_cents)')
-        .eq('dispensary_id', dispensary.id)
-        .maybeSingle(),
-      supabase
-        .from('placements')
-        .select('*')
-        .eq('dispensary_id', dispensary.id)
-        .order('created_at', { ascending: false }),
-      supabase.from('plans').select('*').eq('is_active', true).order('sort_order'),
-      supabase.from('placement_stats').select('*'),
-    ]);
+  const [
+    { data: sub },
+    { data: placements },
+    { data: plans },
+    { data: stats },
+    { data: dealTargets },
+    { data: productTargets },
+  ] = await Promise.all([
+    supabase
+      .from('dispensary_subscriptions')
+      .select('status, stripe_customer_id, stripe_subscription_id, plan:plans(name, price_cents)')
+      .eq('dispensary_id', dispensary.id)
+      .maybeSingle(),
+    supabase
+      .from('placements')
+      .select('*')
+      .eq('dispensary_id', dispensary.id)
+      .order('created_at', { ascending: false }),
+    supabase.from('plans').select('*').eq('is_active', true).order('sort_order'),
+    supabase.from('placement_stats').select('*'),
+    supabase
+      .from('deals')
+      .select('id, title')
+      .eq('dispensary_id', dispensary.id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('products')
+      .select('id, name')
+      .eq('dispensary_id', dispensary.id)
+      .order('name')
+      .limit(200),
+  ]);
 
   const plan = sub?.plan as { name: string; price_cents: number } | null;
   const live = (placements ?? []).filter(isLive);
   const statsByPlacement = new Map((stats ?? []).map((s) => [s.placement_id, s] as const));
+
+  const subscribed = !!sub?.stripe_subscription_id && sub.status !== 'canceled';
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Promote {dispensary.name}</h1>
         <p className="text-muted mt-1 text-sm">
-          Featured and spotlight placements put your shop in front of more customers. Self-serve
-          checkout is coming soon — contact us to activate a placement in the meantime.
+          Subscribe to a plan and buy featured or spotlight placements to put your shop in front of
+          more customers. Placements activate on payment and expire automatically.
         </p>
       </div>
+
+      {banner && (
+        <div
+          className={`rounded-card border p-4 text-sm ${
+            banner.tone === 'primary'
+              ? 'border-primary/30 bg-primary-muted text-primary'
+              : 'border-border bg-surface text-muted'
+          }`}
+        >
+          {banner.text}
+        </div>
+      )}
 
       {/* Current plan */}
       <section className="space-y-3">
@@ -121,40 +167,23 @@ export default async function PromotePage() {
         )}
       </section>
 
-      {/* Plans / upsell */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Plans</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {(plans ?? []).map((pl) => {
-            const features = Array.isArray(pl.features) ? (pl.features as string[]) : [];
-            const current = (plan?.name ?? 'Free') === pl.name;
-            return (
-              <div
-                key={pl.id}
-                className={`rounded-card bg-surface border p-5 ${
-                  current ? 'border-primary' : 'border-border'
-                }`}
-              >
-                <div className="flex items-baseline justify-between">
-                  <h3 className="font-semibold">{pl.name}</h3>
-                  {current && <Badge tone="primary">Current</Badge>}
-                </div>
-                <p className="mt-1 text-sm font-medium">
-                  {pl.price_cents === 0 ? 'Free' : `${formatPrice(pl.price_cents)}/mo`}
-                </p>
-                <ul className="mt-3 space-y-1.5">
-                  {features.map((f) => (
-                    <li key={f} className="text-muted flex items-start gap-1.5 text-xs">
-                      <Check className="text-primary mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {/* Plans + self-serve placement purchase */}
+      <PromoteBilling
+        stripeEnabled={isStripeConfigured}
+        plans={(plans ?? []).map((pl) => ({
+          id: pl.id,
+          name: pl.name,
+          price_cents: pl.price_cents,
+          features: Array.isArray(pl.features) ? (pl.features as string[]) : [],
+        }))}
+        currentPlanName={plan?.name ?? 'Free'}
+        subscribed={subscribed}
+        hasBillingAccount={!!sub?.stripe_customer_id}
+        city={dispensary.city}
+        state={dispensary.state}
+        deals={(dealTargets ?? []).map((d) => ({ id: d.id, label: d.title }))}
+        products={(productTargets ?? []).map((p) => ({ id: p.id, label: p.name }))}
+      />
     </div>
   );
 }

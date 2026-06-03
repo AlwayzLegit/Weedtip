@@ -8,6 +8,60 @@ import { createServiceClient } from '@/lib/supabase/service';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+/** Map a Stripe subscription status onto our coarser tier. */
+function mapSubStatus(status: Stripe.Subscription.Status): 'active' | 'past_due' | 'canceled' {
+  if (status === 'active' || status === 'trialing') return 'active';
+  if (status === 'past_due' || status === 'unpaid') return 'past_due';
+  return 'canceled';
+}
+
+/** Upsert a dispensary's subscription row from a Stripe subscription object. */
+async function syncSubscription(service: ServiceClient, sub: Stripe.Subscription) {
+  const dispensaryId = sub.metadata?.dispensary_id;
+  if (!dispensaryId) return;
+  const periodEnd = (sub as Stripe.Subscription & { current_period_end?: number })
+    .current_period_end;
+  await service.from('dispensary_subscriptions').upsert(
+    {
+      dispensary_id: dispensaryId,
+      plan_id: sub.metadata?.plan_id ?? null,
+      status: mapSubStatus(sub.status),
+      stripe_customer_id: typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+      stripe_subscription_id: sub.id,
+      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'dispensary_id' },
+  );
+}
+
+/** Activate a paid placement and re-sync the dispensary's featured flag. */
+async function activatePlacement(
+  service: ServiceClient,
+  placementId: string,
+  days: number,
+  paymentIntentId: string | null,
+) {
+  const start = new Date();
+  const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
+  const { data: placement } = await service
+    .from('placements')
+    .update({
+      is_active: true,
+      starts_at: start.toISOString(),
+      ends_at: end.toISOString(),
+      stripe_payment_intent_id: paymentIntentId,
+    })
+    .eq('id', placementId)
+    .select('dispensary_id, type')
+    .single();
+  if (placement?.type === 'featured') {
+    await service.rpc('sync_featured_flags', { p_dispensary_id: placement.dispensary_id });
+  }
+}
+
 /**
  * Stripe webhook. Configure the endpoint URL `${SITE}/api/stripe/webhook` in the
  * Stripe dashboard (or `stripe listen --forward-to .../api/stripe/webhook` locally)
@@ -46,9 +100,32 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
+        const service = createServiceClient();
+
+        // Subscription checkout → sync the subscription from Stripe.
+        if (session.mode === 'subscription' && typeof session.subscription === 'string') {
+          const sub = await stripe.subscriptions.retrieve(session.subscription);
+          await syncSubscription(service, sub);
+          break;
+        }
+
+        // One-time placement purchase → activate the pending placement.
+        const placementId = session.metadata?.placement_id;
+        if (placementId && session.payment_status === 'paid') {
+          const days = Number(session.metadata?.days ?? '0') || 1;
+          await activatePlacement(
+            service,
+            placementId,
+            days,
+            typeof session.payment_intent === 'string' ? session.payment_intent : null,
+          );
+          break;
+        }
+
+        // Otherwise it's a product order.
         const orderId = session.metadata?.order_id ?? session.client_reference_id;
         if (orderId && session.payment_status === 'paid') {
-          await createServiceClient()
+          await service
             .from('orders')
             .update({
               payment_status: 'paid',
@@ -59,6 +136,11 @@ export async function POST(req: NextRequest) {
             })
             .eq('id', orderId);
         }
+        break;
+      }
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        await syncSubscription(createServiceClient(), event.data.object);
         break;
       }
       case 'charge.refunded': {
