@@ -115,6 +115,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     ownershipStatus = (req?.status as 'pending' | 'approved' | 'rejected' | undefined) ?? null;
   }
 
+  // Active auto-apply storefront sales → effective price per product.
+  const { data: salePrices } = await supabase.rpc('dispensary_sale_prices', {
+    p_dispensary_id: d.id,
+  });
+  const saleByProduct = new Map(
+    (salePrices ?? []).map((s) => [s.product_id, s] as const),
+  );
+
   // Group menu by category, preserving sort_order.
   const sections = new Map<string, { name: string; sort: number; items: typeof products }>();
   for (const p of products ?? []) {
@@ -337,32 +345,37 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         {section.name}
                       </h3>
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                        {section.items!.map((p) => (
-                          <div key={p.id} className="space-y-2">
-                            <ProductCard
-                              p={{
-                                name: p.name,
-                                brand: p.brand,
-                                priceCents: p.price_cents,
-                                imageUrl: p.image_urls[0] ?? null,
-                                strainType: p.strain_type,
-                                thcPercentage: p.thc_percentage,
-                                inStock: p.in_stock,
-                                productId: p.id,
-                              }}
-                            />
-                            {p.in_stock && (
-                              <AddToCart
-                                dispensary={{ id: d.id, slug: d.slug, name: d.name }}
-                                product={{
-                                  productId: p.id,
+                        {section.items!.map((p) => {
+                          const sale = saleByProduct.get(p.id);
+                          const effectivePrice = sale?.sale_cents ?? p.price_cents;
+                          return (
+                            <div key={p.id} className="space-y-2">
+                              <ProductCard
+                                p={{
                                   name: p.name,
-                                  priceCents: p.price_cents,
+                                  brand: p.brand,
+                                  priceCents: effectivePrice,
+                                  originalPriceCents: sale ? p.price_cents : null,
+                                  imageUrl: p.image_urls[0] ?? null,
+                                  strainType: p.strain_type,
+                                  thcPercentage: p.thc_percentage,
+                                  inStock: p.in_stock,
+                                  productId: p.id,
                                 }}
                               />
-                            )}
-                          </div>
-                        ))}
+                              {p.in_stock && (
+                                <AddToCart
+                                  dispensary={{ id: d.id, slug: d.slug, name: d.name }}
+                                  product={{
+                                    productId: p.id,
+                                    name: p.name,
+                                    priceCents: effectivePrice,
+                                  }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

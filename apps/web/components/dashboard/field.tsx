@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ChangeEventHandler, type ReactNode } from 'react';
 import { Label } from '../ui/label';
 
 export function Field({
@@ -29,11 +29,13 @@ export function Checkbox({
   label,
   value,
   defaultChecked,
+  onChange,
 }: {
   name: string;
   label: string;
   value?: string;
   defaultChecked?: boolean;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
 }) {
   return (
     <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -42,6 +44,7 @@ export function Checkbox({
         name={name}
         value={value}
         defaultChecked={defaultChecked}
+        onChange={onChange}
         className="border-border bg-surface text-primary focus:ring-primary h-4 w-4 rounded"
       />
       {label}

@@ -180,6 +180,7 @@ export type Database = {
           stackable: boolean
           target_brand_ids: string[]
           target_category_ids: string[]
+          target_price_cents: number | null
           target_product_ids: string[]
           target_scope: Database["public"]["Enums"]["deal_target_scope"]
           terms: string | null
@@ -218,6 +219,7 @@ export type Database = {
           stackable?: boolean
           target_brand_ids?: string[]
           target_category_ids?: string[]
+          target_price_cents?: number | null
           target_product_ids?: string[]
           target_scope?: Database["public"]["Enums"]["deal_target_scope"]
           terms?: string | null
@@ -256,6 +258,7 @@ export type Database = {
           stackable?: boolean
           target_brand_ids?: string[]
           target_category_ids?: string[]
+          target_price_cents?: number | null
           target_product_ids?: string[]
           target_scope?: Database["public"]["Enums"]["deal_target_scope"]
           terms?: string | null
@@ -1207,6 +1210,23 @@ export type Database = {
           p_promo_code?: string
         }
         Returns: string
+      }
+      dispensary_sale_prices: {
+        Args: { p_dispensary_id: string }
+        Returns: {
+          product_id: string
+          sale_cents: number
+          deal_id: string
+          deal_title: string
+        }[]
+      }
+      effective_unit_price: {
+        Args: { p_product_id: string }
+        Returns: {
+          unit_cents: number
+          deal_id: string
+          deal_title: string
+        }[]
       }
       is_admin: { Args: never; Returns: boolean }
       is_dispensary_open: {

@@ -20,6 +20,8 @@ export interface ProductCardData {
   productId?: string;
   dispensarySlug?: string;
   sponsored?: boolean;
+  /** Original list price when an auto-apply sale is active (priceCents is the sale price). */
+  originalPriceCents?: number | null;
   /** When set, records placement impression/click analytics for this card. */
   placementId?: string;
 }
@@ -32,12 +34,17 @@ const STRAIN_LABEL: Record<StrainType, string> = {
 };
 
 export function ProductCard({ p }: { p: ProductCardData }) {
+  const onSale = typeof p.originalPriceCents === 'number' && p.originalPriceCents > p.priceCents;
   const body = (
     <div className="rounded-card border-border bg-surface hover:border-primary/50 overflow-hidden border transition-colors">
       <MediaImage url={p.imageUrl} alt={p.name} className="h-32" iconClassName="h-10 w-10">
         {p.sponsored ? (
           <Badge tone="primary" className="absolute left-2 top-2">
             Sponsored
+          </Badge>
+        ) : onSale ? (
+          <Badge tone="primary" className="absolute left-2 top-2">
+            Sale
           </Badge>
         ) : (
           !p.inStock && (
@@ -56,7 +63,14 @@ export function ProductCard({ p }: { p: ProductCardData }) {
         {p.brand && <p className="text-muted truncate text-xs">{p.brand}</p>}
         <h3 className="truncate text-sm font-semibold">{p.name}</h3>
         <div className="flex items-center justify-between pt-1">
-          <span className="text-primary font-semibold">{formatPrice(p.priceCents)}</span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-primary font-semibold">{formatPrice(p.priceCents)}</span>
+            {onSale && (
+              <span className="text-muted text-xs line-through">
+                {formatPrice(p.originalPriceCents!)}
+              </span>
+            )}
+          </span>
           {typeof p.thcPercentage === 'number' && (
             <span className="text-muted text-xs">{p.thcPercentage}% THC</span>
           )}

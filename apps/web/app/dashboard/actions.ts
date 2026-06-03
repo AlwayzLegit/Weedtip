@@ -213,12 +213,25 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
   if (!dispensaryId) return formError('Create your dispensary listing first.');
 
   const id = str(fd, 'id');
+
+  // The form drives a richer `kind`; map it onto the legacy discount_type enum
+  // (percentage | fixed | bogo) the rest of the app still reads.
+  const kind = (str(fd, 'kind') ?? 'percentage') as
+    | 'percentage'
+    | 'fixed_amount'
+    | 'price_target'
+    | 'bogo';
+  const autoApply = bool(fd, 'auto_apply');
+  const rawValue = numOpt(fd, 'discount_value') ?? 0;
+  const legacyType = kind === 'percentage' ? 'percentage' : kind === 'bogo' ? 'bogo' : 'fixed';
+  const legacyValue = kind === 'price_target' || kind === 'bogo' ? 0 : rawValue;
+
   const input = {
     title: str(fd, 'title') ?? '',
     description: str(fd, 'description') ?? null,
-    code: str(fd, 'code') ?? null,
-    discount_type: str(fd, 'discount_type') ?? '',
-    discount_value: numOpt(fd, 'discount_value') ?? NaN,
+    code: autoApply ? null : (str(fd, 'code') ?? null),
+    discount_type: legacyType,
+    discount_value: legacyValue,
     start_date: toIso(str(fd, 'start_date')) ?? '',
     end_date: toIso(str(fd, 'end_date')) ?? '',
     is_active: bool(fd, 'is_active'),
@@ -227,7 +240,34 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
   const parsed = dealWriteSchema.safeParse(input);
   if (!parsed.success) return fromZodError(parsed.error);
 
-  const payload = { ...parsed.data, dispensary_id: dispensaryId };
+  // Storefront-sale targeting + scheduling (only meaningful when auto-applied).
+  const scope = (autoApply ? (str(fd, 'target_scope') ?? 'menu') : 'menu') as
+    | 'menu'
+    | 'category'
+    | 'brand'
+    | 'products';
+  const catIds =
+    autoApply && scope === 'category'
+      ? fd.getAll('target_category_ids').map(String).filter(Boolean)
+      : [];
+  const prodIds =
+    autoApply && scope === 'products'
+      ? fd.getAll('target_product_ids').map(String).filter(Boolean)
+      : [];
+  const daysOfWeek = autoApply ? [0, 1, 2, 3, 4, 5, 6].filter((i) => bool(fd, `dow_${i}`)) : [];
+
+  const payload = {
+    ...parsed.data,
+    dispensary_id: dispensaryId,
+    kind,
+    auto_apply: autoApply,
+    target_scope: scope,
+    target_category_ids: catIds,
+    target_product_ids: prodIds,
+    target_price_cents: kind === 'price_target' ? Math.round(rawValue * 100) : null,
+    days_of_week: daysOfWeek,
+    featured: autoApply ? bool(fd, 'featured') : false,
+  };
   const { error } = id
     ? await supabase.from('deals').update(payload).eq('id', id).eq('dispensary_id', dispensaryId)
     : await supabase.from('deals').insert(payload);
