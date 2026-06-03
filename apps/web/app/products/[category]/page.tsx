@@ -84,7 +84,8 @@ export default async function CategoryPage({
           { name: category.name, href: `/products/${category.slug}` },
         ]}
       />
-      <h1 className="text-2xl font-bold">Cannabis {category.name}</h1>
+      <p className="eyebrow mb-1">Category</p>
+      <h1 className="text-2xl font-bold sm:text-3xl">Cannabis {category.name}</h1>
       <p className="text-muted mt-1 text-sm">
         {products.length} {products.length === 1 ? 'product' : 'products'} from licensed
         dispensaries.
