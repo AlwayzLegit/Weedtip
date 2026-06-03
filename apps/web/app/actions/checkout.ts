@@ -69,6 +69,27 @@ export async function previewPromo(
   return { ok: true, discountCents: data.discount_cents, title: data.title };
 }
 
+export type AutoDiscountPreview =
+  | { ok: true; discountCents: number; title: string }
+  | { ok: false };
+
+/** Best auto-applied "spend & save" order discount for the current subtotal. */
+export async function previewAutoDiscount(
+  dispensaryId: string,
+  subtotalCents: number,
+): Promise<AutoDiscountPreview> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc('compute_auto_order_discount', {
+    p_dispensary_id: dispensaryId,
+    p_subtotal_cents: Math.max(0, Math.round(subtotalCents)),
+  });
+  const row = data?.[0];
+  if (row && row.discount_cents > 0) {
+    return { ok: true, discountCents: row.discount_cents, title: row.title };
+  }
+  return { ok: false };
+}
+
 export async function startCheckout(rawInput: StartCheckoutInput): Promise<StartCheckoutResult> {
   if (!(await rateLimit('checkout', { limit: 15, window: '60 s' })).success) {
     return { ok: false, error: 'Too many checkout attempts. Please wait a moment and try again.' };

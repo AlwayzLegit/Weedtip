@@ -1193,6 +1193,14 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      compute_auto_order_discount: {
+        Args: { p_dispensary_id: string; p_subtotal_cents: number }
+        Returns: {
+          deal_id: string
+          discount_cents: number
+          title: string
+        }[]
+      }
       compute_promo_discount: {
         Args: { p_code: string; p_dispensary_id: string; p_subtotal_cents: number }
         Returns: {

@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { ESTIMATED_TAX_RATE, type OrderType } from '@weedtip/shared';
-import { previewPromo, startCheckout } from '@/app/actions/checkout';
+import { previewAutoDiscount, previewPromo, startCheckout } from '@/app/actions/checkout';
 import { cn } from '@/lib/utils';
 import { formatPrice } from '@/lib/format';
 import { Button } from '../ui/button';
@@ -35,6 +35,27 @@ export function CartView({
   );
   const [promoPending, setPromoPending] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [autoDiscount, setAutoDiscount] = useState<{ discountCents: number; title: string } | null>(
+    null,
+  );
+
+  // Auto "spend & save" order discount preview (when no promo code is applied).
+  const dispensaryId = cart?.dispensaryId;
+  useEffect(() => {
+    if (!dispensaryId || promo || subtotalCents <= 0) {
+      setAutoDiscount(null);
+      return;
+    }
+    let cancelled = false;
+    previewAutoDiscount(dispensaryId, subtotalCents).then((res) => {
+      if (!cancelled) {
+        setAutoDiscount(res.ok ? { discountCents: res.discountCents, title: res.title } : null);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [dispensaryId, promo, subtotalCents]);
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -51,7 +72,11 @@ export function CartView({
     );
   }
 
-  const discountCents = promo ? Math.min(promo.discountCents, subtotalCents) : 0;
+  const discountCents = promo
+    ? Math.min(promo.discountCents, subtotalCents)
+    : autoDiscount
+      ? Math.min(autoDiscount.discountCents, subtotalCents)
+      : 0;
   const taxCents = Math.round((subtotalCents - discountCents) * ESTIMATED_TAX_RATE);
   const totalCents = subtotalCents - discountCents + taxCents;
 
@@ -168,6 +193,12 @@ export function CartView({
             {discountCents > 0 && promo && (
               <div className="text-primary flex justify-between">
                 <span>Discount ({promo.code})</span>
+                <span>−{formatPrice(discountCents)}</span>
+              </div>
+            )}
+            {discountCents > 0 && !promo && autoDiscount && (
+              <div className="text-primary flex justify-between">
+                <span>{autoDiscount.title}</span>
                 <span>−{formatPrice(discountCents)}</span>
               </div>
             )}
