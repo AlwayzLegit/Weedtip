@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import { EmbedSnippet } from '@/components/dashboard/embed-snippet';
 import { PromoteBilling } from '@/components/dashboard/promote-billing';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { SITE_URL } from '@/lib/site';
 import { isStripeConfigured } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 
@@ -184,6 +186,18 @@ export default async function PromotePage({
         deals={(dealTargets ?? []).map((d) => ({ id: d.id, label: d.title }))}
         products={(productTargets ?? []).map((p) => ({ id: p.id, label: p.name }))}
       />
+
+      {/* Embeddable menu widget */}
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">Embeddable menu</h2>
+          <p className="text-muted mt-1 text-sm">
+            Drop your live Weedtip menu onto your own website. It updates automatically — including
+            sale prices — and links shoppers back to order.
+          </p>
+        </div>
+        <EmbedSnippet siteUrl={SITE_URL} slug={dispensary.slug} name={dispensary.name} />
+      </section>
     </div>
   );
 }

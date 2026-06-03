@@ -34,6 +34,14 @@ const securityHeaders = [
   },
 ];
 
+// The embeddable menu widget (/embed/*) must be frameable on any origin, so it
+// gets a relaxed CSP (frame-ancestors *) with X-Frame-Options dropped. Every
+// other route keeps the strict security headers.
+const embedCsp = csp.replace("frame-ancestors 'none'", 'frame-ancestors *');
+const embedHeaders = securityHeaders
+  .filter((h) => h.key !== 'X-Frame-Options')
+  .map((h) => (h.key === 'Content-Security-Policy' ? { key: h.key, value: embedCsp } : h));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -48,7 +56,10 @@ const nextConfig = {
     ],
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [
+      { source: '/embed/:path*', headers: embedHeaders },
+      { source: '/((?!embed).*)', headers: securityHeaders },
+    ];
   },
 };
 
