@@ -567,6 +567,41 @@ export type Database = {
           },
         ]
       }
+      dispensary_updates: {
+        Row: {
+          body: string | null
+          created_at: string
+          dispensary_id: string
+          expires_at: string
+          id: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          dispensary_id: string
+          expires_at?: string
+          id?: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          dispensary_id?: string
+          expires_at?: string
+          id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispensary_updates_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -1432,6 +1467,14 @@ export type Database = {
       dispute_review: {
         Args: { p_review_id: string; p_reason: string }
         Returns: undefined
+      }
+      dispensary_follower_count: {
+        Args: { p_dispensary_id: string }
+        Returns: number
+      }
+      post_dispensary_update: {
+        Args: { p_dispensary_id: string; p_title: string; p_body: string }
+        Returns: string
       }
       recalc_dispensary_rating: {
         Args: { target_id: string }
