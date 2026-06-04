@@ -26,7 +26,7 @@ export default async function AnalyticsPage() {
   const [{ data }, { data: redemptions }] = await Promise.all([
     supabase
       .from('orders')
-      .select('status,total_cents,platform_fee_cents,platform_fee_bps,created_at,items')
+      .select('status,total_cents,platform_fee_cents,platform_fee_bps,created_at,items,source,device')
       .eq('dispensary_id', dispensary.id),
     supabase
       .from('deal_redemptions')
@@ -87,6 +87,34 @@ export default async function AnalyticsPage() {
     .map(([name, v]) => ({ name, ...v }))
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 10);
+
+  // ─── Attribution: where orders come from ─────────────────────────────────
+  const SOURCE_LABEL: Record<string, string> = {
+    web: 'Weedtip site',
+    embed: 'Embedded menu',
+    mobile_web: 'Mobile web',
+  };
+  const DEVICE_LABEL: Record<string, string> = {
+    desktop: 'Desktop',
+    mobile: 'Mobile',
+    tablet: 'Tablet',
+    unknown: 'Unknown',
+  };
+  function breakdown(key: (o: (typeof live)[number]) => string, labels: Record<string, string>) {
+    const agg = new Map<string, { orders: number; revenue: number }>();
+    for (const o of live) {
+      const k = key(o);
+      const cur = agg.get(k) ?? { orders: 0, revenue: 0 };
+      cur.orders += 1;
+      cur.revenue += o.total_cents;
+      agg.set(k, cur);
+    }
+    return [...agg.entries()]
+      .map(([k, v]) => ({ key: k, label: labels[k] ?? k, ...v }))
+      .sort((a, b) => b.revenue - a.revenue);
+  }
+  const bySource = breakdown((o) => o.source ?? 'web', SOURCE_LABEL);
+  const byDevice = breakdown((o) => o.device ?? 'unknown', DEVICE_LABEL);
 
   // ─── Promo code performance ──────────────────────────────────────────────
   const promoAgg = new Map<string, { title: string; uses: number; discount: number }>();
@@ -187,6 +215,46 @@ export default async function AnalyticsPage() {
             </div>
           </div>
         </section>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {(
+          [
+            ['Orders by source', bySource],
+            ['Orders by device', byDevice],
+          ] as const
+        ).map(([title, rows]) => {
+          const maxRev = Math.max(1, ...rows.map((r) => r.revenue));
+          return (
+            <section key={title}>
+              <h2 className="mb-3 text-lg font-semibold">{title}</h2>
+              <div className="rounded-card border-border bg-surface border p-4">
+                {rows.length === 0 ? (
+                  <p className="text-muted text-sm">No orders yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {rows.map((r) => (
+                      <div key={r.key}>
+                        <div className="mb-1 flex items-center justify-between text-sm">
+                          <span className="font-medium">{r.label}</span>
+                          <span className="text-muted">
+                            {r.orders} order{r.orders === 1 ? '' : 's'} · {formatPrice(r.revenue)}
+                          </span>
+                        </div>
+                        <div className="bg-surface-2 h-2 overflow-hidden rounded-full">
+                          <div
+                            className="bg-primary h-full rounded-full"
+                            style={{ width: `${Math.max(3, (r.revenue / maxRev) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       <section>

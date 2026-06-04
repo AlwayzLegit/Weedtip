@@ -78,7 +78,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
       const priceHtml = sale
         ? `<span class="price"><span class="was">${formatPrice(p.price_cents)}</span>${formatPrice(price)}</span>`
         : `<span class="price">${formatPrice(price)}</span>`;
-      return `<li><a href="${SITE_URL}/product/${p.id}" target="_blank" rel="noopener">
+      return `<li><a href="${SITE_URL}/product/${p.id}?source=embed" target="_blank" rel="noopener">
         <span><span class="name">${esc(p.name)}</span>${p.brand ? `<br/><span class="brand">${esc(p.brand)}</span>` : ''}</span>
         ${priceHtml}</a></li>`;
     })
@@ -90,7 +90,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
       <span>${esc(d.city)}, ${esc(d.state)}</span>
     </div>
     ${rows ? `<ul>${rows}</ul>` : '<p class="empty">No products listed yet.</p>'}
-    <div class="foot"><a href="${SITE_URL}/dispensary/${esc(d.slug)}" target="_blank" rel="noopener">View full menu &amp; order on Weedtip →</a></div>`;
+    <div class="foot"><a href="${SITE_URL}/dispensary/${esc(d.slug)}?source=embed" target="_blank" rel="noopener">View full menu &amp; order on Weedtip →</a></div>`;
 
   return new Response(shell(`${d.name} — Menu`, body), { headers });
 }
