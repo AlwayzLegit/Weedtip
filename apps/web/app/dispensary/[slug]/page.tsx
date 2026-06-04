@@ -72,8 +72,15 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   if (!d) notFound();
 
   const nowIso = new Date().toISOString();
-  const [{ data: products }, { data: deals }, { data: reviews }, { data: updates }, { user, profile }] =
-    await Promise.all([
+  const today = nowIso.slice(0, 10);
+  const [
+    { data: products },
+    { data: deals },
+    { data: reviews },
+    { data: updates },
+    { data: promos },
+    { user, profile },
+  ] = await Promise.all([
       supabase
         .from('products')
         .select('*, category:categories(name,slug,sort_order)')
@@ -101,6 +108,15 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         .gt('expires_at', nowIso)
         .order('created_at', { ascending: false })
         .limit(5),
+      supabase
+        .from('dispensary_promos')
+        .select('id,title,description,image_url,start_date,end_date')
+        .eq('dispensary_id', d.id)
+        .eq('is_active', true)
+        .or(`start_date.is.null,start_date.lte.${today}`)
+        .or(`end_date.is.null,end_date.gte.${today}`)
+        .order('sort_order')
+        .limit(10),
       getAuth(),
     ]);
 
@@ -363,6 +379,38 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                       </div>
                     );
                   })}
+                </div>
+              </section>
+            )}
+
+            {/* In-store promos */}
+            {promos && promos.length > 0 && (
+              <section className="mb-8">
+                <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+                  <BadgeCheck className="text-primary h-5 w-5" /> In-store offers
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {promos.map((promo) => (
+                    <div
+                      key={promo.id}
+                      className="rounded-card border-border bg-surface overflow-hidden border"
+                    >
+                      {promo.image_url && (
+                        <img
+                          src={promo.image_url}
+                          alt=""
+                          className="h-32 w-full object-cover"
+                        />
+                      )}
+                      <div className="p-4">
+                        <p className="font-medium">{promo.title}</p>
+                        {promo.description && (
+                          <p className="text-muted mt-1 text-sm">{promo.description}</p>
+                        )}
+                        <p className="text-muted mt-2 text-xs">Claim in-store</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
             )}
