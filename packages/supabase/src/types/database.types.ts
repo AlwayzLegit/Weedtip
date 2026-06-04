@@ -1516,6 +1516,7 @@ export type Database = {
       }
       search_dispensaries: {
         Args: {
+          filter_amenities?: string[]
           filter_category_slug?: string
           filter_delivery?: boolean
           filter_medical?: boolean
