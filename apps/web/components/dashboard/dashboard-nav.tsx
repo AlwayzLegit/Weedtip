@@ -28,6 +28,7 @@ const OWNER_NAV: NavItem[] = [
   { href: '/dashboard/listing', label: 'Listing', icon: Store },
   { href: '/dashboard/products', label: 'Products', icon: Package },
   { href: '/dashboard/deals', label: 'Deals', icon: Tag },
+  { href: '/dashboard/promos', label: 'In-store', icon: BadgeCheck },
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/dashboard/reviews', label: 'Reviews', icon: Star },
   { href: '/dashboard/updates', label: 'Updates', icon: Users },
