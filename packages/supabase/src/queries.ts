@@ -22,6 +22,7 @@ export async function searchDispensaries(supabase: Client, params: DispensarySea
     filter_recreational: params.is_recreational ?? undefined,
     filter_open_now: params.open_now ?? false,
     filter_category_slug: params.category_slug ?? undefined,
+    filter_amenities: params.amenities && params.amenities.length ? params.amenities : undefined,
     result_limit: params.page_size,
     result_offset: params.page * params.page_size,
   });

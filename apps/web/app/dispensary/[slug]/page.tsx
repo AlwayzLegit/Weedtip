@@ -13,7 +13,7 @@ import {
   Tag,
   Truck,
 } from 'lucide-react';
-import { AMENITY_LABELS, type Amenity, type OperatingHours } from '@weedtip/shared';
+import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
 import { deleteReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
@@ -339,17 +339,30 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
             {d.amenities && d.amenities.length > 0 && (
               <section>
-                <h2 className="mb-3 text-lg font-semibold">Amenities</h2>
-                <div className="flex flex-wrap gap-2">
-                  {d.amenities.map((a) => (
-                    <span
-                      key={a}
-                      className="border-border bg-surface text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm"
-                    >
-                      <Check className="text-primary h-3.5 w-3.5" />
-                      {AMENITY_LABELS[a as Amenity] ?? a}
-                    </span>
-                  ))}
+                <h2 className="mb-3 text-lg font-semibold">Features &amp; amenities</h2>
+                <div className="space-y-3">
+                  {AMENITY_GROUPS.map((group) => {
+                    const items = group.items.filter((a) => d.amenities.includes(a));
+                    if (items.length === 0) return null;
+                    return (
+                      <div key={group.label}>
+                        <p className="text-muted mb-1.5 text-xs font-semibold uppercase tracking-wide">
+                          {group.label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {items.map((a) => (
+                            <span
+                              key={a}
+                              className="border-border bg-surface text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm"
+                            >
+                              <Check className="text-primary h-3.5 w-3.5" />
+                              {AMENITY_LABELS[a]}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}

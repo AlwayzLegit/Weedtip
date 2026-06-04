@@ -68,21 +68,40 @@ export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
  * stays consistent across web and mobile.
  */
 export const AMENITIES = [
+  // General
   'atm',
   'accessible',
   'curbside_pickup',
+  'drive_thru',
   'parking',
   'security',
   'storefront',
+  'pet_friendly',
+  'restroom',
+  'photo_id_required',
+  // Payments
+  'cash_only',
+  'credit_cards',
+  'debit_cards',
+  'mobile_payment',
+  'online_ordering',
+  // Accessibility
+  'wheelchair_accessible',
+  // Discounts
   'veteran_discount',
   'senior_discount',
   'first_time_discount',
-  'cash_only',
-  'credit_cards',
-  'wheelchair_accessible',
-  'restroom',
-  'photo_id_required',
-  'online_ordering',
+  'student_discount',
+  'military_discount',
+  'industry_discount',
+  // Ownership / identity
+  'woman_owned',
+  'black_owned',
+  'lgbtq_owned',
+  'veteran_owned',
+  'latino_owned',
+  'asian_owned',
+  'indigenous_owned',
 ] as const;
 export type Amenity = (typeof AMENITIES)[number];
 
@@ -90,19 +109,78 @@ export const AMENITY_LABELS: Record<Amenity, string> = {
   atm: 'ATM',
   accessible: 'ADA accessible',
   curbside_pickup: 'Curbside pickup',
+  drive_thru: 'Drive-thru',
   parking: 'Parking',
   security: 'Security on site',
   storefront: 'Storefront',
+  pet_friendly: 'Pet friendly',
+  restroom: 'Restroom',
+  photo_id_required: 'Photo ID required',
+  cash_only: 'Cash only',
+  credit_cards: 'Credit cards',
+  debit_cards: 'Debit cards',
+  mobile_payment: 'Mobile / online payment',
+  online_ordering: 'Online ordering',
+  wheelchair_accessible: 'Wheelchair accessible',
   veteran_discount: 'Veteran discount',
   senior_discount: 'Senior discount',
   first_time_discount: 'First-time discount',
-  cash_only: 'Cash only',
-  credit_cards: 'Credit cards accepted',
-  wheelchair_accessible: 'Wheelchair accessible',
-  restroom: 'Restroom',
-  photo_id_required: 'Photo ID required',
-  online_ordering: 'Online ordering',
+  student_discount: 'Student discount',
+  military_discount: 'Military discount',
+  industry_discount: 'Industry discount',
+  woman_owned: 'Woman owned',
+  black_owned: 'Black owned',
+  lgbtq_owned: 'LGBTQ+ owned',
+  veteran_owned: 'Veteran owned',
+  latino_owned: 'Latino owned',
+  asian_owned: 'Asian owned',
+  indigenous_owned: 'Indigenous owned',
 };
+
+/** Grouped facets for the listing form, finder filters, and storefront display. */
+export const AMENITY_GROUPS: { label: string; items: Amenity[] }[] = [
+  {
+    label: 'Ownership',
+    items: [
+      'woman_owned',
+      'black_owned',
+      'lgbtq_owned',
+      'veteran_owned',
+      'latino_owned',
+      'asian_owned',
+      'indigenous_owned',
+    ],
+  },
+  { label: 'Accessibility', items: ['wheelchair_accessible', 'accessible', 'restroom'] },
+  {
+    label: 'Payments',
+    items: ['cash_only', 'credit_cards', 'debit_cards', 'mobile_payment', 'online_ordering'],
+  },
+  {
+    label: 'Discounts',
+    items: [
+      'veteran_discount',
+      'senior_discount',
+      'student_discount',
+      'military_discount',
+      'first_time_discount',
+      'industry_discount',
+    ],
+  },
+  {
+    label: 'Amenities',
+    items: [
+      'atm',
+      'parking',
+      'security',
+      'storefront',
+      'curbside_pickup',
+      'drive_thru',
+      'pet_friendly',
+      'photo_id_required',
+    ],
+  },
+];
 
 const amenitySchema = z.enum(AMENITIES);
 
@@ -228,6 +306,7 @@ export const dispensarySearchSchema = z.object({
   is_recreational: z.boolean().optional(),
   open_now: z.boolean().optional(),
   category_slug: slugSchema.optional(),
+  amenities: z.array(amenitySchema).max(AMENITIES.length).optional(),
   page: z.number().int().nonnegative().default(0),
   page_size: z
     .number()

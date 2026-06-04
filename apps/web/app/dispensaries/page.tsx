@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MapPin } from 'lucide-react';
-import { dispensarySearchSchema } from '@weedtip/shared';
+import { AMENITIES, type Amenity, dispensarySearchSchema } from '@weedtip/shared';
 import { searchDispensaries } from '@weedtip/supabase/queries';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DispensaryCard } from '@/components/dispensary-card';
@@ -36,6 +36,13 @@ export default async function DispensariesPage({
 }) {
   const sp = await searchParams;
 
+  // Amenities arrive comma-separated; keep only known facet keys so a bad URL
+  // can't throw the whole page.
+  const amenityRaw = typeof sp.amenities === 'string' ? sp.amenities.split(',') : [];
+  const amenities = amenityRaw.filter((a): a is Amenity =>
+    (AMENITIES as readonly string[]).includes(a),
+  );
+
   const params = dispensarySearchSchema.parse({
     query: typeof sp.query === 'string' ? sp.query : undefined,
     lat: num(sp.lat),
@@ -47,6 +54,7 @@ export default async function DispensariesPage({
     is_recreational: truthy(sp.is_recreational),
     open_now: truthy(sp.open_now),
     category_slug: typeof sp.category === 'string' ? sp.category : undefined,
+    amenities: amenities.length ? amenities : undefined,
     page: num(sp.page),
   });
 

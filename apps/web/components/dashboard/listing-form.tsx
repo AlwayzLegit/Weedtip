@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { AMENITIES, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
+import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
 import type { Tables } from '@weedtip/supabase/types';
 import { upsertDispensary } from '@/app/dashboard/actions';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
@@ -157,17 +157,29 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
       </fieldset>
 
       <fieldset className="rounded-card border-border border p-4">
-        <legend className="px-1 text-sm font-medium">Amenities</legend>
-        <p className="text-muted mb-3 text-xs">Highlight what customers can expect at your shop.</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {AMENITIES.map((a) => (
-            <Checkbox
-              key={a}
-              name="amenities"
-              value={a}
-              label={AMENITY_LABELS[a]}
-              defaultChecked={amenities.has(a)}
-            />
+        <legend className="px-1 text-sm font-medium">Features &amp; amenities</legend>
+        <p className="text-muted mb-3 text-xs">
+          Highlight ownership, accessibility, payments, discounts, and amenities — these power the
+          finder filters.
+        </p>
+        <div className="space-y-4">
+          {AMENITY_GROUPS.map((group) => (
+            <div key={group.label}>
+              <p className="text-muted mb-2 text-xs font-semibold uppercase tracking-wide">
+                {group.label}
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {group.items.map((a) => (
+                  <Checkbox
+                    key={a}
+                    name="amenities"
+                    value={a}
+                    label={AMENITY_LABELS[a]}
+                    defaultChecked={amenities.has(a)}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </fieldset>
