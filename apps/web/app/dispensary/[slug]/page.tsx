@@ -72,7 +72,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   if (!d) notFound();
 
   const nowIso = new Date().toISOString();
-  const [{ data: products }, { data: deals }, { data: reviews }, { user, profile }] =
+  const [{ data: products }, { data: deals }, { data: reviews }, { data: updates }, { user, profile }] =
     await Promise.all([
       supabase
         .from('products')
@@ -94,6 +94,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         )
         .eq('dispensary_id', d.id)
         .order('created_at', { ascending: false }),
+      supabase
+        .from('dispensary_updates')
+        .select('id,title,body,created_at')
+        .eq('dispensary_id', d.id)
+        .gt('expires_at', nowIso)
+        .order('created_at', { ascending: false })
+        .limit(5),
       getAuth(),
     ]);
 
@@ -413,6 +420,28 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 </div>
               )}
             </section>
+
+            {/* Updates from the shop */}
+            {updates && updates.length > 0 && (
+              <section className="mb-8">
+                <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+                  <Megaphone className="text-primary h-5 w-5" /> Updates
+                </h2>
+                <div className="space-y-3">
+                  {updates.map((u) => (
+                    <div key={u.id} className="rounded-card border-border bg-surface border p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">{u.title}</p>
+                        <span className="text-muted text-xs">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {u.body && <p className="text-muted mt-1 text-sm">{u.body}</p>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Reviews */}
             <section>
