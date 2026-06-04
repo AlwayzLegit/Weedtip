@@ -727,6 +727,7 @@ export type Database = {
         Row: {
           created_at: string
           deal_id: string | null
+          device: string | null
           discount_cents: number
           dispensary_id: string
           id: string
@@ -738,6 +739,7 @@ export type Database = {
           payment_status: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps: number
           platform_fee_cents: number
+          source: string
           status: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -750,6 +752,7 @@ export type Database = {
         Insert: {
           created_at?: string
           deal_id?: string | null
+          device?: string | null
           discount_cents?: number
           dispensary_id: string
           id?: string
@@ -761,6 +764,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps?: number
           platform_fee_cents?: number
+          source?: string
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -773,6 +777,7 @@ export type Database = {
         Update: {
           created_at?: string
           deal_id?: string | null
+          device?: string | null
           discount_cents?: number
           dispensary_id?: string
           id?: string
@@ -784,6 +789,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps?: number
           platform_fee_cents?: number
+          source?: string
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -1481,6 +1487,8 @@ export type Database = {
           p_notes?: string
           p_order_type: Database["public"]["Enums"]["order_type"]
           p_promo_code?: string
+          p_source?: string
+          p_device?: string
         }
         Returns: string
       }

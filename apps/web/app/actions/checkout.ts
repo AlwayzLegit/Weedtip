@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies, headers } from 'next/headers';
 import type Stripe from 'stripe';
 import { z } from 'zod';
 import { orderTypeSchema, type OrderItem } from '@weedtip/shared';
@@ -121,6 +122,17 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
 
   const wantsOnline = !!input.pay_now && isStripeConfigured && stripe !== null;
 
+  // Attribution: device from the user-agent, source from the wt_src cookie
+  // (set by middleware when a shopper arrives via an embed link).
+  const [hdrs, cookieStore] = await Promise.all([headers(), cookies()]);
+  const ua = hdrs.get('user-agent') ?? '';
+  const device = /tablet|ipad/i.test(ua)
+    ? 'tablet'
+    : /mobile|android|iphone/i.test(ua)
+      ? 'mobile'
+      : 'desktop';
+  const source = cookieStore.get('wt_src')?.value === 'embed' ? 'embed' : 'web';
+
   // 1. Create the order (server-authoritative pricing). Always unpaid at creation.
   const { data: orderId, error: rpcError } = await supabase.rpc('create_order', {
     p_dispensary_id: input.dispensary_id,
@@ -128,6 +140,8 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
     p_items: input.items,
     p_notes: input.notes ?? undefined,
     p_promo_code: input.promo_code?.trim() || undefined,
+    p_source: source,
+    p_device: device,
   });
   if (rpcError || !orderId) return { ok: false, error: rpcError?.message ?? 'Could not create order.' };
 
