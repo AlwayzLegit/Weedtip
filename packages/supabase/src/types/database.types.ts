@@ -1062,6 +1062,71 @@ export type Database = {
           },
         ]
       }
+      pos_shifts: {
+        Row: {
+          card_sales_cents: number
+          cash_sales_cents: number
+          closed_at: string | null
+          closed_by: string | null
+          closing_count_cents: number | null
+          created_at: string
+          debit_sales_cents: number
+          dispensary_id: string
+          expected_cash_cents: number | null
+          id: string
+          notes: string | null
+          opened_at: string
+          opened_by: string
+          opening_float_cents: number
+          over_short_cents: number | null
+          sales_count: number
+        }
+        Insert: {
+          card_sales_cents?: number
+          cash_sales_cents?: number
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_count_cents?: number | null
+          created_at?: string
+          debit_sales_cents?: number
+          dispensary_id: string
+          expected_cash_cents?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opened_by: string
+          opening_float_cents?: number
+          over_short_cents?: number | null
+          sales_count?: number
+        }
+        Update: {
+          card_sales_cents?: number
+          cash_sales_cents?: number
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_count_cents?: number | null
+          created_at?: string
+          debit_sales_cents?: number
+          dispensary_id?: string
+          expected_cash_cents?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opened_by?: string
+          opening_float_cents?: number
+          over_short_cents?: number | null
+          sales_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_shifts_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           brand: string | null
