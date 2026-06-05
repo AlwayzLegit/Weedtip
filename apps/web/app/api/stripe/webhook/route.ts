@@ -37,6 +37,14 @@ async function syncSubscription(service: ServiceClient, sub: Stripe.Subscription
   );
 }
 
+/** Flip the POS add-on entitlement from its (separate) Stripe subscription. */
+async function syncPosAddon(service: ServiceClient, sub: Stripe.Subscription) {
+  const dispensaryId = sub.metadata?.dispensary_id;
+  if (!dispensaryId) return;
+  const enabled = sub.status === 'active' || sub.status === 'trialing';
+  await service.rpc('grant_pos_addon', { p_dispensary_id: dispensaryId, p_enabled: enabled });
+}
+
 /** Activate a paid placement and re-sync the dispensary's featured flag. */
 async function activatePlacement(
   service: ServiceClient,
@@ -102,10 +110,11 @@ export async function POST(req: NextRequest) {
         const session = event.data.object;
         const service = createServiceClient();
 
-        // Subscription checkout → sync the subscription from Stripe.
+        // Subscription checkout → sync the subscription (or the POS add-on) from Stripe.
         if (session.mode === 'subscription' && typeof session.subscription === 'string') {
           const sub = await stripe.subscriptions.retrieve(session.subscription);
-          await syncSubscription(service, sub);
+          if (sub.metadata?.addon === 'pos') await syncPosAddon(service, sub);
+          else await syncSubscription(service, sub);
           break;
         }
 
@@ -140,7 +149,10 @@ export async function POST(req: NextRequest) {
       }
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
-        await syncSubscription(createServiceClient(), event.data.object);
+        const sub = event.data.object;
+        const service = createServiceClient();
+        if (sub.metadata?.addon === 'pos') await syncPosAddon(service, sub);
+        else await syncSubscription(service, sub);
         break;
       }
       case 'charge.refunded': {

@@ -1506,6 +1506,10 @@ export type Database = {
         }
         Returns: string
       }
+      grant_pos_addon: {
+        Args: { p_dispensary_id: string; p_enabled: boolean }
+        Returns: undefined
+      }
       dispensary_sale_prices: {
         Args: { p_dispensary_id: string }
         Returns: {
