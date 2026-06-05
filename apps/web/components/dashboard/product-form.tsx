@@ -182,6 +182,9 @@ export function ProductForm({
             defaultValue={p?.stock_qty ?? ''}
           />
         </Field>
+        <Field label="Barcode / SKU" htmlFor="barcode" error={fe.barcode} hint="For POS scanning">
+          <Input id="barcode" name="barcode" defaultValue={p?.barcode ?? ''} />
+        </Field>
       </section>
 
       <ImageUpload

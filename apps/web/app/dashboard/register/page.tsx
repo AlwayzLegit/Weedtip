@@ -64,7 +64,7 @@ export default async function RegisterPage({
   ] = await Promise.all([
     supabase
       .from('products')
-      .select('id,name,price_cents,stock_qty, category:categories(name)')
+      .select('id,name,price_cents,stock_qty,barcode, category:categories(name)')
       .eq('dispensary_id', dispensary.id)
       .eq('in_stock', true)
       .order('name')
@@ -124,6 +124,7 @@ export default async function RegisterPage({
     name: p.name,
     price_cents: p.price_cents,
     stock_qty: p.stock_qty,
+    barcode: p.barcode,
     category: (p.category as { name: string } | null)?.name ?? null,
   }));
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { Minus, Plus, Search, Trash2 } from 'lucide-react';
+import { Minus, Plus, ScanLine, Search, Trash2 } from 'lucide-react';
 import { ringSale } from '@/app/actions/pos';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
@@ -12,6 +12,7 @@ type Product = {
   name: string;
   price_cents: number;
   stock_qty: number | null;
+  barcode: string | null;
   category: string | null;
 };
 
@@ -27,6 +28,25 @@ export function RegisterTerminal({ products }: { products: Product[] }) {
   const [error, setError] = useState<string | null>(null);
 
   const priceById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const byBarcode = useMemo(
+    () => new Map(products.filter((p) => p.barcode).map((p) => [p.barcode as string, p])),
+    [products],
+  );
+  const [scan, setScan] = useState('');
+  const [scanMsg, setScanMsg] = useState<string | null>(null);
+
+  function onScan() {
+    const code = scan.trim();
+    if (!code) return;
+    const hit = byBarcode.get(code);
+    if (hit) {
+      add(hit.id);
+      setScanMsg(null);
+    } else {
+      setScanMsg(`No product for "${code}"`);
+    }
+    setScan('');
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -73,6 +93,25 @@ export function RegisterTerminal({ products }: { products: Product[] }) {
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       {/* Catalog */}
       <div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onScan();
+          }}
+          className="mb-2"
+        >
+          <div className="relative">
+            <ScanLine className="text-primary pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+            <input
+              value={scan}
+              onChange={(e) => setScan(e.target.value)}
+              placeholder="Scan or enter a barcode…"
+              aria-label="Scan barcode"
+              className="border-border bg-surface focus-visible:border-primary/60 h-10 w-full rounded-full border pl-9 pr-4 text-sm outline-none"
+            />
+          </div>
+          {scanMsg && <p className="text-danger mt-1 text-xs">{scanMsg}</p>}
+        </form>
         <div className="relative mb-3">
           <Search className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <input

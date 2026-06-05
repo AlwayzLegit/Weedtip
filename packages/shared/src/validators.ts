@@ -225,6 +225,7 @@ export const productWriteSchema = z.object({
   price_cents: z.number().int().nonnegative(),
   weight_grams: z.number().positive().nullable().optional(),
   unit: z.string().max(20).nullable().optional(),
+  barcode: z.string().max(64).nullable().optional(),
   stock_qty: z.number().int().min(0).max(1_000_000).nullable().optional(),
   in_stock: z.boolean().default(true),
   is_featured: z.boolean().default(false),
