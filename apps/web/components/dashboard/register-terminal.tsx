@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { Minus, Plus, ScanLine, Search, Trash2 } from 'lucide-react';
-import { ringSale } from '@/app/actions/pos';
+import { ringSale, verifyStaffPin } from '@/app/actions/pos';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -19,13 +19,22 @@ type Product = {
 const TAX_RATE = 0.15;
 const METHODS = ['cash', 'card', 'debit'] as const;
 
-export function RegisterTerminal({ products }: { products: Product[] }) {
+export function RegisterTerminal({
+  products,
+  hasStaff = false,
+}: {
+  products: Product[];
+  hasStaff?: boolean;
+}) {
   const [query, setQuery] = useState('');
   const [ticket, setTicket] = useState<Record<string, number>>({});
   const [method, setMethod] = useState<(typeof METHODS)[number]>('cash');
   const [pending, start] = useTransition();
   const [done, setDone] = useState<{ total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [operator, setOperator] = useState<{ id: string; name: string } | null>(null);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
 
   const priceById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const byBarcode = useMemo(
@@ -79,6 +88,7 @@ export function RegisterTerminal({ products }: { products: Product[] }) {
       const res = await ringSale(
         lines.map(([product_id, quantity]) => ({ product_id, quantity })),
         method,
+        operator?.id ?? null,
       );
       if (res.ok) {
         setDone({ total });
@@ -89,8 +99,56 @@ export function RegisterTerminal({ products }: { products: Product[] }) {
     });
   }
 
+  function signIn() {
+    setPinError(null);
+    start(async () => {
+      const staff = await verifyStaffPin(pin);
+      if (staff) {
+        setOperator(staff);
+        setPin('');
+      } else {
+        setPinError('PIN not recognized.');
+      }
+    });
+  }
+
+  // When staff PINs are configured, an operator must sign in before ringing.
+  if (hasStaff && !operator) {
+    return (
+      <div className="card mx-auto flex max-w-sm flex-col items-center gap-3 p-8 text-center">
+        <p className="font-semibold">Sign in to the register</p>
+        <p className="text-muted text-sm">Enter your staff PIN to start a sale.</p>
+        <input
+          type="password"
+          inputMode="numeric"
+          value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          onKeyDown={(e) => e.key === 'Enter' && signIn()}
+          className="border-border bg-background h-11 w-32 rounded-md border text-center text-lg tracking-[0.4em]"
+          placeholder="••••"
+        />
+        {pinError && <p className="text-danger text-sm">{pinError}</p>}
+        <Button disabled={pending || pin.length < 4} onClick={signIn}>
+          Sign in
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <div className="space-y-3">
+      {operator && (
+        <div className="text-muted flex items-center justify-end gap-2 text-sm">
+          Cashier: <span className="text-foreground font-medium">{operator.name}</span>
+          <button
+            onClick={() => setOperator(null)}
+            className="text-primary hover:underline"
+          >
+            Switch
+          </button>
+        </div>
+      )}
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       {/* Catalog */}
       <div>
         <form
@@ -216,6 +274,7 @@ export function RegisterTerminal({ products }: { products: Product[] }) {
         <Button disabled={pending || lines.length === 0} onClick={complete} size="lg">
           {pending ? 'Completing…' : `Complete sale · ${formatPrice(total)}`}
         </Button>
+      </div>
       </div>
     </div>
   );

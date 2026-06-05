@@ -61,6 +61,7 @@ export default async function RegisterPage({
     { data: todaySales },
     openShiftRes,
     recentShiftsRes,
+    { count: staffCount },
   ] = await Promise.all([
     supabase
       .from('products')
@@ -98,9 +99,15 @@ export default async function RegisterPage({
       .not('closed_at', 'is', null)
       .order('opened_at', { ascending: false })
       .limit(8),
+    supabase
+      .from('pos_staff')
+      .select('id', { count: 'exact', head: true })
+      .eq('dispensary_id', dispensary.id)
+      .eq('active', true),
   ]);
   const openShift = openShiftRes.data;
   const recentShifts = recentShiftsRes.data ?? [];
+  const hasStaff = (staffCount ?? 0) > 0;
 
   // Live cash-drawer tally for the open shift.
   const live = { cash: 0, card: 0, debit: 0, count: 0 };
@@ -133,12 +140,20 @@ export default async function RegisterPage({
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Register</h1>
-        <p className="text-muted mt-1 text-sm">
-          Ring up in-store sales for {dispensary.name}. Sales post to your orders and analytics
-          with no platform commission, and draw down tracked inventory.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">Register</h1>
+          <p className="text-muted mt-1 text-sm">
+            Ring up in-store sales for {dispensary.name}. Sales post to your orders and analytics
+            with no platform commission, and draw down tracked inventory.
+          </p>
+        </div>
+        <Link
+          href="/dashboard/register/staff"
+          className="text-primary shrink-0 text-sm font-medium hover:underline"
+        >
+          Manage staff →
+        </Link>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -186,7 +201,7 @@ export default async function RegisterPage({
 
       <ShiftBar shift={openShift} live={live} />
 
-      <RegisterTerminal products={items} />
+      <RegisterTerminal products={items} hasStaff={hasStaff} />
 
       {recentShifts.length > 0 && (
         <section>
