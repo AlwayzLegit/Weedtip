@@ -10,6 +10,7 @@ export type PosLine = { product_id: string; quantity: number };
 export async function ringSale(
   items: PosLine[],
   paymentMethod: string,
+  staffId?: string | null,
 ): Promise<{ ok: boolean; orderId?: string; error?: string }> {
   if (!items || items.length === 0) return { ok: false, error: 'The ticket is empty.' };
 
@@ -21,11 +22,68 @@ export async function ringSale(
     p_payment_method: paymentMethod,
   });
   if (error) return { ok: false, error: error.message };
+  const orderId = data as string;
+
+  // Tag the sale with the operator (validated against this shop's active staff).
+  if (staffId) {
+    const { data: staff } = await supabase
+      .from('pos_staff')
+      .select('id')
+      .eq('id', staffId)
+      .eq('dispensary_id', dispensary.id)
+      .eq('active', true)
+      .maybeSingle();
+    if (staff) await supabase.from('orders').update({ sold_by_staff: staffId }).eq('id', orderId);
+  }
 
   revalidatePath('/dashboard/register');
   revalidatePath('/dashboard/orders');
   revalidatePath('/dashboard/analytics');
-  return { ok: true, orderId: data as string };
+  return { ok: true, orderId };
+}
+
+// ─── Staff (per-operator PINs) ───────────────────────────────────────────────
+
+export async function addStaff(name: string, pin: string): Promise<{ ok: boolean; error?: string }> {
+  if (!name.trim()) return { ok: false, error: 'Name is required.' };
+  const { dispensary } = await requireOwnerDispensary();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('add_pos_staff', {
+    p_dispensary_id: dispensary.id,
+    p_name: name,
+    p_pin: pin,
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard/register/staff');
+  return { ok: true };
+}
+
+export async function setStaffActive(id: string, active: boolean): Promise<void> {
+  const { dispensary } = await requireOwnerDispensary();
+  const supabase = await createClient();
+  await supabase
+    .from('pos_staff')
+    .update({ active })
+    .eq('id', id)
+    .eq('dispensary_id', dispensary.id);
+  revalidatePath('/dashboard/register/staff');
+}
+
+export async function deleteStaff(id: string): Promise<void> {
+  const { dispensary } = await requireOwnerDispensary();
+  const supabase = await createClient();
+  await supabase.from('pos_staff').delete().eq('id', id).eq('dispensary_id', dispensary.id);
+  revalidatePath('/dashboard/register/staff');
+}
+
+export async function verifyStaffPin(pin: string): Promise<{ id: string; name: string } | null> {
+  const { dispensary } = await requireOwnerDispensary();
+  const supabase = await createClient();
+  const { data } = await supabase.rpc('verify_pos_staff', {
+    p_dispensary_id: dispensary.id,
+    p_pin: pin,
+  });
+  return (data as { id: string; name: string }[] | null)?.[0] ?? null;
 }
 
 /** Open a cash-drawer shift with a starting float. */

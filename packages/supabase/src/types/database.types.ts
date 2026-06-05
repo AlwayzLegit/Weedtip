@@ -742,6 +742,7 @@ export type Database = {
           payment_status: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps: number
           platform_fee_cents: number
+          sold_by_staff: string | null
           source: string
           status: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id: string | null
@@ -767,6 +768,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps?: number
           platform_fee_cents?: number
+          sold_by_staff?: string | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
@@ -792,6 +794,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps?: number
           platform_fee_cents?: number
+          sold_by_staff?: string | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent_id?: string | null
@@ -1120,6 +1123,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pos_shifts_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_staff: {
+        Row: {
+          active: boolean
+          created_at: string
+          dispensary_id: string
+          id: string
+          name: string
+          pin_hash: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          dispensary_id: string
+          id?: string
+          name: string
+          pin_hash: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          dispensary_id?: string
+          id?: string
+          name?: string
+          pin_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_staff_dispensary_id_fkey"
             columns: ["dispensary_id"]
             isOneToOne: false
             referencedRelation: "dispensaries"
@@ -1577,6 +1615,14 @@ export type Database = {
       grant_pos_addon: {
         Args: { p_dispensary_id: string; p_enabled: boolean }
         Returns: undefined
+      }
+      add_pos_staff: {
+        Args: { p_dispensary_id: string; p_name: string; p_pin: string }
+        Returns: string
+      }
+      verify_pos_staff: {
+        Args: { p_dispensary_id: string; p_pin: string }
+        Returns: { id: string; name: string }[]
       }
       dispensary_sale_prices: {
         Args: { p_dispensary_id: string }
