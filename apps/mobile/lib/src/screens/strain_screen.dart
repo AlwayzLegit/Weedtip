@@ -59,6 +59,8 @@ class _Body extends ConsumerWidget {
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           ),
           TagChip(_typeLabels[s['type']] ?? s['type'] as String, filled: true),
+          if (ref.watch(currentUserProvider) != null)
+            _StrainSaveButton(strainId: s['id'] as String),
         ]),
         if (s['thc_low'] != null && s['thc_high'] != null) ...[
           const SizedBox(height: 6),
@@ -147,6 +149,26 @@ class _Body extends ConsumerWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _StrainSaveButton extends ConsumerWidget {
+  const _StrainSaveButton({required this.strainId});
+  final String strainId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(isStrainSavedProvider(strainId));
+    final isSaved = saved.value ?? false;
+    return IconButton(
+      tooltip: isSaved ? 'Saved' : 'Save',
+      icon: Icon(isSaved ? Icons.favorite : Icons.favorite_border,
+          color: isSaved ? WeedtipColors.primary : null),
+      onPressed: () async {
+        await ref.read(repositoryProvider).toggleStrainSave(strainId);
+        ref.invalidate(isStrainSavedProvider(strainId));
+      },
     );
   }
 }

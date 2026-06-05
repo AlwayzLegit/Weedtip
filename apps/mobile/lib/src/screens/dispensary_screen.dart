@@ -36,6 +36,8 @@ class _DispensaryBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final products = ref.watch(dispensaryProductsProvider(d.id));
     final reviews = ref.watch(dispensaryReviewsProvider(d.id));
+    final updates = ref.watch(dispensaryUpdatesProvider(d.id));
+    final promos = ref.watch(dispensaryPromosProvider(d.id));
 
     return ListView(
       children: [
@@ -81,6 +83,51 @@ class _DispensaryBody extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Text(d.description!, style: const TextStyle(color: WeedtipColors.muted)),
               ],
+              ...updates.maybeWhen(
+                orElse: () => const <Widget>[],
+                data: (list) => list.isEmpty
+                    ? const <Widget>[]
+                    : <Widget>[
+                        const SizedBox(height: 20),
+                        const _Heading('Updates'),
+                        const SizedBox(height: 8),
+                        for (final u in list)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(u['title'] as String,
+                                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                                if (u['body'] != null)
+                                  Text(u['body'] as String,
+                                      style: const TextStyle(color: WeedtipColors.muted)),
+                              ],
+                            ),
+                          ),
+                      ],
+              ),
+              ...promos.maybeWhen(
+                orElse: () => const <Widget>[],
+                data: (list) => list.isEmpty
+                    ? const <Widget>[]
+                    : <Widget>[
+                        const SizedBox(height: 20),
+                        const _Heading('In-store offers'),
+                        const SizedBox(height: 8),
+                        for (final p in list)
+                          Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              title: Text(p['title'] as String),
+                              subtitle: p['description'] != null
+                                  ? Text(p['description'] as String)
+                                  : const Text('Claim in-store',
+                                      style: TextStyle(color: WeedtipColors.muted)),
+                            ),
+                          ),
+                      ],
+              ),
               const SizedBox(height: 20),
               const _Heading('Menu'),
               const SizedBox(height: 10),

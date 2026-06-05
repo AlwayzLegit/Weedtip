@@ -67,6 +67,21 @@ final dispensaryReviewsProvider =
   return ref.watch(repositoryProvider).reviewsForDispensary(dispensaryId);
 });
 
+final dispensaryUpdatesProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, dispensaryId) {
+  return ref.watch(repositoryProvider).dispensaryUpdates(dispensaryId);
+});
+
+final dispensaryPromosProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, dispensaryId) {
+  return ref.watch(repositoryProvider).dispensaryPromos(dispensaryId);
+});
+
+final isStrainSavedProvider = FutureProvider.family<bool, String>((ref, strainId) {
+  ref.watch(authStateProvider);
+  return ref.watch(repositoryProvider).isStrainSaved(strainId);
+});
+
 final productSearchProvider =
     FutureProvider.family<List<Product>, String?>((ref, categorySlug) {
   return ref.watch(repositoryProvider).searchProducts(categorySlug: categorySlug);
