@@ -34,6 +34,13 @@ export async function setDispensaryStatus(id: string, status: string): Promise<v
   revalidatePath('/admin');
 }
 
+export async function setPosAddon(id: string, enabled: boolean): Promise<void> {
+  const supabase = await createClient();
+  // RLS + the enforce_dispensary_admin_fields trigger permit pos_addon only for admins.
+  await supabase.from('dispensaries').update({ pos_addon: enabled }).eq('id', id);
+  revalidatePath('/admin/dispensaries');
+}
+
 export async function setDispensaryFeatured(id: string, featured: boolean): Promise<void> {
   const supabase = await createClient();
   // featured_manual is the admin's intent; sync_featured_flags recomputes the

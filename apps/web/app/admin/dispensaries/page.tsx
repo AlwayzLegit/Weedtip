@@ -28,7 +28,7 @@ export default async function AdminDispensaries({
   const supabase = await createClient();
   let query = supabase
     .from('dispensaries')
-    .select('id,name,slug,city,state,status,featured,created_at')
+    .select('id,name,slug,city,state,status,featured,pos_addon,created_at')
     .order('created_at', { ascending: false });
   if (active) query = query.eq('status', active as never);
   if (search) query = query.or(`name.ilike.%${search}%,city.ilike.%${search}%`);
@@ -111,7 +111,12 @@ export default async function AdminDispensaries({
                   {d.city}, {d.state} · added {new Date(d.created_at).toLocaleDateString()}
                 </p>
               </div>
-              <ModerationButtons id={d.id} status={d.status} featured={d.featured} />
+              <ModerationButtons
+                id={d.id}
+                status={d.status}
+                featured={d.featured}
+                posAddon={d.pos_addon}
+              />
             </div>
           ))}
         </div>
