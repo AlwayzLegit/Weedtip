@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { AlertTriangle, Calculator, DollarSign, Receipt } from 'lucide-react';
 import { PosAddonButton } from '@/components/dashboard/pos-addon-button';
 import { RegisterTerminal } from '@/components/dashboard/register-terminal';
+import { ShiftBar } from '@/components/dashboard/shift-bar';
 import { formatPrice } from '@/lib/format';
 import { requireOwnerDispensary } from '@/lib/owner';
 import { createClient } from '@/lib/supabase/server';
@@ -54,7 +55,13 @@ export default async function RegisterPage({
   const supabase = await createClient();
   const todayIso = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
 
-  const [{ data: products }, { data: lowStock }, { data: todaySales }] = await Promise.all([
+  const [
+    { data: products },
+    { data: lowStock },
+    { data: todaySales },
+    openShiftRes,
+    recentShiftsRes,
+  ] = await Promise.all([
     supabase
       .from('products')
       .select('id,name,price_cents,stock_qty, category:categories(name)')
@@ -76,7 +83,41 @@ export default async function RegisterPage({
       .eq('dispensary_id', dispensary.id)
       .eq('source', 'pos')
       .gte('created_at', todayIso),
+    supabase
+      .from('pos_shifts')
+      .select('id,opened_at,opening_float_cents')
+      .eq('dispensary_id', dispensary.id)
+      .is('closed_at', null)
+      .maybeSingle(),
+    supabase
+      .from('pos_shifts')
+      .select(
+        'id,opened_at,closed_at,opening_float_cents,closing_count_cents,expected_cash_cents,cash_sales_cents,card_sales_cents,debit_sales_cents,sales_count,over_short_cents',
+      )
+      .eq('dispensary_id', dispensary.id)
+      .not('closed_at', 'is', null)
+      .order('opened_at', { ascending: false })
+      .limit(8),
   ]);
+  const openShift = openShiftRes.data;
+  const recentShifts = recentShiftsRes.data ?? [];
+
+  // Live cash-drawer tally for the open shift.
+  const live = { cash: 0, card: 0, debit: 0, count: 0 };
+  if (openShift) {
+    const { data: shiftSales } = await supabase
+      .from('orders')
+      .select('payment_method,total_cents')
+      .eq('dispensary_id', dispensary.id)
+      .eq('source', 'pos')
+      .gte('created_at', openShift.opened_at);
+    for (const o of shiftSales ?? []) {
+      live.count += 1;
+      if (o.payment_method === 'cash') live.cash += o.total_cents;
+      else if (o.payment_method === 'card') live.card += o.total_cents;
+      else if (o.payment_method === 'debit') live.debit += o.total_cents;
+    }
+  }
 
   const items = (products ?? []).map((p) => ({
     id: p.id,
@@ -142,7 +183,66 @@ export default async function RegisterPage({
         </div>
       )}
 
+      <ShiftBar shift={openShift} live={live} />
+
       <RegisterTerminal products={items} />
+
+      {recentShifts.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold">Recent shifts</h2>
+          <div className="rounded-card border-border bg-surface overflow-x-auto border">
+            <table className="w-full text-sm">
+              <thead className="text-muted border-border border-b text-left text-xs uppercase">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Opened</th>
+                  <th className="px-3 py-2 font-medium">Sales</th>
+                  <th className="px-3 py-2 font-medium">Cash / Card / Debit</th>
+                  <th className="px-3 py-2 font-medium">Expected</th>
+                  <th className="px-3 py-2 font-medium">Counted</th>
+                  <th className="px-3 py-2 font-medium">Over / Short</th>
+                </tr>
+              </thead>
+              <tbody className="divide-border divide-y">
+                {recentShifts.map((s) => {
+                  const os = s.over_short_cents ?? 0;
+                  return (
+                    <tr key={s.id}>
+                      <td className="px-3 py-2">
+                        {new Date(s.opened_at).toLocaleDateString()}{' '}
+                        <span className="text-muted">
+                          {new Date(s.opened_at).toLocaleTimeString([], {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">{s.sales_count}</td>
+                      <td className="px-3 py-2">
+                        {formatPrice(s.cash_sales_cents)} / {formatPrice(s.card_sales_cents)} /{' '}
+                        {formatPrice(s.debit_sales_cents)}
+                      </td>
+                      <td className="px-3 py-2">{formatPrice(s.expected_cash_cents ?? 0)}</td>
+                      <td className="px-3 py-2">{formatPrice(s.closing_count_cents ?? 0)}</td>
+                      <td
+                        className={
+                          os === 0
+                            ? 'px-3 py-2'
+                            : os > 0
+                              ? 'text-primary px-3 py-2'
+                              : 'text-danger px-3 py-2'
+                        }
+                      >
+                        {os > 0 ? '+' : ''}
+                        {formatPrice(os)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
