@@ -14,6 +14,7 @@ import 'screens/orders_screen.dart';
 import 'screens/product_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/search_screen.dart';
 import 'screens/strain_screen.dart';
 import 'screens/strains_screen.dart';
 
@@ -47,6 +48,7 @@ final appRouter = GoRouter(
       path: '/dispensary/:slug',
       builder: (_, state) => DispensaryScreen(slug: state.pathParameters['slug']!),
     ),
+    GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
     GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
     GoRoute(path: '/orders', builder: (_, __) => const OrdersScreen()),
     GoRoute(path: '/favorites', builder: (_, __) => const FavoritesScreen()),

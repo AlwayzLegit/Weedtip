@@ -206,12 +206,37 @@ class WeedtipRepository {
 
   // ─── Reviews / profile ─────────────────────────────────────────────────────
 
-  Future<void> submitReview(String dispensaryId, int rating, String? body) async {
+  Future<void> submitReview(
+    String dispensaryId, {
+    required int quality,
+    required int service,
+    required int atmosphere,
+    String? body,
+  }) async {
     final uid = _c.auth.currentUser!.id;
+    final rating = ((quality + service + atmosphere) / 3).round();
     await _c.from('reviews').upsert(
-      {'dispensary_id': dispensaryId, 'user_id': uid, 'rating': rating, 'body': body},
+      {
+        'dispensary_id': dispensaryId,
+        'user_id': uid,
+        'rating': rating,
+        'quality': quality,
+        'service': service,
+        'atmosphere': atmosphere,
+        'body': body,
+      },
       onConflict: 'dispensary_id,user_id',
     );
+  }
+
+  /// Unified site-wide search across dispensaries / products / brands / strains.
+  Future<List<Map<String, dynamic>>> searchGlobal(String query) async {
+    if (query.trim().length < 2) return const [];
+    final rows = await _c.rpc('search_global', params: {
+      'search_query': query,
+      'per_kind_limit': 8,
+    });
+    return (rows as List).cast<Map<String, dynamic>>();
   }
 
   Future<Map<String, dynamic>?> myProfile() async {

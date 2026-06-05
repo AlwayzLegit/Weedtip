@@ -82,6 +82,11 @@ final isStrainSavedProvider = FutureProvider.family<bool, String>((ref, strainId
   return ref.watch(repositoryProvider).isStrainSaved(strainId);
 });
 
+final globalSearchProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, query) {
+  return ref.watch(repositoryProvider).searchGlobal(query);
+});
+
 final productSearchProvider =
     FutureProvider.family<List<Product>, String?>((ref, categorySlug) {
   return ref.watch(repositoryProvider).searchProducts(categorySlug: categorySlug);
