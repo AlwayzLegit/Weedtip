@@ -384,6 +384,7 @@ export type Database = {
           name: string
           owner_id: string | null
           phone: string | null
+          pos_addon: boolean
           rating_atmosphere: number
           rating_avg: number
           rating_count: number
@@ -422,6 +423,7 @@ export type Database = {
           name: string
           owner_id?: string | null
           phone?: string | null
+          pos_addon?: boolean
           rating_atmosphere?: number
           rating_avg?: number
           rating_count?: number
@@ -460,6 +462,7 @@ export type Database = {
           name?: string
           owner_id?: string | null
           phone?: string | null
+          pos_addon?: boolean
           rating_atmosphere?: number
           rating_avg?: number
           rating_count?: number
