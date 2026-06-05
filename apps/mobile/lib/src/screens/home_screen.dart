@@ -49,12 +49,12 @@ class HomeScreen extends ConsumerWidget {
                 style: TextStyle(color: WeedtipColors.muted),
               ),
               const SizedBox(height: 16),
-              // Search → Explore
+              // Search → global search
               TextField(
                 readOnly: true,
-                onTap: () => context.go('/explore'),
+                onTap: () => context.push('/search'),
                 decoration: const InputDecoration(
-                  hintText: 'Search dispensaries by name or city',
+                  hintText: 'Search stores, products, brands, strains',
                   prefixIcon: Icon(Icons.search),
                 ),
               ),

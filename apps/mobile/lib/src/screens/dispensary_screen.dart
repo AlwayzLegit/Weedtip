@@ -279,9 +279,13 @@ class _ReviewComposer extends ConsumerStatefulWidget {
 }
 
 class _ReviewComposerState extends ConsumerState<_ReviewComposer> {
-  int _rating = 0;
+  int _quality = 0;
+  int _service = 0;
+  int _atmosphere = 0;
   bool _busy = false;
   final _controller = TextEditingController();
+
+  bool get _complete => _quality > 0 && _service > 0 && _atmosphere > 0;
 
   @override
   void dispose() {
@@ -290,24 +294,52 @@ class _ReviewComposerState extends ConsumerState<_ReviewComposer> {
   }
 
   Future<void> _submit() async {
-    if (_rating == 0) return;
+    if (!_complete) return;
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
       final body = _controller.text.trim();
-      await ref
-          .read(repositoryProvider)
-          .submitReview(widget.dispensaryId, _rating, body.isEmpty ? null : body);
+      await ref.read(repositoryProvider).submitReview(
+            widget.dispensaryId,
+            quality: _quality,
+            service: _service,
+            atmosphere: _atmosphere,
+            body: body.isEmpty ? null : body,
+          );
       ref.invalidate(dispensaryReviewsProvider(widget.dispensaryId));
       ref.invalidate(dispensaryBySlugProvider(widget.slug));
       _controller.clear();
-      setState(() => _rating = 0);
+      setState(() {
+        _quality = 0;
+        _service = 0;
+        _atmosphere = 0;
+      });
       messenger.showSnackBar(const SnackBar(content: Text('Thanks for your review!')));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Could not submit: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Widget _starRow(String label, int value, ValueChanged<int> onSet) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 90,
+          child: Text(label, style: const TextStyle(color: WeedtipColors.muted)),
+        ),
+        for (var i = 1; i <= 5; i++)
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: () => onSet(i),
+            icon: Icon(
+              i <= value ? Icons.star_rounded : Icons.star_border_rounded,
+              color: WeedtipColors.primary,
+            ),
+          ),
+      ],
+    );
   }
 
   @override
@@ -324,19 +356,10 @@ class _ReviewComposerState extends ConsumerState<_ReviewComposer> {
         children: [
           const Text('Leave a review', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              for (var i = 1; i <= 5; i++)
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => setState(() => _rating = i),
-                  icon: Icon(
-                    i <= _rating ? Icons.star_rounded : Icons.star_border_rounded,
-                    color: WeedtipColors.primary,
-                  ),
-                ),
-            ],
-          ),
+          _starRow('Quality', _quality, (v) => setState(() => _quality = v)),
+          _starRow('Service', _service, (v) => setState(() => _service = v)),
+          _starRow('Atmosphere', _atmosphere, (v) => setState(() => _atmosphere = v)),
+          const SizedBox(height: 8),
           TextField(
             controller: _controller,
             maxLines: 2,
@@ -346,7 +369,7 @@ class _ReviewComposerState extends ConsumerState<_ReviewComposer> {
           Align(
             alignment: Alignment.centerRight,
             child: FilledButton(
-              onPressed: _busy || _rating == 0 ? null : _submit,
+              onPressed: _busy || !_complete ? null : _submit,
               child: _busy
                   ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Submit'),
