@@ -164,6 +164,7 @@ export async function upsertProduct(_prev: FormState, fd: FormData): Promise<For
     price_cents: priceDollars !== undefined ? Math.round(priceDollars * 100) : NaN,
     weight_grams: numOpt(fd, 'weight_grams') ?? null,
     unit: str(fd, 'unit') ?? null,
+    stock_qty: numOpt(fd, 'stock_qty') ?? null,
     in_stock: bool(fd, 'in_stock'),
     is_featured: bool(fd, 'is_featured'),
   };

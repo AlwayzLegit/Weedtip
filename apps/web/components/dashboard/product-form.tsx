@@ -168,6 +168,20 @@ export function ProductForm({
         <Field label="Unit" htmlFor="unit" error={fe.unit} hint="e.g. 3.5g, each, 1/8 oz">
           <Input id="unit" name="unit" defaultValue={p?.unit ?? ''} />
         </Field>
+        <Field
+          label="Stock count"
+          htmlFor="stock_qty"
+          error={fe.stock_qty}
+          hint="For the POS register — leave blank if untracked"
+        >
+          <Input
+            id="stock_qty"
+            name="stock_qty"
+            type="number"
+            min="0"
+            defaultValue={p?.stock_qty ?? ''}
+          />
+        </Field>
       </section>
 
       <ImageUpload
