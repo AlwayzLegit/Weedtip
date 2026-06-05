@@ -35,6 +35,17 @@ class _Body extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final effects = (s['effects'] as List?)?.cast<String>() ?? const [];
     final flavors = (s['flavors'] as List?)?.cast<String>() ?? const [];
+    final terpenes = (s['terpenes'] as List?)?.cast<String>() ?? const [];
+    final negative = (s['negative_effects'] as List?)?.cast<String>() ?? const [];
+    final medical = (s['medical_uses'] as List?)?.cast<String>() ?? const [];
+    final parents = (s['parents'] as List?)?.cast<String>() ?? const [];
+    final flowerMin = s['flowering_days_min'];
+    final flowerMax = s['flowering_days_max'];
+    final hasGrow = s['grow_difficulty'] != null ||
+        flowerMin != null ||
+        flowerMax != null ||
+        s['yield_note'] != null ||
+        s['grow_notes'] != null;
     final products = ref.watch(strainProductsProvider(s['id'] as String));
 
     return ListView(
@@ -48,10 +59,17 @@ class _Body extends ConsumerWidget {
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           ),
           TagChip(_typeLabels[s['type']] ?? s['type'] as String, filled: true),
+          if (ref.watch(currentUserProvider) != null)
+            _StrainSaveButton(strainId: s['id'] as String),
         ]),
         if (s['thc_low'] != null && s['thc_high'] != null) ...[
           const SizedBox(height: 6),
           Text('THC ${s['thc_low']}–${s['thc_high']}%',
+              style: const TextStyle(color: WeedtipColors.muted)),
+        ],
+        if (s['cbd_low'] != null && s['cbd_high'] != null) ...[
+          const SizedBox(height: 4),
+          Text('CBD ${s['cbd_low']}–${s['cbd_high']}%',
               style: const TextStyle(color: WeedtipColors.muted)),
         ],
         if (s['description'] != null) ...[
@@ -70,6 +88,50 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: 8),
           Wrap(spacing: 6, runSpacing: 6, children: [for (final f in flavors) TagChip(f)]),
         ],
+        if (terpenes.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text('Terpenes', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, runSpacing: 6, children: [for (final t in terpenes) TagChip(t)]),
+        ],
+        if (negative.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text('May cause', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, runSpacing: 6, children: [for (final n in negative) TagChip(n)]),
+        ],
+        if (medical.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text('May help with', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, runSpacing: 6, children: [for (final m in medical) TagChip(m, filled: true)]),
+        ],
+        if (parents.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text('Genetics', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Text('A cross of ${parents.join(' × ')}.',
+              style: const TextStyle(color: WeedtipColors.muted)),
+        ],
+        if (hasGrow) ...[
+          const SizedBox(height: 16),
+          const Text('Grow info', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          if (s['grow_difficulty'] != null)
+            Text('Difficulty: ${s['grow_difficulty']}',
+                style: const TextStyle(color: WeedtipColors.muted)),
+          if (flowerMin != null || flowerMax != null)
+            Text(
+              'Flowering: ${flowerMin != null && flowerMax != null ? '$flowerMin–$flowerMax' : (flowerMin ?? flowerMax)} days',
+              style: const TextStyle(color: WeedtipColors.muted),
+            ),
+          if (s['yield_note'] != null)
+            Text('Yield: ${s['yield_note']}', style: const TextStyle(color: WeedtipColors.muted)),
+          if (s['grow_notes'] != null) ...[
+            const SizedBox(height: 4),
+            Text(s['grow_notes'] as String, style: const TextStyle(color: WeedtipColors.muted)),
+          ],
+        ],
         const SizedBox(height: 24),
         const Text('Where to buy', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
@@ -87,6 +149,26 @@ class _Body extends ConsumerWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _StrainSaveButton extends ConsumerWidget {
+  const _StrainSaveButton({required this.strainId});
+  final String strainId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(isStrainSavedProvider(strainId));
+    final isSaved = saved.value ?? false;
+    return IconButton(
+      tooltip: isSaved ? 'Saved' : 'Save',
+      icon: Icon(isSaved ? Icons.favorite : Icons.favorite_border,
+          color: isSaved ? WeedtipColors.primary : null),
+      onPressed: () async {
+        await ref.read(repositoryProvider).toggleStrainSave(strainId);
+        ref.invalidate(isStrainSavedProvider(strainId));
+      },
     );
   }
 }

@@ -85,13 +85,39 @@ class WeedtipRepository {
   Future<List<Map<String, dynamic>>> reviewsForDispensary(String dispensaryId) async {
     final rows = await _c
         .from('reviews')
-        .select('id,rating,body,created_at')
+        .select('id,rating,quality,service,atmosphere,verified,body,created_at')
         .eq('dispensary_id', dispensaryId)
         .order('created_at', ascending: false);
     return rows.cast<Map<String, dynamic>>();
   }
 
-  /// Place an order via the shared server-authoritative `create_order` RPC.
+  /// Live follower "Updates" for a dispensary (6-week TTL; public ones).
+  Future<List<Map<String, dynamic>>> dispensaryUpdates(String dispensaryId) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final rows = await _c
+        .from('dispensary_updates')
+        .select('id,title,body,created_at')
+        .eq('dispensary_id', dispensaryId)
+        .gt('expires_at', now)
+        .order('created_at', ascending: false)
+        .limit(5);
+    return rows.cast<Map<String, dynamic>>();
+  }
+
+  /// Live in-store promos for a dispensary (non-menu offers).
+  Future<List<Map<String, dynamic>>> dispensaryPromos(String dispensaryId) async {
+    final today = DateTime.now().toUtc().toIso8601String().substring(0, 10);
+    final rows = await _c
+        .from('dispensary_promos')
+        .select('id,title,description,image_url,start_date,end_date')
+        .eq('dispensary_id', dispensaryId)
+        .eq('is_active', true)
+        .or('start_date.is.null,start_date.lte.$today')
+        .or('end_date.is.null,end_date.gte.$today')
+        .order('sort_order')
+        .limit(10);
+    return rows.cast<Map<String, dynamic>>();
+  }
   /// `items` is [{ 'product_id': uuid, 'quantity': int }]. Returns the order id.
   Future<String> createOrder({
     required String dispensaryId,
@@ -150,6 +176,31 @@ class WeedtipRepository {
       return false;
     }
     await _c.from('favorites').insert({'user_id': uid, 'dispensary_id': dispensaryId});
+    return true;
+  }
+
+  // ─── Strain saves ───────────────────────────────────────────────────────────
+
+  Future<bool> isStrainSaved(String strainId) async {
+    final uid = _c.auth.currentUser?.id;
+    if (uid == null) return false;
+    final row = await _c
+        .from('strain_favorites')
+        .select('strain_id')
+        .eq('user_id', uid)
+        .eq('strain_id', strainId)
+        .maybeSingle();
+    return row != null;
+  }
+
+  /// Returns the new saved state.
+  Future<bool> toggleStrainSave(String strainId) async {
+    final uid = _c.auth.currentUser!.id;
+    if (await isStrainSaved(strainId)) {
+      await _c.from('strain_favorites').delete().eq('user_id', uid).eq('strain_id', strainId);
+      return false;
+    }
+    await _c.from('strain_favorites').insert({'user_id': uid, 'strain_id': strainId});
     return true;
   }
 
