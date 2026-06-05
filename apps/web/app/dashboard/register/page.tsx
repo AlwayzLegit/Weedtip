@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AlertTriangle, Calculator, DollarSign, Receipt } from 'lucide-react';
+import { PosAddonButton } from '@/components/dashboard/pos-addon-button';
 import { RegisterTerminal } from '@/components/dashboard/register-terminal';
 import { formatPrice } from '@/lib/format';
 import { requireOwnerDispensary } from '@/lib/owner';
@@ -10,14 +11,29 @@ export const metadata: Metadata = { title: 'Register (POS)' };
 
 const LOW_STOCK_THRESHOLD = 5;
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ billing?: string }>;
+}) {
   const { dispensary, role } = await requireOwnerDispensary();
+  const { billing } = await searchParams;
   const posEnabled = dispensary.pos_addon || role === 'admin';
 
   if (!posEnabled) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Register</h1>
+        {billing === 'pos' && (
+          <p className="border-primary/40 bg-primary-muted text-primary rounded-card border px-4 py-2 text-sm">
+            Payment received — your POS add-on activates momentarily. Refresh in a few seconds.
+          </p>
+        )}
+        {billing === 'cancel' && (
+          <p className="border-border bg-surface text-muted rounded-card border px-4 py-2 text-sm">
+            Checkout canceled. No charge was made.
+          </p>
+        )}
         <div className="card flex flex-col items-center gap-3 p-12 text-center">
           <Calculator className="text-primary h-8 w-8" />
           <p className="text-lg font-semibold">POS is a paid add-on</p>
@@ -26,8 +42,9 @@ export default async function RegisterPage() {
             analytics with no platform commission, and draw down inventory. The register isn&apos;t
             enabled for {dispensary.name} yet.
           </p>
-          <Link href="/dashboard/promote" className="text-primary font-medium hover:underline">
-            See plans &amp; add-ons →
+          <PosAddonButton />
+          <Link href="/dashboard/promote" className="text-primary text-sm hover:underline">
+            See all plans &amp; add-ons →
           </Link>
         </div>
       </div>

@@ -81,6 +81,63 @@ export async function startSubscriptionCheckout(planId: string): Promise<Checkou
   }
 }
 
+/** Monthly price of the POS register add-on, in cents. */
+const POS_ADDON_PRICE_CENTS = 9900;
+
+/** Subscribe to the POS register add-on. The webhook flips dispensaries.pos_addon. */
+export async function startPosAddonCheckout(): Promise<CheckoutResult> {
+  if (!(await rateLimit('billing', { limit: 15, window: '60 s' })).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
+  if (!isStripeConfigured || !stripe) {
+    return { ok: false, error: 'Online billing is not enabled yet.' };
+  }
+
+  const { dispensary } = await requireOwnerDispensary();
+  if (dispensary.pos_addon) {
+    return { ok: false, error: 'The POS add-on is already active.' };
+  }
+
+  const supabase = await createClient();
+  const { data: sub } = await supabase
+    .from('dispensary_subscriptions')
+    .select('stripe_customer_id')
+    .eq('dispensary_id', dispensary.id)
+    .maybeSingle();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  try {
+    const meta = { dispensary_id: dispensary.id, addon: 'pos' };
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      ...(sub?.stripe_customer_id
+        ? { customer: sub.stripe_customer_id }
+        : { customer_email: user?.email ?? undefined }),
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: 'usd',
+            unit_amount: POS_ADDON_PRICE_CENTS,
+            recurring: { interval: 'month' },
+            product_data: { name: 'Weedtip POS register add-on' },
+          },
+        },
+      ],
+      metadata: meta,
+      subscription_data: { metadata: meta },
+      success_url: `${siteUrl()}/dashboard/register?billing=pos`,
+      cancel_url: `${siteUrl()}/dashboard/register?billing=cancel`,
+    });
+    if (!session.url) return { ok: false, error: 'Could not start checkout.' };
+    return { ok: true, url: session.url };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Checkout failed.' };
+  }
+}
+
 /** Open the Stripe billing portal so the owner can manage/cancel their plan. */
 export async function openBillingPortal(): Promise<CheckoutResult> {
   if (!isStripeConfigured || !stripe) {
