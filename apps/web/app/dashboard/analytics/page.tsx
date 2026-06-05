@@ -23,15 +23,18 @@ export default async function AnalyticsPage() {
   const { dispensary } = await requireOwnerDispensary();
   const supabase = await createClient();
 
-  const [{ data }, { data: redemptions }] = await Promise.all([
+  const [{ data }, { data: redemptions }, { data: staff }] = await Promise.all([
     supabase
       .from('orders')
-      .select('status,total_cents,platform_fee_cents,platform_fee_bps,created_at,items,source,device')
+      .select(
+        'status,total_cents,platform_fee_cents,platform_fee_bps,created_at,items,source,device,sold_by_staff',
+      )
       .eq('dispensary_id', dispensary.id),
     supabase
       .from('deal_redemptions')
       .select('code, discount_cents, deal:deals(title)')
       .eq('dispensary_id', dispensary.id),
+    supabase.from('pos_staff').select('id,name').eq('dispensary_id', dispensary.id),
   ]);
 
   const orders = data ?? [];
@@ -116,6 +119,20 @@ export default async function AnalyticsPage() {
   }
   const bySource = breakdown((o) => o.source ?? 'web', SOURCE_LABEL);
   const byDevice = breakdown((o) => o.device ?? 'unknown', DEVICE_LABEL);
+
+  // ─── Staff sales leaderboard (POS, by operator) ──────────────────────────
+  const staffName = new Map((staff ?? []).map((s) => [s.id, s.name]));
+  const staffAgg = new Map<string, { orders: number; revenue: number }>();
+  for (const o of live) {
+    if (!o.sold_by_staff) continue;
+    const cur = staffAgg.get(o.sold_by_staff) ?? { orders: 0, revenue: 0 };
+    cur.orders += 1;
+    cur.revenue += o.total_cents;
+    staffAgg.set(o.sold_by_staff, cur);
+  }
+  const staffLeaderboard = [...staffAgg.entries()]
+    .map(([id, v]) => ({ id, name: staffName.get(id) ?? 'Removed staff', ...v }))
+    .sort((a, b) => b.revenue - a.revenue);
 
   // ─── Promo code performance ──────────────────────────────────────────────
   const promoAgg = new Map<string, { title: string; uses: number; discount: number }>();
@@ -257,6 +274,32 @@ export default async function AnalyticsPage() {
           );
         })}
       </div>
+
+      {staffLeaderboard.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">Sales by staff</h2>
+          <div className="rounded-card border-border bg-surface overflow-hidden border">
+            <table className="w-full text-sm">
+              <thead className="bg-surface-2 text-muted text-left">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Budtender</th>
+                  <th className="px-4 py-2 font-medium">Sales</th>
+                  <th className="px-4 py-2 font-medium">Revenue</th>
+                </tr>
+              </thead>
+              <tbody className="divide-border divide-y">
+                {staffLeaderboard.map((s) => (
+                  <tr key={s.id}>
+                    <td className="px-4 py-2 font-medium">{s.name}</td>
+                    <td className="px-4 py-2">{s.orders}</td>
+                    <td className="px-4 py-2">{formatPrice(s.revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Top products</h2>
