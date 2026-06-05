@@ -16,21 +16,37 @@ type Product = {
   category: string | null;
 };
 
+type Receipt = {
+  items: { name: string; qty: number; cents: number }[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  method: string;
+  operator: string | null;
+  at: string;
+};
+
 const TAX_RATE = 0.15;
 const METHODS = ['cash', 'card', 'debit'] as const;
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+}
 
 export function RegisterTerminal({
   products,
   hasStaff = false,
+  dispensaryName,
 }: {
   products: Product[];
   hasStaff?: boolean;
+  dispensaryName: string;
 }) {
   const [query, setQuery] = useState('');
   const [ticket, setTicket] = useState<Record<string, number>>({});
   const [method, setMethod] = useState<(typeof METHODS)[number]>('cash');
   const [pending, start] = useTransition();
-  const [done, setDone] = useState<{ total: number } | null>(null);
+  const [done, setDone] = useState<Receipt | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [operator, setOperator] = useState<{ id: string; name: string } | null>(null);
   const [pin, setPin] = useState('');
@@ -82,8 +98,54 @@ export function RegisterTerminal({
     });
   }
 
+  function printReceipt(r: Receipt) {
+    const win = window.open('', '_blank', 'width=320,height=600');
+    if (!win) return;
+    const rows = r.items
+      .map(
+        (it) =>
+          `<tr><td>${it.qty}× ${escapeHtml(it.name)}</td><td class="r">${formatPrice(it.cents)}</td></tr>`,
+      )
+      .join('');
+    win.document.write(
+      `<html><head><title>Receipt</title><style>
+        body{font-family:ui-monospace,monospace;font-size:12px;width:280px;margin:0 auto;padding:12px;color:#111}
+        h2{text-align:center;margin:0 0 2px}.muted{color:#666;text-align:center;margin:0}
+        table{width:100%;border-collapse:collapse;margin:10px 0}td{padding:2px 0}.r{text-align:right}
+        .tot{border-top:1px dashed #999;margin-top:8px;padding-top:6px}
+       </style></head><body>
+        <h2>${escapeHtml(dispensaryName)}</h2>
+        <p class="muted">${r.at}${r.operator ? ` · ${escapeHtml(r.operator)}` : ''}</p>
+        <table>${rows}</table>
+        <table class="tot">
+          <tr><td>Subtotal</td><td class="r">${formatPrice(r.subtotal)}</td></tr>
+          <tr><td>Tax</td><td class="r">${formatPrice(r.tax)}</td></tr>
+          <tr><td><strong>Total</strong></td><td class="r"><strong>${formatPrice(r.total)}</strong></td></tr>
+          <tr><td>Paid (${r.method})</td><td class="r">${formatPrice(r.total)}</td></tr>
+        </table>
+        <p class="muted">Thank you!</p>
+       </body></html>`,
+    );
+    win.document.close();
+    win.focus();
+    win.print();
+  }
+
   function complete() {
     setError(null);
+    const receipt: Receipt = {
+      items: lines.map(([id, q]) => ({
+        name: priceById.get(id)?.name ?? '',
+        qty: q,
+        cents: (priceById.get(id)?.price_cents ?? 0) * q,
+      })),
+      subtotal,
+      tax,
+      total,
+      method,
+      operator: operator?.name ?? null,
+      at: new Date().toLocaleString(),
+    };
     start(async () => {
       const res = await ringSale(
         lines.map(([product_id, quantity]) => ({ product_id, quantity })),
@@ -91,7 +153,7 @@ export function RegisterTerminal({
         operator?.id ?? null,
       );
       if (res.ok) {
-        setDone({ total });
+        setDone(receipt);
         setTicket({});
       } else {
         setError(res.error ?? 'Could not complete the sale.');
@@ -268,7 +330,14 @@ export function RegisterTerminal({
 
         {error && <p className="text-danger text-sm">{error}</p>}
         {done && (
-          <p className="text-primary text-sm">Sale complete — {formatPrice(done.total)} charged.</p>
+          <div className="border-primary/30 bg-primary-muted/40 flex items-center justify-between gap-2 rounded-lg border px-3 py-2">
+            <span className="text-primary text-sm">
+              Sale complete — {formatPrice(done.total)} charged.
+            </span>
+            <Button size="sm" variant="outline" onClick={() => printReceipt(done)}>
+              Print receipt
+            </Button>
+          </div>
         )}
 
         <Button disabled={pending || lines.length === 0} onClick={complete} size="lg">
