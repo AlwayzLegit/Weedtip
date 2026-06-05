@@ -201,7 +201,7 @@ export default async function RegisterPage({
 
       <ShiftBar shift={openShift} live={live} />
 
-      <RegisterTerminal products={items} hasStaff={hasStaff} />
+      <RegisterTerminal products={items} hasStaff={hasStaff} dispensaryName={dispensary.name} />
 
       {recentShifts.length > 0 && (
         <section>
