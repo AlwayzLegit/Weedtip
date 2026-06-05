@@ -1129,6 +1129,7 @@ export type Database = {
       }
       products: {
         Row: {
+          barcode: string | null
           brand: string | null
           brand_id: string | null
           category_id: string
@@ -1155,6 +1156,7 @@ export type Database = {
           weight_grams: number | null
         }
         Insert: {
+          barcode?: string | null
           brand?: string | null
           brand_id?: string | null
           category_id: string
@@ -1181,6 +1183,7 @@ export type Database = {
           weight_grams?: number | null
         }
         Update: {
+          barcode?: string | null
           brand?: string | null
           brand_id?: string | null
           category_id?: string
