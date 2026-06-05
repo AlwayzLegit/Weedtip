@@ -27,13 +27,13 @@ export async function GET() {
   const { data: orders } = await supabase
     .from('orders')
     .select(
-      'id,created_at,status,order_type,payment_status,items,subtotal_cents,tax_cents,total_cents',
+      'id,created_at,status,order_type,payment_status,source,device,items,subtotal_cents,tax_cents,total_cents',
     )
     .eq('dispensary_id', dispensary.id)
     .order('created_at', { ascending: false });
 
   const rows = [
-    'order_id,date,status,type,payment_status,item_count,subtotal,tax,total',
+    'order_id,date,status,type,payment_status,source,device,item_count,subtotal,tax,total',
   ];
   for (const o of orders ?? []) {
     const items = (o.items as OrderItem[]) ?? [];
@@ -45,6 +45,8 @@ export async function GET() {
         o.status,
         o.order_type,
         o.payment_status,
+        o.source ?? 'web',
+        o.device ?? '',
         String(itemCount),
         (o.subtotal_cents / 100).toFixed(2),
         (o.tax_cents / 100).toFixed(2),
