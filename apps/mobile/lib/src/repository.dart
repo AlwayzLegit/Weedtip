@@ -85,7 +85,7 @@ class WeedtipRepository {
   Future<List<Map<String, dynamic>>> reviewsForDispensary(String dispensaryId) async {
     final rows = await _c
         .from('reviews')
-        .select('id,rating,body,created_at')
+        .select('id,rating,quality,service,atmosphere,verified,body,created_at')
         .eq('dispensary_id', dispensaryId)
         .order('created_at', ascending: false);
     return rows.cast<Map<String, dynamic>>();

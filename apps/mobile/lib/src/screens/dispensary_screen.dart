@@ -146,7 +146,34 @@ class _DispensaryBody extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  RatingStars((r['rating'] as num?) ?? 0),
+                                  Row(
+                                    children: [
+                                      RatingStars((r['rating'] as num?) ?? 0),
+                                      if (r['verified'] == true) ...[
+                                        const SizedBox(width: 6),
+                                        const Icon(Icons.verified_rounded,
+                                            size: 14, color: WeedtipColors.primary),
+                                        const SizedBox(width: 2),
+                                        const Text('Verified',
+                                            style: TextStyle(
+                                                fontSize: 11, color: WeedtipColors.primary)),
+                                      ],
+                                    ],
+                                  ),
+                                  if (r['quality'] != null ||
+                                      r['service'] != null ||
+                                      r['atmosphere'] != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      [
+                                        if (r['quality'] != null) 'Quality ${r['quality']}',
+                                        if (r['service'] != null) 'Service ${r['service']}',
+                                        if (r['atmosphere'] != null) 'Atmosphere ${r['atmosphere']}',
+                                      ].join('  ·  '),
+                                      style: const TextStyle(
+                                          fontSize: 12, color: WeedtipColors.muted),
+                                    ),
+                                  ],
                                   if (r['body'] != null) ...[
                                     const SizedBox(height: 6),
                                     Text(r['body'] as String,
