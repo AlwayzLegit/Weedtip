@@ -1078,6 +1078,7 @@ export type Database = {
           rating_count: number
           search_vector: unknown
           slug: string
+          stock_qty: number | null
           strain_id: string | null
           strain_type: Database["public"]["Enums"]["strain_type"] | null
           thc_percentage: number | null
@@ -1103,6 +1104,7 @@ export type Database = {
           rating_count?: number
           search_vector?: unknown
           slug: string
+          stock_qty?: number | null
           strain_id?: string | null
           strain_type?: Database["public"]["Enums"]["strain_type"] | null
           thc_percentage?: number | null
@@ -1128,6 +1130,7 @@ export type Database = {
           rating_count?: number
           search_vector?: unknown
           slug?: string
+          stock_qty?: number | null
           strain_id?: string | null
           strain_type?: Database["public"]["Enums"]["strain_type"] | null
           thc_percentage?: number | null
@@ -1489,6 +1492,14 @@ export type Database = {
           p_promo_code?: string
           p_source?: string
           p_device?: string
+        }
+        Returns: string
+      }
+      create_pos_order: {
+        Args: {
+          p_dispensary_id: string
+          p_items: Json
+          p_payment_method?: string
         }
         Returns: string
       }

@@ -93,6 +93,7 @@ export default async function AnalyticsPage() {
     web: 'Weedtip site',
     embed: 'Embedded menu',
     mobile_web: 'Mobile web',
+    pos: 'In-store (POS)',
   };
   const DEVICE_LABEL: Record<string, string> = {
     desktop: 'Desktop',
