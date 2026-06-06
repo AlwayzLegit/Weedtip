@@ -12,6 +12,7 @@ import {
   Receipt,
   Settings,
   Shield,
+  Sparkles,
   Store,
   X,
 } from 'lucide-react';
@@ -36,12 +37,14 @@ export function NavMenu({
   displayName,
   isOwner,
   isAdmin,
+  isBrandOwner = false,
   unreadCount = 0,
 }: {
   email: string | null;
   displayName: string | null;
   isOwner: boolean;
   isAdmin: boolean;
+  isBrandOwner?: boolean;
   unreadCount?: number;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -97,7 +100,8 @@ export function NavMenu({
     <>
       {isAdmin && <MenuItem href="/admin" icon={Shield} label="Admin console" />}
       {isOwner && <MenuItem href="/dashboard" icon={Store} label="Owner dashboard" />}
-      {(isAdmin || isOwner) && <div className="border-border my-1 border-t" />}
+      {isBrandOwner && <MenuItem href="/studio" icon={Sparkles} label="Brand Studio" />}
+      {(isAdmin || isOwner || isBrandOwner) && <div className="border-border my-1 border-t" />}
       <MenuItem href="/notifications" icon={Bell} label="Notifications" />
       <MenuItem href="/orders" icon={Receipt} label="Your orders" />
       <MenuItem href="/account/favorites" icon={Heart} label="Favorites" />
