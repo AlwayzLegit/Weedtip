@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { BrandFollowButton } from '@/components/brand/brand-follow-button';
 import { ClaimBrandButton } from '@/components/brand/claim-brand-button';
 import { ProductCard } from '@/components/product-card';
 import { getAuth } from '@/lib/auth';
@@ -82,6 +83,25 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   }
   const avgRating = ratingN > 0 ? (ratingSum / ratingN).toFixed(1) : '—';
 
+  // Follow state + live updates for followers.
+  let isFollowing = false;
+  if (user) {
+    const { data: f } = await supabase
+      .from('brand_followers')
+      .select('brand_id')
+      .eq('user_id', user.id)
+      .eq('brand_id', brand.id)
+      .maybeSingle();
+    isFollowing = !!f;
+  }
+  const { data: brandUpdates } = await supabase
+    .from('brand_updates')
+    .select('id,title,body,created_at')
+    .eq('brand_id', brand.id)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(10);
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <Breadcrumbs
@@ -120,9 +140,12 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
               Visit website →
             </a>
           )}
-          {canClaim && (
-            <div className="mt-3">
-              <ClaimBrandButton brandId={brand.id} />
+          {(user || canClaim) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {user && (
+                <BrandFollowButton brandId={brand.id} slug={brand.slug} isFollowing={isFollowing} />
+              )}
+              {canClaim && <ClaimBrandButton brandId={brand.id} />}
             </div>
           )}
         </div>
@@ -132,6 +155,23 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           <Stat value={avgRating} label="Avg rating" />
         </div>
       </div>
+
+      {brandUpdates && brandUpdates.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-lg font-semibold">Latest updates</h2>
+          <div className="space-y-3">
+            {brandUpdates.map((u) => (
+              <div key={u.id} className="rounded-card border-border bg-surface border p-4">
+                <p className="font-medium">{u.title}</p>
+                {u.body && <p className="text-muted mt-1 text-sm">{u.body}</p>}
+                <p className="text-muted mt-1 text-xs">
+                  {new Date(u.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {shops.size > 0 && (
         <section className="mt-8">
