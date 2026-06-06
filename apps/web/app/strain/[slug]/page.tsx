@@ -6,6 +6,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { StrainFavoriteButton } from '@/components/strain/strain-favorite-button';
 import { Badge } from '@/components/ui/badge';
+import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -50,7 +51,7 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
   // Products carrying this strain at active dispensaries ("where to buy").
   const { data: products } = await supabase
     .from('products')
-    .select('*, dispensary:dispensaries!inner(slug,name,status)')
+    .select(`*, dispensary:dispensaries!inner(slug,name,status), ${CATALOG_IMAGE_EMBED}`)
     .eq('strain_id', strain.id)
     .eq('dispensary.status', 'active')
     .order('price_cents');
@@ -283,7 +284,7 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
                     brand: p.brand ?? dispensary?.name ?? null,
                     priceCents: saleMap.get(p.id) ?? p.price_cents,
                     originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
-                    imageUrl: p.image_urls[0] ?? null,
+                    imageUrl: cardImageUrl(p),
                     strainType: p.strain_type,
                     thcPercentage: p.thc_percentage,
                     inStock: p.in_stock,

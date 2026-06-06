@@ -4,6 +4,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
+import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { itemListJsonLd, pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -42,7 +43,7 @@ export default async function CategoryPage({
 
   const { data: productData } = await supabase
     .from('products')
-    .select('*, dispensary:dispensaries!inner(slug,status)')
+    .select(`*, dispensary:dispensaries!inner(slug,status), ${CATALOG_IMAGE_EMBED}`)
     .eq('category_id', category.id)
     .eq('dispensary.status', 'active')
     .order('rating_avg', { ascending: false })
@@ -105,7 +106,7 @@ export default async function CategoryPage({
                 brand: p.brand,
                 priceCents: saleMap.get(p.id) ?? p.price_cents,
                 originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
-                imageUrl: p.image_urls[0] ?? null,
+                imageUrl: cardImageUrl(p),
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,
                 inStock: p.in_stock,

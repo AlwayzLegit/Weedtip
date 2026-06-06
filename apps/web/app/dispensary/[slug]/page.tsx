@@ -28,6 +28,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
+import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
@@ -83,7 +84,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   ] = await Promise.all([
       supabase
         .from('products')
-        .select('*, category:categories(name,slug,sort_order)')
+        .select(`*, category:categories(name,slug,sort_order), ${CATALOG_IMAGE_EMBED}`)
         .eq('dispensary_id', d.id)
         .order('name'),
       supabase
@@ -184,7 +185,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             brand: p.brand,
             priceCents: effectivePrice,
             originalPriceCents: sale ? p.price_cents : null,
-            imageUrl: p.image_urls[0] ?? null,
+            imageUrl: cardImageUrl(p),
             strainType: p.strain_type,
             thcPercentage: p.thc_percentage,
             inStock: p.in_stock,
