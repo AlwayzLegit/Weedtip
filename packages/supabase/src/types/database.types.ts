@@ -657,6 +657,67 @@ export type Database = {
           },
         ]
       }
+      brand_followers: {
+        Row: {
+          brand_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_followers_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_updates: {
+        Row: {
+          body: string | null
+          brand_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          brand_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          brand_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_updates_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispensary_updates: {
         Row: {
           body: string | null
@@ -1710,6 +1771,14 @@ export type Database = {
       place_ad_bid: {
         Args: { p_region_id: string; p_dispensary_id: string; p_bid_cents: number }
         Returns: undefined
+      }
+      brand_follower_count: {
+        Args: { p_brand_id: string }
+        Returns: number
+      }
+      post_brand_update: {
+        Args: { p_brand_id: string; p_title: string; p_body: string }
+        Returns: string
       }
       region_featured_dispensaries: {
         Args: { p_state: string; p_city?: string }

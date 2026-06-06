@@ -54,7 +54,7 @@ export default async function NotificationsPage() {
       ) : (
         <div className="space-y-3">
           {list.map((n) => {
-            const data = (n.data ?? {}) as { order_id?: string };
+            const data = (n.data ?? {}) as { order_id?: string; brand_slug?: string };
             return (
               <div
                 key={n.id}
@@ -76,6 +76,14 @@ export default async function NotificationsPage() {
                         className="text-primary mt-2 inline-block text-sm hover:underline"
                       >
                         View order
+                      </Link>
+                    )}
+                    {data.brand_slug && (
+                      <Link
+                        href={`/brand/${data.brand_slug}`}
+                        className="text-primary mt-2 inline-block text-sm hover:underline"
+                      >
+                        View brand
                       </Link>
                     )}
                   </div>
