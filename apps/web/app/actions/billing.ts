@@ -340,15 +340,15 @@ export async function startBrandPlacementCheckout(
       client_reference_id: placement.id,
       metadata: { placement_id: placement.id, days: String(input.days) },
       payment_intent_data: { metadata: { placement_id: placement.id } },
-      success_url: `${siteUrl()}/dashboard/brands?billing=placement`,
-      cancel_url: `${siteUrl()}/dashboard/brands?billing=cancel`,
+      success_url: `${siteUrl()}/studio/promote?billing=placement`,
+      cancel_url: `${siteUrl()}/studio/promote?billing=cancel`,
     });
     if (!session.url) {
       await service.from('placements').delete().eq('id', placement.id);
       return { ok: false, error: 'Could not start checkout.' };
     }
     await service.from('placements').update({ stripe_session_id: session.id }).eq('id', placement.id);
-    revalidatePath('/dashboard/brands');
+    revalidatePath('/studio/promote');
     return { ok: true, url: session.url };
   } catch (e) {
     await service.from('placements').delete().eq('id', placement.id);

@@ -36,7 +36,7 @@ const OWNER_NAV: NavItem[] = [
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/dashboard/reviews', label: 'Reviews', icon: Star },
   { href: '/dashboard/updates', label: 'Updates', icon: Users },
-  { href: '/dashboard/brands', label: 'Brands', icon: Award },
+  { href: '/studio', label: 'Brand Studio', icon: Award },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/qr', label: 'QR codes', icon: QrCode },
   { href: '/dashboard/promote', label: 'Promote', icon: Megaphone },

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getAuth } from '@/lib/auth';
+import { ownsAnyBrand } from '@/lib/brand-owner';
 import { createClient } from '@/lib/supabase/server';
 import { Logo } from './brand/logo';
 import { GlobalSearch } from './global-search';
@@ -9,6 +10,7 @@ export async function Navbar() {
   const { user, profile } = await getAuth();
 
   let unreadCount = 0;
+  let isBrandOwner = false;
   if (user) {
     const supabase = await createClient();
     const { count } = await supabase
@@ -16,6 +18,7 @@ export async function Navbar() {
       .select('id', { count: 'exact', head: true })
       .eq('read', false);
     unreadCount = count ?? 0;
+    isBrandOwner = await ownsAnyBrand(user.id);
   }
 
   return (
@@ -30,6 +33,7 @@ export async function Navbar() {
           displayName={profile?.display_name ?? null}
           isOwner={profile?.role === 'dispensary_owner'}
           isAdmin={profile?.role === 'admin'}
+          isBrandOwner={isBrandOwner}
           unreadCount={unreadCount}
         />
       </div>
