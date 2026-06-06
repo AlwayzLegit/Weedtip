@@ -102,6 +102,14 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
     .order('created_at', { ascending: false })
     .limit(10);
 
+  // The brand's official catalog lineup.
+  const { data: lineup } = await supabase
+    .from('brand_products')
+    .select('id,name,strain_type,thc_percentage,cbd_percentage,description,image_url')
+    .eq('brand_id', brand.id)
+    .order('sort_order')
+    .order('name');
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <Breadcrumbs
@@ -167,6 +175,35 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                 <p className="text-muted mt-1 text-xs">
                   {new Date(u.created_at).toLocaleDateString()}
                 </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {lineup && lineup.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-lg font-semibold">Official lineup</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {lineup.map((it) => (
+              <div key={it.id} className="rounded-card border-border bg-surface overflow-hidden border">
+                {it.image_url ? (
+                  <img src={it.image_url} alt={it.name} className="bg-surface-2 h-32 w-full object-cover" />
+                ) : (
+                  <div className="bg-surface-2 flex h-32 w-full items-center justify-center text-3xl font-bold text-muted">
+                    {it.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="p-3">
+                  <p className="truncate text-sm font-medium">{it.name}</p>
+                  <p className="text-muted mt-0.5 text-xs capitalize">
+                    {it.strain_type ?? ''}
+                    {it.thc_percentage != null ? `${it.strain_type ? ' · ' : ''}${it.thc_percentage}% THC` : ''}
+                  </p>
+                  {it.description && (
+                    <p className="text-muted mt-1 line-clamp-2 text-xs">{it.description}</p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
