@@ -34,6 +34,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_regions: {
+        Row: {
+          city: string | null
+          created_at: string
+          featured_rate_cents: number
+          id: string
+          is_active: boolean
+          name: string
+          slots: number
+          slug: string
+          state: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          featured_rate_cents?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          slots?: number
+          slug: string
+          state: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          featured_rate_cents?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          slots?: number
+          slug?: string
+          state?: string
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           created_at: string
