@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Megaphone, Sparkles, Users } from 'lucide-react';
+import { BarChart3, Megaphone, Package, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV = [
   { href: '/studio', label: 'Profile', icon: Sparkles },
+  { href: '/studio/catalog', label: 'Catalog', icon: Package },
   { href: '/studio/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/studio/updates', label: 'Updates', icon: Users },
   { href: '/studio/promote', label: 'Promote', icon: Megaphone },

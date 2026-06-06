@@ -683,6 +683,66 @@ export type Database = {
           },
         ]
       }
+      brand_products: {
+        Row: {
+          brand_id: string
+          category_id: string | null
+          cbd_percentage: number | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          sort_order: number
+          strain_type: Database["public"]["Enums"]["strain_type"] | null
+          thc_percentage: number | null
+          updated_at: string
+        }
+        Insert: {
+          brand_id: string
+          category_id?: string | null
+          cbd_percentage?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          sort_order?: number
+          strain_type?: Database["public"]["Enums"]["strain_type"] | null
+          thc_percentage?: number | null
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string
+          category_id?: string | null
+          cbd_percentage?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          sort_order?: number
+          strain_type?: Database["public"]["Enums"]["strain_type"] | null
+          thc_percentage?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_updates: {
         Row: {
           body: string | null
@@ -1318,6 +1378,7 @@ export type Database = {
           barcode: string | null
           brand: string | null
           brand_id: string | null
+          catalog_id: string | null
           category_id: string
           cbd_percentage: number | null
           created_at: string
@@ -1345,6 +1406,7 @@ export type Database = {
           barcode?: string | null
           brand?: string | null
           brand_id?: string | null
+          catalog_id?: string | null
           category_id: string
           cbd_percentage?: number | null
           created_at?: string
@@ -1372,6 +1434,7 @@ export type Database = {
           barcode?: string | null
           brand?: string | null
           brand_id?: string | null
+          catalog_id?: string | null
           category_id?: string
           cbd_percentage?: number | null
           created_at?: string
