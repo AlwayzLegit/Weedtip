@@ -7,23 +7,35 @@ import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = pageSeo({
   title: 'Brands',
-  description: 'Browse cannabis brands and find their products at dispensaries near you on Weedtip.',
+  description: 'Browse cannabis brands by state and find their products at dispensaries near you on Weedtip.',
   path: '/brands',
 });
 
-export default async function BrandsPage() {
+type FeaturedRow = {
+  id: string;
+  scope_state: string | null;
+  brand: { slug: string; name: string; description: string | null; logo_url: string | null };
+};
+
+export default async function BrandsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ state?: string }>;
+}) {
   const supabase = await createClient();
   const nowIso = new Date().toISOString();
+  const { state: stateParam } = await searchParams;
+
   const [{ data: brands }, { data: prodBrands }, { data: featured }] = await Promise.all([
     supabase.from('brands').select('id,slug,name,description,logo_url').order('name'),
     supabase
       .from('products')
-      .select('brand_id, dispensary:dispensaries!inner(status)')
+      .select('brand_id, dispensary:dispensaries!inner(status,state)')
       .eq('dispensary.status', 'active')
       .not('brand_id', 'is', null),
     supabase
       .from('placements')
-      .select('id, priority, brand:brands!inner(slug,name,description,logo_url)')
+      .select('id, priority, scope_state, brand:brands!inner(slug,name,description,logo_url)')
       .eq('type', 'promoted_brand')
       .eq('is_active', true)
       .lte('starts_at', nowIso)
@@ -31,38 +43,94 @@ export default async function BrandsPage() {
       .order('priority', { ascending: false }),
   ]);
 
-  // Product counts per brand (a "most stocked" leaderboard proxy).
+  // Per-brand total + per-state product counts (a brand's states = the states of
+  // the active dispensaries that carry it).
   const countByBrand = new Map<string, number>();
+  const brandStateCount = new Map<string, Map<string, number>>();
+  const stateBrandSets = new Map<string, Set<string>>();
   for (const p of prodBrands ?? []) {
-    if (p.brand_id) countByBrand.set(p.brand_id, (countByBrand.get(p.brand_id) ?? 0) + 1);
+    if (!p.brand_id) continue;
+    countByBrand.set(p.brand_id, (countByBrand.get(p.brand_id) ?? 0) + 1);
+    const st = (p.dispensary as { state: string } | null)?.state;
+    if (!st) continue;
+    let m = brandStateCount.get(p.brand_id);
+    if (!m) {
+      m = new Map();
+      brandStateCount.set(p.brand_id, m);
+    }
+    m.set(st, (m.get(st) ?? 0) + 1);
+    if (!stateBrandSets.has(st)) stateBrandSets.set(st, new Set());
+    stateBrandSets.get(st)!.add(p.brand_id);
   }
+
+  const allStates = [...stateBrandSets.keys()].sort();
+  const selectedState = stateParam && allStates.includes(stateParam) ? stateParam : null;
+
   const ranked = (brands ?? [])
-    .map((b) => ({ ...b, count: countByBrand.get(b.id) ?? 0 }))
+    .map((b) => ({
+      ...b,
+      count: selectedState
+        ? (brandStateCount.get(b.id)?.get(selectedState) ?? 0)
+        : (countByBrand.get(b.id) ?? 0),
+    }))
+    .filter((b) => (selectedState ? b.count > 0 : true))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+  const featuredList = ((featured as FeaturedRow[] | null) ?? []).filter(
+    (f) => !selectedState || f.scope_state == null || f.scope_state === selectedState,
+  );
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6">
+      <div className="mb-4">
         <p className="eyebrow mb-1">Discover</p>
-        <h1 className="text-2xl font-bold sm:text-3xl">Brands</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">
+          Brands{selectedState ? ` in ${selectedState}` : ''}
+        </h1>
         <p className="text-muted mt-1">Discover brands and where to find their products.</p>
       </div>
 
-      {featured && featured.length > 0 && (
+      {/* State division */}
+      {allStates.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          <Link
+            href="/brands"
+            className={
+              selectedState
+                ? 'border-border text-muted hover:text-foreground rounded-full border px-3 py-1 text-sm'
+                : 'border-primary bg-primary-muted text-primary rounded-full border px-3 py-1 text-sm font-medium'
+            }
+          >
+            All states
+          </Link>
+          {allStates.map((st) => (
+            <Link
+              key={st}
+              href={`/brands?state=${st}`}
+              className={
+                selectedState === st
+                  ? 'border-primary bg-primary-muted text-primary rounded-full border px-3 py-1 text-sm font-medium'
+                  : 'border-border text-muted hover:text-foreground rounded-full border px-3 py-1 text-sm'
+              }
+            >
+              {st} ({stateBrandSets.get(st)?.size ?? 0})
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {featuredList.length > 0 && (
         <section className="mb-8">
           <div className="mb-3 flex items-center gap-1.5">
             <Sparkles className="text-primary h-4 w-4" />
-            <h2 className="text-sm font-semibold uppercase tracking-wide">Featured brands</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide">
+              Featured brands{selectedState ? ` · ${selectedState}` : ''}
+            </h2>
             <span className="text-muted text-xs">· Sponsored</span>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((f) => {
-              const b = f.brand as {
-                slug: string;
-                name: string;
-                description: string | null;
-                logo_url: string | null;
-              };
+            {featuredList.map((f) => {
+              const b = f.brand;
               return (
                 <Link
                   key={f.id}
@@ -95,7 +163,9 @@ export default async function BrandsPage() {
       )}
 
       {ranked.length === 0 ? (
-        <div className="card text-muted p-10 text-center">No brands yet.</div>
+        <div className="card text-muted p-10 text-center">
+          No brands{selectedState ? ` in ${selectedState}` : ' yet'}.
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ranked.map((b) => (
@@ -123,6 +193,7 @@ export default async function BrandsPage() {
                 <p className="text-muted mt-2 flex items-center gap-1 text-xs">
                   <Package className="h-3.5 w-3.5" />
                   {b.count} {b.count === 1 ? 'product' : 'products'}
+                  {selectedState ? ` in ${selectedState}` : ''}
                 </p>
               </div>
             </Link>
