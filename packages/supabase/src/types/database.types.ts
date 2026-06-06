@@ -34,6 +34,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_bids: {
+        Row: {
+          bid_cents: number
+          contract_end: string
+          contract_start: string
+          created_at: string
+          dispensary_id: string
+          id: string
+          region_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bid_cents: number
+          contract_end: string
+          contract_start?: string
+          created_at?: string
+          dispensary_id: string
+          id?: string
+          region_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bid_cents?: number
+          contract_end?: string
+          contract_start?: string
+          created_at?: string
+          dispensary_id?: string
+          id?: string
+          region_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_bids_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "ad_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_bids_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_regions: {
         Row: {
           city: string | null
@@ -1655,6 +1706,30 @@ export type Database = {
       add_pos_staff: {
         Args: { p_dispensary_id: string; p_name: string; p_pin: string }
         Returns: string
+      }
+      place_ad_bid: {
+        Args: { p_region_id: string; p_dispensary_id: string; p_bid_cents: number }
+        Returns: undefined
+      }
+      cancel_ad_bid: {
+        Args: { p_bid_id: string }
+        Returns: undefined
+      }
+      ad_bids_for_owner: {
+        Args: { p_dispensary_id: string }
+        Returns: {
+          region_id: string
+          region_name: string
+          state: string
+          city: string | null
+          slots: number
+          floor_cents: number
+          min_winning_cents: number
+          your_bid_cents: number | null
+          your_bid_id: string | null
+          contract_end: string | null
+          is_winning: boolean
+        }[]
       }
       verify_pos_staff: {
         Args: { p_dispensary_id: string; p_pin: string }
