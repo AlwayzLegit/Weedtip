@@ -8,11 +8,13 @@ export const metadata: Metadata = { title: 'Add product' };
 export default async function NewProductPage() {
   await requireOwnerDispensary();
   const supabase = await createClient();
-  const [{ data: categories }, { data: strains }, { data: brands }] = await Promise.all([
-    supabase.from('categories').select('id,name').order('sort_order'),
-    supabase.from('strains').select('id,name').order('name'),
-    supabase.from('brands').select('id,name').order('name'),
-  ]);
+  const [{ data: categories }, { data: strains }, { data: brands }, { data: catalog }] =
+    await Promise.all([
+      supabase.from('categories').select('id,name').order('sort_order'),
+      supabase.from('strains').select('id,name').order('name'),
+      supabase.from('brands').select('id,name').order('name'),
+      supabase.from('brand_products').select('id,name,brand_id').order('name'),
+    ]);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -22,6 +24,7 @@ export default async function NewProductPage() {
         categories={categories ?? []}
         strains={strains ?? []}
         brands={brands ?? []}
+        catalog={catalog ?? []}
       />
     </div>
   );
