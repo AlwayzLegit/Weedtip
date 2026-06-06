@@ -259,6 +259,12 @@ export async function startPlacementCheckout(raw: StartPlacementInput): Promise<
 const brandPlacementSchema = z.object({
   brand_id: z.string().uuid(),
   days: z.number().int().min(PLACEMENT_MIN_DAYS).max(PLACEMENT_MAX_DAYS),
+  state: z
+    .string()
+    .trim()
+    .length(2)
+    .transform((s) => s.toUpperCase())
+    .optional(),
 });
 export type StartBrandPlacementInput = z.infer<typeof brandPlacementSchema>;
 
@@ -298,8 +304,10 @@ export async function startBrandPlacementCheckout(
     return { ok: false, error: 'You do not own this brand.' };
   }
 
-  // Brands aren't geo-scoped, so brand promotions are always nationwide.
-  const priceCents = placementPriceCents('promoted_brand', 'nationwide', input.days);
+  // Nationwide, or targeted to a single state's Brands page (costs more for reach).
+  const scope = input.state ? 'state' : 'nationwide';
+  const priceCents = placementPriceCents('promoted_brand', scope, input.days);
+  const where = input.state ? input.state : 'Nationwide';
 
   const service = createServiceClient();
   const { data: placement, error: insErr } = await service
@@ -307,9 +315,10 @@ export async function startBrandPlacementCheckout(
     .insert({
       brand_id: brand.id,
       type: 'promoted_brand',
+      scope_state: input.state ?? null,
       is_active: false,
       price_cents: priceCents,
-      notes: `Self-serve brand promo · ${input.days} day${input.days === 1 ? '' : 's'}`,
+      notes: `Self-serve brand promo · ${where} · ${input.days} day${input.days === 1 ? '' : 's'}`,
     })
     .select('id')
     .single();

@@ -19,9 +19,14 @@ export function BrandPromote({
   stripeEnabled: boolean;
 }) {
   const [days, setDays] = useState(30);
+  const [stateCode, setStateCode] = useState('');
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const price = useMemo(() => placementPriceCents('promoted_brand', 'nationwide', days), [days]);
+  const targeted = stateCode.trim().length === 2;
+  const price = useMemo(
+    () => placementPriceCents('promoted_brand', targeted ? 'state' : 'nationwide', days),
+    [days, targeted],
+  );
 
   if (!stripeEnabled) {
     return (
@@ -40,8 +45,8 @@ export function BrandPromote({
         </p>
       )}
       <p className="text-muted text-sm">
-        Feature your brand nationwide on the Brands directory. Activates as soon as payment clears
-        and expires automatically.
+        Feature your brand on the Brands directory — nationwide or targeted to one state.
+        Activates as soon as payment clears and expires automatically.
       </p>
       <div className="flex flex-wrap items-end gap-4">
         <label className="space-y-1.5 text-sm">
@@ -62,10 +67,21 @@ export function BrandPromote({
             }
           />
         </label>
+        <label className="space-y-1.5 text-sm">
+          <span className="font-medium">Target</span>
+          <input
+            value={stateCode}
+            onChange={(e) => setStateCode(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 2))}
+            placeholder="Nationwide"
+            maxLength={2}
+            className="border-border bg-background block w-28 rounded-md border px-3 py-2 uppercase"
+          />
+          <span className="text-muted block text-xs">Blank = nationwide; or a 2-letter state</span>
+        </label>
         <div>
           <p className="text-lg font-semibold">{formatPrice(price)}</p>
           <p className="text-muted text-xs">
-            one-time · {days} day{days === 1 ? '' : 's'}
+            one-time · {days} day{days === 1 ? '' : 's'} · {targeted ? stateCode.toUpperCase() : 'nationwide'}
           </p>
         </div>
         <Button
@@ -73,7 +89,11 @@ export function BrandPromote({
           onClick={() => {
             setError(null);
             start(async () => {
-              const res = await startBrandPlacementCheckout({ brand_id: brandId, days });
+              const res = await startBrandPlacementCheckout({
+                brand_id: brandId,
+                days,
+                state: targeted ? stateCode.toUpperCase() : undefined,
+              });
               if (res.ok) window.location.href = res.url;
               else setError(res.error);
             });
