@@ -40,6 +40,7 @@ const OWNER_NAV: NavItem[] = [
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/qr', label: 'QR codes', icon: QrCode },
   { href: '/dashboard/promote', label: 'Promote', icon: Megaphone },
+  { href: '/dashboard/ads', label: 'Advertise', icon: Gavel },
 ];
 
 const ADMIN_NAV: NavItem[] = [
