@@ -1,0 +1,10 @@
+license_number,license_status,license_type,license_designation,business_legal_name,business_dba_name,business_website,business_email,business_phone,premise_street_address,premise_city,premise_state,premise_zip_code,premise_latitude,premise_longitude
+C10-0000111-LIC,Active,Commercial - Retailer,Adult-Use and Medicinal,Green Street LA Inc.,GREEN STREET LA,greenstla.com,Info@GreenstLA.com,(213) 555-0100,1200 S Hope St,Los Angeles,CA,90015,34.0407,-118.2668
+C10-0000222-LIC,Active,Commercial - Retailer,Adult-Use,Bay Co LLC,Bay Buds,,,(415) 555-0200,500 Market St,San Francisco,CA,94105,37.7937,-122.3965
+CCL18-0000333,Active,Cultivation - Small Outdoor,Adult-Use,Grow Co,Grow Co Farms,,,,99 Farm Rd,Los Angeles,CA,90001,34.01,-118.25
+C10-0000444-LIC,Cancelled,Commercial - Retailer,Adult-Use and Medicinal,Old Shop Inc,Old Shop,,,,1 Dead St,Los Angeles,CA,90012,34.05,-118.24
+M10-0000555-LIC,Active,Commercial - Microbusiness,Medicinal,Micro Wellness LLC,Micro Wellness,,Care@micro.example,(323) 555-0300,77 Sunset Blvd,Los Angeles,CA,90028,34.0983,-118.3267
+C10-0000666-LIC,Active,Commercial - Retailer,Adult-Use and Medicinal,Legalonly Holdings Inc.,Data Not Available,Data Not Available,Data Not Available,Data Not Available,888 Spring St,Los Angeles,CA,90014,34.0455,-118.2512
+C10-0000111-LIC,Active,Commercial - Retailer,Adult-Use,Dup Co,Duplicate Shop,,,(213) 555-9999,1200 S Hope St,Los Angeles,CA,90015,34.0407,-118.2668
+C9-0000777-LIC,Active,Commercial - Retailer Nonstorefront,Adult-Use,Delivery Co,Quick Delivery,,,(310) 555-0400,222 Delivery Ave,Los Angeles,CA,90045,33.95,-118.40
+C10-0000888-LIC,Active,Commercial - Retailer,Adult-Use and Medicinal,Another Co,GREEN STREET LA,,,(213) 555-0500,1300 S Hope St,Los Angeles,CA,90015,34.0410,-118.2670
