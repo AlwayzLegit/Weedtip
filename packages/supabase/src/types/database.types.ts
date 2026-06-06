@@ -1711,6 +1711,10 @@ export type Database = {
         Args: { p_region_id: string; p_dispensary_id: string; p_bid_cents: number }
         Returns: undefined
       }
+      region_featured_dispensaries: {
+        Args: { p_state: string; p_city?: string }
+        Returns: { dispensary_id: string }[]
+      }
       cancel_ad_bid: {
         Args: { p_bid_id: string }
         Returns: undefined

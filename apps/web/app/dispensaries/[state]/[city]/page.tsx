@@ -51,6 +51,18 @@ async function loadCity(state: string, city: string) {
     }
   }
 
+  // Winning ad bids for this market are featured too (pinned, no beacon).
+  const { data: bidWinners } = await supabase.rpc('region_featured_dispensaries', {
+    p_state: code,
+    p_city: first.city,
+  });
+  const shopIdSet = new Set(shopIds);
+  for (const w of bidWinners ?? []) {
+    if (shopIdSet.has(w.dispensary_id) && !featuredByDispensary.has(w.dispensary_id)) {
+      featuredByDispensary.set(w.dispensary_id, { placementId: '', priority: 1 });
+    }
+  }
+
   // Pin featured shops first (by placement priority), keep the rest A→Z.
   const ordered = [...shops].sort((a, b) => {
     const fa = featuredByDispensary.get(a.id);
