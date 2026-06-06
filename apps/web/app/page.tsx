@@ -8,6 +8,7 @@ import { SearchBar } from '@/components/search-bar';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -94,7 +95,7 @@ export default async function HomePage() {
     supabase
       .from('products')
       .select(
-        'id,name,brand,price_cents,image_urls,strain_type,thc_percentage,in_stock,rating_avg,rating_count,dispensary:dispensaries!inner(slug,status)',
+        `id,name,brand,price_cents,image_urls,strain_type,thc_percentage,in_stock,rating_avg,rating_count,dispensary:dispensaries!inner(slug,status), ${CATALOG_IMAGE_EMBED}`,
       )
       .eq('dispensary.status', 'active')
       .eq('in_stock', true)
@@ -268,7 +269,7 @@ export default async function HomePage() {
                       name: p.name,
                       brand: p.brand,
                       priceCents: p.price_cents,
-                      imageUrl: p.image_urls[0] ?? null,
+                      imageUrl: cardImageUrl(p),
                       strainType: p.strain_type,
                       thcPercentage: p.thc_percentage,
                       inStock: p.in_stock,

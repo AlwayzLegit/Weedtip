@@ -4,6 +4,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
+import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -33,7 +34,7 @@ async function load(state: string, city: string, categorySlug: string) {
 
   const { data: productData } = await supabase
     .from('products')
-    .select('*, dispensary:dispensaries!inner(slug,city,state,status)')
+    .select(`*, dispensary:dispensaries!inner(slug,city,state,status), ${CATALOG_IMAGE_EMBED}`)
     .eq('category_id', category.id)
     .eq('dispensary.status', 'active')
     .eq('dispensary.state', code)
@@ -124,7 +125,7 @@ export default async function CategoryInCityPage({
                 name: p.name,
                 brand: p.brand,
                 priceCents: p.price_cents,
-                imageUrl: p.image_urls[0] ?? null,
+                imageUrl: cardImageUrl(p),
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,
                 inStock: p.in_stock,

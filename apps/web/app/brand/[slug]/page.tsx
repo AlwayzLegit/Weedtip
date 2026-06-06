@@ -6,6 +6,7 @@ import { BrandFollowButton } from '@/components/brand/brand-follow-button';
 import { ClaimBrandButton } from '@/components/brand/claim-brand-button';
 import { ProductCard } from '@/components/product-card';
 import { getAuth } from '@/lib/auth';
+import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -53,7 +54,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
 
   const { data: products } = await supabase
     .from('products')
-    .select('*, dispensary:dispensaries!inner(slug,name,status)')
+    .select(`*, dispensary:dispensaries!inner(slug,name,status), ${CATALOG_IMAGE_EMBED}`)
     .eq('brand_id', brand.id)
     .eq('dispensary.status', 'active')
     .order('price_cents');
@@ -243,7 +244,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                     brand: brand.name,
                     priceCents: saleMap.get(p.id) ?? p.price_cents,
                     originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
-                    imageUrl: p.image_urls[0] ?? null,
+                    imageUrl: cardImageUrl(p),
                     strainType: p.strain_type,
                     thcPercentage: p.thc_percentage,
                     inStock: p.in_stock,
