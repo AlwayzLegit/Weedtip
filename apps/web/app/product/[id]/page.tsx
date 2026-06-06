@@ -59,11 +59,21 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { data: product } = await supabase
     .from('products')
     .select(
-      '*, dispensary:dispensaries(id,slug,name), strain:strains(slug,name), brand:brands(slug,name)',
+      '*, dispensary:dispensaries(id,slug,name), strain:strains(slug,name), brand:brands(slug,name), catalog:brand_products(image_url,description)',
     )
     .eq('id', id)
     .maybeSingle();
   if (!product) notFound();
+
+  // Enrich a sparse listing from the brand's canonical catalog entry.
+  const catalog = product.catalog as { image_url: string | null; description: string | null } | null;
+  const images =
+    product.image_urls && product.image_urls.length > 0
+      ? product.image_urls
+      : catalog?.image_url
+        ? [catalog.image_url]
+        : [];
+  const description = product.description ?? catalog?.description ?? null;
 
   const [{ data: reviews }, { user }] = await Promise.all([
     supabase
@@ -89,8 +99,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    ...(product.description ? { description: product.description } : {}),
-    ...(product.image_urls?.[0] ? { image: product.image_urls[0] } : {}),
+    ...(description ? { description } : {}),
+    ...(images[0] ? { image: images[0] } : {}),
     ...(brand?.name || product.brand
       ? { brand: { '@type': 'Brand', name: brand?.name ?? product.brand } }
       : {}),
@@ -142,7 +152,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <JsonLd data={jsonLd} />
       <Breadcrumbs items={crumbs} />
       <div className="grid gap-8 sm:grid-cols-2">
-        <ProductGallery images={product.image_urls ?? []} alt={product.name} />
+        <ProductGallery images={images} alt={product.name} />
         <div>
           <div className="flex flex-wrap items-center gap-2">
             {product.strain_type && (
@@ -218,10 +228,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {product.description && (
+      {description && (
         <section className="mt-8">
           <h2 className="mb-2 text-lg font-semibold">Description</h2>
-          <p className="text-muted">{product.description}</p>
+          <p className="text-muted">{description}</p>
         </section>
       )}
 

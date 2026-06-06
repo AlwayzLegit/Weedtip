@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { STRAIN_TYPES } from '@weedtip/shared';
 import type { Tables } from '@weedtip/supabase/types';
 import { upsertProduct } from '@/app/dashboard/actions';
@@ -25,15 +25,22 @@ export function ProductForm({
   categories,
   strains,
   brands,
+  catalog = [],
 }: {
   product: Tables<'products'> | null;
   categories: { id: string; name: string }[];
   strains: { id: string; name: string }[];
   brands: { id: string; name: string }[];
+  catalog?: { id: string; name: string; brand_id: string }[];
 }) {
   const [state, action] = useActionState(upsertProduct, EMPTY_FORM_STATE);
   const fe = state.fieldErrors ?? {};
   const p = product;
+
+  // Catalog linking depends on the selected brand; reset the link when it changes.
+  const [brandId, setBrandId] = useState(p?.brand_id ?? '');
+  const [catalogId, setCatalogId] = useState(p?.catalog_id ?? '');
+  const brandCatalog = catalog.filter((c) => c.brand_id === brandId);
 
   return (
     <form action={action} className="space-y-5">
@@ -119,7 +126,15 @@ export function ProductForm({
         error={fe.brand_id}
         hint="Link to a brand page."
       >
-        <Select id="brand_id" name="brand_id" defaultValue={p?.brand_id ?? ''}>
+        <Select
+          id="brand_id"
+          name="brand_id"
+          value={brandId}
+          onChange={(e) => {
+            setBrandId(e.target.value);
+            setCatalogId('');
+          }}
+        >
           <option value="">None</option>
           {brands.map((b) => (
             <option key={b.id} value={b.id}>
@@ -128,6 +143,28 @@ export function ProductForm({
           ))}
         </Select>
       </Field>
+
+      {brandId && brandCatalog.length > 0 && (
+        <Field
+          label="Catalog entry"
+          htmlFor="catalog_id"
+          hint="Link to this brand's catalog product to inherit its image & description."
+        >
+          <Select
+            id="catalog_id"
+            name="catalog_id"
+            value={catalogId}
+            onChange={(e) => setCatalogId(e.target.value)}
+          >
+            <option value="">Not linked</option>
+            {brandCatalog.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-3">
         <Field label="THC %" htmlFor="thc_percentage" error={fe.thc_percentage}>

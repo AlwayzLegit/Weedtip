@@ -173,7 +173,12 @@ export async function upsertProduct(_prev: FormState, fd: FormData): Promise<For
   const parsed = productWriteSchema.safeParse(input);
   if (!parsed.success) return fromZodError(parsed.error);
 
-  const payload = { ...parsed.data, dispensary_id: dispensaryId };
+  // Optional link to a brand's canonical catalog entry (FK enforces existence).
+  const rawCatalog = str(fd, 'catalog_id');
+  const catalog_id =
+    rawCatalog && /^[0-9a-f-]{36}$/i.test(rawCatalog) ? rawCatalog : null;
+
+  const payload = { ...parsed.data, dispensary_id: dispensaryId, catalog_id };
   const { error } = id
     ? await supabase.from('products').update(payload).eq('id', id).eq('dispensary_id', dispensaryId)
     : await supabase.from('products').insert(payload);
