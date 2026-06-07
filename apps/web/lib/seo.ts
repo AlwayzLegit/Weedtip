@@ -192,8 +192,8 @@ export const US_STATES: Record<string, string> = {
 };
 
 /** "Denver" → "denver" slug for city URLs (reversible enough for lookups). */
-export const citySlug = (city: string): string =>
-  city
+export const citySlug = (city: string | null | undefined): string =>
+  (city ?? '')
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
