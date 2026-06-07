@@ -39,13 +39,25 @@ def camel_to_snake(s: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
 
 
+# Last-known API host, used if config.js can't be parsed (transient/redeploy).
+FALLBACK_API_BASE = "https://as-dcc-pub-cann-w-p-002.azurewebsites.net"
+
+
 def discover_api_base() -> str:
-    """Read the API base from the search site's config.js (survives redeploys)."""
-    cfg = requests.get("https://search.cannabis.ca.gov/config.js", headers=HEADERS, timeout=60).text
-    m = re.search(r"CANNA_API:\s*'([^']+)'", cfg)
-    if not m:
-        raise SystemExit("Could not find CANNA_API in config.js")
-    return m.group(1).rstrip("/")
+    """Read the API base from the search site's config.js (survives redeploys),
+    with retries and a known-host fallback so the unattended job stays robust."""
+    import time
+    for attempt in range(3):
+        try:
+            cfg = requests.get("https://search.cannabis.ca.gov/config.js", headers=HEADERS, timeout=60).text
+            m = re.search(r"CANNA_API:\s*['\"]([^'\"]+)['\"]", cfg)
+            if m:
+                return m.group(1).rstrip("/")
+        except Exception:
+            pass
+        time.sleep(3)
+    print("config.js discovery failed; using fallback API host", flush=True)
+    return FALLBACK_API_BASE
 
 
 def fetch_all(base: str):
