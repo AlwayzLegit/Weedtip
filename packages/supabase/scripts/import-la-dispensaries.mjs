@@ -194,7 +194,7 @@ if (idx.license === -1 || idx.city === -1 || idx.street === -1) {
 }
 
 const cityFilter = new Set(opts.city.split(',').map((c) => norm(c)));
-const stats = { total: 0, notRetailer: 0, inactive: 0, wrongCity: 0, noName: 0, dupLicense: 0, dupSlug: 0, kept: 0 };
+const stats = { total: 0, notRetailer: 0, inactive: 0, wrongCity: 0, noName: 0, noLocation: 0, dupLicense: 0, dupSlug: 0, kept: 0 };
 const seenLicense = new Set();
 const seenSlug = new Set();
 const records = [];
@@ -224,9 +224,24 @@ for (const r of rows.slice(1)) {
     continue;
   }
 
-  const name = titleCase(clean(get('dba')) ?? clean(get('legal')) ?? '');
+  let name = titleCase(clean(get('dba')) ?? clean(get('legal')) ?? '');
   if (!name) {
     stats.noName++;
+    continue;
+  }
+  // Schema caps name length at 120 (some DCC DBA fields concatenate many DBAs).
+  // Prefer the legal name when the DBA is too long; otherwise truncate.
+  if (name.length > 120) {
+    const legal = titleCase(clean(get('legal')) ?? '');
+    name = legal && legal.length >= 2 && legal.length <= 120 ? legal : name.slice(0, 120).trim();
+  }
+
+  // `location` is NOT NULL in the schema and a listing needs a map point — drop
+  // records without valid premise coordinates rather than emit a broken insert.
+  const lat = parseCoord(get('lat'), 32, 42);
+  const lng = parseCoord(get('lng'), -125, -114);
+  if (lat == null || lng == null) {
+    stats.noLocation++;
     continue;
   }
 
@@ -248,8 +263,6 @@ for (const r of rows.slice(1)) {
   seenSlug.add(slug);
 
   const designation = (clean(get('designation')) ?? '').toLowerCase();
-  const lat = parseCoord(get('lat'), 32, 42);
-  const lng = parseCoord(get('lng'), -125, -114);
 
   records.push({
     name,
@@ -279,16 +292,15 @@ const sqlNum = (v) => (v == null ? 'null' : String(v));
 const sqlBool = (v) => (v ? 'true' : 'false');
 
 const valueRows = records.map((d) => {
-  const location =
-    d.latitude != null && d.longitude != null
-      ? `'SRID=4326;POINT(${d.longitude} ${d.latitude})'::geography`
-      : 'null';
+  // `location` is the source of truth; latitude/longitude are STORED generated
+  // columns (ST_Y/ST_X of location) and must NOT be written to directly.
+  const location = `'SRID=4326;POINT(${d.longitude} ${d.latitude})'::geography`;
   return (
     `  (${sqlStr(d.name)}, ${sqlStr(d.slug)}, ${sqlStr(d.address)}, ${sqlStr(d.city)}, ` +
     `${sqlStr(d.state)}, ${sqlStr(d.zip)}, ${sqlStr(d.phone)}, ${sqlStr(d.email)}, ` +
     `${sqlStr(d.website)}, ${sqlStr(d.license_number)}, ${sqlBool(d.is_medical)}, ` +
     `${sqlBool(d.is_recreational)}, ${sqlBool(d.is_delivery)}, ${sqlBool(d.is_pickup)}, ` +
-    `${sqlNum(d.latitude)}, ${sqlNum(d.longitude)}, ${location}, 'active')`
+    `${location}, 'active')`
   );
 });
 
@@ -309,7 +321,7 @@ const sql =
     ? `${banner}-- No matching records.\n`
     : `${banner}insert into public.dispensaries
   (name, slug, address, city, state, zip, phone, email, website, license_number,
-   is_medical, is_recreational, is_delivery, is_pickup, latitude, longitude, location, status)
+   is_medical, is_recreational, is_delivery, is_pickup, location, status)
 values
 ${valueRows.join(',\n')}
 on conflict (slug) do nothing;
@@ -325,7 +337,7 @@ if (opts.dry) {
 console.error(
   `\nParsed ${stats.total} rows → kept ${stats.kept}\n` +
     `  skipped: ${stats.notRetailer} non-retailer, ${stats.inactive} inactive, ` +
-    `${stats.wrongCity} other-city, ${stats.noName} no-name, ` +
+    `${stats.wrongCity} other-city, ${stats.noName} no-name, ${stats.noLocation} no-location, ` +
     `${stats.dupLicense} dup-license, ${stats.dupSlug} dup-slug\n` +
     (opts.dry ? '  (dry run — SQL written to stdout)' : `  → ${outPath}`),
 );
