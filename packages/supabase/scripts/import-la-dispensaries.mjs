@@ -25,6 +25,9 @@
  *   --limit N                   Cap the number of rows written
  *   --out <path>                Output SQL path. Default: a timestamped migration
  *   --dry                       Print SQL to stdout instead of writing a file
+ *   --exclude-licenses <file>   Newline-delimited license numbers to skip (already loaded)
+ *   --reserved-slugs <file>     Newline-delimited slugs already in use (generated
+ *                               slugs avoid these, so incremental imports never collide)
  *
  * Example:
  *   node scripts/import-la-dispensaries.mjs licenses-ca.csv --city "Los Angeles"
@@ -47,6 +50,8 @@ const opts = {
   limit: Infinity,
   out: null,
   dry: false,
+  excludeLicenses: null,
+  reservedSlugs: null,
 };
 const input = argv.find((a) => !a.startsWith('--'));
 for (let i = 0; i < argv.length; i++) {
@@ -59,7 +64,21 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--limit') opts.limit = Number(argv[++i]);
   else if (a === '--out') opts.out = argv[++i];
   else if (a === '--dry') opts.dry = true;
+  else if (a === '--exclude-licenses') opts.excludeLicenses = argv[++i];
+  else if (a === '--reserved-slugs') opts.reservedSlugs = argv[++i];
 }
+
+// Newline-delimited lists for incremental imports: skip licenses already loaded,
+// and reserve slugs already in use so generated slugs never collide with them.
+function readList(path) {
+  if (!path) return [];
+  return readFileSync(path, 'utf8')
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+const excludeLicenses = new Set(readList(opts.excludeLicenses));
+const reservedSlugs = readList(opts.reservedSlugs);
 
 if (!input) {
   console.error('Usage: node scripts/import-la-dispensaries.mjs <input.csv> [options]');
@@ -194,9 +213,9 @@ if (idx.license === -1 || idx.city === -1 || idx.street === -1) {
 }
 
 const cityFilter = new Set(opts.city.split(',').map((c) => norm(c)));
-const stats = { total: 0, notRetailer: 0, inactive: 0, wrongCity: 0, noName: 0, noLocation: 0, dupLicense: 0, dupSlug: 0, kept: 0 };
+const stats = { total: 0, notRetailer: 0, inactive: 0, wrongCity: 0, noName: 0, noLocation: 0, excluded: 0, dupLicense: 0, dupSlug: 0, kept: 0 };
 const seenLicense = new Set();
-const seenSlug = new Set();
+const seenSlug = new Set(reservedSlugs); // reserved → generated slugs avoid them
 const records = [];
 
 for (const r of rows.slice(1)) {
@@ -225,15 +244,19 @@ for (const r of rows.slice(1)) {
   }
 
   let name = titleCase(clean(get('dba')) ?? clean(get('legal')) ?? '');
-  if (!name) {
+  const legalName = titleCase(clean(get('legal')) ?? '');
+  const legalOk = legalName.length >= 2 && legalName.length <= 120;
+  // Schema requires 2 ≤ char_length(name) ≤ 120. Some DCC DBA fields are junk
+  // ("_", ".") or concatenate many DBAs (>120). Prefer the legal name in those
+  // cases; otherwise truncate. Drop the row only if no usable name remains.
+  if ((name.length < 2 || name.length > 120) && legalOk) {
+    name = legalName;
+  } else if (name.length > 120) {
+    name = name.slice(0, 120).trim();
+  }
+  if (name.length < 2) {
     stats.noName++;
     continue;
-  }
-  // Schema caps name length at 120 (some DCC DBA fields concatenate many DBAs).
-  // Prefer the legal name when the DBA is too long; otherwise truncate.
-  if (name.length > 120) {
-    const legal = titleCase(clean(get('legal')) ?? '');
-    name = legal && legal.length >= 2 && legal.length <= 120 ? legal : name.slice(0, 120).trim();
   }
 
   // `location` is NOT NULL in the schema and a listing needs a map point — drop
@@ -246,6 +269,10 @@ for (const r of rows.slice(1)) {
   }
 
   const license = clean(get('license'));
+  if (license && excludeLicenses.has(license)) {
+    stats.excluded++;
+    continue;
+  }
   if (license && seenLicense.has(license)) {
     stats.dupLicense++;
     continue;
@@ -338,6 +365,6 @@ console.error(
   `\nParsed ${stats.total} rows → kept ${stats.kept}\n` +
     `  skipped: ${stats.notRetailer} non-retailer, ${stats.inactive} inactive, ` +
     `${stats.wrongCity} other-city, ${stats.noName} no-name, ${stats.noLocation} no-location, ` +
-    `${stats.dupLicense} dup-license, ${stats.dupSlug} dup-slug\n` +
+    `${stats.excluded} excluded, ${stats.dupLicense} dup-license, ${stats.dupSlug} dup-slug\n` +
     (opts.dry ? '  (dry run — SQL written to stdout)' : `  → ${outPath}`),
 );
