@@ -22,8 +22,9 @@ out/
 supabase/.branches/
 supabase/.temp/
 
-# Dispensary importer source data (large public-record CSVs; regenerable)
+# Importer source data (large public-record CSVs; regenerable)
 licenses-*.csv
+*-results.csv
 
 # Flutter / Dart
 apps/mobile/.dart_tool/
