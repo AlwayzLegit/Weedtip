@@ -28,7 +28,7 @@ export default async function AdminDispensaries({
   const supabase = await createClient();
   let query = supabase
     .from('dispensaries')
-    .select('id,name,slug,city,state,status,featured,pos_addon,created_at')
+    .select('id,name,slug,city,state,status,featured,pos_addon,created_at,legal_name,license_number,county,dcc_phone,dcc_email')
     .order('created_at', { ascending: false });
   if (active) query = query.eq('status', active as never);
   if (search) query = query.or(`name.ilike.%${search}%,city.ilike.%${search}%`);
@@ -108,8 +108,17 @@ export default async function AdminDispensaries({
                   {d.featured && <Badge tone="primary">Featured</Badge>}
                 </div>
                 <p className="text-muted text-xs">
-                  {d.city}, {d.state} · added {new Date(d.created_at).toLocaleDateString()}
+                  {d.city ? `${d.city}, ${d.state}` : `${d.county ? `${d.county} County` : d.state} · delivery`}{' '}
+                  · added {new Date(d.created_at).toLocaleDateString()}
                 </p>
+                {(d.legal_name || d.license_number || d.dcc_phone || d.dcc_email) && (
+                  <p className="text-muted/80 mt-0.5 text-xs">
+                    DCC:{d.legal_name ? ` ${d.legal_name}` : ''}
+                    {d.license_number ? ` · ${d.license_number}` : ''}
+                    {d.dcc_phone ? ` · ${d.dcc_phone}` : ''}
+                    {d.dcc_email ? ` · ${d.dcc_email}` : ''}
+                  </p>
+                )}
               </div>
               <ModerationButtons
                 id={d.id}
