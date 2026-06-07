@@ -9,8 +9,10 @@ import { RatingStars } from './rating-stars';
 export interface DispensaryCardData {
   slug: string;
   name: string;
-  city: string;
+  city: string | null;
   state: string;
+  /** Service-area county for delivery-only listings without a city. */
+  county?: string | null;
   coverImageUrl: string | null;
   isDelivery: boolean;
   isPickup: boolean;
@@ -59,7 +61,11 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       <div className="space-y-2 p-4">
         <h3 className="group-hover:text-primary truncate font-semibold">{d.name}</h3>
         <p className="text-muted text-sm">
-          {d.city}, {d.state}
+          {d.city
+            ? `${d.city}, ${d.state}`
+            : d.county
+              ? `Delivery · ${d.county} County`
+              : 'Delivery only'}
         </p>
 
         {typeof d.rating === 'number' && d.rating > 0 && (

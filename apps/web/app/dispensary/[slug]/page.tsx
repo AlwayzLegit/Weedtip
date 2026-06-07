@@ -47,10 +47,11 @@ export async function generateMetadata({
     .maybeSingle();
   if (!data) return { title: 'Dispensary' };
 
-  const title = `${data.name} — ${data.city}, ${data.state}`;
+  const place = data.city ? `${data.city}, ${data.state}` : `${data.state} (delivery)`;
+  const title = `${data.name} — ${place}`;
   const description =
     data.description?.slice(0, 160) ??
-    `${data.name} in ${data.city}, ${data.state}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
+    `${data.name}${data.city ? ` in ${data.city}, ${data.state}` : ' — delivery in California'}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
   const canonical = `/dispensary/${slug}`;
   return {
     title,
@@ -260,10 +261,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     { name: 'Home', href: '/' },
     { name: 'Dispensaries', href: '/dispensaries' },
     { name: US_STATES[d.state] ?? d.state, href: `/dispensaries/${d.state.toLowerCase()}` },
-    {
-      name: d.city,
-      href: `/dispensaries/${d.state.toLowerCase()}/${citySlug(d.city)}`,
-    },
+    // Delivery-only listings have no city — skip the city crumb.
+    ...(d.city
+      ? [{ name: d.city, href: `/dispensaries/${d.state.toLowerCase()}/${citySlug(d.city)}` }]
+      : []),
     { name: d.name, href: `/dispensary/${d.slug}` },
   ];
 
@@ -290,7 +291,16 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           <div className="rounded-card border-border bg-surface shadow-card-hover sheen border p-5">
             <h1 className="text-2xl font-bold sm:text-3xl">{d.name}</h1>
             <p className="text-muted mt-1 flex items-center gap-1 text-sm">
-              <MapPin className="h-4 w-4" /> {d.address}, {d.city}, {d.state} {d.zip}
+              {d.address && d.city ? (
+                <>
+                  <MapPin className="h-4 w-4" /> {d.address}, {d.city}, {d.state} {d.zip}
+                </>
+              ) : (
+                <>
+                  <Truck className="h-4 w-4" /> Delivery only
+                  {d.county ? ` · serves ${d.county} County, ${d.state}` : ` · ${d.state}`}
+                </>
+              )}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {avgRating > 0 && (

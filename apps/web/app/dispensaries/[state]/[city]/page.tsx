@@ -23,7 +23,7 @@ async function loadCity(state: string, city: string) {
     .eq('status', 'active')
     .eq('state', code)
     .order('name');
-  const shops = (data ?? []).filter((s) => citySlug(s.city) === city.toLowerCase());
+  const shops = (data ?? []).filter((s) => citySlug(s.city ?? '') === city.toLowerCase());
   const first = shops[0];
   if (!first) return null;
 
@@ -54,7 +54,7 @@ async function loadCity(state: string, city: string) {
   // Winning ad bids for this market are featured too (pinned, no beacon).
   const { data: bidWinners } = await supabase.rpc('region_featured_dispensaries', {
     p_state: code,
-    p_city: first.city,
+    p_city: first.city ?? '',
   });
   const shopIdSet = new Set(shopIds);
   for (const w of bidWinners ?? []) {
@@ -73,7 +73,7 @@ async function loadCity(state: string, city: string) {
     return 0;
   });
 
-  return { stateName, cityName: first.city, shops: ordered, featuredByDispensary };
+  return { stateName, cityName: first.city ?? '', shops: ordered, featuredByDispensary };
 }
 
 export async function generateMetadata({

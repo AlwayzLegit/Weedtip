@@ -47,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const d of dispensaries.data ?? []) {
       const st = d.state.toLowerCase();
       stateSet.add(st);
-      citySet.add(`${st}/${citySlug(d.city)}`);
+      if (d.city) citySet.add(`${st}/${citySlug(d.city)}`);
     }
     const locationRoutes: MetadataRoute.Sitemap = [
       ...[...stateSet].map((st) => ({

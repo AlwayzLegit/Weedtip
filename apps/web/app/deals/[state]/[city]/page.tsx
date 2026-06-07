@@ -44,7 +44,7 @@ async function loadCityDeals(state: string, city: string) {
     .select('city')
     .eq('status', 'active')
     .eq('state', code);
-  const cityName = (cityRow ?? []).map((r) => r.city).find((c) => citySlug(c) === city.toLowerCase());
+  const cityName = (cityRow ?? []).map((r) => r.city).find((c) => citySlug(c ?? '') === city.toLowerCase());
   if (!cityName) return null;
   return { stateName, cityName, deals };
 }
