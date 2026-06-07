@@ -18,10 +18,15 @@ export function ClaimListing({
   dispensaryId,
   slug,
   existingStatus,
+  legalName,
+  licenseNumber,
 }: {
   dispensaryId: string;
   slug: string;
   existingStatus: 'pending' | 'approved' | 'rejected' | null;
+  /** Registered name + license # from the DCC record, shown so a claimer can verify the listing. */
+  legalName?: string | null;
+  licenseNumber?: string | null;
 }) {
   const [state, action] = useActionState(requestOwnership, EMPTY_FORM_STATE);
   const [open, setOpen] = useState(false);
@@ -50,6 +55,13 @@ export function ClaimListing({
           <p className="text-muted text-sm">
             Claim this listing to manage its menu, deals, and orders.
           </p>
+          {(legalName || licenseNumber) && (
+            <p className="text-muted mt-1 text-xs">
+              On file with the CA DCC:{legalName ? ` ${legalName}` : ''}
+              {legalName && licenseNumber ? ' · ' : ' '}
+              {licenseNumber ? `License ${licenseNumber}` : ''}
+            </p>
+          )}
         </div>
         {!open && (
           <Button size="sm" onClick={() => setOpen(true)}>

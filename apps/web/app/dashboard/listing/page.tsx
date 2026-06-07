@@ -26,6 +26,53 @@ export default async function ListingPage() {
           approves them.
         </p>
       )}
+      {dispensary &&
+        (dispensary.legal_name ||
+          dispensary.license_number ||
+          dispensary.dcc_phone ||
+          dispensary.dcc_email ||
+          dispensary.county) && (
+          <div className="rounded-card border-border bg-surface border p-4 text-sm">
+            <p className="font-medium">License on file (California DCC)</p>
+            <p className="text-muted mt-0.5 text-xs">
+              From your state cannabis license — the registered entity and licensee/registered-agent
+              contact. These are for reference and verification; your public storefront name, phone,
+              and hours are what you edit below.
+            </p>
+            <dl className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2">
+              {dispensary.legal_name && (
+                <div>
+                  <dt className="text-muted inline">Legal name: </dt>
+                  <dd className="inline font-medium">{dispensary.legal_name}</dd>
+                </div>
+              )}
+              {dispensary.license_number && (
+                <div>
+                  <dt className="text-muted inline">License #: </dt>
+                  <dd className="inline font-medium">{dispensary.license_number}</dd>
+                </div>
+              )}
+              {dispensary.county && (
+                <div>
+                  <dt className="text-muted inline">County: </dt>
+                  <dd className="inline font-medium">{dispensary.county}</dd>
+                </div>
+              )}
+              {dispensary.dcc_phone && (
+                <div>
+                  <dt className="text-muted inline">DCC phone: </dt>
+                  <dd className="inline font-medium">{dispensary.dcc_phone}</dd>
+                </div>
+              )}
+              {dispensary.dcc_email && (
+                <div>
+                  <dt className="text-muted inline">DCC email: </dt>
+                  <dd className="inline font-medium">{dispensary.dcc_email}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        )}
       <ListingForm dispensary={dispensary} />
     </div>
   );

@@ -347,7 +347,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
         {canClaim && (
           <div className="mt-6">
-            <ClaimListing dispensaryId={d.id} slug={d.slug} existingStatus={ownershipStatus} />
+            <ClaimListing
+              dispensaryId={d.id}
+              slug={d.slug}
+              existingStatus={ownershipStatus}
+              legalName={d.legal_name}
+              licenseNumber={d.license_number}
+            />
           </div>
         )}
 
