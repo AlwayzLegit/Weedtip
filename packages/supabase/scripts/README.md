@@ -76,6 +76,33 @@ Imported listings have `owner_id = null` (unclaimed). Owners fill in hours,
 photos, menus, etc. via the dashboard after claiming — none of that proprietary
 content is scraped.
 
+## Refresh from the live DCC registry (current data)
+
+The Cannlytics mirror is a point-in-time snapshot (~2023). To pull **today's**
+data straight from the DCC's public API (the backend of
+<https://search.cannabis.ca.gov>) and fully refresh:
+
+```bash
+# from packages/supabase
+python scripts/fetch-ca-licenses.py licenses-ca-live.csv            # current registry
+python scripts/geocode-ca-licenses.py licenses-ca-live.csv licenses-ca-live-geo.csv  # fill coords
+# full refresh: replace the prior unclaimed seed, statewide, incl. delivery licenses
+printf '%s\n' bay-state-wellness desert-bloom-phoenix emerald-collective \
+  green-leaf-nyc mile-high-denver rose-city-cannabis silver-state-vegas sunset-la > demo-slugs.txt
+node scripts/import-la-dispensaries.mjs ../../licenses-ca-live-geo.csv \
+  --any-city --include-nonstorefront --replace-unclaimed --reserved-slugs demo-slugs.txt \
+  --out supabase/migrations/<timestamp>_refresh_ca_dispensaries.sql
+```
+
+`--replace-unclaimed` prepends `delete from dispensaries where owner_id is null`,
+so the generated migration replaces the previous seed in one atomic refresh
+(claimed/demo listings with an `owner_id` are untouched).
+
+> ⚠️ DCC suppresses the premise address/coordinates for **delivery-only
+> (Non-Storefront)** retailers and some recently-licensed shops. Those rows have
+> no mappable location and are skipped (the `location` column is `NOT NULL`).
+> Verify a generated migration with `node scripts/verify-la-import.mjs <file>`.
+
 ## Test
 
 ```bash

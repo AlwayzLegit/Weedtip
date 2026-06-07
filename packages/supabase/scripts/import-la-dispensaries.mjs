@@ -28,6 +28,8 @@
  *   --exclude-licenses <file>   Newline-delimited license numbers to skip (already loaded)
  *   --reserved-slugs <file>     Newline-delimited slugs already in use (generated
  *                               slugs avoid these, so incremental imports never collide)
+ *   --replace-unclaimed         Prepend a delete of all unclaimed (owner_id null)
+ *                               dispensaries — a full refresh that replaces the prior seed
  *
  * Example:
  *   node scripts/import-la-dispensaries.mjs licenses-ca.csv --city "Los Angeles"
@@ -52,6 +54,7 @@ const opts = {
   dry: false,
   excludeLicenses: null,
   reservedSlugs: null,
+  replaceUnclaimed: false,
 };
 const input = argv.find((a) => !a.startsWith('--'));
 for (let i = 0; i < argv.length; i++) {
@@ -66,6 +69,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--dry') opts.dry = true;
   else if (a === '--exclude-licenses') opts.excludeLicenses = argv[++i];
   else if (a === '--reserved-slugs') opts.reservedSlugs = argv[++i];
+  else if (a === '--replace-unclaimed') opts.replaceUnclaimed = true;
 }
 
 // Newline-delimited lists for incremental imports: skip licenses already loaded,
@@ -343,10 +347,16 @@ const banner = [
   '',
 ].join('\n');
 
+// --replace-unclaimed: clear the prior unclaimed (owner_id null) seed first so a
+// full refresh fully replaces it. Claimed listings (owner_id set, incl. demo) stay.
+const replacePrefix = opts.replaceUnclaimed
+  ? 'delete from public.dispensaries where owner_id is null;\n\n'
+  : '';
+
 const sql =
   records.length === 0
-    ? `${banner}-- No matching records.\n`
-    : `${banner}insert into public.dispensaries
+    ? `${banner}${replacePrefix}-- No matching records.\n`
+    : `${banner}${replacePrefix}insert into public.dispensaries
   (name, slug, address, city, state, zip, phone, email, website, license_number,
    is_medical, is_recreational, is_delivery, is_pickup, location, status)
 values
