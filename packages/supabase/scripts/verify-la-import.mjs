@@ -9,9 +9,9 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
-const file = process.argv[2];
-if (!file) {
-  console.error('Usage: node scripts/verify-la-import.mjs <migration.sql>');
+const files = process.argv.slice(2);
+if (files.length === 0) {
+  console.error('Usage: node scripts/verify-la-import.mjs <migration.sql> [more.sql ...]');
   process.exit(1);
 }
 
@@ -54,8 +54,7 @@ function unq(tok) {
   return tok; // bare: numbers, true/false
 }
 
-const text = readFileSync(file, 'utf8');
-const lines = text.split('\n');
+const lines = files.flatMap((f) => readFileSync(f, 'utf8').split('\n'));
 
 const SEP = '\x1f';
 const records = [];
