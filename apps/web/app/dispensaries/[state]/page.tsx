@@ -46,6 +46,7 @@ export default async function StateDispensariesPage({
   const shops = rows ?? [];
   const byCity = new Map<string, typeof shops>();
   for (const s of shops) {
+    if (!s.city) continue; // delivery-only listings have no city to group under
     const arr = byCity.get(s.city) ?? [];
     arr.push(s);
     byCity.set(s.city, arr);

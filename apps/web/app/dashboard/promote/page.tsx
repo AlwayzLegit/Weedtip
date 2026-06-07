@@ -181,7 +181,7 @@ export default async function PromotePage({
         currentPlanName={plan?.name ?? 'Free'}
         subscribed={subscribed}
         hasBillingAccount={!!sub?.stripe_customer_id}
-        city={dispensary.city}
+        city={dispensary.city ?? ''}
         state={dispensary.state}
         deals={(dealTargets ?? []).map((d) => ({ id: d.id, label: d.title }))}
         products={(productTargets ?? []).map((p) => ({ id: p.id, label: p.name }))}

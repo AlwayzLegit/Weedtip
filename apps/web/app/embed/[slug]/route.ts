@@ -87,7 +87,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   const body = `
     <div class="head">
       <h1>${esc(d.name)}</h1>
-      <span>${esc(d.city)}, ${esc(d.state)}</span>
+      <span>${d.city ? `${esc(d.city)}, ${esc(d.state)}` : 'Delivery only'}</span>
     </div>
     ${rows ? `<ul>${rows}</ul>` : '<p class="empty">No products listed yet.</p>'}
     <div class="foot"><a href="${SITE_URL}/dispensary/${esc(d.slug)}?source=embed" target="_blank" rel="noopener">View full menu &amp; order on Weedtip →</a></div>`;

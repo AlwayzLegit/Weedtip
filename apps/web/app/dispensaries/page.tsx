@@ -72,13 +72,16 @@ export default async function DispensariesPage({
     rows.sort((a, b) => (a.distance_meters ?? Infinity) - (b.distance_meters ?? Infinity));
   const hasMore = (params.page + 1) * params.page_size < total;
 
-  const points: MapPoint[] = rows.map((r) => ({
-    slug: r.slug,
-    name: r.name,
-    lat: r.latitude,
-    lng: r.longitude,
-    featured: r.featured,
-  }));
+  const points: MapPoint[] = rows
+    // Delivery-only listings have no premise coordinates — keep them off the map.
+    .filter((r) => typeof r.latitude === 'number' && typeof r.longitude === 'number')
+    .map((r) => ({
+      slug: r.slug,
+      name: r.name,
+      lat: r.latitude as number,
+      lng: r.longitude as number,
+      featured: r.featured,
+    }));
 
   const pageHref = (page: number) => {
     const next = new URLSearchParams();

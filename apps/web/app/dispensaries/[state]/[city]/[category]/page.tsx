@@ -29,7 +29,7 @@ async function load(state: string, city: string, categorySlug: string) {
     .eq('state', code);
   const cityName = (cityRows ?? [])
     .map((r) => r.city)
-    .find((c) => citySlug(c) === city.toLowerCase());
+    .find((c) => citySlug(c ?? '') === city.toLowerCase());
   if (!cityName) return null;
 
   const { data: productData } = await supabase

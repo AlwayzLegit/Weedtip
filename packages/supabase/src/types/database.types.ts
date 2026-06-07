@@ -447,10 +447,11 @@ export type Database = {
       }
       dispensaries: {
         Row: {
-          address: string
+          address: string | null
           amenities: string[]
           announcement: string | null
-          city: string
+          city: string | null
+          county: string | null
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -483,13 +484,14 @@ export type Database = {
           status: Database["public"]["Enums"]["dispensary_status"]
           updated_at: string
           website: string | null
-          zip: string
+          zip: string | null
         }
         Insert: {
-          address: string
+          address?: string | null
           amenities?: string[]
           announcement?: string | null
-          city: string
+          city?: string | null
+          county?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -504,7 +506,7 @@ export type Database = {
           is_recreational?: boolean
           latitude?: number | null
           license_number?: string | null
-          location: unknown
+          location?: unknown
           logo_url?: string | null
           longitude?: number | null
           name: string
@@ -522,13 +524,14 @@ export type Database = {
           status?: Database["public"]["Enums"]["dispensary_status"]
           updated_at?: string
           website?: string | null
-          zip: string
+          zip?: string | null
         }
         Update: {
-          address?: string
+          address?: string | null
           amenities?: string[]
           announcement?: string | null
-          city?: string
+          city?: string | null
+          county?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -561,7 +564,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["dispensary_status"]
           updated_at?: string
           website?: string | null
-          zip?: string
+          zip?: string | null
         }
         Relationships: [
           {
