@@ -264,6 +264,61 @@ const BRANDS_US = [
   ['Legion of Bloom', 'vape', 'California'],
 ];
 
+// Round 2 — deeper per-state coverage + more legal states (NY, MO, OH, MD).
+// Additive to BRANDS + BRANDS_US (those slugs are reserved before this runs).
+const BRANDS_US2 = [
+  // ── National / multi-state ───────────────────────────────────────────────
+  ['22Red', 'flower', 'National'],
+  ['Jaunty', 'vape', 'National'],
+  ['Spherex', 'vape', 'National'],
+  ['Cherry', 'conc', 'National'],
+  ['The Clear', 'vape', 'National'],
+  ['Ripple', 'edible', 'National'],
+  ['Stillwater', 'edible', 'National'],
+  // ── Colorado ─────────────────────────────────────────────────────────────
+  ['Lazercat', 'conc', 'Colorado'],
+  ['Mountain High Suckers', 'edible', 'Colorado'],
+  ['Olio', 'conc', 'Colorado'],
+  ['Seed & Smith', 'conc', 'Colorado'],
+  // ── Washington ───────────────────────────────────────────────────────────
+  ['Dabstract', 'conc', 'Washington'],
+  ['Honu', 'edible', 'Washington'],
+  ['Gabriel', 'flower', 'Washington'],
+  ['Artizen', 'flower', 'Washington'],
+  // ── Oregon ───────────────────────────────────────────────────────────────
+  ['Serra', 'multi', 'Oregon'],
+  ['Pruf Cultivar', 'flower', 'Oregon'],
+  ['Drops', 'edible', 'Oregon'],
+  ['Lunchbox Alchemy', 'edible', 'Oregon'],
+  // ── Michigan ─────────────────────────────────────────────────────────────
+  ['Redemption', 'vape', 'Michigan'],
+  ['Glorious Cannabis', 'flower', 'Michigan'],
+  ['MKX Oil Co', 'conc', 'Michigan'],
+  // ── Massachusetts ────────────────────────────────────────────────────────
+  ['Theory Wellness', 'multi', 'Massachusetts'],
+  ['Berkshire Roots', 'multi', 'Massachusetts'],
+  ['Treeworks', 'conc', 'Massachusetts'],
+  // ── Florida ──────────────────────────────────────────────────────────────
+  ['VidaCann', 'multi', 'Florida'],
+  // ── Arizona ──────────────────────────────────────────────────────────────
+  ['Mohave Cannabis', 'flower', 'Arizona'],
+  ['Grow Sciences', 'conc', 'Arizona'],
+  ['Sonoran Roots', 'flower', 'Arizona'],
+  // ── New York ─────────────────────────────────────────────────────────────
+  ['MFNY', 'flower', 'New York'],
+  ['Hepworth', 'flower', 'New York'],
+  ['Florist Farms', 'flower', 'New York'],
+  // ── Missouri ─────────────────────────────────────────────────────────────
+  ['Illicit', 'flower', 'Missouri'],
+  ['Proper Cannabis', 'flower', 'Missouri'],
+  // ── Ohio ─────────────────────────────────────────────────────────────────
+  ['Klutch', 'flower', 'Ohio'],
+  ['Buckeye Relief', 'flower', 'Ohio'],
+  ['Galenas', 'flower', 'Ohio'],
+  // ── Maryland ─────────────────────────────────────────────────────────────
+  ['Curio Wellness', 'multi', 'Maryland'],
+];
+
 const slugify = (v) =>
   v
     .normalize('NFD')
@@ -292,7 +347,21 @@ const add = (name, descr) => {
 let banner;
 let stamp;
 let file;
-if (opts.set === 'us') {
+if (opts.set === 'us2') {
+  // Reserve CA + US slugs so round-2 additions never duplicate them.
+  for (const [name] of BRANDS) seenSlug.add(slugify(name));
+  for (const [name] of BRANDS_US) seenSlug.add(slugify(name));
+  for (const [name, cat, region] of BRANDS_US2) add(name, buildDesc(region, cat));
+  banner = [
+    '-- Seed: curated real US cannabis consumer brands (round 2).',
+    '-- Deeper per-state coverage + more legal states (NY/MO/OH/MD), additive.',
+    '-- Hand-curated (no public brand registry exists; not scraped). Unowned.',
+    `-- Brands: ${rows.length}`,
+    '',
+  ].join('\n');
+  stamp = '20260607180000';
+  file = `${stamp}_seed_us_brands_2.sql`;
+} else if (opts.set === 'us') {
   // Reserve the CA-set slugs so multi-state additions never duplicate them.
   for (const [name] of BRANDS) seenSlug.add(slugify(name));
   for (const [name, cat, region] of BRANDS_US) add(name, buildDesc(region, cat));

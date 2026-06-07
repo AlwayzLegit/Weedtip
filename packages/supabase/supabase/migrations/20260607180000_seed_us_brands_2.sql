@@ -1,0 +1,45 @@
+-- Seed: curated real US cannabis consumer brands (round 2).
+-- Deeper per-state coverage + more legal states (NY/MO/OH/MD), additive.
+-- Hand-curated (no public brand registry exists; not scraped). Unowned.
+-- Brands: 38
+insert into public.brands (name, slug, description)
+values
+  ('22Red', '22red', 'National cannabis flower brand.'),
+  ('Jaunty', 'jaunty', 'National cannabis vape & concentrate brand.'),
+  ('Spherex', 'spherex', 'National cannabis vape & concentrate brand.'),
+  ('Cherry', 'cherry', 'National cannabis concentrate & extract brand.'),
+  ('The Clear', 'the-clear', 'National cannabis vape & concentrate brand.'),
+  ('Ripple', 'ripple', 'National cannabis edibles brand.'),
+  ('Stillwater', 'stillwater', 'National cannabis edibles brand.'),
+  ('Lazercat', 'lazercat', 'Colorado cannabis concentrate & extract brand.'),
+  ('Mountain High Suckers', 'mountain-high-suckers', 'Colorado cannabis edibles brand.'),
+  ('Olio', 'olio', 'Colorado cannabis concentrate & extract brand.'),
+  ('Seed & Smith', 'seed-and-smith', 'Colorado cannabis concentrate & extract brand.'),
+  ('Dabstract', 'dabstract', 'Washington cannabis concentrate & extract brand.'),
+  ('Honu', 'honu', 'Washington cannabis edibles brand.'),
+  ('Gabriel', 'gabriel', 'Washington cannabis flower brand.'),
+  ('Artizen', 'artizen', 'Washington cannabis flower brand.'),
+  ('Serra', 'serra', 'Oregon cannabis brand.'),
+  ('Pruf Cultivar', 'pruf-cultivar', 'Oregon cannabis flower brand.'),
+  ('Drops', 'drops', 'Oregon cannabis edibles brand.'),
+  ('Lunchbox Alchemy', 'lunchbox-alchemy', 'Oregon cannabis edibles brand.'),
+  ('Redemption', 'redemption', 'Michigan cannabis vape & concentrate brand.'),
+  ('Glorious Cannabis', 'glorious-cannabis', 'Michigan cannabis flower brand.'),
+  ('MKX Oil Co', 'mkx-oil-co', 'Michigan cannabis concentrate & extract brand.'),
+  ('Theory Wellness', 'theory-wellness', 'Massachusetts cannabis brand.'),
+  ('Berkshire Roots', 'berkshire-roots', 'Massachusetts cannabis brand.'),
+  ('Treeworks', 'treeworks', 'Massachusetts cannabis concentrate & extract brand.'),
+  ('VidaCann', 'vidacann', 'Florida cannabis brand.'),
+  ('Mohave Cannabis', 'mohave-cannabis', 'Arizona cannabis flower brand.'),
+  ('Grow Sciences', 'grow-sciences', 'Arizona cannabis concentrate & extract brand.'),
+  ('Sonoran Roots', 'sonoran-roots', 'Arizona cannabis flower brand.'),
+  ('MFNY', 'mfny', 'New York cannabis flower brand.'),
+  ('Hepworth', 'hepworth', 'New York cannabis flower brand.'),
+  ('Florist Farms', 'florist-farms', 'New York cannabis flower brand.'),
+  ('Illicit', 'illicit', 'Missouri cannabis flower brand.'),
+  ('Proper Cannabis', 'proper-cannabis', 'Missouri cannabis flower brand.'),
+  ('Klutch', 'klutch', 'Ohio cannabis flower brand.'),
+  ('Buckeye Relief', 'buckeye-relief', 'Ohio cannabis flower brand.'),
+  ('Galenas', 'galenas', 'Ohio cannabis flower brand.'),
+  ('Curio Wellness', 'curio-wellness', 'Maryland cannabis brand.')
+on conflict (slug) do nothing;
