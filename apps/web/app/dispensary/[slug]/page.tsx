@@ -204,6 +204,19 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   };
 
   const hours = d.hours as OperatingHours | null;
+  // Open-now status in California (Pacific) time, computed at request time.
+  const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const todayKey = (['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const)[ptNow.getDay()]!;
+  const nowMinutes = ptNow.getHours() * 60 + ptNow.getMinutes();
+  const toMinutes = (t: string) => {
+    const [h = '0', m = '0'] = t.split(':');
+    return Number(h) * 60 + Number(m);
+  };
+  const todayHours = hours?.[todayKey] ?? null;
+  const isOpenNow =
+    !!todayHours &&
+    nowMinutes >= toMinutes(todayHours.open) &&
+    nowMinutes < toMinutes(todayHours.close);
 
   const prices = (products ?? []).map((p) => p.price_cents);
   const priceRange = prices.length
@@ -632,16 +645,31 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           {/* Sidebar: hours + contact */}
           <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
             <div className="rounded-card border-border bg-surface shadow-card border p-5">
-              <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
-                Hours
-              </h2>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="text-muted text-sm font-semibold uppercase tracking-wide">Hours</h2>
+                {hours && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      isOpenNow
+                        ? 'bg-primary-muted text-primary'
+                        : 'bg-surface-2 text-muted border-border border'
+                    }`}
+                  >
+                    {isOpenNow ? 'Open now' : 'Closed now'}
+                  </span>
+                )}
+              </div>
               {hours ? (
                 <ul className="space-y-1.5 text-sm">
                   {DAY_ORDER.map((day) => {
                     const h = hours[day];
+                    const isToday = day === todayKey;
                     return (
-                      <li key={day} className="flex justify-between">
-                        <span className="text-muted">{dayLabel(day)}</span>
+                      <li
+                        key={day}
+                        className={`flex justify-between ${isToday ? 'text-foreground font-medium' : ''}`}
+                      >
+                        <span className={isToday ? '' : 'text-muted'}>{dayLabel(day)}</span>
                         <span>
                           {h ? `${formatTime(h.open)} – ${formatTime(h.close)}` : 'Closed'}
                         </span>
