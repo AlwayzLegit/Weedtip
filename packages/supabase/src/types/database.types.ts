@@ -460,6 +460,7 @@ export type Database = {
           email: string | null
           featured: boolean
           featured_manual: boolean
+          google_place_id: string | null
           legal_name: string | null
           hours: Json | null
           id: string
@@ -504,6 +505,7 @@ export type Database = {
           email?: string | null
           featured?: boolean
           featured_manual?: boolean
+          google_place_id?: string | null
           hours?: Json | null
           id?: string
           is_delivery?: boolean
@@ -547,6 +549,7 @@ export type Database = {
           email?: string | null
           featured?: boolean
           featured_manual?: boolean
+          google_place_id?: string | null
           hours?: Json | null
           id?: string
           is_delivery?: boolean
