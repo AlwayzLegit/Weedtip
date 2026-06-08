@@ -13,6 +13,7 @@ import {
   MapPin,
   Megaphone,
   Package,
+  Plug,
   QrCode,
   Shield,
   ShoppingBag,
@@ -57,6 +58,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: '/admin/reviews', label: 'Reviews', icon: Star },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/integrations', label: 'Integrations', icon: Plug },
 ];
 
 /** Sidebar nav with active-route highlighting, shared by owner + admin shells. */
