@@ -302,6 +302,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 </>
               )}
             </p>
+            {d.legal_name && d.legal_name.toLowerCase() !== d.name.toLowerCase() && (
+              <p className="text-muted/80 mt-0.5 text-xs">Licensed as {d.legal_name}</p>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {avgRating > 0 && (
                 <span className="flex items-center gap-1.5">
@@ -344,7 +347,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
         {canClaim && (
           <div className="mt-6">
-            <ClaimListing dispensaryId={d.id} slug={d.slug} existingStatus={ownershipStatus} />
+            <ClaimListing
+              dispensaryId={d.id}
+              slug={d.slug}
+              existingStatus={ownershipStatus}
+              legalName={d.legal_name}
+              licenseNumber={d.license_number}
+            />
           </div>
         )}
 

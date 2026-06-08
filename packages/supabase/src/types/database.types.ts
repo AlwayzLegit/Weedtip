@@ -538,10 +538,13 @@ export type Database = {
           county: string | null
           cover_image_url: string | null
           created_at: string
+          dcc_email: string | null
+          dcc_phone: string | null
           description: string | null
           email: string | null
           featured: boolean
           featured_manual: boolean
+          legal_name: string | null
           hours: Json | null
           id: string
           is_delivery: boolean
@@ -577,6 +580,9 @@ export type Database = {
           city?: string | null
           county?: string | null
           cover_image_url?: string | null
+          dcc_email?: string | null
+          dcc_phone?: string | null
+          legal_name?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -617,6 +623,9 @@ export type Database = {
           city?: string | null
           county?: string | null
           cover_image_url?: string | null
+          dcc_email?: string | null
+          dcc_phone?: string | null
+          legal_name?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
