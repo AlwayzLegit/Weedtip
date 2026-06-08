@@ -142,6 +142,7 @@ export default async function DispensariesPage({
                       city: r.city,
                       state: r.state,
                       coverImageUrl: r.cover_image_url,
+                      logoUrl: r.logo_url,
                       isDelivery: r.is_delivery,
                       isPickup: r.is_pickup,
                       isMedical: r.is_medical,

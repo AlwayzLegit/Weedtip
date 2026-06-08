@@ -13,7 +13,7 @@ import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 const DISP_FIELDS =
-  'slug,name,city,state,cover_image_url,is_delivery,is_pickup,is_medical,is_recreational,rating_avg,rating_count,status';
+  'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,rating_avg,rating_count,status';
 
 function discountLabel(type: string, value: number): string {
   if (type === 'percentage') return `${value}% off`;
@@ -65,7 +65,7 @@ export default async function HomePage() {
     supabase
       .from('dispensaries')
       .select(
-        'slug,name,city,state,cover_image_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count',
+        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count',
       )
       .eq('status', 'active')
       .order('featured', { ascending: false })
@@ -199,6 +199,7 @@ export default async function HomePage() {
                     city: d.city,
                     state: d.state,
                     coverImageUrl: d.cover_image_url,
+                    logoUrl: d.logo_url,
                     isDelivery: d.is_delivery,
                     isPickup: d.is_pickup,
                     isMedical: d.is_medical,

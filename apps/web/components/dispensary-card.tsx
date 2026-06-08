@@ -14,6 +14,7 @@ export interface DispensaryCardData {
   /** Service-area county for delivery-only listings without a city. */
   county?: string | null;
   coverImageUrl: string | null;
+  logoUrl?: string | null;
   isDelivery: boolean;
   isPickup: boolean;
   isMedical: boolean;
@@ -59,7 +60,17 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       </MediaImage>
 
       <div className="space-y-2 p-4">
-        <h3 className="group-hover:text-primary truncate font-semibold">{d.name}</h3>
+        <div className="flex items-center gap-2">
+          {d.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={d.logoUrl}
+              alt=""
+              className="border-border bg-surface h-8 w-8 shrink-0 rounded-md border object-contain p-0.5"
+            />
+          )}
+          <h3 className="group-hover:text-primary truncate font-semibold">{d.name}</h3>
+        </div>
         <p className="text-muted text-sm">
           {d.city
             ? `${d.city}, ${d.state}`

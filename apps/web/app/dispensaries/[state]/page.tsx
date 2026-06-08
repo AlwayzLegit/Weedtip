@@ -9,7 +9,7 @@ import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 const LOCATION_SELECT =
-  'id,slug,name,city,state,cover_image_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
+  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
 
 export async function generateMetadata({
   params,
@@ -121,6 +121,7 @@ export default async function StateDispensariesPage({
                       city: s.city,
                       state: s.state,
                       coverImageUrl: s.cover_image_url,
+                      logoUrl: s.logo_url,
                       isDelivery: s.is_delivery,
                       isPickup: s.is_pickup,
                       isMedical: s.is_medical,

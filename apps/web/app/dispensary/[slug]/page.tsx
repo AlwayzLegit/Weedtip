@@ -302,7 +302,17 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       <div className="mx-auto max-w-7xl px-4">
         <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="rounded-card border-border bg-surface shadow-card-hover sheen border p-5">
-            <h1 className="text-2xl font-bold sm:text-3xl">{d.name}</h1>
+            <div className="flex items-center gap-3">
+              {d.logo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={d.logo_url}
+                  alt=""
+                  className="border-border bg-surface h-12 w-12 shrink-0 rounded-lg border object-contain p-1"
+                />
+              )}
+              <h1 className="text-2xl font-bold sm:text-3xl">{d.name}</h1>
+            </div>
             <p className="text-muted mt-1 flex items-center gap-1 text-sm">
               {d.address && d.city ? (
                 <>
