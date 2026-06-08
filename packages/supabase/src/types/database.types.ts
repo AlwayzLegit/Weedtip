@@ -162,8 +162,11 @@ export type Database = {
           contract_start: string
           created_at: string
           id: string
+          paid_at: string | null
           region_id: string
           status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           updated_at: string
         }
         Insert: {
@@ -173,8 +176,11 @@ export type Database = {
           contract_start?: string
           created_at?: string
           id?: string
+          paid_at?: string | null
           region_id: string
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -184,8 +190,11 @@ export type Database = {
           contract_start?: string
           created_at?: string
           id?: string
+          paid_at?: string | null
           region_id?: string
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1972,6 +1981,10 @@ export type Database = {
       }
       place_brand_bid: {
         Args: { p_region_id: string; p_brand_id: string; p_bid_cents: number }
+        Returns: undefined
+      }
+      activate_brand_bid: {
+        Args: { p_bid_id: string; p_payment_intent?: string }
         Returns: undefined
       }
       cancel_brand_bid: {
