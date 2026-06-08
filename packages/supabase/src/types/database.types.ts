@@ -42,8 +42,11 @@ export type Database = {
           created_at: string
           dispensary_id: string
           id: string
+          paid_at: string | null
           region_id: string
           status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           updated_at: string
         }
         Insert: {
@@ -53,8 +56,11 @@ export type Database = {
           created_at?: string
           dispensary_id: string
           id?: string
+          paid_at?: string | null
           region_id: string
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -64,8 +70,11 @@ export type Database = {
           created_at?: string
           dispensary_id?: string
           id?: string
+          paid_at?: string | null
           region_id?: string
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1984,6 +1993,10 @@ export type Database = {
         Returns: undefined
       }
       activate_brand_bid: {
+        Args: { p_bid_id: string; p_payment_intent?: string }
+        Returns: undefined
+      }
+      activate_ad_bid: {
         Args: { p_bid_id: string; p_payment_intent?: string }
         Returns: undefined
       }

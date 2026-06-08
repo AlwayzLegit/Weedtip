@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { cancelBid, placeBid } from '@/app/actions/ads';
+import { startAdBidCheckout } from '@/app/actions/billing';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
@@ -21,7 +22,7 @@ type Row = {
   is_winning: boolean;
 };
 
-export function AdBidRow({ row }: { row: Row }) {
+export function AdBidRow({ row, stripeEnabled }: { row: Row; stripeEnabled: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,22 @@ export function AdBidRow({ row }: { row: Row }) {
       const res = await fn();
       if (res.ok) router.refresh();
       else setError(res.error ?? 'Something went wrong.');
+    });
+  }
+
+  // With Stripe on, placing/updating a bid goes through paid checkout; otherwise
+  // it commits directly (free) — same graceful fallback as the rest of billing.
+  function onPlace() {
+    const cents = Math.round((Number(amount) || 0) * 100);
+    setError(null);
+    if (!stripeEnabled) {
+      submit(() => placeBid(row.region_id, cents));
+      return;
+    }
+    start(async () => {
+      const res = await startAdBidCheckout({ region_id: row.region_id, bid_cents: cents });
+      if (res.ok) window.location.href = res.url;
+      else setError(res.error);
     });
   }
 
@@ -75,11 +92,8 @@ export function AdBidRow({ row }: { row: Row }) {
             className="border-border bg-background h-10 w-36 rounded-md border px-3"
           />
         </label>
-        <Button
-          disabled={pending}
-          onClick={() => submit(() => placeBid(row.region_id, (Number(amount) || 0) * 100))}
-        >
-          {row.your_bid_cents != null ? 'Update bid' : 'Place bid'}
+        <Button disabled={pending} onClick={onPlace}>
+          {row.your_bid_cents != null ? 'Update bid' : stripeEnabled ? 'Bid & pay' : 'Place bid'}
         </Button>
         {row.your_bid_id && (
           <Button

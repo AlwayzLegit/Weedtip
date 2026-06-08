@@ -118,11 +118,15 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        // Brand featured-auction bid → activate the pending bid for its term.
-        if (session.metadata?.kind === 'brand_bid' && session.payment_status === 'paid') {
+        // Featured-auction bid (brand or dispensary) → activate it for its term.
+        if (
+          (session.metadata?.kind === 'brand_bid' || session.metadata?.kind === 'ad_bid') &&
+          session.payment_status === 'paid'
+        ) {
           const bidId = session.metadata.bid_id;
           if (bidId) {
-            await service.rpc('activate_brand_bid', {
+            const rpc = session.metadata.kind === 'brand_bid' ? 'activate_brand_bid' : 'activate_ad_bid';
+            await service.rpc(rpc, {
               p_bid_id: bidId,
               p_payment_intent:
                 typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
