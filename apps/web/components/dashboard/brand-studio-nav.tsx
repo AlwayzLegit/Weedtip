@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Megaphone, Package, Sparkles, Users } from 'lucide-react';
+import { BarChart3, Gavel, Megaphone, Package, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
   { href: '/studio/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/studio/updates', label: 'Updates', icon: Users },
   { href: '/studio/promote', label: 'Promote', icon: Megaphone },
+  { href: '/studio/bids', label: 'Featured bids', icon: Gavel },
 ];
 
 /** Sidebar nav for the Brand Studio portal. */

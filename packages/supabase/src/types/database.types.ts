@@ -121,6 +121,90 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_ad_regions: {
+        Row: {
+          created_at: string
+          featured_rate_cents: number
+          id: string
+          is_active: boolean
+          name: string
+          slots: number
+          slug: string
+          state: string
+        }
+        Insert: {
+          created_at?: string
+          featured_rate_cents?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          slots?: number
+          slug: string
+          state: string
+        }
+        Update: {
+          created_at?: string
+          featured_rate_cents?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          slots?: number
+          slug?: string
+          state?: string
+        }
+        Relationships: []
+      }
+      brand_ad_bids: {
+        Row: {
+          bid_cents: number
+          brand_id: string
+          contract_end: string
+          contract_start: string
+          created_at: string
+          id: string
+          region_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bid_cents: number
+          brand_id: string
+          contract_end: string
+          contract_start?: string
+          created_at?: string
+          id?: string
+          region_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bid_cents?: number
+          brand_id?: string
+          contract_end?: string
+          contract_start?: string
+          created_at?: string
+          id?: string
+          region_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_ad_bids_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "brand_ad_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_ad_bids_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           created_at: string
@@ -1868,6 +1952,33 @@ export type Database = {
           region_name: string
           state: string
           city: string | null
+          slots: number
+          floor_cents: number
+          min_winning_cents: number
+          your_bid_cents: number | null
+          your_bid_id: string | null
+          contract_end: string | null
+          is_winning: boolean
+        }[]
+      }
+      place_brand_bid: {
+        Args: { p_region_id: string; p_brand_id: string; p_bid_cents: number }
+        Returns: undefined
+      }
+      cancel_brand_bid: {
+        Args: { p_bid_id: string }
+        Returns: undefined
+      }
+      region_featured_brands: {
+        Args: { p_state: string }
+        Returns: { brand_id: string }[]
+      }
+      brand_bids_for_owner: {
+        Args: { p_brand_id: string }
+        Returns: {
+          region_id: string
+          region_name: string
+          state: string
           slots: number
           floor_cents: number
           min_winning_cents: number

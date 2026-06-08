@@ -76,9 +76,42 @@ export default async function BrandsPage({
     .filter((b) => (selectedState ? b.count > 0 : true))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
-  const featuredList = ((featured as FeaturedRow[] | null) ?? []).filter(
-    (f) => !selectedState || f.scope_state == null || f.scope_state === selectedState,
-  );
+  // Featured strip = flat-rate placements + the per-state auction winners.
+  const placementCards = ((featured as FeaturedRow[] | null) ?? [])
+    .filter((f) => !selectedState || f.scope_state == null || f.scope_state === selectedState)
+    .map((f) => ({
+      key: f.id,
+      placementId: f.id as string | null,
+      slug: f.brand.slug,
+      name: f.brand.name,
+      description: f.brand.description,
+      logo_url: f.brand.logo_url,
+    }));
+
+  let auctionCards: typeof placementCards = [];
+  if (selectedState) {
+    const { data: winners } = await supabase.rpc('region_featured_brands', {
+      p_state: selectedState,
+    });
+    const winnerIds = (winners ?? []).map((w) => w.brand_id);
+    if (winnerIds.length) {
+      const { data: wb } = await supabase
+        .from('brands')
+        .select('id,slug,name,description,logo_url')
+        .in('id', winnerIds);
+      auctionCards = (wb ?? []).map((b) => ({
+        key: `a-${b.id}`,
+        placementId: null,
+        slug: b.slug,
+        name: b.name,
+        description: b.description,
+        logo_url: b.logo_url,
+      }));
+    }
+  }
+
+  const seenFeatured = new Set(placementCards.map((c) => c.slug));
+  const featuredCards = [...placementCards, ...auctionCards.filter((c) => !seenFeatured.has(c.slug))];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
@@ -119,7 +152,7 @@ export default async function BrandsPage({
         </div>
       )}
 
-      {featuredList.length > 0 && (
+      {featuredCards.length > 0 && (
         <section className="mb-8">
           <div className="mb-3 flex items-center gap-1.5">
             <Sparkles className="text-primary h-4 w-4" />
@@ -129,35 +162,32 @@ export default async function BrandsPage({
             <span className="text-muted text-xs">· Sponsored</span>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredList.map((f) => {
-              const b = f.brand;
-              return (
-                <Link
-                  key={f.id}
-                  href={`/brand/${b.slug}`}
-                  className="rounded-card border-primary/40 bg-primary-muted/30 shadow-card hover:border-primary hover:shadow-card-hover relative flex items-start gap-4 border p-5 transition-all duration-200 hover:-translate-y-0.5"
-                >
-                  <PlacementBeacon placementId={f.id} />
-                  {b.logo_url ? (
-                    <img
-                      src={b.logo_url}
-                      alt={b.name}
-                      className="bg-surface-2 border-border h-12 w-12 shrink-0 rounded-xl border object-contain p-1"
-                    />
-                  ) : (
-                    <span className="bg-primary-muted text-primary ring-primary/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold ring-1">
-                      {b.name.charAt(0).toUpperCase()}
-                    </span>
+            {featuredCards.map((c) => (
+              <Link
+                key={c.key}
+                href={`/brand/${c.slug}`}
+                className="rounded-card border-primary/40 bg-primary-muted/30 shadow-card hover:border-primary hover:shadow-card-hover relative flex items-start gap-4 border p-5 transition-all duration-200 hover:-translate-y-0.5"
+              >
+                {c.placementId && <PlacementBeacon placementId={c.placementId} />}
+                {c.logo_url ? (
+                  <img
+                    src={c.logo_url}
+                    alt={c.name}
+                    className="bg-surface-2 border-border h-12 w-12 shrink-0 rounded-xl border object-contain p-1"
+                  />
+                ) : (
+                  <span className="bg-primary-muted text-primary ring-primary/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold ring-1">
+                    {c.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <h3 className="font-semibold">{c.name}</h3>
+                  {c.description && (
+                    <p className="text-muted mt-1 line-clamp-2 text-sm">{c.description}</p>
                   )}
-                  <div className="min-w-0">
-                    <h3 className="font-semibold">{b.name}</h3>
-                    {b.description && (
-                      <p className="text-muted mt-1 line-clamp-2 text-sm">{b.description}</p>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
       )}
