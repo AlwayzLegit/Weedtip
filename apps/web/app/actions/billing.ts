@@ -356,5 +356,112 @@ export async function startBrandPlacementCheckout(
   }
 }
 
+const brandBidSchema = z.object({
+  brand_id: z.string().uuid(),
+  region_id: z.string().uuid(),
+  bid_cents: z.number().int().min(50).max(100_000_00),
+});
+export type StartBrandBidInput = z.infer<typeof brandBidSchema>;
+
+/**
+ * Pay for a brand featured-auction bid. Verifies brand ownership + the market
+ * floor, creates a PENDING bid, then a Stripe Checkout session for the bid amount
+ * (the 2-month term). The webhook flips it to 'active' on payment.
+ */
+export async function startBrandBidCheckout(raw: StartBrandBidInput): Promise<CheckoutResult> {
+  if (!(await rateLimit('billing', { limit: 15, window: '60 s' })).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
+  if (!isStripeConfigured || !stripe) {
+    return { ok: false, error: 'Online billing is not enabled yet.' };
+  }
+
+  const parsed = brandBidSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
+  }
+  const input = parsed.data;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Please sign in.' };
+
+  const { data: brand } = await supabase
+    .from('brands')
+    .select('id, name, owner_id')
+    .eq('id', input.brand_id)
+    .maybeSingle();
+  if (!brand || brand.owner_id !== user.id) {
+    return { ok: false, error: 'You do not own this brand.' };
+  }
+
+  const { data: region } = await supabase
+    .from('brand_ad_regions')
+    .select('id, name, featured_rate_cents, is_active')
+    .eq('id', input.region_id)
+    .maybeSingle();
+  if (!region || !region.is_active) return { ok: false, error: 'That market is unavailable.' };
+  if (input.bid_cents < region.featured_rate_cents) {
+    return { ok: false, error: 'Bid is below the market floor.' };
+  }
+
+  // Service client: bid writes are admin-only under RLS, and we've authorized the
+  // brand owner above. Clear any stale pending bid, then create a fresh one.
+  const service = createServiceClient();
+  await service
+    .from('brand_ad_bids')
+    .delete()
+    .eq('brand_id', brand.id)
+    .eq('region_id', region.id)
+    .eq('status', 'pending');
+  const placeholderEnd = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: bid, error: insErr } = await service
+    .from('brand_ad_bids')
+    .insert({
+      region_id: region.id,
+      brand_id: brand.id,
+      bid_cents: input.bid_cents,
+      status: 'pending',
+      contract_end: placeholderEnd,
+    })
+    .select('id')
+    .single();
+  if (insErr || !bid) return { ok: false, error: 'Could not create the bid.' };
+
+  try {
+    const meta = { kind: 'brand_bid', bid_id: bid.id };
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: 'usd',
+            unit_amount: input.bid_cents,
+            product_data: { name: `Featured bid: ${brand.name} — ${region.name} (2-month term)` },
+          },
+        },
+      ],
+      client_reference_id: bid.id,
+      metadata: meta,
+      payment_intent_data: { metadata: meta },
+      success_url: `${siteUrl()}/studio/bids?billing=bid`,
+      cancel_url: `${siteUrl()}/studio/bids?billing=cancel`,
+    });
+    if (!session.url) {
+      await service.from('brand_ad_bids').delete().eq('id', bid.id);
+      return { ok: false, error: 'Could not start checkout.' };
+    }
+    await service.from('brand_ad_bids').update({ stripe_session_id: session.id }).eq('id', bid.id);
+    revalidatePath('/studio/bids');
+    return { ok: true, url: session.url };
+  } catch (e) {
+    await service.from('brand_ad_bids').delete().eq('id', bid.id);
+    return { ok: false, error: e instanceof Error ? e.message : 'Checkout failed.' };
+  }
+}
+
 // Re-export the type for callers that map over placement types.
 export type { PlacementType };

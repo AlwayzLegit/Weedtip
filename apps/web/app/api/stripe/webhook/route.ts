@@ -118,6 +118,19 @@ export async function POST(req: NextRequest) {
           break;
         }
 
+        // Brand featured-auction bid → activate the pending bid for its term.
+        if (session.metadata?.kind === 'brand_bid' && session.payment_status === 'paid') {
+          const bidId = session.metadata.bid_id;
+          if (bidId) {
+            await service.rpc('activate_brand_bid', {
+              p_bid_id: bidId,
+              p_payment_intent:
+                typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
+            });
+          }
+          break;
+        }
+
         // One-time placement purchase → activate the pending placement.
         const placementId = session.metadata?.placement_id;
         if (placementId && session.payment_status === 'paid') {

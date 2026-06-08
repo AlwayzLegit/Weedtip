@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { startBrandBidCheckout } from '@/app/actions/billing';
 import { cancelBrandBid, placeBrandBid } from '@/app/actions/brand-bids';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,15 @@ type Row = {
   is_winning: boolean;
 };
 
-export function BrandBidRow({ brandId, row }: { brandId: string; row: Row }) {
+export function BrandBidRow({
+  brandId,
+  row,
+  stripeEnabled,
+}: {
+  brandId: string;
+  row: Row;
+  stripeEnabled: boolean;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +46,26 @@ export function BrandBidRow({ brandId, row }: { brandId: string; row: Row }) {
       const res = await fn();
       if (res.ok) router.refresh();
       else setError(res.error ?? 'Something went wrong.');
+    });
+  }
+
+  // With Stripe on, placing/updating a bid goes through paid checkout; otherwise
+  // it commits directly (free) — same graceful fallback as the rest of billing.
+  function placeBid() {
+    const cents = Math.round((Number(amount) || 0) * 100);
+    setError(null);
+    if (!stripeEnabled) {
+      submit(() => placeBrandBid(brandId, row.region_id, cents));
+      return;
+    }
+    start(async () => {
+      const res = await startBrandBidCheckout({
+        brand_id: brandId,
+        region_id: row.region_id,
+        bid_cents: cents,
+      });
+      if (res.ok) window.location.href = res.url;
+      else setError(res.error);
     });
   }
 
@@ -75,11 +104,8 @@ export function BrandBidRow({ brandId, row }: { brandId: string; row: Row }) {
             className="border-border bg-background h-10 w-36 rounded-md border px-3"
           />
         </label>
-        <Button
-          disabled={pending}
-          onClick={() => submit(() => placeBrandBid(brandId, row.region_id, (Number(amount) || 0) * 100))}
-        >
-          {row.your_bid_cents != null ? 'Update bid' : 'Place bid'}
+        <Button disabled={pending} onClick={placeBid}>
+          {row.your_bid_cents != null ? 'Update bid' : stripeEnabled ? 'Bid & pay' : 'Place bid'}
         </Button>
         {row.your_bid_id && (
           <Button
