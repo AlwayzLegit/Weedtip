@@ -80,6 +80,10 @@ echo "7 Enrich public phone/website from OpenStreetMap"
 python3 scripts/enrich-from-osm.py "$TMP/osm.sql" "$SUPABASE_URL" "$SUPABASE_ANON_KEY"
 apply "$TMP/osm.sql" "OSM enrichment"
 
+echo "8 Enrich opening hours from OpenStreetMap"
+python3 scripts/enrich-hours-from-osm.py "$TMP/hours.sql" "$SUPABASE_URL" "$SUPABASE_ANON_KEY"
+apply "$TMP/hours.sql" "OSM hours"
+
 if [[ -n "$DRY_RUN" ]]; then
   echo
   echo "── Dry-run summary (generated vs current DB) ──"
@@ -89,6 +93,7 @@ if [[ -n "$DRY_RUN" ]]; then
     "$(current "select count(*) from public.dispensaries where is_delivery and location is null")"
   printf '   legal_name backfill      : %6s generated\n' "$(rows "$TMP/legal.sql")"
   printf '   OSM enrichment           : %6s generated\n' "$(rows "$TMP/osm.sql")"
+  printf '   OSM hours                : %6s generated\n' "$(rows "$TMP/hours.sql")"
   printf '   current total / owner-null : %s / %s\n' \
     "$(current "select count(*) from public.dispensaries")" \
     "$(current "select count(*) from public.dispensaries where owner_id is null")"
