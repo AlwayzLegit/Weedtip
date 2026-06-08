@@ -53,6 +53,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: '/admin/brands', label: 'Brands', icon: Award },
   { href: '/admin/regions', label: 'Regions', icon: MapPin },
   { href: '/admin/ad-regions', label: 'Ad regions', icon: Gavel },
+  { href: '/admin/brand-regions', label: 'Brand markets', icon: Award },
   { href: '/admin/reviews', label: 'Reviews', icon: Star },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/users', label: 'Users', icon: Users },
