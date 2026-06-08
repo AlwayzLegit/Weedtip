@@ -5,6 +5,28 @@ import { citySlug } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
+// Regenerate at most once a day — the sitemap pages through tens of thousands of
+// rows, so we don't want to rebuild it on every crawler hit.
+export const revalidate = 86400;
+
+/**
+ * Fetch every row of a query, paging past PostgREST's default row cap (1k) so
+ * large tables (products, dispensaries) aren't silently truncated.
+ */
+async function fetchAll<T>(
+  query: (from: number, to: number) => PromiseLike<{ data: T[] | null }>,
+): Promise<T[]> {
+  const PAGE = 1000;
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data } = await query(from, from + PAGE - 1);
+    if (!data?.length) break;
+    out.push(...data);
+    if (data.length < PAGE) break;
+  }
+  return out;
+}
+
 /**
  * Dynamic sitemap. Static marketing/browse routes plus every public dispensary,
  * product, strain, and brand. Runs as the anon role, so RLS already restricts it
@@ -15,6 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { path: '', priority: 1, freq: 'daily' as const },
     { path: '/dispensaries', priority: 0.9, freq: 'daily' as const },
+    { path: '/map', priority: 0.7, freq: 'weekly' as const },
     { path: '/deliveries', priority: 0.8, freq: 'daily' as const },
     { path: '/products', priority: 0.8, freq: 'daily' as const },
     { path: '/strains', priority: 0.6, freq: 'weekly' as const },
@@ -33,9 +56,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const supabase = await createClient();
-    const [dispensaries, products, strains, brands, categories] = await Promise.all([
-      supabase.from('dispensaries').select('slug, city, state, updated_at'),
-      supabase.from('products').select('id, updated_at'),
+    const [dispensaryRows, productRows, strains, brands, categories] = await Promise.all([
+      fetchAll<{ slug: string; city: string | null; state: string; updated_at: string }>((f, t) =>
+        supabase.from('dispensaries').select('slug, city, state, updated_at').range(f, t),
+      ),
+      fetchAll<{ id: string; updated_at: string }>((f, t) =>
+        supabase.from('products').select('id, updated_at').range(f, t),
+      ),
       supabase.from('strains').select('slug, updated_at'),
       supabase.from('brands').select('slug, updated_at'),
       supabase.from('categories').select('slug'),
@@ -44,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Local SEO landing pages: distinct states and state+city combinations.
     const stateSet = new Set<string>();
     const citySet = new Set<string>();
-    for (const d of dispensaries.data ?? []) {
+    for (const d of dispensaryRows) {
       const st = d.state.toLowerCase();
       stateSet.add(st);
       if (d.city) citySet.add(`${st}/${citySlug(d.city)}`);
@@ -88,13 +115,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const dynamicRoutes: MetadataRoute.Sitemap = [
       ...locationRoutes,
-      ...(dispensaries.data ?? []).map((d) => ({
+      ...dispensaryRows.map((d) => ({
         url: `${SITE_URL}/dispensary/${d.slug}`,
         lastModified: new Date(d.updated_at),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       })),
-      ...(products.data ?? []).map((p) => ({
+      ...productRows.map((p) => ({
         url: `${SITE_URL}/product/${p.id}`,
         lastModified: new Date(p.updated_at),
         changeFrequency: 'weekly' as const,
