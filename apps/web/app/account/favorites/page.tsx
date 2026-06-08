@@ -15,7 +15,7 @@ export default async function FavoritesPage() {
   const { data: favorites } = await supabase
     .from('favorites')
     .select(
-      'created_at, dispensary:dispensaries(slug,name,city,state,cover_image_url,is_delivery,is_pickup,is_medical,is_recreational,featured,status,rating_avg,rating_count)',
+      'created_at, dispensary:dispensaries(slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,status,rating_avg,rating_count)',
     )
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
@@ -50,6 +50,7 @@ export default async function FavoritesPage() {
             city: d.city,
             state: d.state,
             coverImageUrl: d.cover_image_url,
+            logoUrl: d.logo_url,
             isDelivery: d.is_delivery,
             isPickup: d.is_pickup,
             isMedical: d.is_medical,

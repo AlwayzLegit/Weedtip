@@ -16,7 +16,7 @@ export const metadata: Metadata = pageSeo({
 });
 
 const SELECT =
-  'id,slug,name,city,state,latitude,longitude,cover_image_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
+  'id,slug,name,city,state,latitude,longitude,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
 
 export default async function DeliveriesPage() {
   const supabase = await createClient();
@@ -96,6 +96,7 @@ export default async function DeliveriesPage() {
                     city: s.city,
                     state: s.state,
                     coverImageUrl: s.cover_image_url,
+                    logoUrl: s.logo_url,
                     isDelivery: s.is_delivery,
                     isPickup: s.is_pickup,
                     isMedical: s.is_medical,
