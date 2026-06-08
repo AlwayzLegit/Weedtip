@@ -32,6 +32,8 @@ export function AdBidRow({ row, stripeEnabled }: { row: Row; stripeEnabled: bool
 
   const committedUntil = row.contract_end ? new Date(row.contract_end) : null;
   const stillCommitted = committedUntil ? committedUntil.getTime() > Date.now() : false;
+  // A paid bid whose 2-month term has lapsed no longer competes (server-enforced).
+  const termEnded = row.your_bid_cents != null && committedUntil != null && !stillCommitted;
 
   function submit(fn: () => Promise<{ ok: boolean; error?: string }>) {
     setError(null);
@@ -68,7 +70,9 @@ export function AdBidRow({ row, stripeEnabled }: { row: Row; stripeEnabled: bool
           </span>
         </div>
         {row.your_bid_cents != null &&
-          (row.is_winning ? (
+          (termEnded ? (
+            <Badge tone="muted">Term ended</Badge>
+          ) : row.is_winning ? (
             <Badge tone="primary">Featured · winning</Badge>
           ) : (
             <Badge tone="muted">Outbid</Badge>
