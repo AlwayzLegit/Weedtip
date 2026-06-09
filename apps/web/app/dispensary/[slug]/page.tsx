@@ -498,7 +498,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             <section>
               <h2 className="mb-3 text-lg font-semibold">Menu</h2>
               {menu.length === 0 ? (
-                <p className="text-muted">No products listed yet.</p>
+                <div className="rounded-card border-border bg-surface text-muted border border-dashed p-6 text-center text-sm">
+                  <p className="text-foreground font-medium">Menu coming soon</p>
+                  <p className="mt-1">
+                    {d.owner_id
+                      ? 'This dispensary hasn’t published its menu yet.'
+                      : 'This is an unclaimed listing. Are you the owner? Claim it to add your live menu, deals, and photos.'}
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-8">
                   {saleItems.length > 0 && (
