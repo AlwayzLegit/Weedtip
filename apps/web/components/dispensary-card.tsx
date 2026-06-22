@@ -62,7 +62,6 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       <div className="space-y-2 p-4">
         <div className="flex items-center gap-2">
           {d.logoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={d.logoUrl}
               alt=""
