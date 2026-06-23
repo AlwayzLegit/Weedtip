@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { BrandFollowButton } from '@/components/brand/brand-follow-button';
 import { ClaimBrandButton } from '@/components/brand/claim-brand-button';
+import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
@@ -122,17 +123,14 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       />
 
       <div className="card sheen mt-4 flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
-        {brand.logo_url ? (
-          <img
-            src={brand.logo_url}
-            alt={brand.name}
-            className="bg-surface-2 border-border h-16 w-16 shrink-0 rounded-2xl border object-contain p-1"
-          />
-        ) : (
-          <span className="bg-primary-muted text-primary ring-primary/20 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-bold ring-1">
-            {brand.name.charAt(0).toUpperCase()}
-          </span>
-        )}
+        <LogoImage
+          src={brand.logo_url}
+          name={brand.name}
+          className="h-16 w-16"
+          rounded="rounded-2xl"
+          textClassName="text-2xl"
+          hideWhenEmpty={false}
+        />
         <div className="min-w-0 flex-1">
           <p className="eyebrow mb-1">Brand</p>
           <h1 className="text-2xl font-bold sm:text-3xl">{brand.name}</h1>
