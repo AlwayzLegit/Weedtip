@@ -33,6 +33,14 @@ export default async function AdminUsers({
   if (search) query = query.ilike('display_name', `%${search}%`);
   const { data: users } = await query;
 
+  // Brand ownership is orthogonal to the role enum (any user can own a brand →
+  // Brand Studio access), so surface it as a separate badge rather than a role.
+  const { data: brandOwnerRows } = await supabase
+    .from('brands')
+    .select('owner_id')
+    .not('owner_id', 'is', null);
+  const brandOwnerIds = new Set((brandOwnerRows ?? []).map((b) => b.owner_id));
+
   const filters = [{ key: undefined, label: 'All' }, ...ROLES.map((r) => ({ key: r, label: r.replace('_', ' ') }))];
   const pillHref = (key?: string) => {
     const p = new URLSearchParams();
@@ -99,7 +107,10 @@ export default async function AdminUsers({
                 <tr key={u.id} className="bg-surface hover:bg-surface-2/50 transition-colors">
                   <td className="px-4 py-3 font-medium">{u.display_name ?? '—'}</td>
                   <td className="px-4 py-3">
-                    <Badge tone={ROLE_TONE[u.role] ?? 'default'}>{u.role.replace('_', ' ')}</Badge>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge tone={ROLE_TONE[u.role] ?? 'default'}>{u.role.replace('_', ' ')}</Badge>
+                      {brandOwnerIds.has(u.id) && <Badge tone="outline">Brand owner</Badge>}
+                    </div>
                   </td>
                   <td className="text-muted hidden px-4 py-3 sm:table-cell">
                     {new Date(u.created_at).toLocaleDateString()}
