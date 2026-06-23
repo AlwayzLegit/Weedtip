@@ -304,7 +304,6 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           <div className="rounded-card border-border bg-surface shadow-card-hover sheen border p-5">
             <div className="flex items-center gap-3">
               {d.logo_url && (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={d.logo_url}
                   alt=""
@@ -498,7 +497,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             <section>
               <h2 className="mb-3 text-lg font-semibold">Menu</h2>
               {menu.length === 0 ? (
-                <p className="text-muted">No products listed yet.</p>
+                <div className="rounded-card border-border bg-surface text-muted border border-dashed p-6 text-center text-sm">
+                  <p className="text-foreground font-medium">Menu coming soon</p>
+                  <p className="mt-1">
+                    {d.owner_id
+                      ? 'This dispensary hasn’t published its menu yet.'
+                      : 'This is an unclaimed listing. Are you the owner? Claim it to add your live menu, deals, and photos.'}
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-8">
                   {saleItems.length > 0 && (
