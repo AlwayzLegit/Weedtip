@@ -301,7 +301,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         />
       </MediaImage>
       <div className="mx-auto max-w-7xl px-4">
-        <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="-mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="rounded-card border-border bg-surface shadow-card-hover sheen border p-5">
             <div className="flex items-center gap-3">
               <LogoImage src={d.logo_url} name={d.name} className="h-12 w-12" rounded="rounded-lg" />

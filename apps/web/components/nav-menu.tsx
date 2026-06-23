@@ -75,10 +75,10 @@ export function NavMenu({
     };
   }, []);
 
-  const roleLabel = isAdmin ? 'Admin' : isOwner ? 'Owner' : 'Shopper';
+  const roleLabel = isAdmin ? 'Admin' : isOwner ? 'Owner' : isBrandOwner ? 'Brand owner' : 'Shopper';
   const roleTone: 'primary' | 'outline' | 'muted' = isAdmin
     ? 'primary'
-    : isOwner
+    : isOwner || isBrandOwner
       ? 'outline'
       : 'muted';
   const initial = (displayName ?? email ?? '?').charAt(0).toUpperCase();
