@@ -159,7 +159,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           )}
         </div>
         <div className="flex gap-6 sm:flex-col sm:gap-3">
-          <Stat value={String(list.length)} label="Products" />
+          <Stat value={String(list.length)} label="In stores" />
           <Stat value={String(shops.size)} label="Shops" />
           <Stat value={avgRating} label="Avg rating" />
         </div>
@@ -229,7 +229,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       )}
 
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold">Products</h2>
+        <h2 className="mb-3 text-lg font-semibold">Available at dispensaries</h2>
         {list.length === 0 ? (
           <p className="text-muted">No products from this brand are listed yet.</p>
         ) : (

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { MapPin, Truck, Store } from 'lucide-react';
 import { formatDistance } from '@/lib/format';
 import { Badge } from './ui/badge';
+import { DispensaryLogo } from './dispensary-logo';
 import { MediaImage } from './media-image';
 import { PlacementBeacon } from './placement-beacon';
 import { RatingStars } from './rating-stars';
@@ -36,6 +37,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
   return (
     <Link
       href={`/dispensary/${d.slug}`}
+      prefetch={false}
       className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group block overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
       {d.placementId && <PlacementBeacon placementId={d.placementId} />}
@@ -61,13 +63,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
 
       <div className="space-y-2 p-4">
         <div className="flex items-center gap-2">
-          {d.logoUrl && (
-            <img
-              src={d.logoUrl}
-              alt=""
-              className="border-border bg-surface h-8 w-8 shrink-0 rounded-md border object-contain p-0.5"
-            />
-          )}
+          <DispensaryLogo src={d.logoUrl} name={d.name} className="h-8 w-8" />
           <h3 className="group-hover:text-primary truncate font-semibold">{d.name}</h3>
         </div>
         <p className="text-muted text-sm">

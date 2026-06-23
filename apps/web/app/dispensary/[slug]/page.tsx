@@ -19,6 +19,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { ClaimListing } from '@/components/claim-listing';
 import { DeleteButton } from '@/components/dashboard/delete-button';
+import { DispensaryLogo } from '@/components/dispensary-logo';
 import { FavoriteButton } from '@/components/favorite-button';
 import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
@@ -26,7 +27,7 @@ import { RatingStars } from '@/components/rating-stars';
 import { ReviewForm } from '@/components/review-form';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
-import { DAY_ORDER, dayLabel, formatTime } from '@/lib/format';
+import { DAY_ORDER, dayLabel, dealBadge, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
@@ -303,13 +304,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="rounded-card border-border bg-surface shadow-card-hover sheen border p-5">
             <div className="flex items-center gap-3">
-              {d.logo_url && (
-                <img
-                  src={d.logo_url}
-                  alt=""
-                  className="border-border bg-surface h-12 w-12 shrink-0 rounded-lg border object-contain p-1"
-                />
-              )}
+              <DispensaryLogo src={d.logo_url} name={d.name} className="h-12 w-12" />
               <h1 className="text-2xl font-bold sm:text-3xl">{d.name}</h1>
             </div>
             <p className="text-muted mt-1 flex items-center gap-1 text-sm">
@@ -481,11 +476,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         )}
                       </div>
                       <Badge tone="primary">
-                        {deal.discount_type === 'percentage'
-                          ? `${deal.discount_value}% off`
-                          : deal.discount_type === 'fixed'
-                            ? `$${deal.discount_value} off`
-                            : 'BOGO'}
+                        {dealBadge(deal.discount_type, deal.discount_value)}
                       </Badge>
                     </div>
                   ))}

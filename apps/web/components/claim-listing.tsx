@@ -57,7 +57,7 @@ export function ClaimListing({
           </p>
           {(legalName || licenseNumber) && (
             <p className="text-muted mt-1 text-xs">
-              On file with the CA DCC:{legalName ? ` ${legalName}` : ''}
+              On file with the state licensing authority:{legalName ? ` ${legalName}` : ''}
               {legalName && licenseNumber ? ' · ' : ' '}
               {licenseNumber ? `License ${licenseNumber}` : ''}
             </p>

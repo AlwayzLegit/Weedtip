@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { getAuth } from '@/lib/auth';
 import { Logo } from './brand/logo';
 
-export function Footer() {
+export async function Footer() {
+  const { user } = await getAuth();
   return (
     <footer className="border-border mt-16 border-t">
       <div className="mx-auto max-w-7xl px-4 py-10">
@@ -31,9 +33,15 @@ export function Footer() {
             <Link href="/sign-up" className="text-muted hover:text-foreground">
               List your shop
             </Link>
-            <Link href="/sign-in" className="text-muted hover:text-foreground">
-              Sign in
-            </Link>
+            {user ? (
+              <Link href="/account" className="text-muted hover:text-foreground">
+                Account
+              </Link>
+            ) : (
+              <Link href="/sign-in" className="text-muted hover:text-foreground">
+                Sign in
+              </Link>
+            )}
           </nav>
         </div>
         <div className="border-border text-muted mt-8 border-t pt-6 text-xs">

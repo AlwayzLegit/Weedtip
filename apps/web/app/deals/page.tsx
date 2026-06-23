@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Tag } from 'lucide-react';
 import { PlacementBeacon } from '@/components/placement-beacon';
 import { Badge } from '@/components/ui/badge';
+import { dealBadge } from '@/lib/format';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -11,12 +12,6 @@ export const metadata: Metadata = pageSeo({
   description: 'Live cannabis deals and discounts from licensed dispensaries near you on Weedtip.',
   path: '/deals',
 });
-
-function discountLabel(type: string, value: number): string {
-  if (type === 'percentage') return `${value}% off`;
-  if (type === 'fixed') return `$${value} off`;
-  return 'BOGO';
-}
 
 type DealDispensary = { slug: string; name: string; city: string; state: string } | null;
 type DealRow = {
@@ -69,7 +64,7 @@ function DealTile({
         )}
       </div>
       <Badge tone="primary" className="shrink-0">
-        {discountLabel(deal.discount_type, deal.discount_value)}
+        {dealBadge(deal.discount_type, deal.discount_value)}
       </Badge>
     </Link>
   );

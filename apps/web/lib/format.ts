@@ -43,3 +43,28 @@ export function formatTime(hhmm: string): string {
   const hour12 = h! % 12 === 0 ? 12 : h! % 12;
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
 }
+
+/**
+ * Short badge label for a deal's discount, covering every deal kind the
+ * dashboard can create (percentage, fixed_amount, price_target,
+ * spend_threshold, bogo) plus the legacy `fixed` value. Returns a generic
+ * "Special" instead of a misleading "$0 off" when no numeric value applies —
+ * e.g. a set-price/category promo whose amount lives in the title.
+ */
+export function dealBadge(type: string, value: number): string {
+  switch (type) {
+    case 'percentage':
+      return value > 0 ? `${value}% off` : 'Special';
+    case 'fixed':
+    case 'fixed_amount':
+      return value > 0 ? `$${value} off` : 'Special';
+    case 'price_target':
+      return value > 0 ? `$${value}` : 'Special';
+    case 'spend_threshold':
+      return value > 0 ? `${value}% off order` : 'Special';
+    case 'bogo':
+      return 'BOGO';
+    default:
+      return 'Special';
+  }
+}

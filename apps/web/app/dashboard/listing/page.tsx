@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
 import { ListingForm } from '@/components/dashboard/listing-form';
+import { licenseAuthority } from '@/lib/license';
 import { getOwnerContext } from '@/lib/owner';
 
 export const metadata: Metadata = { title: 'Listing' };
 
 export default async function ListingPage() {
   const { dispensary } = await getOwnerContext();
+  const authority = dispensary ? licenseAuthority(dispensary.state) : null;
 
   return (
     <div className="space-y-6">
@@ -33,7 +35,7 @@ export default async function ListingPage() {
           dispensary.dcc_email ||
           dispensary.county) && (
           <div className="rounded-card border-border bg-surface border p-4 text-sm">
-            <p className="font-medium">License on file (California DCC)</p>
+            <p className="font-medium">License on file{authority ? ` (${authority})` : ''}</p>
             <p className="text-muted mt-0.5 text-xs">
               From your state cannabis license — the registered entity and licensee/registered-agent
               contact. These are for reference and verification; your public storefront name, phone,
@@ -60,13 +62,13 @@ export default async function ListingPage() {
               )}
               {dispensary.dcc_phone && (
                 <div>
-                  <dt className="text-muted inline">DCC phone: </dt>
+                  <dt className="text-muted inline">License phone: </dt>
                   <dd className="inline font-medium">{dispensary.dcc_phone}</dd>
                 </div>
               )}
               {dispensary.dcc_email && (
                 <div>
-                  <dt className="text-muted inline">DCC email: </dt>
+                  <dt className="text-muted inline">License email: </dt>
                   <dd className="inline font-medium">{dispensary.dcc_email}</dd>
                 </div>
               )}

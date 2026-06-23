@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { dealBadge } from '@/lib/format';
 import { Badge } from './ui/badge';
 
 export interface DealCardData {
@@ -11,12 +12,6 @@ export interface DealCardData {
   dispensaryName: string;
   city: string;
   state: string;
-}
-
-function discountLabel(type: string, value: number): string {
-  if (type === 'percentage') return `${value}% off`;
-  if (type === 'fixed') return `$${value} off`;
-  return 'BOGO';
 }
 
 export function DealCard({ deal }: { deal: DealCardData }) {
@@ -42,7 +37,7 @@ export function DealCard({ deal }: { deal: DealCardData }) {
         </p>
       </div>
       <Badge tone="primary" className="shrink-0">
-        {discountLabel(deal.discountType, deal.discountValue)}
+        {dealBadge(deal.discountType, deal.discountValue)}
       </Badge>
     </Link>
   );
