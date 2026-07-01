@@ -34,7 +34,8 @@ def main():
     df = pd.read_csv(src, dtype=str, low_memory=False)
     lat = pd.to_numeric(df["premise_latitude"], errors="coerce")
     lng = pd.to_numeric(df["premise_longitude"], errors="coerce")
-    has_coord = lat.between(32, 42) & lng.between(-125, -114)
+    # Bounds cover all US states (not CA-specific) so this also works for other states.
+    has_coord = lat.between(17, 72) & lng.between(-180, -65)
     s = df["license_status"].fillna("").str.lower()
     t = df["license_type"].fillna("").str.lower()
     target = s.str.contains("active") & (t.str.contains("retail") | t.str.contains("microbusiness"))
@@ -56,7 +57,8 @@ def main():
         w = csv.writer(buf)
         for i, r in chunk:
             z = re.search(r"\d{5}", str(r["premise_zip_code"])).group(0)
-            w.writerow([i, real(r["premise_street_address"]), real(r["premise_city"]), "CA", z])
+            state = real(r.get("premise_state", "")) or "CA"
+            w.writerow([i, real(r["premise_street_address"]), real(r["premise_city"]), state, z])
         resp = requests.post(
             CENSUS,
             files={"addressFile": ("a.csv", buf.getvalue(), "text/csv")},
