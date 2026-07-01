@@ -85,12 +85,16 @@ def parse_hours(reg):
 
 
 def fetch_dispensaries(url, key):
+    # Only rows still missing at least one of phone/website/hours — otherwise a
+    # re-run pays for a fresh Places lookup on every already-enriched dispensary.
     rows, offset = [], 0
     while True:
         b = requests.get(f"{url}/rest/v1/dispensaries",
                          headers={"apikey": key, "Authorization": f"Bearer {key}"},
                          params={"select": "slug,name,address,city,latitude,longitude,phone,website,hours,google_place_id",
-                                 "latitude": "not.is.null", "limit": 1000, "offset": offset}, timeout=120).json()
+                                 "latitude": "not.is.null",
+                                 "or": "(phone.is.null,website.is.null,hours.is.null)",
+                                 "limit": 1000, "offset": offset}, timeout=120).json()
         if not b:
             break
         rows += b
