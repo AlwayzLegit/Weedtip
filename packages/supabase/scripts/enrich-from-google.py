@@ -14,7 +14,7 @@ Cost: Text Search (New) with these fields is ~$0.03–0.04 per dispensary.
 Use --limit to test cheaply first.
 
 Env:  GOOGLE_PLACES_API_KEY
-Usage: python scripts/enrich-from-google.py <out.sql> <supabase_url> <anon_key> [--limit N]
+Usage: python scripts/enrich-from-google.py <out.sql> <supabase_url> <anon_key> [--limit N] [--states CT,CO,WA]
 """
 import json
 import math
@@ -84,17 +84,20 @@ def parse_hours(reg):
     return hours if got else None
 
 
-def fetch_dispensaries(url, key):
+def fetch_dispensaries(url, key, states=None):
     # Only rows still missing at least one of phone/website/hours — otherwise a
     # re-run pays for a fresh Places lookup on every already-enriched dispensary.
     rows, offset = [], 0
     while True:
+        params = {"select": "slug,name,address,city,state,latitude,longitude,phone,website,hours,google_place_id",
+                  "latitude": "not.is.null",
+                  "or": "(phone.is.null,website.is.null,hours.is.null)",
+                  "limit": 1000, "offset": offset}
+        if states:
+            params["state"] = f"in.({','.join(states)})"
         b = requests.get(f"{url}/rest/v1/dispensaries",
                          headers={"apikey": key, "Authorization": f"Bearer {key}"},
-                         params={"select": "slug,name,address,city,latitude,longitude,phone,website,hours,google_place_id",
-                                 "latitude": "not.is.null",
-                                 "or": "(phone.is.null,website.is.null,hours.is.null)",
-                                 "limit": 1000, "offset": offset}, timeout=120).json()
+                         params=params, timeout=120).json()
         if not b:
             break
         rows += b
@@ -116,8 +119,11 @@ def main():
     limit = None
     if "--limit" in sys.argv:
         limit = int(sys.argv[sys.argv.index("--limit") + 1])
+    states = None
+    if "--states" in sys.argv:
+        states = sys.argv[sys.argv.index("--states") + 1].split(",")
 
-    disp = fetch_dispensaries(url, anon)
+    disp = fetch_dispensaries(url, anon, states)
     if limit:
         disp = disp[:limit]
     print(f"querying Google Places for {len(disp)} dispensaries")
@@ -125,7 +131,7 @@ def main():
     updates, matched = {}, 0
     for i, d in enumerate(disp):
         dl, dn = float(d["latitude"]), float(d["longitude"])
-        q = " ".join(x for x in [d["name"], d.get("address"), d.get("city"), "CA"] if x)
+        q = " ".join(x for x in [d["name"], d.get("address"), d.get("city"), d.get("state")] if x)
         body = {"textQuery": q, "maxResultCount": 5,
                 "locationBias": {"circle": {"center": {"latitude": dl, "longitude": dn}, "radius": 500.0}}}
         try:
