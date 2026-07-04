@@ -705,6 +705,7 @@ export type Database = {
           slug: string
           state: string
           status: Database["public"]["Enums"]["dispensary_status"]
+          timezone: string | null
           updated_at: string
           website: string | null
           zip: string | null
@@ -750,6 +751,7 @@ export type Database = {
           slug: string
           state: string
           status?: Database["public"]["Enums"]["dispensary_status"]
+          timezone?: string | null
           updated_at?: string
           website?: string | null
           zip?: string | null
@@ -795,6 +797,7 @@ export type Database = {
           slug?: string
           state?: string
           status?: Database["public"]["Enums"]["dispensary_status"]
+          timezone?: string | null
           updated_at?: string
           website?: string | null
           zip?: string | null
