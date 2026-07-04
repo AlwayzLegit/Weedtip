@@ -1,15 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { MapPin, Truck } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { DispensaryCard } from '@/components/dispensary-card';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
-
-const LOCATION_SELECT =
-  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
+import { fetchAll } from '@/lib/supabase/fetch-all';
 
 export async function generateMetadata({
   params,
@@ -20,7 +18,7 @@ export async function generateMetadata({
   const name = US_STATES[state.toUpperCase()];
   if (!name) return { title: 'Dispensaries' };
   const title = `Cannabis Dispensaries in ${name}`;
-  const description = `Find licensed cannabis dispensaries in ${name}. Browse menus, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
+  const description = `Find licensed cannabis dispensaries across ${name} by city. Browse menus, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
   return pageSeo({ title, description, path: `/dispensaries/${state.toLowerCase()}` });
 }
 
@@ -35,28 +33,35 @@ export default async function StateDispensariesPage({
   if (!stateName) notFound();
 
   const supabase = await createClient();
-  const { data: rows } = await supabase
-    .from('dispensaries')
-    .select(LOCATION_SELECT)
-    .eq('status', 'active')
-    .eq('state', code)
-    .order('city')
-    .order('name');
+  // A single state can exceed PostgREST's 1k cap, so page the full set. We only
+  // read the columns needed to build the city directory (not full shop rows),
+  // so even the largest states stay cheap.
+  const rows = await fetchAll<{ city: string | null; is_delivery: boolean }>((from, to) =>
+    supabase
+      .from('dispensaries')
+      .select('city,is_delivery')
+      .eq('status', 'active')
+      .eq('state', code)
+      .range(from, to),
+  );
 
-  const shops = rows ?? [];
-  const byCity = new Map<string, typeof shops>();
-  for (const s of shops) {
-    if (!s.city) continue; // delivery-only listings have no city to group under
-    const arr = byCity.get(s.city) ?? [];
-    arr.push(s);
-    byCity.set(s.city, arr);
+  const total = rows.length;
+  const byCity = new Map<string, number>();
+  let deliveryOnly = 0;
+  for (const r of rows) {
+    if (!r.city) {
+      deliveryOnly += 1; // delivery-only listings have no city to group under
+      continue;
+    }
+    byCity.set(r.city, (byCity.get(r.city) ?? 0) + 1);
   }
-  const cities = [...byCity.keys()].sort();
+  // Biggest markets first, then alphabetical.
+  const cities = [...byCity.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
   const faqs = [
     {
       question: `How many cannabis dispensaries are in ${stateName}?`,
-      answer: `Weedtip lists ${shops.length} licensed ${shops.length === 1 ? 'dispensary' : 'dispensaries'}${cities.length ? ` across ${cities.length} ${cities.length === 1 ? 'city' : 'cities'}` : ''} in ${stateName}, each with menus, deals, and reviews.`,
+      answer: `Weedtip lists ${total} licensed ${total === 1 ? 'dispensary' : 'dispensaries'}${cities.length ? ` across ${cities.length} ${cities.length === 1 ? 'city' : 'cities'}` : ''} in ${stateName}, each with menus, deals, and reviews.`,
     },
     {
       question: `Can I order cannabis for pickup or delivery in ${stateName}?`,
@@ -68,13 +73,17 @@ export default async function StateDispensariesPage({
     },
     {
       question: `How do I find cannabis deals in ${stateName}?`,
-      answer: `Check each dispensary's page for active deals, or browse the Deals page on Weedtip for current discounts near you.`,
+      answer: `Open your city below, then check each dispensary's page for active deals, or browse the Deals page for current discounts.`,
     },
   ];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
-      <JsonLd data={itemListJsonLd(shops.map((s) => `/dispensary/${s.slug}`))} />
+      <JsonLd
+        data={itemListJsonLd(
+          cities.map(([city]) => `/dispensaries/${state.toLowerCase()}/${citySlug(city)}`),
+        )}
+      />
       <Breadcrumbs
         items={[
           { name: 'Home', href: '/' },
@@ -84,64 +93,49 @@ export default async function StateDispensariesPage({
       />
       <h1 className="text-2xl font-bold">Cannabis dispensaries in {stateName}</h1>
       <p className="text-muted mt-1 text-sm">
-        {shops.length} {shops.length === 1 ? 'dispensary' : 'dispensaries'}
-        {cities.length > 0 && (
-          <>
-            {' '}
-            across {cities.length} {cities.length === 1 ? 'city' : 'cities'}
-          </>
-        )}
-        .
+        {total.toLocaleString()} {total === 1 ? 'dispensary' : 'dispensaries'}
+        {cities.length > 0 && <> across {cities.length} {cities.length === 1 ? 'city' : 'cities'}</>}.
+        Choose a city to see its shops.
       </p>
 
-      {shops.length === 0 ? (
+      {total === 0 ? (
         <div className="rounded-card border-border bg-surface text-muted mt-6 border p-10 text-center">
           No active dispensaries are listed in {stateName} yet.
         </div>
       ) : (
-        <div className="mt-8 space-y-10">
-          {cities.map((city) => (
-            <section key={city}>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{city}</h2>
-                <Link
-                  href={`/dispensaries/${state.toLowerCase()}/${citySlug(city)}`}
-                  className="text-primary text-sm hover:underline"
-                >
-                  View all in {city}
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {byCity.get(city)!.map((s) => (
-                  <DispensaryCard
-                    key={s.id}
-                    d={{
-                      slug: s.slug,
-                      name: s.name,
-                      city: s.city,
-                      state: s.state,
-                      coverImageUrl: s.cover_image_url,
-                      logoUrl: s.logo_url,
-                      isDelivery: s.is_delivery,
-                      isPickup: s.is_pickup,
-                      isMedical: s.is_medical,
-                      isRecreational: s.is_recreational,
-                      featured: s.featured,
-                      rating: s.rating_avg,
-                      reviewCount: s.rating_count,
-                    }}
-                  />
-                ))}
-              </div>
-            </section>
+        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {cities.map(([city, n]) => (
+            <Link
+              key={city}
+              href={`/dispensaries/${state.toLowerCase()}/${citySlug(city)}`}
+              className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group flex items-center justify-between border p-4 transition-all"
+            >
+              <span className="flex items-center gap-2 font-medium">
+                <MapPin className="text-muted group-hover:text-primary h-4 w-4" />
+                {city}
+              </span>
+              <span className="text-muted text-sm">
+                {n} {n === 1 ? 'shop' : 'shops'}
+              </span>
+            </Link>
           ))}
         </div>
       )}
 
+      {deliveryOnly > 0 && (
+        <p className="text-muted mt-6 flex items-center gap-2 text-sm">
+          <Truck className="h-4 w-4" />
+          {deliveryOnly} delivery-only {deliveryOnly === 1 ? 'service' : 'services'} in {stateName} —
+          see the{' '}
+          <Link href="/deliveries" className="text-primary hover:underline">
+            delivery directory
+          </Link>
+          .
+        </p>
+      )}
+
       <section className="mt-12 max-w-3xl">
-        <h2 className="mb-2 text-lg font-semibold">
-          About cannabis dispensaries in {stateName}
-        </h2>
+        <h2 className="mb-2 text-lg font-semibold">About cannabis dispensaries in {stateName}</h2>
         <p className="text-muted text-sm leading-relaxed">
           {stateName} is home to licensed cannabis dispensaries on Weedtip. Browse menus, compare
           prices and deals, read reviews, and order online for pickup or delivery. Always bring a

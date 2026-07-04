@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PRODUCT_CATEGORIES } from '@weedtip/shared';
@@ -8,22 +9,30 @@ import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetch-all';
 
 const LOCATION_SELECT =
   'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
 
-async function loadCity(state: string, city: string) {
+// Cached per request so generateMetadata + the page don't each run the query.
+const loadCity = cache(async function loadCity(state: string, city: string) {
   const code = state.toUpperCase();
   const stateName = US_STATES[code];
   if (!stateName) return null;
   const supabase = await createClient();
-  const { data } = await supabase
-    .from('dispensaries')
-    .select(LOCATION_SELECT)
-    .eq('status', 'active')
-    .eq('state', code)
-    .order('name');
-  const shops = (data ?? []).filter((s) => citySlug(s.city ?? '') === city.toLowerCase());
+  // Page past the 1k cap: in large states a city's shops can all sort beyond
+  // row 1,000, which previously 404'd valid (and sitemap-listed) city pages.
+  const data = await fetchAll<{ id: string; slug: string; name: string; city: string | null; state: string; cover_image_url: string | null; logo_url: string | null; is_delivery: boolean; is_pickup: boolean; is_medical: boolean; is_recreational: boolean; featured: boolean; rating_avg: number; rating_count: number }>(
+    (from, to) =>
+      supabase
+        .from('dispensaries')
+        .select(LOCATION_SELECT)
+        .eq('status', 'active')
+        .eq('state', code)
+        .order('name')
+        .range(from, to),
+  );
+  const shops = data.filter((s) => citySlug(s.city ?? '') === city.toLowerCase());
   const first = shops[0];
   if (!first) return null;
 
@@ -74,7 +83,7 @@ async function loadCity(state: string, city: string) {
   });
 
   return { stateName, cityName: first.city ?? '', shops: ordered, featuredByDispensary };
-}
+});
 
 export async function generateMetadata({
   params,

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
@@ -7,8 +8,10 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetch-all';
 
-async function load(state: string, city: string, categorySlug: string) {
+// Cached per request (generateMetadata + page share one run).
+const load = cache(async function load(state: string, city: string, categorySlug: string) {
   const code = state.toUpperCase();
   const stateName = US_STATES[code];
   if (!stateName) return null;
@@ -21,13 +24,17 @@ async function load(state: string, city: string, categorySlug: string) {
     .maybeSingle();
   if (!category) return null;
 
-  // Resolve the city's display name from active dispensaries in the state.
-  const { data: cityRows } = await supabase
-    .from('dispensaries')
-    .select('city')
-    .eq('status', 'active')
-    .eq('state', code);
-  const cityName = (cityRows ?? [])
+  // Resolve the city's display name from active dispensaries in the state,
+  // paging past the 1k cap so large-state cities still resolve.
+  const cityRows = await fetchAll<{ city: string | null }>((from, to) =>
+    supabase
+      .from('dispensaries')
+      .select('city')
+      .eq('status', 'active')
+      .eq('state', code)
+      .range(from, to),
+  );
+  const cityName = cityRows
     .map((r) => r.city)
     .find((c) => citySlug(c ?? '') === city.toLowerCase());
   if (!cityName) return null;
@@ -46,7 +53,7 @@ async function load(state: string, city: string, categorySlug: string) {
   });
 
   return { stateName, cityName, category, products };
-}
+});
 
 export async function generateMetadata({
   params,

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ExploreMap, type ExplorePoint } from '@/components/explore-map';
 import { pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetch-all';
 
 export const metadata: Metadata = pageSeo({
   title: 'Dispensary map',
@@ -19,16 +20,24 @@ export default async function MapPage({
   const { state: stateParam } = await searchParams;
   const supabase = await createClient();
 
-  // All active listings with premise coordinates. Override the 1k default cap so
-  // the whole set reaches the clustered map.
-  const { data: rows } = await supabase
-    .from('dispensaries')
-    .select('slug,name,latitude,longitude,city,state,featured,rating_avg,rating_count')
-    .eq('status', 'active')
-    .not('latitude', 'is', null)
-    .limit(5000);
+  // All active listings with premise coordinates. `.limit()` can't beat
+  // PostgREST's 1k cap, so page the full set — otherwise most pins (and every
+  // derived count below) are silently wrong. NOTE: this ships all ~9k points in
+  // the RSC payload; a cached GeoJSON/viewport endpoint is the tracked perf
+  // follow-up (audit upgrade #10).
+  const rows = await fetchAll<{
+    slug: string; name: string; latitude: number | null; longitude: number | null;
+    city: string | null; state: string; featured: boolean; rating_avg: number; rating_count: number;
+  }>((from, to) =>
+    supabase
+      .from('dispensaries')
+      .select('slug,name,latitude,longitude,city,state,featured,rating_avg,rating_count')
+      .eq('status', 'active')
+      .not('latitude', 'is', null)
+      .range(from, to),
+  );
 
-  const all = (rows ?? []).filter(
+  const all = rows.filter(
     (r) => typeof r.latitude === 'number' && typeof r.longitude === 'number',
   );
 
