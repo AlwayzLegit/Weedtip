@@ -36,6 +36,20 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
 
   const supabase = await createClient();
 
+  // Claims are verified against the license on file — listings imported without
+  // a license number can't be claimed until it's backfilled. (RLS enforces this
+  // too; checking here surfaces a clear message instead of a policy error.)
+  const { data: target } = await supabase
+    .from('dispensaries')
+    .select('license_number')
+    .eq('id', parsed.data.dispensary_id)
+    .maybeSingle();
+  if (!target?.license_number) {
+    return formError(
+      'This listing can’t be claimed yet — we don’t have its state license on file to verify against. Check back soon.',
+    );
+  }
+
   // Clear any prior non-approved request so a rejected owner can re-submit.
   await supabase
     .from('ownership_requests')

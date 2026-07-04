@@ -141,8 +141,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   // The actual owner of THIS shop — admins manage via /admin, not the owner dashboard.
   const isOwner = profile?.role === 'dispensary_owner' && d.owner_id === user?.id;
 
-  // Unclaimed, active listings can be claimed by dispensary-owner accounts.
-  const canClaim = !d.owner_id && profile?.role === 'dispensary_owner' && !!user;
+  // Unclaimed, active listings can be claimed by dispensary-owner accounts —
+  // but only when we hold the state license on file to verify the claim against.
+  const canClaim =
+    !d.owner_id && !!d.license_number && profile?.role === 'dispensary_owner' && !!user;
   let ownershipStatus: 'pending' | 'approved' | 'rejected' | null = null;
   if (canClaim && user) {
     const { data: req } = await supabase
@@ -493,7 +495,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   <p className="mt-1">
                     {d.owner_id
                       ? 'This dispensary hasn’t published its menu yet.'
-                      : 'This is an unclaimed listing. Are you the owner? Claim it to add your live menu, deals, and photos.'}
+                      : d.license_number
+                        ? 'This is an unclaimed listing. Are you the owner? Claim it to add your live menu, deals, and photos.'
+                        : 'This is an unclaimed listing. Claiming opens once its state license is verified on our end.'}
                   </p>
                 </div>
               ) : (
