@@ -18,6 +18,7 @@ export default function robots(): MetadataRoute.Robots {
         '/sign-up',
         '/forgot-password',
         '/auth/',
+        '/embed/',
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
