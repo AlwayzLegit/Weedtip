@@ -63,17 +63,22 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
       </Field>
 
       <section className="grid gap-4 sm:grid-cols-2">
-        <Field label="Address" htmlFor="address" error={fe.address}>
-          <Input id="address" name="address" defaultValue={d?.address ?? ''} required />
+        <Field
+          label="Address"
+          htmlFor="address"
+          error={fe.address}
+          hint="Recommended — shown on your listing."
+        >
+          <Input id="address" name="address" defaultValue={d?.address ?? ''} />
         </Field>
         <Field label="City" htmlFor="city" error={fe.city}>
-          <Input id="city" name="city" defaultValue={d?.city ?? ''} required />
+          <Input id="city" name="city" defaultValue={d?.city ?? ''} />
         </Field>
         <Field label="State" htmlFor="state" error={fe.state} hint="2-letter code, e.g. NY">
           <Input id="state" name="state" maxLength={2} defaultValue={d?.state ?? ''} required />
         </Field>
         <Field label="ZIP" htmlFor="zip" error={fe.zip}>
-          <Input id="zip" name="zip" defaultValue={d?.zip ?? ''} required />
+          <Input id="zip" name="zip" defaultValue={d?.zip ?? ''} />
         </Field>
       </section>
 
@@ -82,7 +87,7 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
           label="Latitude"
           htmlFor="latitude"
           error={fe['location.lat']}
-          hint="Decimal degrees"
+          hint="Decimal degrees — needed to appear on the map and in nearby search."
         >
           <Input
             id="latitude"
@@ -90,14 +95,13 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
             type="number"
             step="any"
             defaultValue={d?.latitude ?? ''}
-            required
           />
         </Field>
         <Field
           label="Longitude"
           htmlFor="longitude"
           error={fe['location.lng']}
-          hint="Decimal degrees"
+          hint="Decimal degrees — set both, or leave both blank."
         >
           <Input
             id="longitude"
@@ -105,7 +109,6 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
             type="number"
             step="any"
             defaultValue={d?.longitude ?? ''}
-            required
           />
         </Field>
       </section>

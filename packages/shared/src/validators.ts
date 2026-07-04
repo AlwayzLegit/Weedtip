@@ -188,10 +188,14 @@ export const dispensaryWriteSchema = z.object({
   name: z.string().min(2).max(120),
   slug: slugSchema,
   description: z.string().max(5000).nullable().optional(),
-  address: z.string().min(3).max(200),
-  city: z.string().min(1).max(100),
+  // Address, ZIP, and coordinates are validated only when provided. Thousands of
+  // registry-sourced listings lack a street address or geocode; hard-requiring
+  // them locked their owners out of saving ANY edit (hours, phone, etc.) after
+  // claiming. State stays required — every row has one.
+  address: z.string().min(3).max(200).nullable().optional(),
+  city: z.string().min(1).max(100).nullable().optional(),
   state: z.string().length(2, 'Use the 2-letter state code'),
-  zip: z.string().regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code'),
+  zip: z.string().regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code').nullable().optional(),
   phone: z.string().max(30).nullable().optional(),
   email: z.string().email().nullable().optional(),
   website: z.string().url().nullable().optional(),
@@ -205,7 +209,7 @@ export const dispensaryWriteSchema = z.object({
   hours: operatingHoursSchema.nullable().optional(),
   announcement: z.string().max(500).nullable().optional(),
   amenities: z.array(amenitySchema).max(AMENITIES.length).default([]),
-  location: coordinatesSchema,
+  location: coordinatesSchema.nullable().optional(),
 });
 export type DispensaryWriteInput = z.infer<typeof dispensaryWriteSchema>;
 
