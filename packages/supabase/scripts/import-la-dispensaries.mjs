@@ -162,7 +162,7 @@ const FIELD_NAMES = {
 };
 
 // ── value normalization ──────────────────────────────────────────────────────
-const NULLISH = new Set(['', 'data not available', 'n/a', 'na', 'none', 'null']);
+const NULLISH = new Set(['', 'data not available', 'n/a', 'na', 'none', 'null', 'no dba', 'not applicable']);
 function clean(v) {
   const t = String(v ?? '').trim();
   return NULLISH.has(t.toLowerCase()) ? null : t;
@@ -201,6 +201,29 @@ function slugify(v) {
     .replace(/^-+|-+$/g, '')
     .slice(0, 60)
     .replace(/-+$/g, '');
+}
+
+// ── display-name derivation ──────────────────────────────────────────────────
+// The shopper-facing name is the trade name, per directory practice (Yelp,
+// Google, Weedmaps): extract the trade side of "Legal, LLC DBA Trade" strings
+// and strip legal-entity designators. "Co"/"Company" are deliberately NOT
+// stripped — they're often the brand itself ("Boston Bud Co"). Falls back to
+// the input when cleaning would leave nothing usable. The full legal string is
+// preserved separately in legal_name (surfaced as "Licensed as …").
+const DBA_SPLIT = /\bdba\b[\s.:)]*(.+)$/i;
+const DBA_TAIL = /\s*[/;,]?\s*\(?\s*\bdba\b.*$/i; // drop "…/ DBA Second Name)" tails
+const ENTITY_SUFFIX =
+  /([\s,]+(llc|l\.l\.c\.?|inc\.?|incorporated|corp\.?|corporation|ltd\.?|limited|llp|pllc))+[\s.,]*$/i;
+function tradeName(raw) {
+  let n = raw;
+  const m = n.match(DBA_SPLIT);
+  if (m) n = m[1].replace(DBA_TAIL, '');
+  n = n
+    .replace(ENTITY_SUFFIX, '')
+    .replace(/\(\s*\)/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[\s,)]+|[\s,(]+$/g, '');
+  return n.length >= 2 ? n : raw;
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
@@ -250,12 +273,11 @@ for (const r of rows.slice(1)) {
   }
 
   let name = titleCase(clean(get('dba')) ?? clean(get('legal')) ?? '');
-  const legalName = titleCase(clean(get('legal')) ?? '');
-  const legalOk = legalName.length >= 2 && legalName.length <= 120;
+  let legalName = titleCase(clean(get('legal')) ?? '');
   // Schema requires 2 ≤ char_length(name) ≤ 120. Some DCC DBA fields are junk
   // ("_", ".") or concatenate many DBAs (>120). Prefer the legal name in those
   // cases; otherwise truncate. Drop the row only if no usable name remains.
-  if ((name.length < 2 || name.length > 120) && legalOk) {
+  if ((name.length < 2 || name.length > 120) && legalName.length >= 2 && legalName.length <= 120) {
     name = legalName;
   } else if (name.length > 120) {
     name = name.slice(0, 120).trim();
@@ -264,6 +286,17 @@ for (const r of rows.slice(1)) {
     stats.noName++;
     continue;
   }
+
+  // When the source packs "Legal, LLC DBA Trade" into one field (VT et al.) or
+  // has no DBA column at all, recover the legal side before deriving the
+  // display name, so the "Licensed as …" fine print stays populated.
+  if (!legalName) {
+    const pre = name.match(/^(.*?)[\s,:;(]*\bdba\b/i);
+    if (pre && pre[1].trim().length >= 2) legalName = pre[1].trim();
+    else if (ENTITY_SUFFIX.test(name)) legalName = name;
+  }
+  name = tradeName(name);
+  const legalOk = legalName.length >= 2 && legalName.length <= 120;
 
   // `location` is NOT NULL in the schema and a listing needs a map point — drop
   // records without valid premise coordinates rather than emit a broken insert.
