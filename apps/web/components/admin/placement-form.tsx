@@ -9,6 +9,7 @@ import { Field } from '../dashboard/field';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { DispensaryPicker } from './dispensary-picker';
 
 const TYPE_LABELS: Record<string, string> = {
   featured: 'Featured (boost in search & city pages)',
@@ -17,11 +18,7 @@ const TYPE_LABELS: Record<string, string> = {
   promoted_product: 'Promoted product',
 };
 
-export function PlacementForm({
-  dispensaries,
-}: {
-  dispensaries: { id: string; name: string }[];
-}) {
+export function PlacementForm() {
   const [state, action] = useActionState(createPlacement, EMPTY_FORM_STATE);
   const fe = state.fieldErrors ?? {};
   const [type, setType] = useState('featured');
@@ -33,13 +30,7 @@ export function PlacementForm({
 
       <section className="grid gap-4 sm:grid-cols-2">
         <Field label="Dispensary" htmlFor="dispensary_id" error={fe.dispensary_id}>
-          <Select id="dispensary_id" name="dispensary_id" required>
-            {dispensaries.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </Select>
+          <DispensaryPicker />
         </Field>
         <Field label="Placement type" htmlFor="type" error={fe.type}>
           <Select id="type" name="type" value={type} onChange={(e) => setType(e.target.value)}>
