@@ -1,0 +1,401 @@
+record_number,name,address,expiration,status
+AU-R-001573,JARS Cannabis,"1825 East US Highway 2, Norway MI 49870",07/02/2027,Active
+AU-R-001562,High Standard Cannabis,"50 N. M-37 HWY Suite C, Hastings MI 49058",05/28/2027,Active
+AU-R-001560,Gramz Cannabis,"11430 Holiday DR, New Buffalo MI 49117",06/25/2027,Active
+AU-R-001551,HOG Cannabis Co. Provisioning,"7812 Portage RD, Portage MI 49002",09/29/2027,Active
+AU-R-001574,Dispo New Buffalo,"19325 US 12 HWY, New Buffalo MI 49117",06/15/2027,Active
+AU-R-001555,The Green Door Kalamazoo,"4037 S. Westnedge AVE, Kalamazoo MI 49008",06/15/2027,Active
+AU-R-001571,Blaney Farm Corp,"4404 N M-77 HWY, Germfask MI 49836",05/06/2026,Active
+AU-R-001561,Mint Cannabis,"922 S. Main ST, Adrian MI 49221",12/30/2026,Active
+AU-R-001566,MarijuanaLand,"1204 W US HWY 2, Germfask MI 49836",06/08/2027,Active
+AU-R-001563,Dacut New Buffalo,"19317 US 12, New Buffalo MI 49117",06/04/2027,Active
+AU-R-001564,Blazed Cannabis,"131 W Chicago ST, Quincy MI 49082",06/04/2027,Active
+AU-R-001559,Good Nature Cannabis Company,"270 Crandall PKWY, Lawrence MI 49064",09/06/2027,Active
+AU-R-001541,Apothecare Benzonia,"1983 Benzie HWY, Benzonia MI 49616",02/09/2027,Active
+AU-R-001552,Pure Cannabis Outlet Warren,"25018 Dequindre, Warren MI 48091",05/21/2027,Active
+AU-R-001558,Lake Effect Westnedge,"5216 S. Westnedge AVE, Portage MI 49002",05/21/2027,Active
+AU-R-001557,Doja Central,"8277 Arnt BLVD, Watervliet MI 49098",05/21/2027,Active
+AU-R-001549,Pure Options Express - Lansing South,"3010 Dunckel RD, Lansing MI 48910",09/08/2027,Active
+AU-R-001553,The Trap Cannabis Co.,"19511 US 12, New Buffalo MI 49117",05/18/2027,Active
+AU-R-001536,Smilez Cannabis,"1139 S. Centerville RD Suite C, Sturgis MI 49091",05/13/2027,Active
+AU-R-001546,Levels of Redford,"24525 Plymouth RD, Redford MI 48239",05/08/2027,Active
+AU-R-001527,Choice,"3331 Page AVE, Jackson MI 49203",04/30/2027,Active
+AU-R-001550,LOUD! Cannabis,"32900 Dequindre Suite A, Warren MI 48092",04/29/2027,Active
+AU-R-001545,Green Care,"10880 W. Jefferson AVE, River Rouge MI 48218",04/29/2027,Active
+AU-R-001543,Midnight Green,"700 Tappan ST, Ann Arbor MI 48104",04/23/2027,Active
+AU-R-001534,Quality Roots Waterford,"1700 Tull CT, Waterford MI 48327",04/22/2027,Active
+AU-R-001538,Corner Budz LLC,"10307 West Jefferson AVE, River Rouge MI 48218",04/21/2027,Active
+AU-R-001544,Highatus,"10269 US-12, White Pigeon MI 49099",04/17/2027,Active
+AU-R-001540,Trapperz Alley New Buffalo,"19563 W US-12 HWY, New Buffalo MI 49117",04/16/2027,Active
+AU-R-001537,Zazen,"25813 7 Mile RD, Redford MI 48240",04/14/2027,Active
+AU-R-001528,Boogiez Arcanna,"600 S. Capitol AVE, Lansing MI 48933",04/14/2027,Active
+AU-R-001515,JARS Cannabis,"18580 Fort ST, Riverview MI 48193",04/14/2027,Active
+AU-R-001539,Clarity Cannabis,"24517 John R RD, Hazel Park MI 48030",04/09/2027,Active
+AU-R-001525,Smilez of Corunna,"2150 E. Main ST, Corunna MI 48817",04/08/2027,Active
+AU-R-001531,"GLH Muskegon, LLC","1840 6th ST, Muskegon MI 49441",04/06/2027,Active
+AU-R-001519,Fuel 420,"1255 Falahee RD, Jackson MI 49203",04/06/2027,Active
+AU-R-001526,High-Way 23,"2426 E. Huron RD, Au Gres MI 48703",08/20/2026,Active
+AU-R-001517,Blue Sky Ann Arbor,"321 E Liberty ST, Ann Arbor MI 48104",03/31/2027,Active
+AU-R-001532,Supergood,"18910 Harbor Country Drive, New Buffalo MI 49117",03/31/2027,Active
+AU-R-001521,Happy Daze,"14498 Laplaisance RD, Monroe MI 48161",03/30/2027,Active
+AU-R-001510,"Exotics Cannabis - Pontiac, Exotics Pontiac","772 Cesar E Chavez AVE, pontiac MI 48340",03/25/2027,Active
+AU-R-001533,Weed Mart New Buffalo,"13944 Grand AVE, New Buffalo MI 49117",03/25/2027,Active
+AU-R-001513,Green Acres Ann Arbor 2,"3430 Washtenaw AVE, Ann Arbor MI 48104",03/18/2027,Active
+AU-R-001530,Nuggets Detroit LLC,"18270 Telegraph RD Suite A, Detroit MI 48219",03/18/2027,Active
+AU-R-001523,UNIQ Cannabis,"10309 W US 12 HWY, New Buffalo MI 49117",07/12/2027,Active
+AU-R-001522,Lume Cannabis Co.,"19471 W. US-12 HWY, New Buffalo MI 49117",11/27/2026,Active
+AU-R-001524,Flint Town Cannabis,"3401 Corunna RD, Flint MI 48503",03/09/2027,Active
+AU-R-001518,The Flowerbowl Ecorse,"148 Southfield RD, Ecorse MI 48229",03/06/2027,Active
+AU-R-001511,Quality Roots Pontiac,"41 E. Walton BLVD, Pontiac MI 48340",03/05/2027,Active
+AU-R-001512,The Gardenz,"592 Lakeville RD Unit 100, Oxford MI 48371",06/22/2027,Active
+AU-R-001506,The Woods Cheboygan,"123 E State ST, Cheboygan MI 49721",02/27/2027,Active
+AU-R-001520,Jailhouse Cannabis Co,"704 E Cayuga ST, Bellaire MI 49615",02/27/2027,Active
+AU-R-001502,Planet Purple,"39530 Red Arrow HWY, Paw Paw MI 49079",02/18/2027,Active
+AU-R-001514,Lume Cannabis Co.,"3075 Peregrine DR NE, Grand Rapids MI 49505",11/27/2026,Active
+AU-R-001505,Lume Cannabis Co.,"850 E Main ST, Morenci MI 49256",11/27/2026,Active
+AU-R-001499,High Profile Cannabis Shop,"10552 Evans DR Unit 1-5, Luna Pier MI 48157",02/10/2027,Active
+AU-R-001500,Trap Kingz Cannabis,"989 E Main ST, Morenci MI 49256",02/09/2027,Active
+AU-R-001486,Better Cannabis,"15831 Mack AVE, Detroit MI 48224",02/04/2027,Active
+AU-R-001492,The Woods Warren,"14210 E 11 Mile RD, Warren MI 48089",02/02/2027,Active
+AU-R-001480,Crafted Leaf,"314 Arlington ST, Middleville MI 49333",01/30/2027,License Void
+AU-R-001497,Farmhouse Provisions,"W17812 US HWY 2, GOULD CITY MI 49838",01/29/2027,Active
+AU-R-001503,Timber Cannabis Co.,"655 Ann Street NW, Grand Rapids MI 49504",09/17/2026,Active
+AU-R-001494,Flower Gallery,"4510 West Pierson RD, Flint MI 48504",01/20/2027,Active
+AU-R-001495,Levels of Adrian,"1032 S Main ST, Adrian MI 49221",03/22/2027,Active
+AU-R-001498,Moses Roses,"17375 East 8 Mile Road, Eastpointe MI 48021",01/15/2027,Active
+AU-R-001491,Kulture 81,"81 N Saginaw ST, Pontiac MI 48342",01/14/2027,Active
+AU-R-001482,Chronic City,"6810 E. MCNICHOLS RD, Detroit MI 48212",01/12/2027,Active
+AU-R-001501,Abra K Dabra LLC,"643 E State ST, Colon MI 49040",01/07/2027,Active
+AU-R-001490,19701 New Buffalo Business LLC,"19703 W US 12, NEW BUFFALO MI 49117",01/06/2027,Active
+AU-R-001496,Mint Cannabis,"221 E. Front ST, Buchanan MI 49107",12/30/2026,Active
+AU-R-001481,810 Collective,"4184 Pier North BLVD Suite A, Flint MI 48504",07/17/2026,Active
+AU-R-001493,Green Acres Westland,"8455 N Inkster RD, Westland MI 48185",12/17/2026,Active
+AU-R-001466,Greenways Provisioning Center,"4568 M-30, Beaverton MI 48612",03/29/2027,Active
+AU-R-001476,20Past4 Stockbridge,"5010 S. M-106, Stockbridge MI 49285",12/11/2026,Active
+AU-R-001477,House of Dank Eastside,"11999 Gratiot, Detroit MI 48213",12/10/2026,Active
+AU-R-001467,Exclusive Lowell,"2384 W MAIN ST SE, LOWELL MI 49331",12/09/2026,Active
+AU-R-001483,Urb Sturgis,"1640 S. Centerville RD, Sturgis MI 49091",12/09/2026,Active
+AU-R-001484,Timber Cannabis Co.,"502 N. Saginaw Street, Holly MI 48442",09/17/2026,Active
+AU-R-001479,Top Cannabis Outlet RR,"286 Burke ST, River Rouge MI 48218",12/03/2026,Active
+AU-R-001473,"Green Gold Enterprises, LLC","2401 E. Milham AVE, Portage MI 49002",12/01/2026,Active
+AU-R-001474,Horticultural Urban Botanicals (H.U.B.),"2611 Nodular DR, Saginaw MI 48601",02/25/2027,Active
+AU-R-001478,Mango Cannabis New Buffalo Twp,"10227 W US 12 HWY, New Buffalo MI 49117",11/25/2026,Active
+AU-R-001475,Mary Jane's On Main,"450 South Main Street, Suite 1, Ann Arbor MI 48104",11/20/2026,Active
+AU-R-001468,The Dude Abides Marijuana Retailer,"71020 M-103, White Pigeon MI 49099",02/18/2027,Active
+AU-R-001462,Elevated Exotics,"13899 Grand AVE, New Buffalo MI 49117",06/16/2027,Active
+AU-R-001458,Wojo Cannabis Co.,"606 3rd ST, Bay City MI 48708",11/05/2026,Active
+AU-R-001461,National Brands Distribution LLC,"3820 Varsity DR, Ann Arbor MI 48108",09/10/2026,Active
+AU-R-001465,3 Smokes,"7200 W US 12, Three Oaks MI 49128",03/24/2027,Active
+AU-R-001472,"Great Lakes Cannabis Management Group, LLC","3470 S. M-37, Baldwin MI 49304",07/10/2027,Active
+AU-R-001470,Kush E Mart,"19215 US 12, New Buffalo MI 49117",10/27/2026,Active
+AU-R-001469,Green Pharm Camden,"331 E Bell ST, Camden MI 49232",10/27/2026,Active
+AU-R-001463,Noxx,"19169 W US-12 HWY, New Buffalo MI 49117",10/16/2026,Active
+AU-R-001459,Skeetown Drive Thru,"551 YOUNG AVE, Muskegon MI 49444",04/08/2027,Active
+AU-R-001460,Space Station Cannabis Company,"716 Sol Morris AVE, White Pigeon MI 49099",05/06/2027,Active
+AU-R-001443,Joyology Cass and Groesbeck,"195 Malow CT Suite A, Mount Clemens MI 48043",09/24/2026,Active
+AU-R-001447,Legacy Greens LLC,"19347 MOUNT ELLIOTT, DETROIT MI 48234",02/16/2027,Active
+AU-R-001457,Good Vibes Port Huron,"515 Wall ST, Port Huron MI 48060",09/18/2026,Active
+AU-R-001455,Capital Dank Wellness,"160 E Columbia AVE, Battle Creek MI 49015",09/16/2026,Active
+AU-R-001445,Star Budz Corunna,"2550 E M 21, Corunna MI 48817",09/16/2026,Active
+AU-R-001444,Star Budz Burton,"3491 E Bristol RD, Burton MI 48529",09/16/2026,Active
+AU-R-001441,The Exhibit,"5508 S Cedar ST, Lansing MI 48911",07/18/2027,Active
+AU-R-001453,JARS Cannabis,"1035 W 12 Mile RD, Madison Heights MI 48071",09/10/2026,Active
+AU-R-001454,Jazz Cannabis Club Lapeer,"1333 IMLAY CITY RD, LAPEER MI 48446",09/08/2026,Active
+AU-R-001450,Dank Garden LLC,"7741 Lyndon ST, Detroit MI 48238",09/08/2027,Active
+AU-R-001440,Emerald Fire Farms powered by Wise Guys Provisioning,"2814 Cook RD, West Branch MI 48661",09/05/2026,Active
+AU-R-001435,Dutch Republic,"435 Blue Star HWY, Douglas MI 49406",09/04/2026,Active
+AU-R-001437,Endo Ypsilanti Inc,"1070 N Huron River DR, Ypsilanti MI 48197",09/04/2026,Active
+AU-R-001452,JARS Cannabis,"808 S Center RD Suite D, Flint MI 48506",09/03/2027,Active
+AU-R-001451,Herbology Cannabis Co. New Buffalo,"19730 M-239, New Buffalo MI 49117",09/02/2026,Active
+AU-R-001442,The Chronic Michigan,"20760 Harper AVE, Harper Woods MI 48225",06/19/2027,Active
+AU-R-001433,Weed Mart,"11815 Joseph Campau ST Suite B, Hamtramck MI 48212",12/16/2026,Active
+AU-R-001432,Muha Meds East Detroit,"16829 Harper AVE, Detroit MI 48224",08/19/2026,Active
+AU-R-001448,High Standard Cannabis,"1100 N Layfayette ST, Greenville MI 48838",05/28/2027,Active
+AU-R-001434,The Cake House - Detroit,"20477 SCHAEFER HWY, Detroit MI 48235",08/15/2026,Active
+AU-R-001438,Premiere Provisions,"840 Clark ST Suite 1, Big Rapids MI 49307",08/26/2026,Active
+AU-R-001417,Herbology Romeo,"15355 32 Mile RD, Romeo MI 48065",08/08/2026,Active
+AU-R-001431,LaHaze Cannabis Company,"217 Mill ST, Cheboygan MI 49721",08/06/2026,Active
+AU-R-001429,Gramz Cannabis Detroit,"6650 E. Eight Mile RD, Detroit MI 48234",08/04/2027,Active
+AU-R-001426,NBMI Retail LLC,"19839 W US-12 HWY, New Buffalo MI 49117",03/20/2027,Active
+AU-R-001421,Joyology of Portage,"8314 Portage RD, Portage MI 49002",07/25/2026,License Void
+AU-R-001428,Bowdega,"45411 Park AVE Suite B, Utica MI 48315",07/21/2026,Active
+AU-R-001410,Burn Cannabis Retail,"24649 Mound RD Suite B, Warren MI 48091",05/21/2027,Active
+AU-R-001422,Supergood,"13992 Grand AVE, New Buffalo MI 49117",07/16/2027,Active
+AU-R-001418,Dealz Cannabis Collective,"1285 US HIGHWAY 2 S, CRYSTAL FALLS MI 49920",07/16/2026,Active
+AU-R-001427,High Society New Buffalo,"19189 W US 12 Highway, New Buffalo MI 49117",07/14/2027,Active
+AU-R-001420,Levels of New Buffalo,"11430 Holiday DR, New Buffalo MI 49117",07/14/2026,License Void
+AU-R-001423,Puff,"4305 Portage ST, Kalamazoo MI 49001",07/14/2027,Active
+AU-R-001430,Haze MP LLC,"914 E. Pickard ST, Mt. Pleasant MI 48858",07/13/2027,Active
+AU-R-001411,Vibe New Buffalo,"19689 W US-12 HWY, New Buffalo MI 49117",07/11/2027,Active
+AU-R-001414,420 Dank Leoni,"6007 Ann Arbor RD, Jackson MI 49201",07/07/2027,Active
+AU-R-001415,The Clinic Riverview,"18480 Fort ST, Riverview MI 48193",07/01/2027,Active
+AU-R-001406,Lumberjack's Green Leaf,"1450 West M-43 HWY Suite 5, Hastings MI 49058",06/26/2027,Active
+AU-R-001419,Lume Cannabis Co.,"752 Munson AVE, Traverse City MI 49686",11/27/2026,Active
+AU-R-001412,Dacut Monroe,"14921 Laplaisance RD, Monroe MI 48161",06/24/2027,Active
+AU-R-001416,Local Roots Cannabis Company,"685 N. Main ST Suite A, Perry MI 48872",03/02/2027,Active
+AU-R-001401,The Chronic Michigan,"23751 Hoover RD Suite A, Warren MI 48089",06/19/2027,Active
+AU-R-001389,Michigan Organic Solutions,"3549 S. Dort HWY Suite 106, Flint MI 48507",09/14/2026,Active
+AU-R-001394,House of Dank New Buffalo,"19333 M-239, New Buffalo MI 49117",06/11/2027,Active
+AU-R-001404,Green Pharm of Allegan,"633 HOOKER RD, Allegan MI 49010",05/28/2027,Active
+AU-R-001403,Frosty Trees Store,"352 E US 41, Negaunee MI 49866",05/20/2027,Active
+AU-R-001399,Kush E Mart,"19215 US 12, New Buffalo MI 49117",08/10/2026,License Void
+AU-R-001400,House of Dank Garden City,"32330 Ford RD Suite C, Garden City MI 48135",05/19/2027,Active
+AU-R-001390,The Exhibit Cannabis Co LLC,"4045 E Court ST, Burton MI 48509",07/18/2027,Active
+AU-R-001395,Supergood,"1830 172nd AVE Suite D-1, Grand Haven MI 49417",05/18/2027,Active
+AU-R-001397,"Boss Leaf, LLC","314 Munson AVE, Traverse City MI 49686",05/05/2027,Active
+AU-R-001392,"Lucky Buds 2, Inc.","207 E MAIN ST Suite 1, STANTON MI 48888",04/24/2027,Active
+AU-R-001396,Puff New Buffalo,"11300 Holiday DR, NEW BUFFALO MI 49117",04/16/2027,Active
+AU-R-001386,Crafted Leaf,"801 Michigan ST NE, Grand Rapids MI 49503",04/14/2027,Active
+AU-R-001383,Lume Cannabis Co.,"910 S. State ST, Big Rapids MI 49307",11/27/2026,Active
+AU-R-001391,Information Entropy I(x4),"18350 US HWY 12, New Buffalo MI 49117",11/19/2026,Active
+AU-R-001382,Eden East Garden LLC,"2601 E Maumee ST, Adrian MI 49221",04/07/2027,Active
+AU-R-001388,King of Budz Taylor,"20720 Eureka RD, Taylor MI 48180",04/07/2027,Active
+AU-R-001371,JARS Cannabis,"26700 Liberal ST Suite 1, Center Line MI 48015",04/04/2027,Active
+AU-R-001387,Exotics Cannabis Saginaw,"1215 Court ST, Saginaw MI 48602",04/01/2027,Active
+AU-R-001372,Krewe Cannabis Co,"2390 Pipestone RD, Benton Harbor MI 49022",03/26/2027,Active
+AU-R-001384,Higher Love,"421 N. Lincoln RD, Escanaba MI 49829",02/01/2027,Active
+AU-R-001381,Quality Roots Kalamazoo,"104 North Drake RD, Kalamazoo MI 49009",03/25/2027,Active
+AU-R-001376,Little Shop of Weed,"1012 N LANSING ST, Mt. Pleasant MI 48858",03/19/2027,Active
+AU-R-001375,Herbology Cannabis Co Adrian,"1561 W. Maumee ST, Adrian MI 49221",03/19/2027,Active
+AU-R-001362,Best Budz Outlet,"326 East Main ST, Benton Harbor MI 49022",03/19/2027,Active
+AU-R-001379,Southland Farms,"215 S 11th ST, Niles MI 49120",03/17/2026,Active
+AU-R-001378,Cookies New Buffalo,"19001 US-12, New Buffalo MI 49117",03/11/2027,Active
+AU-R-001363,Lumberjack's Provisioning Center,"8975 S M37 HWY, Dowling MI 49050",02/28/2027,Active
+AU-R-001367,Boogiez Arcanna,"3435 E MICHIGAN AVE, JACKSON MI 49202",02/28/2027,Active
+AU-R-001360,Jazz Cannabis Club Inkster,"27332 Michigan AVE, Inkster MI 48141",02/27/2027,Active
+AU-R-001369,Elevated Exotics,"1012 20th AVE, Menominee MI 49858",06/16/2027,Active
+AU-R-001374,Jars Cannabis,"45221 Utica Park BLVD Suite A, Utica MI 48315",02/20/2027,Active
+AU-R-001366,8th Street Canna,"877 E 8 Mile RD, Hazel Park MI 48030",02/20/2027,Active
+AU-R-001354,Flower Bowl Corktown,"2101 W Lafayette BLVD Suite 106, Detroit MI 48216",02/19/2027,Active
+AU-R-001373,Green Sheep Cannabis Co,"104 E Edgerton ST, Howard City MI 49329",02/18/2027,Active
+AU-R-001377,Ascend Cannabis Detroit,"24363 W Grand River AVE, Detroit MI 48219",02/18/2027,Active
+AU-R-001365,JARS Cannabis,"1132 Dexter ST, Milan MI 48160",02/13/2027,Active
+AU-R-001358,Smooch,"221 S Main ST, Oakley MI 48649",02/21/2027,Active
+AU-R-001352,Planet Jane,"815 N. Huron River DR, Ypsilanti MI 48197",02/07/2027,Active
+AU-R-001355,Igloo Cannabis Store,"120 S Michigan AVE Unit B, Big Rapids MI 49307",02/05/2027,Active
+AU-R-001368,Urb Mount Morris,"4128 Pierson RD, Flint MI 48504",02/04/2027,Active
+AU-R-001341,Star Budz Provisioning,"400 S Dort HWY, Flint MI 48503",01/31/2027,Active
+AU-R-001349,GLH Lansing,"5245 N Grand River AVE, Lansing MI 48906",01/30/2027,Active
+AU-R-001353,Bank of Buds Cannabis Co.,"24703 N RIVER RD, MT CLEMENS MI 48043",01/27/2027,Active
+AU-R-001346,Green Acres Ann Arbor,"3438 E Ellsworth RD, Ann Arbor MI 48108",01/21/2027,Active
+AU-R-001350,Bloom City Club,"4120 Stadium DR, Kalamazoo MI 49008",01/21/2027,Active
+AU-R-001339,Joyology of Mt Pleasant,"702 N Mission ST, Mt Pleasant MI 48858",01/16/2026,License Void
+AU-R-001359,Gazzz,"27935 Groesbeck HWY, Roseville MI 48066",01/15/2027,Active
+AU-R-001348,Top Cannabis Outlet,"3375 E Washington Rd, Saginaw MI 48601",06/22/2027,Active
+AU-R-001327,Joint Ventures Cannabis Co,"133 W Monroe ST, Bangor MI 49013",01/13/2026,License Void
+AU-R-001344,Gramz Cannabis,"223 N US 131, Three Rivers MI 49093",01/09/2027,Active
+AU-R-001332,Essence South,"19616 Kelly RD, Harper Woods MI 48225",01/16/2027,Active
+AU-R-001357,Jailhouse Cannabis Co,"782 S Cedar ST, Kalkaska MI 49646",11/23/2026,Active
+AU-R-001356,Timber Cannabis Co.,"19615 US 12, New Buffalo MI 49117",09/17/2026,Active
+AU-R-001325,"The Jungle House, LLC","338 S Ashley ST, Ann Arbor MI 48104",12/23/2026,Active
+AU-R-001347,Zaza Recreational,"6045 W PIERSON RD Unit 2, FLUSHING MI 48433",12/19/2026,Active
+AU-R-001342,Herbana,"2119 Haslett RD Suite A, Haslett MI 48840",12/19/2026,Active
+AU-R-001345,7940 Michigan Avenue LLC,"7940 Michigan AVE, Detroit MI 48210",12/18/2026,Active
+AU-R-001343,Pure Cannabis Outlet New Buffalo,"10271 US-12, New Buffalo MI 49117",12/13/2026,Active
+AU-R-001340,Cannabis Club,"19650 M 239, New Buffalo MI 49117",12/10/2026,Active
+AU-R-001329,Border Buds,"19500 M-239, New Buffalo MI 49117",12/10/2026,Active
+AU-R-001337,New Standard Whitehall,"812 E Colby ST Unit A, Whitehall MI 49461",12/09/2026,Active
+AU-R-001319,The Chronic Michigan,"20720 Eureka RD, Taylor MI 48180",12/04/2025,License Void
+AU-R-001334,Jailhouse Cannabis Co,"10 S Mt Tom RD, Mio MI 48647",11/23/2026,Active
+AU-R-001331,New Standard Exit 9,"12261 Cleveland ST Suite B, Nunica MI 49448",12/02/2026,Active
+AU-R-001335,New Standard Sand Lake,"29 Lake ST, Sand Lake MI 49343",12/02/2026,Active
+AU-R-001338,Burn Cannabis Retail,"30200 Groesbeck HWY, Roseville MI 48066",05/21/2027,Active
+AU-R-001336,JARS Cannabis,"925 40th St. SE, Grand Rapids MI 49508",11/27/2026,Active
+AU-R-001324,Flowerbowl New Buffalo,"10168 US-12, New Buffalo MI 49117",11/27/2026,Active
+AU-R-001326,New Standard Edmore,"202 E Main ST, Edmore MI 48829",11/21/2026,Active
+AU-R-001314,Joyology of Centerline Sherwood,"24837 Sherwood AVE, Center Line MI 48015",11/19/2026,Active
+AU-R-001315,The Reef Detroit,"6640 E 8 Mile RD, Detroit MI 48234",11/14/2025,License Void
+AU-R-001322,Hyde Cannabis,"8052 E Eight Mile RD, Detroit MI 48234",11/14/2026,Active
+AU-R-001313,Mint Cannabis,"18300 W US-12 Unit 1A, New Buffalo MI 49117",11/14/2026,Active
+AU-R-001321,Quantum Crest LLC,"7035 State RD, Millington MI 48746",11/14/2026,Active
+AU-R-001330,Vibe New Buffalo,"19689 W US-12 HWY, New Buffalo MI 49117",03/20/2026,License Void
+AU-R-001318,King of Budz Roseville,"29999 Groesbeck HWY, Roseville MI 48066",11/13/2026,Active
+AU-R-001320,"N-East Services, LLC","1341 Lake Lansing RD, Lansing MI 48906",03/18/2026,License Void
+AU-R-001323,Mint Cannabis Roseville,"28970 Hayes RD, Roseville MI 48066",11/06/2026,Active
+AU-R-001306,Trapstars Outlet,"13964 Grand AVE, New Buffalo MI 49117",10/30/2026,Active
+AU-R-001316,Greener Days Recreational Retail,"204 E Saginaw ST, Breckenridge MI 48615",08/29/2026,Active
+AU-R-001310,Lettuce,"2422 Benzie HWY, Benzonia MI 49616",01/19/2026,License Void
+AU-R-001302,JARS Cannabis,"3520 Okemos RD Suite 10, Okemos MI 48864",10/15/2026,Active
+AU-R-001311,"Vibe Ann Arbor, LLC","603 E William ST, Ann Arbor MI 48104",10/14/2026,Active
+AU-R-001312,The Plug - New Buffalo,"19015 US-12, New Buffalo MI 49117",10/09/2026,Active
+AU-R-001294,Mango Cannabis,"5620 S Cedar ST, Lansing MI 48911",10/04/2026,Active
+AU-R-001307,JARS Cannabis,"11451 O'Brien CT, New Buffalo MI 49117",10/01/2026,Active
+AU-R-001293,King of Budz Inkster,"29245 Michigan AVE, Inkster MI 48141",10/01/2026,Active
+AU-R-001305,Lef Cannabis Co,"653 S Lapeer RD, Oxford MI 48371",09/30/2025,License Void
+AU-R-001285,Michigan's Top Shelf,"5540 E 8 Mile RD, Detroit MI 48234",09/30/2026,Active
+AU-R-001279,Eleven Cannabis Company,"3120 ELEVEN MILE ROAD, BERKLEY MI 48072",09/27/2026,Active
+AU-R-001309,Green Medicine Shop,"500 N Lafayette ST, Greenville MI 48838",09/24/2026,Active
+AU-R-001291,JARS Cannabis,"709 E Columbia AVE, Battle Creek MI 49014",09/23/2026,Active
+AU-R-001290,First Class Cannabis Co,"241 E Main ST, Benton Harbor MI 49022",09/23/2026,Active
+AU-R-001300,Urb Mount Pleasant,"1322 E Pickard ST, Mount Pleasant MI 48858",09/20/2026,Active
+AU-R-001299,Good Vibes Cannabis Co,"323 Southfield RD, Ecorse MI 48229",09/20/2026,Active
+AU-R-001298,High Q Cannabis,"49755 Leona DR, Chesterfield MI 48051",09/18/2026,Active
+AU-R-001292,Hollywood Jack's,"1764 Lansing Road, Charlotte MI 48813",09/18/2026,Active
+AU-R-001301,Pincanna,"2207 S Mission ST, Mt. Pleasant MI 48858",03/03/2026,License Void
+AU-R-001282,Envy Canna,"3737 E Apple AVE, Muskegon MI 49442",09/10/2026,Active
+AU-R-001303,Refine New Buffalo Co.,"19281 US 12, New Buffalo MI 49117",09/10/2026,Active
+AU-R-001287,JARS Cannabis,"420 W Railroad ST, Caspian MI 49915",09/06/2026,Active
+AU-R-001297,Higher Love,"751 Greenland RD Unit B, Ontonagon MI 49953",02/01/2027,Active
+AU-R-001277,Greenways Provisioning Center,"403 E M-30 Unit A, Gladwin MI 48624",03/29/2027,Active
+AU-R-001278,The OUI-D Shop Menominee,"3113 10th ST, Menominee MI 49858",08/26/2026,Active
+AU-R-001271,Green Acres Michigan Ave,"26201 Michigan AVE, Inkster MI 48141",08/14/2027,Active
+AU-R-001281,Biogold Dispo powered by Tranquility Fields,"1825 E US Highway 2, Norway MI 49870",08/13/2026,License Void
+AU-R-001264,"Seven Point Dispensing of Michigan, LLC","28557 Woodward AVE, Berkley MI 48072",08/12/2026,Active
+AU-R-001269,Noxx,"23622 Woodward AVE, Pleasant Ridge MI 48069",08/12/2026,Active
+AU-R-001273,"875 North, LLC","875 North AVE, Battle Creek MI 49017",08/12/2026,Active
+AU-R-001265,Skunkz Cannabis,"1628 Division AVE S, Grand Rapids MI 49507",08/12/2026,Active
+AU-R-001272,Craft Leaf LLC,"211 W GARFIELD AVE, Coldwater MI 49036",08/25/2026,Active
+AU-R-001284,"Wayland Gas Station, LLC","1124 W Superior ST, Wayland MI 49348",08/09/2026,Active
+AU-R-001289,JARS Cannabis,"810 W Argyle ST, Jackson MI 49202",08/09/2026,Active
+AU-R-001270,Simply Loud,"216 E Milwaukee ST, Detroit MI 48202",08/09/2027,Active
+AU-R-001242,Gramz Cannabis Romeo,"100 McLean DR, Romeo MI 48065",08/05/2027,Active
+AU-R-001283,High Society 6,"515 Lansing ST Unit B, Charlotte MI 48813",08/02/2026,Active
+AU-R-001261,The High Club Port Huron,"1007 Lapeer AVE, Port Huron MI 48060",07/30/2026,Active
+AU-R-001262,Levels of Grand Haven,"1021 Jackson AVE, Grand Haven MI 49417",07/26/2027,Active
+AU-R-001274,Levels of Waterford,"2060 Dixie HWY Suite 100, Waterford MI 48328",07/26/2027,Active
+AU-R-001268,American Grown,"1864 US-23, East Tawas MI 48730",08/08/2026,Active
+AU-R-001244,Banzen,"55 S Michigan AVE, Coldwater MI 49036",07/23/2026,Active
+AU-R-001275,Meds Cafe,"115 S Wisconsin AVE, Gaylord MI 49735",12/27/2026,Active
+AU-R-001259,The Exhibit,"1033 River ST, Port Huron MI 48060",07/18/2027,Active
+AU-R-001256,PUFF Cannabis Centerline,"26530 Liberal ST, Center Line MI 48015",07/11/2027,Active
+AU-R-001253,Bloom & Blaze,"1724 E Genesee AVE, Saginaw MI 48601",07/11/2026,Active
+AU-R-001267,Love Supreme Craft Cannabis,"1925 Century Ave SW Unit A, Grand Rapids MI 49503",07/08/2026,Active
+AU-R-001245,House of Dank Ann Arbor,"2730 Jackson AVE, Ann Arbor MI 48103",07/08/2027,Active
+AU-R-001276,The Big Top Cannabis Company,"11990 Pulaski RD, Hanover MI 49241",07/08/2026,Active
+AU-R-001231,JARS Cannabis,"6790 Just Barns DR, Fennville MI 49408",08/07/2027,Active
+AU-R-001249,Hazed Cannabis,"1115 Corunna AVE, Owosso MI 48867",07/03/2025,License Void
+AU-R-001247,Wacky Jackz Cannabis,"7043 HWY 2 & 41 & M-35, Gladstone MI 49837",09/14/2026,Active
+AU-R-001263,Flavors Detroit #1,"5730 E 8 Mile RD, Detroit MI 48234",06/28/2027,Active
+AU-R-001260,The Fire Station Cannabis Co,"3101 10th ST Suite A, Menominee MI 49858",12/17/2026,Active
+AU-R-001238,First Class Cannabis Co.,"14921 Laplaisance RD, Monroe MI 48161",08/10/2025,License Void
+AU-R-001254,Canna Klub,"5447 N M-33 Suite B, Rose City MI 48654",05/13/2027,Active
+AU-R-001248,Lettuce 01 LLC,"2201 E Michigan AVE, Jackson MI 49202",06/21/2027,Active
+AU-R-001241,"The Green Door South Haven, Inc.","9287 Blue Star HWY, South Haven MI 49090",06/18/2027,Active
+AU-R-001240,BE Provisioning,"1730 US-23, East Tawas MI 48730",04/16/2025,License Void
+AU-R-001246,The Trap Cannabis Co LLC,"1817 Commerce ST, Muskegon MI 49441",06/17/2027,Active
+AU-R-001234,"Grand Rapids Cannabis Company, LLC","2701 Oak Industrial Dr NE, Grand Rapids MI 49505",06/14/2026,License Void
+AU-R-001239,Grip Cannabis of Oxford,"280 N Washington ST, Oxford MI 48371",06/11/2027,Active
+AU-R-001232,Meds Cafe,"700 Tappan ST, Ann Arbor MI 48104",12/27/2024,License Void
+AU-R-001223,Harbor Farmz,"122 Lansing ST, Charlotte MI 48813",06/04/2027,Active
+AU-R-001227,Moses Roses Chesaning,"101 N Front ST Suite A, Chesaning MI 48616",05/31/2027,Active
+AU-R-001233,Muha Meds Ypsilanti,"19 N Hamilton ST, Ypsilanti MI 48197",05/31/2027,Active
+AU-R-001243,Houghton Lake Provisioning Center,"2041 W Houghton Lake DR, Prudenville MI 48651",05/05/2027,Active
+AU-R-001237,High Standard Cannabis,"25 Ida Red Ave NW Suite 42, Sparta MI 49345",05/28/2027,Active
+AU-R-001225,Leaf and Bud - Battle Creek,"897 North AVE, Battle Creek MI 49017",05/24/2025,License Void
+AU-R-001205,House of Dank Kalamazoo,"1986 S Sprinkle RD, Kalamazoo MI 49048",05/23/2027,Active
+AU-R-001224,Stash House,"1525 S Division ST Suite 101 & 102, Traverse City MI 49684",05/22/2027,Active
+AU-R-001217,ArCanna,"449 Capital Ave NE, Battle Creek MI 49017",03/15/2027,Active
+AU-R-001212,Higher Breed,"10010 Blue Star HWY, South Haven MI 49090",01/13/2025,License Void
+AU-R-001236,Gatsby Cannabis Co Royal Oak,"5130 Meijer DR, Royal Oak MI 48073",05/20/2027,Active
+AU-R-001226,Royal Treatment,"420 E Harrison AVE, Royal Oak MI 48067",05/17/2027,Active
+AU-R-001218,Pharmhouse Wellness - NBT,"19267 US-12, New Buffalo MI 49117",05/16/2026,License Void
+AU-R-001203,Stateline,"989 E Main ST, Morenci MI 49256",12/22/2025,License Void
+AU-R-001209,The Hempire Collective,"130 S Main ST, Scottville MI 49454",08/18/2026,Active
+AU-R-001229,The Fire Station Cannabis Co.,"507 N Lake St, Ironwood MI 49938",12/17/2026,Active
+AU-R-001221,Leaf and Bud - 420,"11999 Gratiot AVE, Detroit MI 48213",04/04/2025,License Void
+AU-R-001228,Cloud Cannabis Company,"521 E Mosel Ave Suite A, Kalamazoo MI 49004",09/17/2026,Active
+AU-R-001208,Apothecare Houghton,"9166 W Lake City RD, Houghton Lake MI 48629",02/09/2027,Active
+AU-R-001206,Spaced Cannabis,"9030 N SAGINAW RD Suite 4, MOUNT MORRIS MI 48458",05/03/2026,License Void
+AU-R-001195,NOBO,"11637 M-140 Hwy, South Haven MI 49090",02/11/2027,Active
+AU-R-001200,Exotic Cannabis - Adrian,"1579 W Maumee ST, Adrian MI 49221",05/01/2027,Active
+AU-R-001190,Stoney Leaf,"17498 Mount Elliott ST, Detroit MI 48212",02/21/2027,Active
+AU-R-001196,Misty Mountain Cannabis,"111 S Main ST, Ann Arbor MI 48104",05/01/2025,License Void
+AU-R-001201,Zaza 8 Mile,"14239 W 8 Mile RD, Detroit MI 48235",04/23/2027,Active
+AU-R-001177,Puff,"11941 Joseph Campau AVE, Hamtramck MI 48212",04/23/2027,Active
+AU-R-001216,Xhale of Mt Clemens,"85 Mary ST, Mount Clemens MI 48043",04/18/2027,Active
+AU-R-001220,31 Cannabis Park Street,"1922 Park ST Suite A, Muskegon MI 49441",09/07/2026,Active
+AU-R-001214,The Releaf Center of Dowagiac LLC,"29402 Amerihost DR, Dowagiac MI 49047",04/16/2027,Active
+AU-R-001199,20past4 Big Rapids,"701 Maple ST, Big Rapids MI 49307",04/15/2026,License Void
+AU-R-001194,Herbology Cannabis Co Pittsford,"8991 Hudson RD, Pittsford MI 49271",04/15/2025,License Void
+AU-R-001207,Strange Rootz Cannabis,"6069 Holton RD, Twin Lake MI 49457",10/05/2026,Active
+AU-R-001204,420 Dank Detroit,"13510 E Eight Mile RD, Detroit MI 48205",04/08/2027,Active
+AU-R-001213,Light'N Up Cannabis Co,"6403 W Pierson RD, Flushing MI 48433",04/05/2027,Active
+AU-R-001192,Medicine Hat Inc,"9238 W Lake City RD, Houghton Lake MI 48629",04/04/2027,Active
+AU-R-001178,Leaf and Bud - Ann Arbor,"617 Packard ST, Ann Arbor MI 48104",04/04/2025,License Void
+AU-R-001210,JARS Cannabis,"19799 US 12, New Buffalo MI 49117",04/04/2027,Active
+AU-R-001184,Rush Canna,"20 Church ST, Oxford MI 48371",03/28/2027,Active
+AU-R-001202,King of Budz New Buffalo,"19253 M-239, New Buffalo MI 49117",03/27/2027,Active
+AU-R-001172,Octane Detroit,"10101 Fenkell ST, Detroit MI 48238",03/25/2027,Active
+AU-R-001182,Da Plugg Cannabis Company,"665 Capital Ave SW, Battle Creek MI 49015",03/22/2027,Active
+AU-R-001189,Green Bean,"1625 W Atherton RD, Flint MI 48507",03/22/2027,Active
+AU-R-001180,Misty Mountain Cannabis,"3772 Wilder RD, Bay City MI 48706",01/31/2025,License Void
+AU-R-001167,Moses Roses Port Huron,"1600 Pine Grove AVE, Port Huron MI 48060",03/21/2027,Active
+AU-R-001198,Quality Roots Madison Heights,"350 E 14 Mile RD, Madison Heights MI 48071",03/20/2027,Active
+AU-R-001173,Mystic Burr Oak,"253 S 3rd ST, BURR OAK MI 49030",03/19/2026,License Void
+AU-R-001183,Cloud Cannabis Company,"206 N Main Street NE, Cedar Springs MI 49319",09/17/2026,Active
+AU-R-001168,South Flint Plaza Dispo,"4811 Fenton RD Suite 4841, Flint MI 48507",03/18/2027,Active
+AU-R-001174,Phix,"413 W Delaware ST, Decatur MI 49045",03/18/2027,Active
+AU-R-001169,House of Dank Lansing,"2901 N East ST, Lansing MI 48906",03/15/2027,Active
+AU-R-001193,Bloomery Cannabis New Buffalo,"11429 O'Brien CT, New Buffalo MI 49117",03/15/2027,Active
+AU-R-001165,Reefer Cannabis Company,"9066 N Saginaw RD, Mt. Morris MI 48458",03/13/2026,License Void
+AU-R-001163,"Five Buds Cannabis Company, LLC","420 N 4th ST, Roscommon MI 48653",03/12/2027,Active
+AU-R-001187,JARS Cannabis,"18580 Fort ST, Riverview MI 48193",08/07/2026,License Void
+AU-R-001191,Green Acres Riverview,"20990 Fort ST, Riverview MI 48193",03/11/2027,Active
+AU-R-001170,Vive Cannabis Co,"1601 E Grand BLVD Bldg B, Detroit MI 48211",03/08/2027,Active
+AU-R-001176,Green Pharm Menominee,"2121 10TH ST, MENOMINEE MI 49858",08/27/2027,Active
+AU-R-001181,Burton Cannabis Company,"3368 Associates DR, Burton MI 48529",11/19/2026,Active
+AU-R-001186,JARS Cannabis,"1225 S Lapeer RD, Oxford MI 48371",03/05/2027,Active
+AU-R-001188,"Oasis Wellness Center of Lansing 2, LLC","1901 S Mission ST, Mount Pleasant MI 48858",03/04/2026,License Void
+AU-R-001171,Jazz Cannabis Club,"16890 Telegraph RD, Detroit MI 48219",03/01/2027,Active
+AU-R-001140,SMOK Cannabis,"2101 S Dort HWY, Flint MI 48507",03/01/2027,Active
+AU-R-001158,The OUI-D Shop Menominee,"3113 10th ST, Menominee MI 49858",01/08/2025,License Void
+AU-R-001185,Bloomery Cannabis Mt. Clemens,"142 Northbound Gratiot AVE, Mount Clemens MI 48043",02/23/2027,Active
+AU-R-001135,JARS Cannabis,"101 N Groesbeck HWY, Mount Clemens MI 48043",02/22/2027,Active
+AU-R-001145,The Cake House - Pleasant Ridge,"420 E 10 Mile RD Suite A & B, Pleasant Ridge MI 48069",02/22/2027,Active
+AU-R-001161,Misty Mountain Cannabis,"1871 Peck ST, Muskegon MI 49441",01/31/2025,License Void
+AU-R-001166,JARS Cannabis,"51679 Gratiot AVE, Chesterfield MI 48051",02/15/2027,Active
+AU-R-001159,Lyfted LLC,"2131 E Greenwood RD, Prescott MI 48756",02/14/2027,Active
+AU-R-001152,Cloud Cannabis Company,"1760 Plymouth Road, Ann Arbor MI 48105",09/17/2026,Active
+AU-R-001154,JARS Cannabis,"20731 Dequindre RD, Hazel Park MI 48030",02/13/2027,Active
+AU-R-001160,Apothecare Ann Arbor,"2793 Plymouth RD Suite C, Ann Arbor MI 48105",02/13/2027,Active
+AU-R-001157,Green Genie Cannabis Company,"20046 W Warren AVE, Detroit MI 48228",02/09/2027,Active
+AU-R-001162,Apothecare Cheboygan,"414 N Main ST, Cheboygan MI 49721",02/09/2027,Active
+AU-R-001156,Pincanna,"505 E Pinconning RD, Pinconning MI 48650",03/03/2026,License Void
+AU-R-001150,Cloud Cannabis Company,"356 Munson AVE, Traverse City MI 49686",09/17/2026,Active
+AU-R-001148,Cloud Cannabis Company,"2190 Whitehall RD Suite E, Muskegon MI 49445",09/17/2026,Active
+AU-R-001147,Cloud Cannabis Company,"621 Fulton W ST, Grand Rapids MI 49504",09/17/2026,Active
+AU-R-001144,Cloud Cannabis Company,"928 28th SE ST, Grand Rapids MI 49508",09/17/2026,Active
+AU-R-001143,Cloud Cannabis Company,"710 Edelweiss Village Parkway, Gaylord MI 49735",09/17/2026,Active
+AU-R-001149,Cloud Cannabis Company,"35269 Cricklewood BLVD, New Baltimore MI 48047",09/17/2026,Active
+AU-R-001151,Cloud Cannabis Company,"44115 Van Dyke AVE, Utica MI 48317",09/17/2026,Active
+AU-R-001137,Misty Mountain Cannabis,"702 Perry AVE, Big Rapids MI 49307",01/31/2025,License Void
+AU-R-001146,California Michigan Cannabis Company,"891 S Fremont RD, Montgomery MI 49255",01/30/2027,Active
+AU-R-001153,Bowz,"15600 King RD, Riverview MI 48193",01/25/2027,Active
+AU-R-001122,D's Nugs,"13042 Van Dyke AVE, Detroit MI 48234",01/25/2027,Active
+AU-R-001131,Lettuce,"3398 I75 Business Spur, Sault Ste Marie MI 49783",01/19/2026,License Void
+AU-R-001139,Backpack Boyz Monroe,"14501 LAPLAISANCE RD, MONROE MI 48161",01/24/2027,Active
+AU-R-001141,Highly Cannaco of Harrisville,"108 N US Highway 23, Harrisville MI 48740",01/23/2027,Active
+AU-R-001130,Lettuce,"8330 M 37, Baldwin MI 49304",01/19/2025,License Void
+AU-R-001125,HOG Cannabis Co. Provisioning,"1331 W State RD, Belding MI 48809",09/29/2026,Active
+AU-R-001142,Dunegrass Co.,"440 E Front ST, Traverse City MI 49686",08/14/2025,License Void
+AU-R-001114,Elite Cannabis Saginaw,"2030 N Mason ST, Saginaw MI 48602",08/04/2025,License Void
+AU-R-001136,"Backpack Boyz, LLC","6240 E 8 Mile RD, Detroit MI 48234",01/12/2027,Active
+AU-R-001132,JARS Cannabis,"404 Quay ST, Port Huron MI 48060",01/11/2027,Active
+AU-R-001138,Green Genie,"24600 W McNichols RD, Detroit MI 48219",01/11/2027,Active
+AU-R-001105,LUMBERJACK'S PROVISIONING CENTER,"122 W SUPERIOR ST, WAYLAND MI 49348",05/19/2026,License Void
+AU-R-001123,Ragged Wizard,"73460 M-40, Lawton MI 49065",02/03/2027,Active
+AU-R-001126,The Refinery Detroit,"12641 Stout ST, Detroit MI 48223",07/28/2027,Active
+AU-R-001113,Love Cannabis,"19705 W Seven Mile RD, Detroit MI 48219",12/26/2026,Active
+AU-R-001117,"190 N 20th Street, Inc.","190 N 20th ST, Battle Creek MI 49015",12/21/2026,Active
+AU-R-001116,"306 W Columbia Ave, Inc.","306 W Columbia AVE, Battle Creek MI 49015",12/21/2026,Active
+AU-R-001120,Fly Shifter Cannabis,"6220 E Eight Mile RD, Detroit MI 48234",12/20/2026,Active
+AU-R-001133,Urb Cannabis,"11539 O'Brien CT, New Buffalo MI 49117",12/19/2026,Active
+AU-R-001129,The Clinic Detroit,"13815 W 8 Mile RD, Detroit MI 48235",12/19/2026,Active
+AU-R-001124,Lighthouse TC1,"704 S Garfield AVE, Traverse City MI 49686",12/14/2026,Active
+AU-R-001128,Big Dawg Brands,"60695 Gratiot Ave, Lenox MI 48048",12/13/2026,Active
+AU-R-001103,High Profile Cannabis Shop,"100 W Cloverland DR, Ironwood MI 49938",02/10/2027,Active
+AU-R-001118,High Society 4,"2040 Merritt Road, East Lansing MI 48823",12/12/2026,Active
+AU-R-001109,The Woods Mt Pleasant,"502 N Mission ST, Mount Pleasant MI 48858",12/11/2026,Active
+AU-R-001111,M66 Cannabis Company,"3023 20 Mile RD, Barryton MI 49305",12/11/2026,Active
+AU-R-001121,"420 Factory, LLC","7555 Greenfield RD, Detroit MI 48228",12/08/2026,Active
+AU-R-001119,Light Em Up Cannabis Company,"6191 W WARREN AVE, DETROIT MI 48210",12/07/2026,Active
+AU-R-001127,Urb Cannabis Detroit,"7304 Michigan AVE, Detroit MI 48210",12/06/2026,Active
+AU-R-001098,Butter,"2222 W 11 Mile RD, Berkley MI 48072",11/22/2026,Active
+AU-R-001112,Pure Cannabis Outlet Oxford,"650 S Glaspie ST Suite A, Oxford MI 48371",11/30/2026,Active
+AU-R-001115,Green Pharm Detroit,"2619 S Schaefer HWY, Detroit MI 48217",11/28/2026,Active
+AU-R-001107,Crave Cannabis Ann Arbor,"3860 Research Park DR Suite A, Ann Arbor MI 48108",11/16/2026,Active
+AU-R-001108,Utopia Gardens,"6541 E Lafayette, Detroit MI 48207",11/15/2026,Active
+AU-R-001095,Nirvana Houghton,"1301 Ridge RD, Houghton MI 49931",11/14/2026,Active
+AU-R-001101,Mint Cannabis,"1707 S Mission ST, Mt Pleasant MI 48858",11/14/2025,License Void
+AU-R-001076,20Past4 Sturgis,"1103 N Centerville RD, Sturgis MI 49091",11/14/2025,License Void
+AU-R-001104,The Cake House - Ann Arbor,"2115 S State ST, Ann Arbor MI 48104",11/03/2026,Active

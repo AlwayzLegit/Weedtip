@@ -18,7 +18,7 @@ import requests
 FAVICON = "https://www.google.com/s2/favicons?domain={host}&sz=128"
 # Don't use these as a logo source — they're directories/menu platforms, not the shop.
 SKIP_HOSTS = {
-    "weedmaps.com", "leafly.com", "iheartjane.com", "jane.com",
+    "weedmaps.com", "leafly.com", "iheartjane.com", "jane.com", "dutchie.com",
     "google.com", "facebook.com", "instagram.com", "linktr.ee", "linktree.com",
 }
 
