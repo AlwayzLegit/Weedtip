@@ -60,6 +60,16 @@ def main():
     with open(RAW_CSV, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
+    # import-la-dispensaries.mjs derives is_medical/is_recreational from this
+    # column via /medic/ and /adult/ regexes -- "Hybrid"/"Recreational" (a plain
+    # .capitalize() of Weedmaps' license_type) match neither, so both flags
+    # would silently end up false. Map to strings the regexes actually catch.
+    designation_map = {
+        "medical": "Medical",
+        "recreational": "Adult-Use",
+        "hybrid": "Adult-Use/Medicinal",
+    }
+
     with open(out, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
         w.writeheader()
@@ -70,7 +80,7 @@ def main():
                 "license_number": f"OK-WM-{row['id']}",
                 "license_status": "Active" if row["is_published"] == "true" else "Unpublished",
                 "license_type": "Retail (Dispensary)",
-                "license_designation": row["license_type"].capitalize(),
+                "license_designation": designation_map.get(row["license_type"], "Adult-Use/Medicinal"),
                 "premise_street_address": row["address"],
                 "premise_city": row["city"],
                 "premise_state": "OK",

@@ -1,0 +1,295 @@
+id,name,slug,address,city,state,zip,phone,email,license_type,lat,lon,is_published
+324007,Green Fuego Dispensary,green-fuego-dispensary,7502 Mallard Way,Santa Fe,New Mexico,87507,(505) 365-2979,greenfuego505@gmail.com,hybrid,35.635355,-106.065527,true
+317133,Vana Society - Clovis,vana-society,3608 N Prince St Suite E,Clovis,New Mexico,88101,(575) 530-0400,hello@vanasociety.com,hybrid,34.43534,-103.19704,true
+337214,GNOMAD Canna Co - Hobbs,gnomad-canna-co,3501 N Grimes,Hobbs,New Mexico,88240,(575) 392-9333,contactsus@gnomadcannaco.com,hybrid,32.739463,-103.144887,true
+316801,Buds N More Dispensary,buds-n-more-dispensary,3023 S. First St,Tucumcari,New Mexico,88401,(575) 832-9122,budsdispensary.tuc@gmail.com,recreational,35.15044,-103.72537,true
+407244,Nitro Organics,nitro-organics,330 E Motel Dr.,Lordsburg,New Mexico,88045,(575) 542-3344,contact@nitroorganicsnm.com,hybrid,32.349314,-108.70572,true
+400135,Urban Wellness - Sunland Park,urban-wellness-sunland-park,"1500 Appaloosa Dr. Building A, Ste 140",Sunland Park,New Mexico,88063,(575) 332-4205,contact@urbanwellnessnm.com,hybrid,31.80225,-106.56425,true
+369507,Mango Cannabis - Sunland Park,mango-sunland-park,1051 McNutt Rd.,Sunland Park,New Mexico,88063,(575) 332-4108,info@mangocannabis.com,hybrid,31.794891,-106.55688,true
+343339,Better Buds,better-buds-7,107 W Main St,Tucumcari,New Mexico,88401,(575) 832-7300,betterbudsnm@gmail.com,hybrid,35.17922,-103.726396,true
+345328,Urban Wellness - Hobbs,urban-wellness-101,236 E Navajo Suite 700 & 800,Hobbs,New Mexico,88240,(575) 964-2221,contact@urbanwellnessnm.com,hybrid,32.74029,-103.13493,true
+325562,A Nice Dream,anicedream,2506 san mateo place,Albuquerque,New Mexico,87110,(505) 705-9790,anicedream2022@gmail.com,hybrid,35.107679,-106.585951,true
+342139,Ridankulous Alamogordo,ridankulous,918 N. White Sands Blvd.,Alamogordo,New Mexico,88310,(575) 495-2393,Ridankulousweed@gmail.com,hybrid,32.89936,-105.96,true
+319651,ENDO,endo-3,2903 Agua Fria Street,Santa Fe,New Mexico,87507,(505) 477-3636,info@newmexendo.com,hybrid,35.663605,-105.997825,true
+382984,Amigos Cannabis - Rio Rancho,amigos-cannabis-2,1670 NM Highway 528 SE Ste A,Rio Rancho,New Mexico,87124,(505) 396-7778,amigosaccting@gmail.com,hybrid,35.23194053548934,-106.6561768577153,true
+397980,Effy Exotics - Alamogordo,effy-exotics-1,1408 Black St,Alamogordo,New Mexico,88310,(575) 286-4282,ndelarosa@effyexotics.com,hybrid,32.873115,-105.976775,true
+335698,Deep Sky Cannabis - Downtown,deep-sky-cannabis-1,300 Galisteo street #105,Santa Fe,New Mexico,87501,(505) 216-6513,deepskycannabis@gmail.com,hybrid,35.68525,-105.94188,true
+377181,The Cannabis Store,the-cannabis-store-carlsbad,516 S. Canal Street,Carlsbad,New Mexico,88220,(575) 689-1910,hello@vanasociety.com,hybrid,32.415031,-104.228591,true
+405371,Hii Experience,hii-experience,1920 Appaloosa Dr,Sunland Park,New Mexico,88063,(505) 575-4444,info@hiiexperience.com,hybrid,31.803297,-106.569688,true
+393997,OBSIDIAN HAZE,obsidian-haze,1600 AVE O,Eunice,New Mexico,88231,(575) 605-4014,Obsidianhazenm@gmail.com,hybrid,32.44282,-103.16368,true
+401998,Neighborhood Plug,neighborhood-plug,3620 Bosque Plaza Ln NW,Albuquerque,New Mexico,87120,(505) 607-0967,neighborhoodplug505@gmail.com,hybrid,35.158372,-106.678162,true
+406741,Prohibition 37 – Sunland Park,prohibition-37-sunland-park,871 McNutt Rd,Sunland Park,New Mexico,88063,(575) 332-4500,devin@prohibition37.com,hybrid,31.795845,-106.554171,true
+365719,Effy Exotics Dispensary & New 24hr Drive-Thru,effy-exotics,2153 W Picacho Ave,Las Cruces,New Mexico,88007,(575) 652-4619,elopez@effyexotics.com,hybrid,32.311335,-106.806387,true
+392020,Bud Board Dispensary Hobbs,bud-board-dispensary-hobbs,2206 W. Marland,Hobbs,New Mexico,88240,(575) 391-1526,marketing@budboard.biz,hybrid,32.69692,-103.1622,true
+333876,Bud Board Dispensary - Pierce,bud-board-dispensary,618 w Pierce st,Carlsbad,New Mexico,88220,(575) 725-5940,marketing@budboard.biz,hybrid,32.43598,-104.23446,true
+397500,Bud Board Smoke Shop & Dispensary - Canyon,bud-board-dispensary-1,401 South Canyon Street,Carlsbad,New Mexico,88220,(575) 725-5811,Marketing@budboard.biz,recreational,32.436014,-104.234469,true
+400511,Earl & Tom's - Prince,earl-tom-s-prince,3211 N. Prince St,Clovis,New Mexico,88101,(575) 218-3040,earlandtoms@gmail.com,hybrid,34.431176,-103.196186,true
+349197,Black Powder Dispensary,black-powder-dispensary,2859 Cerrillos Rd Unit 4,Santa Fe,New Mexico,87507,(505) 303-3153,Info@blackpowderdispensary.com,recreational,35.657239,-105.989116,true
+360777,Amnesia Dispensary - Juan Tabo,amnesia-dispensary-1,2100 Juan Tabo Blvd NE,Albuquerque,New Mexico,87112,(505) 554-2116,amnesiadispensary505@gmail.com,hybrid,35.104291,-106.514903,true
+401786,NRG LYFT DISPENSARY,nrg-lyft-dispensary,875 McNutt Rd.,Sunland Park,New Mexico,88063,(214) 557-0156,Info@nrglyftdispensary.com,hybrid,31.795789,-106.554247,true
+52271,PurLife Dispensary - Truth or Consequences,mj-express-o-t-c,203 S Foch St,Truth or Consequences,New Mexico,87901,(575) 894-0301,torcinfo@naturesmedicines.com,hybrid,33.129914,-107.254728,true
+407887,Amnesia Dispensary - Isleta,amnesia-dispensary-isleta,2035 Isleta Blvd SW,Albuquerque,New Mexico,87105,(505) 300-4531,amnesiadispensary505@gmail.com,hybrid,35.045195,-106.679478,true
+317969,Amnesia Dispensary - San Mateo,amnesia-dispensary,2723 San Mateo Blvd NE Are. B,Albuquerque,New Mexico,87110,(505) 677-3245,Amnesiadispensary505@gmail.com,hybrid,35.112059,-106.586656,true
+316323,Dulce Cannabis,dulce-cannabis,2000 Carlisle Boulevard Northeast,Albuquerque,New Mexico,87110,(505) 430-9391,cannabiz@dulce505.com,recreational,35.101281,-106.6037,true
+346437,WeedMart,weedmart-nm,13600 Copper Avenue Northeast,Albuquerque,New Mexico,87123,(505) 295-5852,lupita@420weed.com,hybrid,35.078685,-106.497775,true
+346128,Green Central Station,green-central-station,2117 Menaul Blvd NE,Albuquerque,New Mexico,87107,(505) 312-8007,greencentralstationnm@gmail.com,hybrid,35.10953,-106.61955,true
+358116,Sundays Clone Bar and Dispensary,sundays-clone-bar-and-dispensary,4505 Menaul BLVD NE,Albuquerque,New Mexico,87110,(505) 418-6857,sundaysdispo@gmail.com,hybrid,35.109551,-106.593279,true
+338917,Stoned Ape Canna Co,stoned-ape-canna-co,1101 W Pierce St,Carlsbad,New Mexico,88220,(575) 988-1051,contact@stonedapecannaco.com,hybrid,32.435275,-104.239185,true
+335361,Mr Goodbud,mr-goodbud,1710 w Joe Harvey blvd suite G,Hobbs,New Mexico,88240,(575) 777-6423,mr.goodbuddispensary@gmail.com,hybrid,32.74228,-103.15681,true
+392716,Apogee - Drive Thru,apogee,1769 Victory Lane,Sunland Park,New Mexico,88063,(575) 334-2764,admin@apogeenm.com,hybrid,31.803191,-106.566497,true
+407925,Peace Pipe Cannabis,peace-pipe-cannabis,22 E Broadway St,Tatum,New Mexico,88267,(575) 704-5260,sam@peacepipecannabis.com,hybrid,33.257262,-103.316706,true
+337669,Elevation 3789,elevation-3789,1999 Futurity,Sunland Park,New Mexico,88063,(575) 332-9087,contact@elevation3789.com,hybrid,31.806,-106.56965,true
+317951,Earl and Tom's,earl-and-tom-s,106 South Main Street,Clovis,New Mexico,88101,(575) 935-6699,earlandtom@gmail.com,hybrid,34.39828,-103.205582,true
+364593,Canna Buddha of Jal,cannabuddha-1,435 S 3rd St,Jal,New Mexico,88252,(505) 808-0929,cannabuddhajal@gmail.com,hybrid,32.10928,-103.19375,true
+324110,Herrera Cannabis Company - Drive Thru,herrera-cannabis-company,6404 Hwy 550,Cuba,New Mexico,87013,(505) 249-6528,cubacannabisfriendly@herreracannabiscompany.com,hybrid,36.018993,-106.95985,true
+348264,Glenrio Smoke Stop - NOW OPEN!,glenrio-smoke-stop,105 Historic Route 66,Bard,New Mexico,88411,(575) 576-0000,info@glenrio.com,hybrid,35.17884468560267,-103.0435797635915,true
+325404,Canna Buddha of Hobbs - Drive Thru,canna-buddha,1003 N Linam St,Hobbs,New Mexico,88240,(575) 397-5871,cannabuddha1003@gmail.com,hybrid,32.71042,-103.13894,true
+317563,Cannaverse,cannaverse-1,2305 Nevada Ave,Las Cruces,New Mexico,88001,(575) 888-4343,admin@cannaversedispensaries.com,hybrid,32.308655,-106.75104,true
+318165,Amnesia Dispensary and Accessories - Jefferson,amnesia-dispensary-and-accessories,5000 Jefferson NE #B,Albuquerque,New Mexico,87109,(505) 835-5595,amnesiadispensary505@gmail.com,hybrid,35.140038,-106.59306,true
+354525,Oasis Cannabis Co - Roswell,oasis-cannabis-roswell,1407 2nd St,Roswell,New Mexico,88201,(575) 659-5304,Help@oasiscannabisnm.com,hybrid,33.394431,-104.541696,true
+320925,Oasis Cannabis Co - Lomas,oasis-cannabis-co-1,6311 Lomas Blvd NE,Albuquerque,New Mexico,87110,(505) 639-4385,koueis@oasiscannabisnm.com,hybrid,35.08762,-106.576722,true
+320924,Oasis Cannabis Co - Juan Tabo,oasis-cannabis-co,2925 Juan Tabo Blvd NE,Albuquerque,New Mexico,87112,(505) 200-9052,koueis@oasiscannabisnm.com,hybrid,35.11583,-106.51608,true
+349215,Oasis Cannabis Coors,oasis-cannabis-coors,3730 Coors Blvd NE Suite B,Albuquerque,New Mexico,87120,(505) 800-7164,help@oasiscannabisnm.com,hybrid,35.12464,-106.70113,true
+320926,Oasis Cannabis Co - Farmington,oasis-cannabis-co-2,428 E Main St,Farmington,New Mexico,87401,(505) 278-8645,help@oasiscannabisnm.com,hybrid,36.73006,-108.200025,true
+333172,Oasis Cannabis Co - Midtown,oasis-cannabis-co-3,3500 Menaul Blvd NE Suite 6,Albuquerque,New Mexico,87107,(505) 312-7973,help@oasiscannabisnm.com,hybrid,35.10916,-106.60514,true
+363042,Cookies Weed Dispensary - Sunland Park,cookies-sunland-park,1500 Appaloosa St Suite B,Sunland Park,New Mexico,88063,(575) 332-4599,Info@cookies-sunland.co,hybrid,31.801942,-106.565009,true
+323764,Deming Cannabis Company,deming-cannabis-company,1113 W Spruce Street,Deming,New Mexico,88030,(575) 936-4078,demingcannabiscompany@gmail.com,hybrid,32.266565,-107.771905,true
+401787,Fly High NM,fly-high-nm-1,4001 San Mateo Blvd NE,Albuquerque,New Mexico,87110,(505) 508-1471,Flyhighdispo@gmail.com,hybrid,35.12678,-106.586888,true
+328422,Enchanted Botanicals NM - Central/Nob Hill,enchanted-botanicals-central,3417 Central Ave SE,Albuquerque,New Mexico,87106,(505) 503-6046,info@enchantedbotanicalsnm.com,hybrid,35.08023,-106.606265,true
+354222,Amigos Cannabis - Las Cruces,amigos-cannabis-las-cruces,3330 Rinconada Blvd Ste A,Las Cruces,New Mexico,88011,(575) 652-4998,jeremy.ross@andretticannabis.com,hybrid,32.362452,-106.746179,true
+319093,Enchanted Botanicals NM - Menaul,enchanted-botanicals-cannabis,5737 Menaul Blvd. NE,Albuquerque,New Mexico,87110,(505) 639-4691,info@enchantedbotanicalsnm.com,hybrid,35.109495,-106.580024,true
+317286,Vana Society - Texico,vana-society-1,205 Wheeler Ave,Texico,New Mexico,88135,(575) 530-0400,hello@vanasociety.com,hybrid,34.388385,-103.0449,true
+349274,Oasis Cannabis - Osuna,oasis-cannabis-osuna,141 Osuna Rd NW Suite B,Albuquerque,New Mexico,87107,(505) 622-4259,koueis@oasiscannabisnm.com,recreational,35.152862,-106.630611,true
+337752,Luna Leaf LLC,luna-leaf-llc,2017 Ridgecrest Drive SE,Albuquerque,New Mexico,87108,(505) 219-3192,gerber@lunaleafnm.com,hybrid,35.05867,-106.58741,true
+328191,Top Crop - Sunland Park,top-crop-nm-sunland-park,1621 Appaloosa Dr,Sunland Park,New Mexico,88063,(575) 332-4413,brian@topcropor.com,hybrid,31.80102,-106.56593,true
+354526,Oasis Cannabis Co - UNM Area,oasis-cannabis-unm-area,2720 Central Ave SE Suite F-G,Albuquerque,New Mexico,87106,(888) 505-3947,help@oasiscannabisnm.com,recreational,35.080712,-106.614915,true
+382942,EmpireGarden,empiregarden,1144 MCNUTT,Sunland Park,New Mexico,88063,(915) 955-1565,empiredispo1144@gmail.com,hybrid,31.801941,-106.542272,true
+354528,Oasis Cannabis Co - Menaul,oasis-cannabis-menaul,7608 Menual Blvd NE,Albuquerque,New Mexico,87110,(505) 461-4920,koueis@oasiscannabisnm.com,hybrid,35.108791,-106.559398,true
+384059,Oasis Cannabis Co - Belen,oasis-cannabis-co-belen,300 Rio Communities Blvd,Rio Communities,New Mexico,87002,(505) 200-9052,help@oasiscannabisnm.com,hybrid,34.64804,-106.7333,true
+384058,Oasis Cannabis Co - Montgomery,oasis-cannabis-co-montgomery,9880 Montgomery Blvd NE STE C,Albuquerque,New Mexico,87111,(505) 327-7822,help@oasiscannabisnm.com,recreational,35.130098,-106.531191,true
+346653,Cookies Weed Dispensary Albuquerque,blue-whale-enterprises-dba-cookies-new-mexico,1340 Broadway Blvd NE,Albuquerque,New Mexico,87102,(505) 548-5066,info@cookiesnm.co,hybrid,35.09636,-106.641572,true
+317462,Colfax Cannabis Company,colfax-cannabis-company,1144 S. 2nd Street,Raton,New Mexico,87740,(575) 245-9333,stevie@colfaxcannabiscompany.com,hybrid,36.88539,-104.440472,true
+361593,High Supply Cannabis Dispensary,high-supply-cannabis-llc,106 N Main Ave,Portales,New Mexico,88130,(575) 226-8468,highsupply@highsupplycannabisllc.com,hybrid,34.187157,-103.337309,true
+401307,Oasis Cannabis Co - Gibson: Open Now!,oasis-cannabis-co-gibson,5910 Gibson Blvd SE,Albuquerque,New Mexico,87108,(505) 560-3464,help@oasiscannabisnm.com,hybrid,35.05801,-106.5761,true
+360918,285 South Dispensary,285-south-dispensary,1725 SE Main St Suite B,Roswell,New Mexico,88203,(575) 208-2899,salcidomelanie3@gmail.com,hybrid,33.37158,-104.51666,true
+63717,Urban Wellness - Paseo,urban-wellness-3,7610 Carmel Ave NE Suite B,Albuquerque,New Mexico,87122,(505) 900-3792,contact@urbanwellnessnm.com,hybrid,35.176634,-106.558687,true
+320873,Deep Sky Cannabis,deep-sky-cannabis,1320 Luana street,Santa Fe,New Mexico,87505,(505) 216-6513,Deepskycannabis@gmail.com,hybrid,35.660962,-105.983252,true
+52802,PurLife Dispensary - Montgomery,purlife-dispensary-montgomery,9800 Montgomery Blvd NE #9,Albuquerque,New Mexico,87111,(505) 832-7934,montgomeryinfo@naturesmedicines.com,hybrid,35.13055,-106.53199,true
+352733,Urban Wellness - Las Cruces,urban-wellness-102,"3830 E Lohman Ave Bldg. 1, Suite 03",Las Cruces,New Mexico,88011,(575) 652-3859,contact@urbanwellnessnm.com,hybrid,32.318451,-106.735489,true
+53313,Urban Wellness - Paradise,urban-wellness-paradise,4601 Paradise Blvd Northwest Suite H,Albuquerque,New Mexico,87114,(505) 369-0092,contact@urbanwellnessnm.com,hybrid,35.184312,-106.67373,true
+344731,Mesa Flowers Canna Co,mesa-flowers-canna-co,617 S Cochran,Hobbs,New Mexico,88240,(575) 393-2231,mesaflowers2022@gmail.com,hybrid,32.69495,-103.14137,true
+314455,Urban Wellness - Academy,urban-wellness-academy,6220 San Mateo Blvd,Albuquerque,New Mexico,87109,(505) 433-5181,contact@urbanwellnessnm.com,hybrid,35.147535,-106.585425,true
+378783,Gnomad - Roswell,gnomad-roswell,"3606 N Main St, Unit 500",Roswell,New Mexico,88201,(575) 208-0642,contactsus@gnomadcannaco.com,hybrid,33.44178,-104.5238,true
+318149,Alta Vida,alta-vida,3100 San Mateo BLVD NE,Albuquerque,New Mexico,87110,(505) 433-5114,altavidanm@gmail.com,hybrid,35.11738,-106.58599,true
+316638,Urban Wellness - Montano,urban-wellness-99,405 Montano Rd NE Suite 5,Albuquerque,New Mexico,87107,(505) 554-2765,contact@urbanwellnessnm.com,hybrid,35.13695,-106.627158,true
+342912,Urban Wellness - Rio Rancho,urban-wellness-100,1660 NM 528 SE Ste 105,Rio Rancho,New Mexico,87124,(505) 420-5961,contact@urbanwellnessnm.com,hybrid,35.2324,-106.656,true
+48023,Urban Wellness - San Mateo,urban-wellness-2,2910 San Mateo Blvd #5,Albuquerque,New Mexico,87110,(505) 508-3305,contact@urbanwellnessnm.com,hybrid,35.115158,-106.586035,true
+314454,Urban Wellness - 98th Street,urban-wellness-98th-street,120 98th Street NW,Albuquerque,New Mexico,87121,(505) 554-1624,contact@urbanwellnessnm.com,hybrid,35.075,-106.74202,true
+321124,GNOMAD Canna Co - Tatum,gnomad,223 w Broadway St.,Tatum,New Mexico,88267,(575) 398-9333,contactsus@gnomadcannaco.com,hybrid,33.25658,-103.31983,true
+354529,Oasis Cannabis Co - Las Vegas,oasis-cannabis-las-vegas,2201 N. Grand Ave,Las Vegas,New Mexico,87701,(505) 421-6186,koueis@oasiscannabisnm.com,hybrid,35.62187,-105.206101,true
+52065,PurLife Dispensary - Tramway,mj-expresso-abq,417 Tramway Blvd. Suite #2,Albuquerque,New Mexico,87123,(505) 695-2432,Tramway@purlifenm.com,hybrid,35.073236,-106.496939,true
+346336,High Tides Dispensary,high-tides-dispensary,5007 Lomas blvd,Albuquerque,New Mexico,87110,(505) 595-3726,Hightidesabq@gmail.com,hybrid,35.08785,-106.58919,true
+328828,PurLife - Santa Fe,purlife-dispensary-santa-fe,3140 Cerrillos Rd Suite L,Santa Fe,New Mexico,87507,(505) 303-3357,xavierh@naturesmedicines.com,hybrid,35.65316,-105.99486,true
+364914,Boutique High Dispensary,boutique-high-dispensary,13025 Lomas Blvd NE B,Albuquerque,New Mexico,87112,(505) 219-3162,ben@boutiquehigh.com,hybrid,35.086868,-106.50218,true
+349258,Dank Of The West,dank-of-the-west,1501 East Route 66 Boulevard,Tucumcari,New Mexico,88401,(575) 936-9456,lucasjason74@gmail.com,hybrid,35.17206,-103.70767,true
+354524,Oasis Cannabis Co - Clovis,oasis-cannabis-clovis,816 N. Prince St,Clovis,New Mexico,88101,(575) 221-3271,koueis@oasiscannabisnm.com,hybrid,34.40645,-103.196824,true
+345779,LovingBud Dispensary & Drive-Thru,loving-bud-dispensary,609 Tatum Highway,Lovington,New Mexico,88260,(505) 370-1455,jjholmes27@gmail.com,hybrid,32.96663,-103.3441,true
+352904,Happy Herb Releaf Dispensary,happy-herb-dispensary,2005 Highway 180 Suite 300,Silver City,New Mexico,88061,(575) 597-9333,happyherbreleaf@gmail.com,hybrid,32.81287,-108.265485,true
+354523,Oasis Cannabis Co - Portales,oasis-cannabis-portales-coming-soon,1604 S Avenue D,Portales,New Mexico,88130,(575) 500-3194,koueis@oasiscannabisnm.com,hybrid,34.173636,-103.335245,true
+402525,BOGO Cannabis - Montgomery,bogo-cannabis-montgomery,3504 Montgomery Blvd NE,Albuquerque,New Mexico,87107,(505) 249-4985,info@bogocannabis.com,hybrid,35.13065,-106.606207,true
+328966,The Vault,the-vault-8,320 w River Street,Red River,New Mexico,87558,(575) 316-9404,vaultredriver@gmail.com,hybrid,36.706125,-105.40491,true
+397672,BOGO Cannabis - Las Cruces,bogo-cannabis-las-cruces,1455 Hickory Dr Suite 1B,Mesilla,New Mexico,88005,(505) 494-4318,info@bogocannabis.com,hybrid,32.290289,-106.786541,true
+373871,Hot Springs Cannabis,hot-springs-cannabis,412 Date St Truth or Consequences,Truth or Consequences,New Mexico,87901,(575) 952-6466,hotspringscannabis@gmail.com,hybrid,33.155365,-107.24918,true
+357179,Altitude Cannabis Dispensary - Paseo Del Norte,altitude-cannabis-dispensary-paseo-del-norte,8110 Louisiana Blvd NE,Albuquerque,New Mexico,87113,(505) 460-3900,contact@nmaltitude.com,recreational,35.175532,-106.568284,true
+374048,Dispensary Near Me - Sunland,dispensary-near-me-sunland,1290 McNutt RD,Sunland Park,New Mexico,88063,(575) 332-4066,dispensarynearmenm@gmail.com,hybrid,31.795908,-106.560998,true
+325968,PurLife Dispensary- Roswell,purlife-roswell,325 S Main St,Roswell,New Mexico,88203,(575) 433-2672,purlifenm@gmail.com,hybrid,33.39006,-104.52234,true
+367247,Urban Wellness Express - Isleta,urban-wellness-express-isleta,"1605 Isleta Blvd. SW, Ste D",Albuquerque,New Mexico,87105,(505) 312-8429,contact@urbanwellnessnm.com,hybrid,35.052837,-106.678786,true
+359187,Deming Clone Bar and Dispensary,clone-bar,1802 E Pine St,Deming,New Mexico,88030,(575) 936-4139,dajuanclonebar@gmail.com,recreational,32.26838,-107.73862,true
+408065,Oasis Cannabis Co - Unser: Now Open!,oasis-cannabis-co-unser,10660 UNSER BLVD NW SUITE G,Albuquerque,New Mexico,87114,(505) 484-2739,koueis@oasiscannabisnm.com,recreational,35.211853,-106.69851,true
+337769,Tafoya Farms - 4th Street,tafoya-farms,3313 4th St NW,Albuquerque,New Mexico,87107,(505) 554-2898,Tafoyafarmsnm@gmail.com,hybrid,35.11659,-106.64585,true
+338974,Blazed Cannabis,blazed-cannabis-1,"7 Avenida Vista Grande, Unit D-1",Santa Fe,New Mexico,87505,(505) 930-5399,Blazedcannabisnm@gmail.com,hybrid,35.53909091745005,-105.8913174749677,true
+326832,Red Gorilla Greens Dispensary,red-gorilla-greens-dispensary,1100 4TH ST NW,Albuquerque,New Mexico,87102,(505) 200-0623,redgorillagreens@gmail.com,hybrid,35.09527,-106.64921,true
+326011,Altitude Dispensary - Rio Rancho,altitude-1,1100 State Highway 528 NE Suite A,Rio Rancho,New Mexico,87144,(505) 456-3500,contact@nmaltitude.com,hybrid,35.27656,-106.61508,true
+399581,BOGO Cannabis - Los Lunas,bogo-cannabis-los-lunas,3459 MAIN ST STE E,Los Lunas,New Mexico,87031,(505) 554-1980,carino.padilla@gmail.com,hybrid,34.808985,-106.699625,true
+407428,1UP Dispensary,1up-dispensary,301 Central Ave NW,Albuquerque,New Mexico,87102,(505) 270-1207,1updispensary@proton.me,hybrid,35.084666,-106.650594,true
+375423,Urban Wellness - Bernalillo,urban-wellness-bernalillo,115 US 550,Bernalillo,New Mexico,87004,(505) 295-3338,contact@urbanwellnessnm.com,hybrid,35.319195,-106.545705,true
+344096,911 Kronic,911-kronic,911 W. Apache,Farmington,New Mexico,87401,(505) 325-0919,911kronic@gmail.com,hybrid,36.73372,-108.22193,true
+398650,High Tymes,frost-station-cannabis-dba-high-tymes,508 Highway 85,Socorro,New Mexico,87801,(575) 835-2607,support@froststationcannabis.com,hybrid,34.052289,-106.891058,true
+405290,Happy Herbs Bayard,happy-herbs-2,1103 Tom Foy Blvd,Bayard,New Mexico,88023,(575) 537-4877,bayardhappyherb@gmail.com,recreational,32.758299,-108.14093,true
+379868,Altitude Dispensary - Vista Oeste,altitude-dispensary-vista-oeste,2105 Vista Oeste NW Suite D,Albuquerque,New Mexico,87120,(505) 533-2700,contact@nmaltitude.com,hybrid,35.108119,-106.730362,true
+404134,Oasis Cannabis Co - Gallup,oasis-cannabis-co-gallup,1736 W. Maloney Avenue,Gallup,New Mexico,87301,,help@oasiscannabisnm.com,recreational,35.526279,-108.770946,true
+353771,Taos 420 Cannabis & Coffee,taos-420-cannabis-coffee-1,827 Paseo Del Pueblo Norte,Taos,New Mexico,87571,(505) 437-5172,420pharmastore@gmail.com,hybrid,36.42259,-105.572278,true
+365629,Urban Wellness Express - Coors,urban-wellness-express-coors,200 Coors Blvd NW,Albuquerque,New Mexico,87121,(505) 361-1371,contact@urbanwellnessnm.com,hybrid,35.082401,-106.710296,true
+324286,Buffalo Bud,buffalo-buds-farming-co,910 North Pope Street,Silver City,New Mexico,88061,(575) 597-0420,buffalobudfarmingco@gmail.com,hybrid,32.77495,-108.27596,true
+376452,Taos Mountain Grown Cannabis,taos-mountain-grown-cannabis,14 State HWY 150,El Prado,New Mexico,87514,(575) 779-2287,miguel@taosmountaingrown.com,hybrid,36.459703,-105.595152,true
+365820,Green World Taos,green-world-taos,1034 Paseo Del Pueblo Sur,Taos,New Mexico,87571,(575) 758-0420,adrianna.jmaestas@gmail.com,hybrid,36.383982,-105.587333,true
+408704,Butte Cannabis,butte-cannabis,505 Hwy 195,Elephant Butte,New Mexico,87935,(575) 223-2373,savageloomis@gmail.com,hybrid,33.186501,-107.219485,true
+405819,Mother Earth cannabis company,mother-earth-cannabis-company,2743 Hwy 35,Mimbres,New Mexico,88049,(575) 536-2900,test@test.com,recreational,32.855908,-107.980025,true
+405289,Happy Herbs 3,happy-herbs-3,412 Silver Heights Blvd,Silver City,New Mexico,88061,(575) 242-1117,happyherbsdispensary3@gmail.com,recreational,32.782452,-108.271358,true
+408787,Urban Wellness - Taos,urban-wellness-taos,1033A Paseo Del Pueblo Sur,Taos,New Mexico,87571,(575) 224-3254,contact@urbanwellnessnm.com,hybrid,36.383703,-105.586407,true
+369509,Tafoya Farms - Ellison,tafoya-farms-ellison,3700 Ellison Dr NW Ste E2,Albuquerque,New Mexico,87114,(505) 322-2307,Tafoyafarmsnm@gmail.com,hybrid,35.206635,-106.653488,true
+409163,Bud Board Dispensary - Smoke Shop & Lounge,bud-board-dispensary-2,4105 National Parks Hwy,Carlsbad,New Mexico,88220,(575) 341-8085,marketing@budboard.biz,recreational,32.369668,-104.233658,true
+325841,Green Therapy Dispensary,green-therapy-dispensary-1,460 S County Line Dr Suite F,Chaparral,New Mexico,88081,(915) 279-6123,greentherapy.nm@gmail.com,hybrid,32.0318,-106.37774,true
+347694,Ganjika Gardens,ganjika-gardens,1245 Riley Way,Chaparral,New Mexico,88081,(855) 426-5452,Jmperez@ganjikagardens.onmicrosoft.com,hybrid,32.01262,-106.3251,true
+328276,Dark Matter - Sunland Park,dark-matter-sunland-park,1615 Appaloosa Dr.,Sunland Park,New Mexico,88063,(575) 332-4397,hello@darkmattercanna.com,recreational,31.80099,-106.56529,true
+320916,Munchiez Cannabis Ruidoso,munchiez-cannabis,1715 Sudderth Dr,Ruidoso,New Mexico,88345,(575) 202-9709,munchiezcannabis@gmail.com,hybrid,33.327625,-105.663085,true
+328002,Top Crop - Las Cruces,top-crop-cannabis-co-las-cruces,2240 E. Lohman Ave. Suite 1,Las Cruces,New Mexico,88001,(575) 556-9876,brian@topcropor.com,hybrid,32.312295,-106.75254,true
+323293,Love Cannabis - Eubank Blvd.,love-cannabis,1220 Eubank Blvd NE,Albuquerque,New Mexico,87112,(505) 312-8275,lovecannabisllc@gmail.com,hybrid,35.093485,-106.53226,true
+356510,Baked Chicken Farm,baked-chicken-farm,2702 W. Amador Suite A,Las Cruces,New Mexico,88005,(575) 218-7131,info@bakedchickenfarm.com,hybrid,32.296748,-106.812526,true
+325333,Spaced Cannabinoid Co.,tnm-holdings,800 Wheeler Ave,Texico,New Mexico,88135,(575) 482-9574,Carson@htxprocessing.com,hybrid,34.38907,-103.05158,true
+359195,Score 420 Las Cruces,score-420-las-cruces,2821 north telshor blvd,Las Cruces,New Mexico,88011,(575) 449-4514,james@score420.io,recreational,32.348859,-106.765211,true
+319284,Mr Buds,mr-buds-1,408 North Norris St,Clovis,New Mexico,88101,(575) 218-3254,Mike@mrbudsdispensary.com,hybrid,34.40233,-103.17932,true
+348840,Breaking Bud Dispensary,breaking-bud-dispensary,8715 Central Ave NW,Albuquerque,New Mexico,87121,(505) 353-7666,breakingbudcentral@gmail.com,hybrid,35.0757,-106.73174,true
+320720,Organ Mountain Cannabis,organ-mountain-cannabis,1590 E Lohman Ave,Las Cruces,New Mexico,88001,(575) 523-5006,troy@organmountaincannabis.com,hybrid,32.30912,-106.76232,true
+328190,Dark Matter - Albuquerque,top-crop-nm-dark-matter-albuquerque-juan-tabo-blvd-ne,1713 Juan Tabo Blvd NE,Albuquerque,New Mexico,87112,(505) 200-0068,hello@darkmattercanna.com,hybrid,35.10018,-106.5159,true
+318696,Score 420 Alamogordo,score-420-alamagordo,805 N White Sands Blvd Suite D,Alamogordo,New Mexico,88310,(575) 437-2815,alamogordo@score420.io,hybrid,32.89851,-105.961072,true
+344379,Score 420 Hobbs,score-420-hobbs,927 E Bender Blvd,Hobbs,New Mexico,88240,(575) 263-0699,hobbs@score420.io,hybrid,32.724708,-103.125341,true
+328189,Top Crop - Albuquerque,top-crop-nm-albuquerque-menaul-blvd-ne,7001 Menaul Blvd NE,Albuquerque,New Mexico,87110,(505) 492-2808,brian@topcropor.com,hybrid,35.1096,-106.56642,true
+329898,High Valley Cannabis Co - OPEN 24 HOURS INC HOLIDAYS!,high-valley-cannabis-dispensary,100 Arch Angel way,Chaparral,New Mexico,88081,(915) 701-8845,Highvalleycannabisco@gmail.com,hybrid,32.00218,-106.35549,true
+347779,Munchiez Cannabis Alamogordo,munchiez-cannabis-1,1022 N White Sands Blvd,Alamogordo,New Mexico,88310,(575) 479-7366,munchiezcannabis@gmail.com,hybrid,32.90037,-105.95995,true
+360850,New Era NM - Las Cruces,new-era-nm,3850 Foothills Rd,Las Cruces,New Mexico,88011,(575) 259-4110,chronickissescbd@gmail.com,hybrid,32.320053,-106.736069,true
+361802,Munchiez Cannabis Las Cruces,munchiez-cannabis-llc,1201 S Solano Dr,Las Cruces,New Mexico,88001,(575) 323-3213,munchiezcannabis@gmail.com,recreational,32.300576,-106.762003,true
+327624,NM Green Door,nm-green-door,815 East Brazos St,Portales,New Mexico,88130,(575) 226-2930,Portales@nmgreendoor.com,hybrid,34.1904,-103.33045,true
+345734,Roadrunner Greens,roadrunner-greens,4401 N Grimes St Suite 300,Hobbs,New Mexico,88240,(575) 392-4336,Roadrunnergreenllc@gmail.com,hybrid,32.626473,-103.119212,true
+346652,ST CANAPA - Santa Teresa,st-canapa-1,5305 McNutt Road,Santa Teresa,New Mexico,88008,(575) 332-4898,joe@stcanapa.com,hybrid,31.84754,-106.625395,true
+382935,Amigos Cannabis - ABQ,amigos-marketing-llc,3880 MENAUL BLVD NE,Albuquerque,New Mexico,87110,(505) 966-9884,amigosabq505@gmail.com,hybrid,35.108644,-106.600898,true
+345400,Casa Verde,casa-verde-2,"795 South Solano Drive, Las Cruces, NM, USA 795 South Solano Drive",Las Cruces,New Mexico,88001,(575) 463-1392,Hello@casaverdecannabis.net,hybrid,32.30549,-106.763842,true
+347613,Score 420 Clovis,score-420-clovis,2905 N Prince Street Suite D1,Clovis,New Mexico,88101,(506) 475-4030,Clovis@score420.io,hybrid,34.427828,-103.195862,true
+318695,Score 420,score-420-albuquerque,2125 Central Ave NW,Albuquerque,New Mexico,87104,(505) 200-9911,matt@score420.io,hybrid,35.09607,-106.67284,true
+50772,Keyway Marketplace,shift-new-mexico,24 Bisbee Court,Santa Fe,New Mexico,87508,(505) 438-1090,web@liftnm.com,medical,35.596331,-106.041975,true
+344368,Score 420 Farmington,score-420-farmington,3150 E Main St Suite A20,Farmington,New Mexico,87402,(505) 258-4857,farmington@score420.io,hybrid,36.74727,-108.163761,true
+334315,Score 420 - Nob Hill,score-420,4521 Central Ave NE,Albuquerque,New Mexico,87108,(505) 527-5710,matt@score420.io,hybrid,35.07879,-106.593457,true
+11935,GrassRoots RX - Grants,grassroots-rx-grants,1005 Mesa Blvd,Ramah,New Mexico,87020,(505) 287-9717,info@grassrootsrxnm.com,hybrid,34.891563,-108.40107,true
+65104,Harvest Foundation,harvest-foundation,"220 Copper Ave NW, Suite 110 A",Albuquerque,New Mexico,87102,(505) 242-3050,dtabqharvest@gmail.com,medical,35.085086,-106.649981,true
+323260,Got Greens,got-greens,10200 Corrales Rd NW,Albuquerque,New Mexico,87114,(505) 433-2181,care@gotgreensnm.com,hybrid,35.20328,-106.64651,true
+328653,Rocky Mountain Cannabis - Taos,rocky-mountain-cannabis-taos,101 Camino de la Placita,Taos,New Mexico,87571,(575) 779-6573,help@rockymountaincannabis.com,hybrid,36.40609,-105.574122,true
+338477,Enchantment Growth Co - Jal,enchantment-growth-co-jal,714 S. Commerce,Jal,New Mexico,88252,(575) 441-0470,enchantmentgrowthco@gmail.com,hybrid,32.10482,-103.18768,true
+52154,High Desert Relief,high-desert-relief-3,4840 Pan-american Freeway Northeast Suite H,Albuquerque,New Mexico,87109,(505) 750-4015,order@highdesertrelief.org,hybrid,35.136409,-106.601665,true
+319050,The Grass Station - 4th st,the-grass-station-12,2523 4th Street NW,Albuquerque,New Mexico,87102,(505) 755-1075,Hi@TheGrassStation.com,hybrid,35.110765,-106.646905,true
+383416,Area 54 Dispensary,area-54-dispensary-llc,764 Angelina blvd,Chaparral,New Mexico,88081,(575) 215-4504,area54dispensary@outlook.com,hybrid,32.042872,-106.307732,true
+326628,Budz Cannabis,budz-cannabis,1886 w. Picacho,Las Cruces,New Mexico,88005,(575) 694-1570,budzcannabis@yahoo.com,hybrid,32.31186,-106.80471,true
+378567,Dark Matter - Hobbs,dark-matter-hobbs,1127 Joe Harvey Blvd,Hobbs,New Mexico,88240,(575) 408-8620,hello@darkmattercanna.com,hybrid,32.739798,-103.149999,true
+372458,Score 420 Central / Juan Tabo,score-420-central-ave,12999 Central Ave,Albuquerque,New Mexico,87123,,cate@score420.io,hybrid,35.069256,-106.503191,true
+351596,R Greenleaf Cannabis Dispensary - Clovis,r-greenleaf-clovis,2009 Ross Street,Clovis,New Mexico,88101,(575) 305-9223,support@schwazze.com,hybrid,34.418436,-103.197416,true
+368978,Score 420 Sunland Park,score-420-sunland-park,2355 McNutt Road,Sunland Park,New Mexico,88063,,matt@score420.io,hybrid,31.799495,-106.57817,true
+65984,Southwest Cannabis - 98th,southwest-wellness-98th,101 98th Street NW,Albuquerque,New Mexico,87121,(505) 433-4174,info@swwtaos.com,hybrid,35.07344,-106.743218,true
+335310,The Kush House - Walk In & Drive Thru,the-kush-house-1,1128 S.Solano dr.,Las Cruces,New Mexico,88001,(575) 556-9755,thekushhousenm@gmail.com,hybrid,32.300905,-106.763052,true
+54509,Kure Cannabis - Downtown,kure-cannabis-downtown,220 N Guadalupe Street,Santa Fe,New Mexico,87501,(505) 930-5339,info@kureforlife.com,hybrid,35.689714,-105.944239,true
+354700,Dreamz- Hobbs,dreamz-hobbs,4301 N Grimes St Suite 600,Hobbs,New Mexico,88240,(575) 259-3622,hobbs@dreamzcannabis.com,hybrid,32.75142,-103.144907,true
+52161,R Greenleaf Cannabis Dispensary - Northeast Heights,r-greenleaf-ne-heights,"9821 Montgomery Blvd NE, Suite C",Albuquerque,New Mexico,87111,(505) 217-9101,support@schwazze.com,hybrid,35.131187,-106.530921,true
+316807,Rocky Mountain Cannabis - Anthony (Drive Through),rocky-mountain-cannabis-anthony,816 Anthony Dr,Anthony,New Mexico,88021,(575) 882-6110,help@rockymountaincannabis.com,recreational,32.00731,-106.60614,true
+21905,Sacred Garden - Santa Fe,sacred-garden-santa-fe,1300 Luisa St Suite 1,Santa Fe,New Mexico,87505,(505) 216-9686,admin@sacredgardennm.com,medical,35.67092,-105.95062,true
+306053,R Greenleaf Cannabis Dispensary - Las Cruces,r-greenleaf-las-cruces,775 S Telshor,Las Cruces,New Mexico,88011,(575) 366-9072,support@schwazze.com,hybrid,32.307349,-106.741251,true
+303663,Organtica - Truth or Consequences,organtica-truth-or-consequences,1912 n date st,Truth or Consequences,New Mexico,87901,(575) 297-4008,cnagma@organtica.com,medical,33.149441,-107.247781,true
+357441,Rocky Mountain Cannabis - Tucumcari,rocky-mountain-cannabis-tucumcari,208 E Estrella Ave,Tucumcari,New Mexico,88401,(575) 282-3336,help@rockymountaincannabis.com,hybrid,35.15342,-103.7244,true
+322443,Round House Reserve,round-house-reserve,200 S. Solano Dr. ste 3,Las Cruces,New Mexico,88001,(575) 618-7820,roundhousereserve@gmail.com,hybrid,32.31141,-106.76575,true
+330569,Factory Direct Pipes & Recreational,factory-direct-pipes-recreational-1,321 w 7th st suite b,Clovis,New Mexico,88101,(575) 935-4270,fdpr88101@gmail.com,recreational,34.40436,-103.20884,true
+52157,R Greenleaf Cannabis Dispensary - Midtown,r-greenleaf-midtown,4414 Menaul Blvd NE,Albuquerque,New Mexico,87110,(505) 217-9086,support@schwazze.com,hybrid,35.108777,-106.593577,true
+365054,Southwest Cannabis - N Riverside,southwest-cannabis-n-riverside,1205 N Riverside Dr,Española,New Mexico,87532,,info@swwtaos.com,hybrid,36.008435,-106.064603,true
+317271,Verve Health Shop,verve-health-shop,2 Marietta Ct. Suite B,Edgewood,New Mexico,87015,(505) 595-6328,lori@vervehealthshop.com,hybrid,35.065315,-106.199938,true
+358175,Rocky Mountain Cannabis - Santa Fe,rocky-mountain-cannabis-santa-fe,121 Sandoval St,Santa Fe,New Mexico,87501,(505) 365-2681,help@rockymountaincannabis.com,hybrid,35.686822,-105.941938,true
+350723,Love Cannabis Dispensary - Isleta Blvd (NOW OPEN!),love-cannabis-dispensary-isleta-blvd,3228 Isleta Blvd SW,Albuquerque,New Mexico,87105,(505) 868-1140,lovescannabisllc@gmail.com,hybrid,35.03003,-106.679479,true
+367793,Distinguished Dispensary,distinguished-dispensary,4601 English Rd,Farmington,New Mexico,87402,(505) 278-8524,distinguisheddispensary@gmail.com,hybrid,36.77012,-108.149316,true
+358174,Rocky Mountain Cannabis - Truth or Consequences,rocky-mountain-cannabis-truth-or-consequences,280 N Date St,Truth or Consequences,New Mexico,87901,(575) 894-1320,help@rockymountaincannabis.com,recreational,33.132753,-107.250803,true
+62892,Everest Cannabis Co - Los Lunas,everest-apothecary-2,1651 W. Main St. Ste. E,Los Lunas,New Mexico,87031,(505) 865-6635,info@everestnm.com,hybrid,34.81,-106.76,true
+302460,Southwest Cannabis - Cerrillos,southwest-wellness-center-99,1829 Cerrillos Rd.,Santa Fe,New Mexico,87505,(505) 372-7046,info@swwtaos.com,hybrid,35.66508,-105.97265,true
+346765,Astro Buds,astro-buds-llc,308 MCCOMBS RD SPC 2,Chaparral,New Mexico,88081,(575) 824-2837,astrobudsnm@gmail.com,hybrid,32.017645,-106.40973,true
+55317,Sacred Garden - Las Cruces,sacred-garden-las-cruces,642 South Alameda Suite A,Las Cruces,New Mexico,88005,(575) 300-0154,matt@sacredgardenlascruces.com,medical,32.304067,-106.779627,true
+67604,Everest Cannabis Co - Uptown,everest-apothecary-uptown,"2201 Louisiana NE, Ste. E",Albuquerque,New Mexico,87110,(505) 872-6150,info@everestnm.com,hybrid,35.10418,-106.56941,true
+56692,Everest Cannabis Co - Far Northeast Heights,everest-apothecary-north-east-heights,5809 Juan Tabo Blvd North East Suite B,Albuquerque,New Mexico,87111,(505) 293-1249,info@everestnm.com,hybrid,35.147106,-106.524931,true
+357188,HI LIFE DISPENSARY,hi-life-dispensary,5620 McNutt Rd,Santa Teresa,New Mexico,88008,(915) 226-5992,askartifex@gmail.com,hybrid,31.85949,-106.638369,true
+325551,1912 Cannabis Company,1912-cannabis-company,1009 East 10th Street,Alamogordo,New Mexico,88310,(575) 495-2070,1912cannabiscompany@gmail.com,hybrid,32.90034,-105.9495,true
+345961,R Greenleaf Cannabis Dispensary - Sunland Park,r-greenleaf-sunland-park,1541 Appaloosa Dr,Sunland Park,New Mexico,88063,(575) 636-2480,support@schwazze.com,hybrid,31.80113,-106.564074,true
+319959,One Stop Smoke Shop & Dispensary,one-stop-smoke-shop,1713 San Pedro Dr NE,Albuquerque,New Mexico,87110,(505) 702-9965,jones.drich@yahoo.com,hybrid,35.094341,-106.577908,true
+370131,Groth Industries,groth-industries,140 Schneberger Dr,Chaparral,New Mexico,88081,(575) 496-7344,Offices@grothindustries.com,hybrid,32.007974,-106.390475,true
+51727,Sacred Garden - Green Jeans,sacred-garden-albuquerque,3600 Cutler Ave NE Suite 12,Albuquerque,New Mexico,87120,(505) 348-5599,admin_abq@sacredgardennm.com,medical,35.11491048688071,-106.731204398768,true
+52158,R Greenleaf Cannabis Dispensary - Westside,r-greenleaf-westside,"5201 Ouray NW, Suite E",Albuquerque,New Mexico,87120,(505) 200-9060,support@schwazze.com,hybrid,35.112718,-106.699822,true
+354711,Dreamz - Taos,dreamz-taos,1128 Paseo Del Pueblo Sur Suite A,Taos,New Mexico,87571,(505) 209-9298,Taos@dreamzcannabis.com,hybrid,36.381204,-105.589706,true
+334166,Mama and The Girls,mama-and-the-girls,915 Yale Boulevard Southeast,Albuquerque,New Mexico,87106,,info@mamaandthegirls.com,hybrid,35.06989,-106.622435,true
+367599,Love Cannabis Dispensary - San Mateo,love-cannabis-dispensary-san-mateo,818 San Mateo Blvd. SE,Albuquerque,New Mexico,87108,(505) 420-6363,lovescannabisllc@gmail.com,hybrid,35.0681,-106.58624,true
+358075,Happy Panda Cannabis Company,happy-panda-cannabis-company,2505 Missouri Avenue,Las Cruces,New Mexico,88011,(575) 652-4390,happypandalc@gmail.com,hybrid,32.299234,-106.741501,true
+321549,CMC Cannabis Dispensary,cmc-cannabis-dispensary-llc,611 W Historic Hwy 66,Gallup,New Mexico,87301,(505) 458-4010,cmcllc94@outlook.com,hybrid,35.52608,-108.74847,true
+364590,Uncle Roys,uncle-roys,711 WEST ROUTE 66,Milan,New Mexico,87021,(505) 285-7322,uncleroyscannabisco@gmail.com,hybrid,35.169463,-107.892532,true
+376457,The Joint Venture - Vaughn,the-joint-venture-vaughn,350 W 8th St.,Vaughn,New Mexico,88353,(575) 512-0004,grind2peacefulmind@gmail.com,hybrid,34.601592,-105.20763,true
+372457,Score 420 Old Coors,score-420-coors,806 Old Coors Drive SW,Albuquerque,New Mexico,87121,,alamogordo@score420.io,hybrid,35.071342,-106.699263,true
+373911,Sunshine Essentials,sunshine-essentials-1,267 Anapra Rd,Sunland Park,New Mexico,88063,(915) 588-0617,sunshineessentials@proton.me,hybrid,31.79385,-106.55628,true
+344100,Thrive Craft Cannabis Co. Dispensary & Lounge,thrive-craft-cannabis-co,5926 2nd St NW,Albuquerque,New Mexico,87107,(505) 225-6500,info@thrivecraftnm.com,recreational,35.142665,-106.63437,true
+317912,Everest Cannabis Co - Sunland Park,everest-cannabis-co-sunland-park,"1580 Appaloosa Drive, Suite 320",Sunland Park,New Mexico,88063,(575) 332-9037,info@everestnm.com,hybrid,31.80196,-106.564845,true
+59986,Sacred Garden - San Mateo,sacred-garden-san-mateo-blvd,616 San Mateo Blvd NE Suite 2,Albuquerque,New Mexico,87108,(505) 257-3748,admin@sacredgardennm.com,medical,35.08,-106.59,true
+354698,Dreamz - Gallup,dreamz-gallup,1379 US-491,Gallup,New Mexico,87301,(505) 297-3193,gallup@dreamzcannabis.com,recreational,35.546211,-108.759764,true
+398036,Everest Las Cruces North,everest-las-cruces-north,4165 White Sage Arc Suite D,Las Cruces,New Mexico,88011,(575) 446-1438,support@schwazze.com,hybrid,32.370509,-106.740242,true
+308852,Southwest Cannabis- Old Santa Fe Trail,southwest-wellness,"507 Old Santa Fe Trail, Santa Fe, NM 87505",Santa Fe,New Mexico,87505,(505) 230-3788,info@swwtaos.com,hybrid,35.68142,-105.93794,true
+357378,Turquoise Bloom,turquoise-bloom,162 Wyatt Dr.,Las Cruces,New Mexico,88005,(575) 259-4089,turqbloom@gmail.com,hybrid,32.299814,-106.775085,true
+337805,The Matchbox,the-matchbox,641 E Thorpe Rd,Las Cruces,New Mexico,88007,(575) 523-8851,matchboxfarmsllc@gmail.com,hybrid,32.38989,-106.81313,true
+358946,Press Labs Dispensary,press-labs-dispensary,711 North Union,Roswell,New Mexico,88201,(575) 306-5273,presslabsinc@gmail.com,recreational,33.400781,-104.535832,true
+324528,Smoke N Body,smoke-n-body,1822 7th St,Las Vegas,New Mexico,87701,(505) 652-8103,smokenbody505@gmail.com,hybrid,35.61121,-105.22384,true
+324076,Elements Dispensary,elements-dispensary,9901 Lomas Blvd NE,Albuquerque,New Mexico,87112,(505) 322-2877,elementsdispo@gmail.com,hybrid,35.0876,-106.536605,true
+391880,Connoisseur Cannabis - Las Cruces,connoisseur-cannabis-1,1810 E. Lohman,Las Cruces,New Mexico,88001,(575) 800-7461,connoisseurcannabisllc@gmail.com,recreational,32.309682,-106.760036,true
+351601,R Greenleaf Las Vegas,r-greenleaf-las-vegas,615 E. Lincoln St Unit A,Las Vegas,New Mexico,87701,(505) 962-2155,support@schwazze.com,hybrid,35.593437,-105.214167,true
+364286,Lava Wellness Dispensary,lava-wellness-dispensary,1208 E Hwy 66,Gallup,New Mexico,87301,(505) 722-3347,kevin@lavawellnessnm.com,hybrid,35.529448,-108.724171,true
+306052,R Greenleaf Cannabis Dispensary - Roswell,r-greenleaf-roswell,"4311 North Main St, Suite B",Roswell,New Mexico,88201,(505) 522-2122,support@schwazze.com,hybrid,33.447012,-104.522742,true
+345964,R Greenleaf Cannabis Dispensary - Carlsbad,r-greenleaf-carlsbad,800 W Pierce St,Carlsbad,New Mexico,88220,(575) 305-7944,support@schwazze.com,hybrid,32.435995,-104.23581,true
+52162,R Greenleaf Cannabis Dispensary - Grants,r-greenleaf-grants,899 E. Roosevelt Ave.,Grants,New Mexico,87020,(505) 287-5383,support@schwazze.com,recreational,35.152102,-107.853346,true
+351600,R Greenleaf Cottonwood,r-greenleaf-cottonwood,"10250 Cottonwood NW, Suite J",Albuquerque,New Mexico,87114,(505) 899-0511,support@schwazze.com,hybrid,35.204005,-106.654807,true
+64307,Keyway Marketplace - Jefferson St,shift-new-mexico-jefferson,5659 Jefferson Street Suite. A,Albuquerque,New Mexico,87109,(505) 312-8871,web@liftnm.com,medical,35.146454,-106.596206,true
+351604,R Greenleaf Yale,r-greenleaf-yale,110 Yale Blvd SE,Albuquerque,New Mexico,87106,(505) 522-3613,support@schwazze.com,hybrid,35.080116,-106.621745,true
+59132,Keyway Marketplace - Montgomery Blvd,shift-new-mexico-2,9880 Montgomery Blvd Unit C,Albuquerque,New Mexico,87111,(505) 219-4295,web@liftnm.com,medical,35.130145,-106.531189,true
+345962,R Greenleaf Cannabis Dispensary - Hobbs,r-greenleaf-hobbs,1901 Joe Harvey Blvd,Hobbs,New Mexico,88240,(505) 217-9103,support@schwazze.com,hybrid,32.74059,-103.15933,true
+60585,Everest Cannabis Co - West Central,everest-apothecary-1,4021 Central Ave Suite B6,Albuquerque,New Mexico,87105,(505) 836-8620,support@schwazze.com,hybrid,35.087058,-106.687521,true
+359347,Chikere Herbs,chikere-herbs,403 N Hwy 54,Logan,New Mexico,88426,(575) 487-2442,chikereherbs@gmail.com,hybrid,35.3658,-103.47725,true
+358176,Akeso Botanicals,akeso-botanicals,200 W Conway Ave STE B,Mesilla,New Mexico,88005,(575) 523-0135,akesoretail@gmail.com,recreational,32.277276,-106.769111,true
+336011,Burnin' Barrels - Aztec,burnin-barrels,2210 w. Aztec blvd,Aztec,New Mexico,87410,(505) 386-2500,bryanaj345@hotmail.com,hybrid,36.82483,-108.030595,true
+399856,Weeden Cannabis,weeden-cannabis,4000 SAN MATEO NE,Albuquerque,New Mexico,87110,(505) 433-3022,irene@weedencannabis.com,hybrid,35.103683,-106.568954,true
+320903,Rollin Love,rollin-love,2410 7th St,Las Vegas,New Mexico,87701,(505) 434-3412,rollinlove@outlook.com,hybrid,35.61816,-105.22476,true
+344044,CloudWalker Farm,cloudwalker-farm,1629 4th St NW,Albuquerque,New Mexico,87102,(505) 780-5871,info@cloudwalkerfarm.com,recreational,35.10088,-106.64873,true
+323118,Laughing Leaf Dispensary,laughing-leaf-dispensary,900 St Francis Dr,Cloudcroft,New Mexico,88317,(575) 682-1354,jim@laughingleafdispensary.com,hybrid,32.95894,-105.74325,true
+400017,Green Matter,green-matter,1900 Cerrilos Road,Santa Fe,New Mexico,87505,(505) 416-5803,debella.grey@yahoo.com,hybrid,35.663625,-105.974174,true
+334154,RoadRunner Cannabis Co,roadrunner-cannabis-co-llc,218 N White Sands Blvd,Alamogordo,New Mexico,88310,(575) 386-7980,roadrunnercannabisco@gmail.com,hybrid,32.89228,-105.9598,true
+332926,Treez LLC,treez-llc,816 West Broadway Avenue,Bloomfield,New Mexico,87413,(505) 436-0170,Nmtreez@gmail.com,hybrid,36.711117,-107.984512,true
+335889,Tumbling TumbleWEED,tumbling-tumbleweed,124 S US Hwy 54,Logan,New Mexico,88426,(575) 487-9333,tumblingtumbleweed@myyahoo.com,hybrid,35.361872,-103.410501,true
+374128,Arrive,arrive,248 DP Rd.,Los Alamos,New Mexico,87544,(505) 661-0111,elginfellers@gmail.com,hybrid,35.87948,-106.28571,true
+396798,Score 420 - Gallup,score-420-gallup,1703 W Hwy 66,Gallup,New Mexico,87301,,cate@score420.io,hybrid,35.520352,-108.765929,true
+365333,Before Daylite Farms,before-daylite-farms,191 Alameda Blvd NW,Albuquerque,New Mexico,87114,(505) 916-5652,beforedaylitefarms@gmail.com,hybrid,35.18833,-106.613297,true
+331955,FreshBudz,freshbudz,1811 N Riverside Dr Suite A,Española,New Mexico,87532,(505) 747-3871,freshbudz505@gmail.com,hybrid,36.018745,-106.063587,true
+323601,420 TeaTime,420-teatime,35 Rover Blvd Ste G #140,White Rock,New Mexico,87545,(505) 393-0068,info@420teatime.com,hybrid,35.82772,-106.20685,true
+337733,Dreamz Dispensary - Las Cruces,dreamz-dispensary-las-cruces,140 W Picacho Ave Suite C,Las Cruces,New Mexico,88005,(575) 259-3463,info@dreamzcannabis.com,recreational,32.31656,-106.78223,true
+363227,Roots Dispensary LLC,roots-dispensary-llc,320 N Main St Suite A,Belen,New Mexico,87002,,crossbones16@gmail.com,hybrid,34.58295,-106.588046,true
+346010,The Natural Source,the-natural-source,2829 San Mateo Blvd NE,Albuquerque,New Mexico,87110,(505) 433-5629,dgnaturalsource@gmail.com,hybrid,35.11384,-106.5867,true
+347609,Top Shelf Dispensary,top-shelf-dispensary-2,815 E HWY 66,Gallup,New Mexico,87301,(505) 297-3192,shelf0049@gmail.com,recreational,35.53082,-108.73183,true
+343142,Dispensary Near Me - Socorro,dispensary-near-me-2,"124 Manzanares Ave, Suite B",Socorro,New Mexico,87801,(505) 386-3577,dispensarynearmenm@gmail.com,recreational,34.05731,-106.89055,true
+368498,Mindscape Dispensary,mindscape-dispensary,708 E Bender Blvd,Hobbs,New Mexico,88240,(575) 492-0913,info@mindscapedispensary.com,hybrid,32.726036,-103.129037,true
+333597,Corrales Hemporium,corrales-hemporium,4484 Corrales Road,Corrales,New Mexico,87048,(505) 898-5252,Corraleshemporium@gmail.com,hybrid,35.224715,-106.61417,true
+368536,Ultimate Flower Odyssey,ultimate-flower-odyssey,9575 Bataan Memorial West,Las Cruces,New Mexico,88012,(575) 494-6866,richelleelberg@yahoo.com,hybrid,32.41262,-106.63739,true
+314831,Everest Cannabis Co - Montano Plaza,everest-cannabis-co-montano-plaza,"6010 Coors NW, Suite 3",Albuquerque,New Mexico,87120,(505) 295-3245,info@everestnm.com,medical,35.14943,-106.684475,true
+333490,Richy Rich Hempire,richy-rich-hempire,401 Ralph,Chaparral,New Mexico,88081,(915) 300-7979,rrhempire@gmail.com,hybrid,32.02357,-106.36049,true
+378370,New Mexico Drip,new-mexico-drip,"9012 Central Ave. SE Suite A,",Albuquerque,New Mexico,87123,(505) 595-3132,newmexicodripllc@gmail.com,hybrid,35.07316,-106.546951,true
+369214,Dreamz - Roswell,dreamz-roswell,2303 N Main St Suite 102,Roswell,New Mexico,88201,,sarahb@dreamzcannabis.com,hybrid,33.420611,-104.522422,true
+372466,Dispensary Near Me - Ruidoso,dispensary-near-me-ruidoso,1803 Sudderth,Ruidoso,New Mexico,88345,(575) 808-8393,dispensarynearmenm@gmail.com,hybrid,33.3284,-105.66335,true
+344440,Dr Green Organics - Las Cruces,dr-green-organics-las-cruces,5555 South Main Street,Mesilla Park,New Mexico,88047,(575) 680-2258,kash_money_calvin@yahoo.com,hybrid,32.24452,-106.74632,true
+336046,Burnin Barrels- Farmington,burnin-barrels-farmington,5575 US-64,Farmington,New Mexico,87401,+31 50 516 0134,Bryanaj345@hotmail.com,hybrid,36.706942,-108.122933,true
+346012,All American bud co,all-american-bud-co,403 West main Street,Farmington,New Mexico,87401,,r.chavez57@yahoo.com,recreational,36.72886,-108.20958,true
+376128,Yucca Point,yucca-point,1000 N Main St Ste A,Las Cruces,New Mexico,88001,(575) 805-5033,ericka@ypdispensary.com,hybrid,32.317851,-106.780594,true
+401169,Cavi Land,cavi-land-1,800 3rd St NW B,Albuquerque,New Mexico,87102,(505) 203-7481,support@cavi.land,hybrid,35.092068,-106.648704,true
+365091,Lavish Leaf,lavish-leaf,604 10th Street,Alamogordo,New Mexico,88310,(575) 489-8539,lavishleafnm@gmail.com,hybrid,32.899502,-105.955153,true
+346654,Kushland,kushland,1331 Cuesta Abajo Ct NE,Albuquerque,New Mexico,87113,(505) 503-8605,info@kushlandabq.com,recreational,35.17226,-106.60849,true
+358173,Pharmtrue Dispensary,pharmtrue-dispensary,227 S Main St,Las Cruces,New Mexico,88001,(575) 993-5243,info@pharmtrue.care,recreational,32.308319,-106.777876,true
+322794,Smoking Crow Cannabis Dispensary,smoking-crow-cannabis-dispensary,195 State Highway 518,Mora,New Mexico,87732,(575) 520-9899,info@smokingcrowNM.com,hybrid,35.97366,-105.3281,true
+356754,Berna-Leño Dispensary,bernaleno,1042 S Camino Del Pueblo,Bernalillo,New Mexico,87004,(505) 867-2959,bernalenoinc@gmail.com,hybrid,35.300238,-106.550793,true
+400043,Wō Poví Cannabis,wo-povi-cannabis-2,68 Cities of Gold Rd,Santa Fe,New Mexico,87506,(505) 479-0173,Store@wopovicannabis.com,hybrid,35.884082,-106.01394,true
+365521,Horizon Cannabis Co.,horizon-cannabis-co,312 S Main Ave,Portales,New Mexico,88130,(575) 425-8792,horizongrowers@outlook.com,hybrid,34.184585,-103.335486,true
+317966,Happy Hippie Budz - Coors BLVD,happy-hippie-budz,2528 Coors Blvd SW,Albuquerque,New Mexico,87107,(505) 508-1322,cannaco@gmail.com,hybrid,35.12644,-106.64326,true
+364489,Baked Buds Cannabis Dispensary,baked-buds-cannabis-dispensary,3400 Vassar Dr NE,Albuquerque,New Mexico,87107,(505) 808-3475,bakedbudsnmcannabis@gmail.com,hybrid,35.118538,-106.614799,true
+346174,Tru Luv Bud,tru-luv-bud-llc,2860 NM-14,Madrid,New Mexico,87010,,contact@truluvbudllc.com,recreational,35.4065,-106.15194,true
+325298,Budding Bar & Dispensary,budding-bar-dispensary,804 S Main st,Belen,New Mexico,87002,(505) 750-0018,buddingbar@gmail.com,hybrid,34.652795,-106.77883,true
+320988,Grandma's Pot Shop,grandmas-pot-shop,2 Valencia Rd,Peralta,New Mexico,87042,(505) 717-2169,Info@grandmaspotshop.com,hybrid,34.815332,-106.6947,true
+364636,Smokin' Joe's,smokin-joe-s,300 Yale Blvd SE,Albuquerque,New Mexico,87106,(505) 226-6560,smokinjoesnm@gmail.com,hybrid,35.07711,-106.6217,true
+407098,Luna Sky Weed Mart LLC,luna-sky-weed-mart-llc,103 E Pine St,Deming,New Mexico,88030,(806) 319-4716,lunaskyweedmart@gmail.com,hybrid,32.268828,-107.758501,true
+312925,R Greenleaf Cannabis Dispensary - Santa Fe,rgreenleaf-santa-fe,403 West Cordova Road,Santa Fe,New Mexico,87505,(505) 962-2161,support@schwazze.com,hybrid,35.672442,-105.949118,true
+407242,April Flowers LLC,april-flowers-llc,725 Realwind Dr,Fort Sumner,New Mexico,88119,(575) 329-2227,aprilflowersnm@gmail.com,recreational,34.45017,-104.21148,true
+367445,Treehouse Cannabis,treehouse-cannabis-llc,830 W Ave D,Lovington,New Mexico,88260,(575) 704-5994,treehousecannabis575@gmail.com,hybrid,32.944235,-103.35954,true
+359794,The Kush House Express - Drive Thru Only,the-kush-house-ii-n-solano-dr,1960 N Solano Dr,Las Cruces,New Mexico,88001,(575) 621-6272,thekushhousenm@gmail.com,hybrid,32.327053,-106.777915,true
+369688,Willow Springs Cannabis,willow-springs-cannabis-llc,215 Clayton Rd.,Raton,New Mexico,87740,(337) 224-6073,willowspringscannabis@gmail.com,hybrid,36.88471,-104.43786,true
+309189,Southwest Cannabis - Guadalupe,southwest-wellness-center-guadalupe,604 N. Guadalupe,Santa Fe,New Mexico,87501,(505) 780-8764,info@swwtaos.com,hybrid,35.69492,-105.95093,true
+329483,Top of the Eighth,top-of-the-eighth,1275 Anthony Dr. Suite C7,Anthony,New Mexico,88021,(575) 201-5163,topoftheeighthnm@gmail.com,hybrid,32.01679,-106.60393,true
+368578,Cloud 9 Cannabis Co. NM,cloud-9-dispensary-nm,1602 E Lohman Ave,Las Cruces,New Mexico,88001,(575) 556-9086,Cloud9cannabis.socials@gmail.com,hybrid,32.309219,-106.761832,true
+321157,Mountain High Express,mountain-high-express,2381 Frontage Road,Chama,New Mexico,87520,(575) 756-2493,mountainhighexpress22@gmail.com,hybrid,36.88347,-106.58595,true
