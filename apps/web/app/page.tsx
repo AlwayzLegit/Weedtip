@@ -60,7 +60,7 @@ export default async function HomePage() {
     { data: popular },
     dispCount,
     prodCount,
-    cityRows,
+    stateCountRes,
   ] = await Promise.all([
     supabase
       .from('dispensaries')
@@ -104,7 +104,7 @@ export default async function HomePage() {
       .limit(10),
     supabase.from('dispensaries').select('id', head).eq('status', 'active'),
     supabase.from('products').select('id', head),
-    supabase.from('dispensaries').select('state').eq('status', 'active'),
+    supabase.rpc('get_active_dispensary_state_count'),
   ]);
 
   const heroSlides: HeroSlide[] = (heroPlacements ?? [])
@@ -124,7 +124,7 @@ export default async function HomePage() {
       reviewCount: (d.rating_count as number) ?? 0,
     }));
 
-  const stateCount = new Set((cityRows.data ?? []).map((r) => r.state)).size;
+  const stateCount = stateCountRes.data ?? 0;
   const nf = new Intl.NumberFormat('en-US');
   const stats = [
     { label: 'Dispensaries', value: `${nf.format(dispCount.count ?? 0)}` },
