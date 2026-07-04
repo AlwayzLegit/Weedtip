@@ -301,6 +301,9 @@ for (const r of rows.slice(1)) {
   records.push({
     name,
     slug,
+    // Only store legal_name when it's actually distinct from the display name
+    // -- the app only surfaces it as "Licensed as {legal_name}" in that case.
+    legal_name: legalOk && legalName.toLowerCase() !== name.toLowerCase() ? legalName : null,
     address: titleCase(clean(get('street'))) ?? '',
     city: titleCase(clean(get('city'))) ?? '',
     state: (clean(get('state')) ?? 'CA').toUpperCase().slice(0, 2),
@@ -334,7 +337,7 @@ const valueRows = records.map((d) => {
     `${sqlStr(d.state)}, ${sqlStr(d.zip)}, ${sqlStr(d.phone)}, ${sqlStr(d.email)}, ` +
     `${sqlStr(d.website)}, ${sqlStr(d.license_number)}, ${sqlBool(d.is_medical)}, ` +
     `${sqlBool(d.is_recreational)}, ${sqlBool(d.is_delivery)}, ${sqlBool(d.is_pickup)}, ` +
-    `${location}, 'active')`
+    `${location}, 'active', ${sqlStr(d.legal_name)})`
   );
 });
 
@@ -363,7 +366,7 @@ const sql =
     ? `${banner}${replacePrefix}-- No matching records.\n`
     : `${banner}${replacePrefix}insert into public.dispensaries
   (name, slug, address, city, state, zip, phone, email, website, license_number,
-   is_medical, is_recreational, is_delivery, is_pickup, location, status)
+   is_medical, is_recreational, is_delivery, is_pickup, location, status, legal_name)
 values
 ${valueRows.join(',\n')}
 on conflict (slug) do nothing;
