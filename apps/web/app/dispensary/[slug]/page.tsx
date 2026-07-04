@@ -52,7 +52,7 @@ export async function generateMetadata({
   const title = `${data.name} — ${place}`;
   const description =
     data.description?.slice(0, 160) ??
-    `${data.name}${data.city ? ` in ${data.city}, ${data.state}` : ' — delivery in California'}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
+    `${data.name}${data.city ? ` in ${data.city}, ${data.state}` : ` — delivery in ${data.state}`}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
   const canonical = `/dispensary/${slug}`;
   return {
     title,
@@ -234,15 +234,21 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     name: d.name,
     url: `${SITE_URL}/dispensary/${d.slug}`,
     ...(d.description ? { description: d.description } : {}),
-    ...(d.cover_image_url ? { image: d.cover_image_url } : {}),
+    ...(d.cover_image_url
+      ? {
+          image: d.cover_image_url.startsWith('http')
+            ? d.cover_image_url
+            : `${SITE_URL}${d.cover_image_url}`,
+        }
+      : {}),
     ...(d.phone ? { telephone: d.phone } : {}),
     ...(d.website ? { sameAs: [d.website] } : {}),
     address: {
       '@type': 'PostalAddress',
-      streetAddress: d.address,
-      addressLocality: d.city,
+      ...(d.address ? { streetAddress: d.address } : {}),
+      ...(d.city ? { addressLocality: d.city } : {}),
       addressRegion: d.state,
-      postalCode: d.zip,
+      ...(d.zip ? { postalCode: d.zip } : {}),
       addressCountry: 'US',
     },
     ...(d.latitude != null && d.longitude != null
@@ -310,14 +316,16 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               <h1 className="text-2xl font-bold sm:text-3xl">{d.name}</h1>
             </div>
             <p className="text-muted mt-1 flex items-center gap-1 text-sm">
-              {d.address && d.city ? (
-                <>
-                  <MapPin className="h-4 w-4" /> {d.address}, {d.city}, {d.state} {d.zip}
-                </>
-              ) : (
+              {d.is_delivery && !d.is_pickup ? (
                 <>
                   <Truck className="h-4 w-4" /> Delivery only
                   {d.county ? ` · serves ${d.county} County, ${d.state}` : ` · ${d.state}`}
+                </>
+              ) : (
+                <>
+                  <MapPin className="h-4 w-4" />{' '}
+                  {[d.address, d.city, d.state].filter(Boolean).join(', ')}
+                  {d.zip ? ` ${d.zip}` : ''}
                 </>
               )}
             </p>

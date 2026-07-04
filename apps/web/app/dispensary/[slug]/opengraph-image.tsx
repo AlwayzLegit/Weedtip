@@ -22,7 +22,9 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     ogCard({
       eyebrow: 'Dispensary',
       title: data?.name ?? 'Dispensary',
-      subtitle: data ? `${data.city}, ${data.state}` : undefined,
+      subtitle: data
+        ? [data.city, data.state].filter(Boolean).join(', ') || undefined
+        : undefined,
     }),
     OG_SIZE,
   );

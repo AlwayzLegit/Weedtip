@@ -47,11 +47,10 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   const { data: brand } = await supabase.from('brands').select('*').eq('slug', slug).maybeSingle();
   if (!brand) notFound();
 
-  const { user, profile } = await getAuth();
-  const canClaim =
-    !!user &&
-    !brand.owner_id &&
-    (profile?.role === 'dispensary_owner' || profile?.role === 'admin');
+  const { user } = await getAuth();
+  // Brand ownership is orthogonal to the role enum — any signed-in user can own
+  // a brand (RLS gates the actual claim), so don't restrict the CTA by role.
+  const canClaim = !!user && !brand.owner_id;
 
   const { data: products } = await supabase
     .from('products')

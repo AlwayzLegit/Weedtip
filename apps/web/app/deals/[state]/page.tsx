@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { Tag } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -20,7 +21,7 @@ type DealRow = {
   dispensary: { slug: string; name: string; city: string; state: string } | null;
 };
 
-async function activeDealsInState(code: string): Promise<DealRow[]> {
+const activeDealsInState = cache(async function activeDealsInState(code: string): Promise<DealRow[]> {
   const supabase = await createClient();
   const nowIso = new Date().toISOString();
   const { data } = await supabase
@@ -33,7 +34,7 @@ async function activeDealsInState(code: string): Promise<DealRow[]> {
     .eq('dispensary.state', code)
     .order('end_date');
   return (data ?? []) as unknown as DealRow[];
-}
+});
 
 export async function generateMetadata({
   params,
@@ -45,7 +46,10 @@ export async function generateMetadata({
   if (!name) return { title: 'Deals' };
   const title = `Cannabis Deals in ${name}`;
   const description = `Find live cannabis deals and discounts from licensed dispensaries in ${name}. Compare offers and order for pickup or delivery on Weedtip.`;
-  return pageSeo({ title, description, path: `/deals/${state.toLowerCase()}` });
+  const meta = pageSeo({ title, description, path: `/deals/${state.toLowerCase()}` });
+  // Don't index a state deals page with no live deals — thin content.
+  const deals = await activeDealsInState(state.toUpperCase());
+  return deals.length === 0 ? { ...meta, robots: { index: false, follow: true } } : meta;
 }
 
 export default async function StateDealsPage({

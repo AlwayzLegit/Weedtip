@@ -36,7 +36,7 @@ export default async function AdminOverview() {
     { data: orders },
     { data: subs },
     { data: placements },
-    { data: dispensaries },
+    active,
     { data: plans },
     pending,
     suspended,
@@ -49,7 +49,7 @@ export default async function AdminOverview() {
       .select('status,payment_status,total_cents,platform_fee_cents,created_at,dispensary_id,source,device'),
     supabase.from('dispensary_subscriptions').select('status, plan:plans(name, price_cents)'),
     supabase.from('placements').select('price_cents,stripe_payment_intent_id'),
-    supabase.from('dispensaries').select('id,name,status'),
+    supabase.from('dispensaries').select('id', head).eq('status', 'active'),
     supabase.from('plans').select('id,name,price_cents').order('sort_order'),
     supabase.from('dispensaries').select('id', head).eq('status', 'pending'),
     supabase.from('dispensaries').select('id', head).eq('status', 'suspended'),
@@ -72,19 +72,28 @@ export default async function AdminOverview() {
     .filter((p) => p.stripe_payment_intent_id)
     .reduce((s, p) => s + (p.price_cents ?? 0), 0);
 
-  const dispList = dispensaries ?? [];
-  const activeCount = dispList.filter((d) => d.status === 'active').length;
-  const nameById = new Map(dispList.map((d) => [d.id, d.name] as const));
+  // Head count — the full dispensaries list can't be fetched (9k+ > 1k cap).
+  const activeCount = active.count ?? 0;
 
   // ─── Top dispensaries by revenue ─────────────────────────────────────────
   const revByDisp = new Map<string, number>();
   for (const o of liveOrders) {
     revByDisp.set(o.dispensary_id, (revByDisp.get(o.dispensary_id) ?? 0) + o.total_cents);
   }
-  const topDispensaries = [...revByDisp.entries()]
-    .map(([id, cents]) => ({ id, name: nameById.get(id) ?? '—', cents }))
-    .sort((a, b) => b.cents - a.cents)
-    .slice(0, 5);
+  const topIds = [...revByDisp.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([id]) => id);
+  // Resolve names for just the top few, rather than fetching (a capped) 9k rows.
+  const { data: topNames } = topIds.length
+    ? await supabase.from('dispensaries').select('id,name').in('id', topIds)
+    : { data: [] as { id: string; name: string }[] };
+  const nameById = new Map((topNames ?? []).map((d) => [d.id, d.name] as const));
+  const topDispensaries = topIds.map((id) => ({
+    id,
+    name: nameById.get(id) ?? '—',
+    cents: revByDisp.get(id) ?? 0,
+  }));
 
   // ─── Plan distribution ───────────────────────────────────────────────────
   const planCounts = new Map<string, number>();

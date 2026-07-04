@@ -68,6 +68,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       supabase.from('categories').select('slug'),
     ]);
 
+    // Which locations actually have live deals — so we don't advertise thousands
+    // of empty /deals pages (their JSON-LD would self-report "0 deals").
+    const nowIso = now.toISOString();
+    const { data: dealRows } = await supabase
+      .from('deals')
+      .select('dispensary:dispensaries!inner(state, city, status)')
+      .eq('is_active', true)
+      .lte('start_date', nowIso)
+      .gte('end_date', nowIso)
+      .eq('dispensary.status', 'active');
+    const dealStateSet = new Set<string>();
+    const dealCitySet = new Set<string>();
+    for (const row of dealRows ?? []) {
+      const d = row.dispensary as { state: string; city: string | null } | null;
+      if (!d) continue;
+      const st = d.state.toLowerCase();
+      dealStateSet.add(st);
+      if (d.city) dealCitySet.add(`${st}/${citySlug(d.city)}`);
+    }
+
     // Local SEO landing pages: distinct states and state+city combinations.
     const stateSet = new Set<string>();
     const citySet = new Set<string>();
@@ -89,19 +109,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'daily' as const,
         priority: 0.7,
       })),
-      // Deals by location.
-      ...[...stateSet].map((st) => ({
-        url: `${SITE_URL}/deals/${st}`,
-        lastModified: now,
-        changeFrequency: 'daily' as const,
-        priority: 0.6,
-      })),
-      ...[...citySet].map((loc) => ({
-        url: `${SITE_URL}/deals/${loc}`,
-        lastModified: now,
-        changeFrequency: 'daily' as const,
-        priority: 0.6,
-      })),
+      // Deals by location — only where live deals exist (else they're empty
+      // doorway pages that advertise "0 deals" in their structured data).
+      ...[...stateSet]
+        .filter((st) => dealStateSet.has(st))
+        .map((st) => ({
+          url: `${SITE_URL}/deals/${st}`,
+          lastModified: now,
+          changeFrequency: 'daily' as const,
+          priority: 0.6,
+        })),
+      ...[...citySet]
+        .filter((loc) => dealCitySet.has(loc))
+        .map((loc) => ({
+          url: `${SITE_URL}/deals/${loc}`,
+          lastModified: now,
+          changeFrequency: 'daily' as const,
+          priority: 0.6,
+        })),
       // Category × city long-tail (e.g. /dispensaries/co/denver/flower).
       ...[...citySet].flatMap((loc) =>
         PRODUCT_CATEGORIES.map((c) => ({
