@@ -207,10 +207,12 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   };
 
   const hours = d.hours as OperatingHours | null;
-  // Open-now status in California (Pacific) time, computed at request time.
-  const ptNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-  const todayKey = (['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const)[ptNow.getDay()]!;
-  const nowMinutes = ptNow.getHours() * 60 + ptNow.getMinutes();
+  // Open-now status in the shop's own timezone, computed at request time. Falls
+  // back to Eastern (the map default for unlisted states) if none is stored.
+  const shopTz = (d.timezone as string | null) || 'America/New_York';
+  const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: shopTz }));
+  const todayKey = (['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const)[localNow.getDay()]!;
+  const nowMinutes = localNow.getHours() * 60 + localNow.getMinutes();
   const toMinutes = (t: string) => {
     const [h = '0', m = '0'] = t.split(':');
     return Number(h) * 60 + Number(m);
