@@ -117,11 +117,52 @@ export async function sendPasswordReset(_prev: AuthState, formData: FormData): P
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${siteUrl()}/auth/callback?next=/dashboard`,
+    redirectTo: `${siteUrl()}/auth/callback?next=/account/update-password`,
   });
   if (error) return { error: error.message };
 
   return { message: 'If that email exists, a reset link is on its way.' };
+}
+
+const updatePasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, {
+    message: 'Passwords do not match',
+    path: ['confirm'],
+  });
+
+/**
+ * Set a new password for the signed-in user. Reached from the reset-email link
+ * (the callback exchanges the recovery code for a session, then lands here) or
+ * from the account page for a routine change. Requires an active session.
+ */
+export async function updatePassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  if (!(await rateLimit('auth-update-password', { limit: 10, window: '60 s' })).success) {
+    return { error: TOO_MANY };
+  }
+  const parsed = updatePasswordSchema.safeParse({
+    password: formData.get('password'),
+    confirm: formData.get('confirm'),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: 'Your reset link has expired. Request a new one and try again.' };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { error: error.message };
+
+  return { message: 'Password updated. You can now use it to sign in.' };
 }
 
 function ageInYears(dob: string): number {
