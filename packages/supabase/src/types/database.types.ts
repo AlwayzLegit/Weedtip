@@ -2009,6 +2009,12 @@ export type Database = {
           your_bid_id: string
         }[]
       }
+      brand_featured_states: {
+        Args: never
+        Returns: {
+          state: string
+        }[]
+      }
       brand_follower_count: { Args: { p_brand_id: string }; Returns: number }
       cancel_ad_bid: { Args: { p_bid_id: string }; Returns: undefined }
       cancel_brand_bid: { Args: { p_bid_id: string }; Returns: undefined }
