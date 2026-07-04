@@ -80,14 +80,19 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
   const { supabase, userId } = auth;
 
   const name = str(fd, 'name') ?? '';
+  // Only build a coordinate pair when both values are present and finite; a
+  // partial or missing geocode leaves location unset (see payload below) rather
+  // than failing the whole save or overwriting good coordinates with null.
+  const lat = numOpt(fd, 'latitude');
+  const lng = numOpt(fd, 'longitude');
   const input = {
     name,
     slug: str(fd, 'slug') ?? slugify(name),
     description: str(fd, 'description') ?? null,
-    address: str(fd, 'address') ?? '',
-    city: str(fd, 'city') ?? '',
+    address: str(fd, 'address') ?? null,
+    city: str(fd, 'city') ?? null,
     state: (str(fd, 'state') ?? '').toUpperCase(),
-    zip: str(fd, 'zip') ?? '',
+    zip: str(fd, 'zip') ?? null,
     phone: str(fd, 'phone') ?? null,
     email: str(fd, 'email') ?? null,
     website: str(fd, 'website') ?? null,
@@ -101,17 +106,19 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
     hours: parseHours(fd),
     announcement: str(fd, 'announcement') ?? null,
     amenities: fd.getAll('amenities').filter((v): v is string => typeof v === 'string'),
-    location: { lat: numOpt(fd, 'latitude') ?? NaN, lng: numOpt(fd, 'longitude') ?? NaN },
+    location: lat !== undefined && lng !== undefined ? { lat, lng } : null,
   };
 
   const parsed = dispensaryWriteSchema.safeParse(input);
   if (!parsed.success) return fromZodError(parsed.error);
 
   const { location, ...rest } = parsed.data;
+  // Set the geography only when we have real coordinates, so saving a listing
+  // that never had a geocode doesn't wipe (or fail on) its location.
   const payload = {
     ...rest,
     hours: rest.hours ?? null,
-    location: pointEwkt(location.lng, location.lat),
+    ...(location ? { location: pointEwkt(location.lng, location.lat) } : {}),
   };
 
   const existingId = await ownerDispensaryId(supabase, userId);
