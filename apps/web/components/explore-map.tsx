@@ -146,9 +146,11 @@ export function ExploreMap({
       ref={mapRef}
       mapboxAccessToken={token}
       initialViewState={{
-        latitude: center?.lat ?? 37.3,
-        longitude: center?.lng ?? -119.4,
-        zoom: zoom ?? 5,
+        // Default to the geographic center of the contiguous US so a nationwide
+        // map opens showing every state, not centered on California.
+        latitude: center?.lat ?? 39.5,
+        longitude: center?.lng ?? -98.35,
+        zoom: zoom ?? 3.6,
       }}
       mapStyle="mapbox://styles/mapbox/dark-v11"
       style={{ width: '100%', height: '100%' }}

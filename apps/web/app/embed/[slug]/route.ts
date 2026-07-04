@@ -49,7 +49,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
     .eq('slug', slug)
     .maybeSingle();
 
-  const headers = { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' };
+  // Keep the embeddable menu out of the index — it's duplicate menu content
+  // that lives to be iframed on partner sites, not crawled on its own.
+  const headers = {
+    'content-type': 'text/html; charset=utf-8',
+    'cache-control': 'public, max-age=300',
+    'x-robots-tag': 'noindex',
+  };
 
   if (!d || d.status !== 'active') {
     return new Response(shell('Menu unavailable', '<p class="empty">This menu is unavailable.</p>'), {
@@ -87,7 +93,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   const body = `
     <div class="head">
       <h1>${esc(d.name)}</h1>
-      <span>${d.city ? `${esc(d.city)}, ${esc(d.state)}` : 'Delivery only'}</span>
+      <span>${d.city ? `${esc(d.city)}, ${esc(d.state)}` : esc(d.state)}</span>
     </div>
     ${rows ? `<ul>${rows}</ul>` : '<p class="empty">No products listed yet.</p>'}
     <div class="foot"><a href="${SITE_URL}/dispensary/${esc(d.slug)}?source=embed" target="_blank" rel="noopener">View full menu &amp; order on Weedtip →</a></div>`;
