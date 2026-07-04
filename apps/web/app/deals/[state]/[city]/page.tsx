@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { Tag } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -7,6 +8,7 @@ import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetch-all';
 
 const DEAL_SELECT = '*, dispensary:dispensaries!inner(slug,name,city,state,status)';
 
@@ -20,7 +22,7 @@ type DealRow = {
   dispensary: { slug: string; name: string; city: string; state: string } | null;
 };
 
-async function loadCityDeals(state: string, city: string) {
+const loadCityDeals = cache(async function loadCityDeals(state: string, city: string) {
   const code = state.toUpperCase();
   const stateName = US_STATES[code];
   if (!stateName) return null;
@@ -38,16 +40,20 @@ async function loadCityDeals(state: string, city: string) {
   const deals = ((data ?? []) as unknown as DealRow[]).filter(
     (d) => d.dispensary && citySlug(d.dispensary.city) === city.toLowerCase(),
   );
-  // Resolve the city's display name even when it currently has no active deals.
-  const { data: cityRow } = await supabase
-    .from('dispensaries')
-    .select('city')
-    .eq('status', 'active')
-    .eq('state', code);
-  const cityName = (cityRow ?? []).map((r) => r.city).find((c) => citySlug(c ?? '') === city.toLowerCase());
+  // Resolve the city's display name even when it currently has no active deals,
+  // paging past the 1k cap so large-state cities still resolve.
+  const cityRow = await fetchAll<{ city: string | null }>((from, to) =>
+    supabase
+      .from('dispensaries')
+      .select('city')
+      .eq('status', 'active')
+      .eq('state', code)
+      .range(from, to),
+  );
+  const cityName = cityRow.map((r) => r.city).find((c) => citySlug(c ?? '') === city.toLowerCase());
   if (!cityName) return null;
   return { stateName, cityName, deals };
-}
+});
 
 export async function generateMetadata({
   params,
