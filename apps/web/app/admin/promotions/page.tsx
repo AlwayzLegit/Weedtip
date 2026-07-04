@@ -29,9 +29,8 @@ function isLive(p: { is_active: boolean; starts_at: string; ends_at: string | nu
 export default async function AdminPromotions() {
   const supabase = await createClient();
 
-  const [{ data: dispensaries }, { data: plans }, { data: placements }, { data: subs }, { data: stats }] =
+  const [{ data: plans }, { data: placements }, { data: subs }, { data: stats }] =
     await Promise.all([
-      supabase.from('dispensaries').select('id,name').order('name'),
       supabase.from('plans').select('*').order('sort_order'),
       supabase
         .from('placements')
@@ -43,7 +42,6 @@ export default async function AdminPromotions() {
       supabase.from('placement_stats').select('*'),
     ]);
 
-  const disp = dispensaries ?? [];
   const planList = plans ?? [];
   const statsByPlacement = new Map(
     (stats ?? []).map((s) => [s.placement_id, s] as const),
@@ -142,7 +140,7 @@ export default async function AdminPromotions() {
       <section className="space-y-4">
         <h3 className="text-lg font-semibold">Grant a placement</h3>
         <div className="rounded-card border-border bg-surface border p-5">
-          <PlacementForm dispensaries={disp} />
+          <PlacementForm />
         </div>
       </section>
 
@@ -178,10 +176,7 @@ export default async function AdminPromotions() {
       <section className="space-y-4">
         <h3 className="text-lg font-semibold">Assign a tier</h3>
         <div className="rounded-card border-border bg-surface border p-5">
-          <PlanAssignForm
-            dispensaries={disp}
-            plans={planList.map((p) => ({ id: p.id, name: p.name }))}
-          />
+          <PlanAssignForm plans={planList.map((p) => ({ id: p.id, name: p.name }))} />
         </div>
 
         {subs && subs.length > 0 && (

@@ -7,14 +7,9 @@ import { FormMessage } from '../auth/form-message';
 import { SubmitButton } from '../auth/submit-button';
 import { Field } from '../dashboard/field';
 import { Select } from '../ui/select';
+import { DispensaryPicker } from './dispensary-picker';
 
-export function PlanAssignForm({
-  dispensaries,
-  plans,
-}: {
-  dispensaries: { id: string; name: string }[];
-  plans: { id: string; name: string }[];
-}) {
+export function PlanAssignForm({ plans }: { plans: { id: string; name: string }[] }) {
   const [state, action] = useActionState(setDispensaryPlan, EMPTY_FORM_STATE);
 
   return (
@@ -27,13 +22,7 @@ export function PlanAssignForm({
       />
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Dispensary" htmlFor="dispensary_id">
-          <Select id="dispensary_id" name="dispensary_id" required>
-            {dispensaries.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </Select>
+          <DispensaryPicker />
         </Field>
         <Field label="Plan" htmlFor="plan_id">
           <Select id="plan_id" name="plan_id">
