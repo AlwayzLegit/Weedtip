@@ -26,22 +26,26 @@ export default async function BrandsPage({
   const nowIso = new Date().toISOString();
   const { state: stateParam } = await searchParams;
 
-  const [{ data: brands }, { data: prodBrands }, { data: featured }] = await Promise.all([
-    supabase.from('brands').select('id,slug,name,description,logo_url').order('name'),
-    supabase
-      .from('products')
-      .select('brand_id, dispensary:dispensaries!inner(status,state)')
-      .eq('dispensary.status', 'active')
-      .not('brand_id', 'is', null),
-    supabase
-      .from('placements')
-      .select('id, priority, scope_state, brand:brands!inner(slug,name,description,logo_url)')
-      .eq('type', 'promoted_brand')
-      .eq('is_active', true)
-      .lte('starts_at', nowIso)
-      .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
-      .order('priority', { ascending: false }),
-  ]);
+  const [{ data: brands }, { data: prodBrands }, { data: featured }, { data: bidStates }] =
+    await Promise.all([
+      supabase.from('brands').select('id,slug,name,description,logo_url').order('name'),
+      supabase
+        .from('products')
+        .select('brand_id, dispensary:dispensaries!inner(status,state)')
+        .eq('dispensary.status', 'active')
+        .not('brand_id', 'is', null),
+      supabase
+        .from('placements')
+        .select('id, priority, scope_state, brand:brands!inner(slug,name,description,logo_url)')
+        .eq('type', 'promoted_brand')
+        .eq('is_active', true)
+        .lte('starts_at', nowIso)
+        .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+        .order('priority', { ascending: false }),
+      // States with a live winning brand bid — so paid markets are selectable
+      // even where there's no organic product coverage yet.
+      supabase.rpc('brand_featured_states'),
+    ]);
 
   // Per-brand total + per-state product counts (a brand's states = the states of
   // the active dispensaries that carry it).
@@ -63,7 +67,17 @@ export default async function BrandsPage({
     stateBrandSets.get(st)!.add(p.brand_id);
   }
 
-  const allStates = [...stateBrandSets.keys()].sort();
+  // A market is selectable if it has organic brand products, a live sponsored
+  // brand placement, or a winning brand bid — otherwise paid markets outside
+  // NY could never render (audit #16).
+  const selectableStates = new Set<string>(stateBrandSets.keys());
+  for (const f of (featured as FeaturedRow[] | null) ?? []) {
+    if (f.scope_state) selectableStates.add(f.scope_state);
+  }
+  for (const row of (bidStates as { state: string }[] | null) ?? []) {
+    if (row.state) selectableStates.add(row.state);
+  }
+  const allStates = [...selectableStates].sort();
   const selectedState = stateParam && allStates.includes(stateParam) ? stateParam : null;
 
   const ranked = (brands ?? [])
@@ -136,19 +150,23 @@ export default async function BrandsPage({
           >
             All states
           </Link>
-          {allStates.map((st) => (
-            <Link
-              key={st}
-              href={`/brands?state=${st}`}
-              className={
-                selectedState === st
-                  ? 'border-primary bg-primary-muted text-primary rounded-full border px-3 py-1 text-sm font-medium'
-                  : 'border-border text-muted hover:text-foreground rounded-full border px-3 py-1 text-sm'
-              }
-            >
-              {st} ({stateBrandSets.get(st)?.size ?? 0})
-            </Link>
-          ))}
+          {allStates.map((st) => {
+            const n = stateBrandSets.get(st)?.size ?? 0;
+            return (
+              <Link
+                key={st}
+                href={`/brands?state=${st}`}
+                className={
+                  selectedState === st
+                    ? 'border-primary bg-primary-muted text-primary rounded-full border px-3 py-1 text-sm font-medium'
+                    : 'border-border text-muted hover:text-foreground rounded-full border px-3 py-1 text-sm'
+                }
+              >
+                {st}
+                {n > 0 ? ` (${n})` : ''}
+              </Link>
+            );
+          })}
         </div>
       )}
 
@@ -194,7 +212,9 @@ export default async function BrandsPage({
 
       {ranked.length === 0 ? (
         <div className="card text-muted p-10 text-center">
-          No brands{selectedState ? ` in ${selectedState}` : ' yet'}.
+          {featuredCards.length > 0 && selectedState
+            ? `No other brands listed in ${selectedState} yet.`
+            : `No brands${selectedState ? ` in ${selectedState}` : ' yet'}.`}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
