@@ -678,6 +678,7 @@ export type Database = {
           email: string | null
           featured: boolean
           featured_manual: boolean
+          google_enriched_at: string | null
           google_photo_name: string | null
           google_place_id: string | null
           hours: Json | null
@@ -725,6 +726,7 @@ export type Database = {
           email?: string | null
           featured?: boolean
           featured_manual?: boolean
+          google_enriched_at?: string | null
           google_photo_name?: string | null
           google_place_id?: string | null
           hours?: Json | null
@@ -772,6 +774,7 @@ export type Database = {
           email?: string | null
           featured?: boolean
           featured_manual?: boolean
+          google_enriched_at?: string | null
           google_photo_name?: string | null
           google_place_id?: string | null
           hours?: Json | null

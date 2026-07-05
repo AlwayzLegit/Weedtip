@@ -1,16 +1,28 @@
 import type { Metadata } from 'next';
 import { AlertTriangle, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { GoogleEnrichConsole } from '@/components/admin/google-enrich-console';
 import { integrationStatuses } from '@/lib/integration-status';
+import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Integrations · Admin' };
 
 // Read live env at request time so a freshly-deployed change is reflected.
 export const dynamic = 'force-dynamic';
 
-export default function AdminIntegrations() {
+export default async function AdminIntegrations() {
   const statuses = integrationStatuses();
   const missingRequired = statuses.filter((s) => s.required && !s.configured);
+
+  // Listings still eligible for Google enrichment (unlinked, unattempted, mappable).
+  const supabase = await createClient();
+  const { count: enrichRemaining } = await supabase
+    .from('dispensaries')
+    .select('id', { count: 'exact', head: true })
+    .is('google_place_id', null)
+    .is('google_enriched_at', null)
+    .not('location', 'is', null)
+    .eq('status', 'active');
 
   return (
     <div className="space-y-6">
@@ -33,6 +45,8 @@ export default function AdminIntegrations() {
           </span>
         </div>
       )}
+
+      <GoogleEnrichConsole initialRemaining={enrichRemaining ?? 0} />
 
       <div className="rounded-card border-border bg-surface divide-border divide-y border">
         {statuses.map((s) => (
