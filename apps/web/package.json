@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
-    "clean": "rimraf .next .turbo *.tsbuildinfo"
+    "clean": "rimraf .next .turbo *.tsbuildinfo",
+    "seed:stripe-ads": "node scripts/seed-stripe-ad-products.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.56.0",
