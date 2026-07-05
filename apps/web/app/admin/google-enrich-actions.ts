@@ -185,6 +185,8 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
       }
 
       const photo = hit.photos?.[0]?.name ?? null;
+      // All references (capped) power the profile-page photo gallery.
+      const photoNames = (hit.photos ?? []).slice(0, 8).map((p) => p.name);
       const periods = hit.regularOpeningHours?.periods;
       await supabase
         .from('dispensaries')
@@ -192,6 +194,7 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
           google_place_id: hit.id,
           google_enriched_at: new Date().toISOString(),
           ...(photo ? { google_photo_name: photo, cover_image_url: `/api/dispensary-cover/${d.slug}` } : {}),
+          ...(photoNames.length ? { google_photo_names: photoNames } : {}),
           // Address-verified fallback: replace our centroid-grade point with
           // Google's premise coordinates (EWKT for the geography column).
           ...(adoptGoogleLocation && hit.location

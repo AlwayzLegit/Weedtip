@@ -58,6 +58,33 @@ export async function searchDispensariesBounds(
   });
 }
 
+/**
+ * Pin-sized projection of the same viewport search: every matching shop in the
+ * bbox (capped) so the map plots the full picture while the list paginates.
+ */
+export async function mapPinsBounds(
+  supabase: Client,
+  params: Omit<DispensaryBoundsSearchParams, 'sort' | 'limit' | 'offset' | 'origin_lat' | 'origin_lng'> & {
+    limit?: number;
+  },
+) {
+  return supabase.rpc('map_pins_bounds', {
+    min_lat: params.min_lat,
+    min_lng: params.min_lng,
+    max_lat: params.max_lat,
+    max_lng: params.max_lng,
+    search_query: params.query ?? undefined,
+    filter_delivery: params.is_delivery ?? undefined,
+    filter_pickup: params.is_pickup ?? undefined,
+    filter_medical: params.is_medical ?? undefined,
+    filter_recreational: params.is_recreational ?? undefined,
+    filter_open_now: params.open_now ?? false,
+    filter_category_slug: params.category_slug ?? undefined,
+    filter_amenities: params.amenities && params.amenities.length ? params.amenities : undefined,
+    result_limit: params.limit ?? 3000,
+  });
+}
+
 export async function searchProducts(supabase: Client, params: ProductSearchParams) {
   return supabase.rpc('search_products', {
     search_query: params.query ?? undefined,

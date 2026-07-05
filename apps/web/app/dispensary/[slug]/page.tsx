@@ -12,20 +12,19 @@ import {
   PenLine,
   Phone,
   Store,
-  Tag,
   Truck,
 } from 'lucide-react';
 import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
 import { deleteReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { AddToCart } from '@/components/cart/add-to-cart';
 import { ClaimListing } from '@/components/claim-listing';
 import { DeleteButton } from '@/components/dashboard/delete-button';
+import { MenuBrowser, type MenuBrowserItem } from '@/components/dispensary/menu-browser';
+import { MiniMap } from '@/components/dispensary/mini-map';
 import { LogoImage } from '@/components/logo-image';
 import { FavoriteButton } from '@/components/favorite-button';
 import { ScrollCarousel } from '@/components/home/scroll-carousel';
 import { MediaImage } from '@/components/media-image';
-import { ProductCard } from '@/components/product-card';
 import { RatingStars } from '@/components/rating-stars';
 import { ReviewForm } from '@/components/review-form';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -177,47 +176,30 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     (salePrices ?? []).map((s) => [s.product_id, s] as const),
   );
 
-  // Group menu by category, preserving sort_order.
-  const sections = new Map<string, { name: string; sort: number; items: typeof products }>();
-  for (const p of products ?? []) {
+  // Flatten the menu for the interactive browser (search + category tabs + sort).
+  const menuItems: MenuBrowserItem[] = (products ?? []).map((p) => {
     const cat = p.category as { name: string; slug: string; sort_order: number } | null;
-    const key = cat?.slug ?? 'other';
-    if (!sections.has(key)) {
-      sections.set(key, { name: cat?.name ?? 'Other', sort: cat?.sort_order ?? 999, items: [] });
-    }
-    sections.get(key)!.items!.push(p);
-  }
-  const menu = [...sections.values()].sort((a, b) => a.sort - b.sort);
-  const saleItems = (products ?? []).filter((p) => saleByProduct.has(p.id));
-
-  // Shared menu tile so the "Sale" section and category sections render identically.
-  const renderTile = (p: NonNullable<typeof products>[number]) => {
     const sale = saleByProduct.get(p.id);
-    const effectivePrice = sale?.sale_cents ?? p.price_cents;
-    return (
-      <div key={p.id} className="space-y-2">
-        <ProductCard
-          p={{
-            name: p.name,
-            brand: p.brand,
-            priceCents: effectivePrice,
-            originalPriceCents: sale ? p.price_cents : null,
-            imageUrl: cardImageUrl(p),
-            strainType: p.strain_type,
-            thcPercentage: p.thc_percentage,
-            inStock: p.in_stock,
-            productId: p.id,
-          }}
-        />
-        {p.in_stock && (
-          <AddToCart
-            dispensary={{ id: d.id, slug: d.slug, name: d.name }}
-            product={{ productId: p.id, name: p.name, priceCents: effectivePrice }}
-          />
-        )}
-      </div>
-    );
-  };
+    return {
+      id: p.id,
+      name: p.name,
+      brand: p.brand,
+      priceCents: sale?.sale_cents ?? p.price_cents,
+      originalPriceCents: sale ? p.price_cents : null,
+      imageUrl: cardImageUrl(p),
+      strainType: p.strain_type,
+      thcPercentage: p.thc_percentage,
+      inStock: p.in_stock,
+      categorySlug: cat?.slug ?? 'other',
+      categoryName: cat?.name ?? 'Other',
+      categorySort: cat?.sort_order ?? 999,
+    };
+  });
+
+  // Storefront photo gallery: Google photo references proxied through our API.
+  const galleryUrls = ((d.google_photo_names as string[] | null) ?? [])
+    .slice(0, 8)
+    .map((_, i) => `/api/dispensary-photo/${d.slug}/${i}`);
 
   const hours = d.hours as OperatingHours | null;
   // Open-now status in the shop's own timezone, computed at request time. Falls
@@ -449,8 +431,8 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           </div>
         </div>
 
-        {/* Sticky section bar (Weedmaps-style menu-category nav) */}
-        {(menu.length > 0 || (deals?.length ?? 0) > 0) && (
+        {/* Sticky section bar (Weedmaps-style page nav; categories live in the menu browser) */}
+        {(menuItems.length > 0 || (deals?.length ?? 0) > 0 || galleryUrls.length > 0) && (
           <nav
             aria-label="Page sections"
             className="border-border/70 bg-background/85 sticky top-16 z-30 -mx-4 mt-6 border-b px-4 backdrop-blur-xl"
@@ -464,23 +446,30 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   Deals
                 </a>
               )}
-              {saleItems.length > 0 && (
+              {menuItems.length > 0 && (
                 <a
-                  href="#menu-sale"
-                  className="text-primary hover:bg-primary-muted shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold"
-                >
-                  Sale
-                </a>
-              )}
-              {menu.map((section) => (
-                <a
-                  key={section.name}
-                  href={`#menu-${citySlug(section.name)}`}
+                  href="#menu"
                   className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
                 >
-                  {section.name}
+                  Menu
                 </a>
-              ))}
+              )}
+              {galleryUrls.length > 0 && (
+                <a
+                  href="#photos"
+                  className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
+                >
+                  Photos
+                </a>
+              )}
+              {(updates?.length ?? 0) > 0 && (
+                <a
+                  href="#updates"
+                  className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
+                >
+                  Updates
+                </a>
+              )}
               <a
                 href="#reviews"
                 className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
@@ -642,9 +631,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             )}
 
             {/* Menu */}
-            <section>
+            <section id="menu" className="scroll-mt-32">
               <h2 className="mb-3 text-lg font-semibold">Menu</h2>
-              {menu.length === 0 ? (
+              {menuItems.length === 0 ? (
                 <div className="rounded-card border-border bg-surface text-muted border border-dashed p-6 text-center text-sm">
                   <p className="text-foreground font-medium">Menu coming soon</p>
                   <p className="mt-1">
@@ -656,38 +645,34 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   </p>
                 </div>
               ) : (
-                <div className="space-y-8">
-                  {saleItems.length > 0 && (
-                    <div id="menu-sale" className="scroll-mt-32">
-                      <h3 className="text-primary mb-3 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide">
-                        <Tag className="h-4 w-4" /> Sale
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                        {saleItems.map(renderTile)}
-                      </div>
-                    </div>
-                  )}
-                  {menu.map((section) => (
-                    <div
-                      key={section.name}
-                      id={`menu-${citySlug(section.name)}`}
-                      className="scroll-mt-32"
-                    >
-                      <h3 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
-                        {section.name}
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                        {section.items!.map(renderTile)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <MenuBrowser
+                  dispensary={{ id: d.id, slug: d.slug, name: d.name }}
+                  items={menuItems}
+                />
               )}
             </section>
 
+            {/* Storefront photos (Google-enriched gallery) */}
+            {galleryUrls.length > 0 && (
+              <section id="photos" className="scroll-mt-32">
+                <h2 className="mb-3 text-lg font-semibold">Photos</h2>
+                <ScrollCarousel itemClassName="w-72" ariaLabel="Storefront photos">
+                  {galleryUrls.map((url, i) => (
+                    <img
+                      key={url}
+                      src={url}
+                      alt={`${d.name} photo ${i + 1}`}
+                      loading="lazy"
+                      className="border-border bg-surface-2 h-44 w-72 rounded-xl border object-cover"
+                    />
+                  ))}
+                </ScrollCarousel>
+              </section>
+            )}
+
             {/* Updates from the shop */}
             {updates && updates.length > 0 && (
-              <section className="mb-8">
+              <section id="updates" className="mb-8 scroll-mt-32">
                 <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                   <Megaphone className="text-primary h-5 w-5" /> Updates
                 </h2>
@@ -812,8 +797,31 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             </section>
           </div>
 
-          {/* Sidebar: hours + contact */}
+          {/* Sidebar: location + hours + contact */}
           <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+            {d.latitude != null && d.longitude != null && (
+              <div className="rounded-card border-border bg-surface shadow-card border p-5">
+                <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
+                  Location
+                </h2>
+                <MiniMap lat={d.latitude} lng={d.longitude} name={d.name} />
+                {d.address && (
+                  <p className="text-muted mt-3 text-sm">
+                    {[d.address, d.city, d.state].filter(Boolean).join(', ')}
+                    {d.zip ? ` ${d.zip}` : ''}
+                  </p>
+                )}
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${d.latitude},${d.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary mt-2 inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
+                >
+                  <Navigation className="h-4 w-4" /> Get directions
+                </a>
+              </div>
+            )}
+
             <div className="rounded-card border-border bg-surface shadow-card border p-5">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h2 className="text-muted text-sm font-semibold uppercase tracking-wide">Hours</h2>
