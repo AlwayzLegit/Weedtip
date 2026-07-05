@@ -14,9 +14,31 @@ const schema = z.object({
   service: star,
   atmosphere: star,
   body: z.string().max(4000).optional(),
+  photo_urls: z.array(z.string().url().max(600)).max(4).optional(),
 });
 
+/**
+ * Review photos must be objects the author uploaded to OUR storage under their
+ * own uid folder — anything else (hotlinks, other users' files) is dropped.
+ */
+function ownStoragePhotos(urls: string[] | undefined, userId: string): string[] {
+  if (!urls?.length) return [];
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return [];
+  const prefix = `${base}/storage/v1/object/public/dispensary-media/${userId}/`;
+  return urls.filter((u) => u.startsWith(prefix)).slice(0, 4);
+}
+
 export async function submitReview(_prev: ReviewState, formData: FormData): Promise<ReviewState> {
+  let photoUrls: string[] | undefined;
+  const rawPhotos = formData.get('photo_urls');
+  if (typeof rawPhotos === 'string' && rawPhotos) {
+    try {
+      photoUrls = JSON.parse(rawPhotos) as string[];
+    } catch {
+      photoUrls = undefined;
+    }
+  }
   const parsed = schema.safeParse({
     dispensary_id: formData.get('dispensary_id'),
     dispensary_slug: formData.get('dispensary_slug'),
@@ -24,6 +46,7 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
     service: formData.get('service'),
     atmosphere: formData.get('atmosphere'),
     body: formData.get('body') || undefined,
+    photo_urls: photoUrls,
   });
   if (!parsed.success) {
     return { error: parsed.error.errors[0]?.message ?? 'Please rate all three categories.' };
@@ -55,6 +78,7 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
       service,
       atmosphere,
       body: parsed.data.body ?? null,
+      photo_urls: ownStoragePhotos(parsed.data.photo_urls, user.id),
       author_name: dispProfile?.display_name ?? 'Weedtip member',
     },
     { onConflict: 'dispensary_id,user_id' },
@@ -137,6 +161,43 @@ export async function submitProductReview(
 
   revalidatePath(`/product/${parsed.data.product_id}`);
   return { message: 'Thanks for your review!' };
+}
+
+// ─── Helpful votes ───────────────────────────────────────────────────────────
+
+export type HelpfulResult = { voted: boolean; count: number } | { error: string };
+
+/** Toggle the caller's helpful vote on a review; returns the new state. */
+export async function toggleHelpfulVote(reviewId: string): Promise<HelpfulResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Sign in to mark reviews as helpful.' };
+
+  const { data: existing } = await supabase
+    .from('review_votes')
+    .select('review_id')
+    .eq('review_id', reviewId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from('review_votes').delete().eq('review_id', reviewId).eq('user_id', user.id);
+  } else {
+    const { error } = await supabase
+      .from('review_votes')
+      .insert({ review_id: reviewId, user_id: user.id });
+    // RLS blocks voting on your own review; surface it politely.
+    if (error) return { error: 'You can’t vote on your own review.' };
+  }
+
+  const { data: fresh } = await supabase
+    .from('reviews')
+    .select('helpful_count')
+    .eq('id', reviewId)
+    .maybeSingle();
+  return { voted: !existing, count: fresh?.helpful_count ?? 0 };
 }
 
 // ─── Deletes (author-only; RLS also enforces) ────────────────────────────────

@@ -1702,6 +1702,32 @@ export type Database = {
         }
         Relationships: []
       }
+      review_votes: {
+        Row: {
+          created_at: string
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_votes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           atmosphere: number | null
@@ -1712,8 +1738,10 @@ export type Database = {
           dispute_reason: string | null
           disputed_at: string | null
           id: string
+          helpful_count: number
           owner_reply: string | null
           owner_reply_at: string | null
+          photo_urls: string[]
           quality: number | null
           rating: number
           service: number | null
@@ -1730,8 +1758,10 @@ export type Database = {
           dispute_reason?: string | null
           disputed_at?: string | null
           id?: string
+          helpful_count?: number
           owner_reply?: string | null
           owner_reply_at?: string | null
+          photo_urls?: string[]
           quality?: number | null
           rating: number
           service?: number | null
@@ -1748,8 +1778,10 @@ export type Database = {
           dispute_reason?: string | null
           disputed_at?: string | null
           id?: string
+          helpful_count?: number
           owner_reply?: string | null
           owner_reply_at?: string | null
+          photo_urls?: string[]
           quality?: number | null
           rating?: number
           service?: number | null

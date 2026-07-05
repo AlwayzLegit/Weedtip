@@ -15,11 +15,10 @@ import {
   Truck,
 } from 'lucide-react';
 import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
-import { deleteReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ClaimListing } from '@/components/claim-listing';
-import { DeleteButton } from '@/components/dashboard/delete-button';
 import { MenuBrowser, type MenuBrowserItem } from '@/components/dispensary/menu-browser';
+import { ReviewList } from '@/components/dispensary/review-list';
 import { MiniMap } from '@/components/dispensary/mini-map';
 import { LogoImage } from '@/components/logo-image';
 import { FavoriteButton } from '@/components/favorite-button';
@@ -103,7 +102,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       supabase
         .from('reviews')
         .select(
-          'id,rating,quality,service,atmosphere,verified,body,created_at,author_name,user_id,owner_reply,owner_reply_at',
+          'id,rating,quality,service,atmosphere,verified,body,created_at,author_name,user_id,owner_reply,owner_reply_at,photo_urls,helpful_count',
         )
         .eq('dispensary_id', d.id)
         .order('created_at', { ascending: false }),
@@ -136,6 +135,17 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
     : 0;
   const myReview = user ? (reviews ?? []).find((r) => r.user_id === user.id) : undefined;
+
+  // Which reviews has the viewer already marked helpful?
+  const myVotes = new Set<string>();
+  if (user && reviews?.length) {
+    const { data: votes } = await supabase
+      .from('review_votes')
+      .select('review_id')
+      .eq('user_id', user.id)
+      .in('review_id', reviews.map((r) => r.id));
+    for (const v of votes ?? []) myVotes.add(v.review_id);
+  }
 
   let isFavorite = false;
   if (user) {
@@ -724,6 +734,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                     initialService={myReview?.service ?? 0}
                     initialAtmosphere={myReview?.atmosphere ?? 0}
                     initialBody={myReview?.body ?? ''}
+                    initialPhotoUrls={myReview?.photo_urls ?? []}
                   />
                 </div>
               )}
@@ -736,61 +747,28 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 </p>
               )}
               {reviews && reviews.length > 0 ? (
-                <div className="space-y-4">
-                  {reviews.map((r) => (
-                    <div key={r.id} className="rounded-card border-border bg-surface border p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <RatingStars rating={r.rating} />
-                          <span className="text-sm font-medium">
-                            {r.author_name ?? 'Weedtip member'}
-                          </span>
-                          {r.verified && (
-                            <Badge tone="primary">
-                              <BadgeCheck className="mr-0.5 h-3 w-3" /> Verified shopper
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-muted text-xs">
-                          {new Date(r.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {(r.quality || r.service || r.atmosphere) && (
-                        <div className="text-muted mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
-                          {r.quality != null && <span>Quality {r.quality.toFixed(1)}</span>}
-                          {r.service != null && <span>Service {r.service.toFixed(1)}</span>}
-                          {r.atmosphere != null && <span>Atmosphere {r.atmosphere.toFixed(1)}</span>}
-                        </div>
-                      )}
-                      {r.body && <p className="text-muted mt-2 text-sm">{r.body}</p>}
-                      {r.owner_reply && (
-                        <div className="border-border bg-surface-2 mt-3 rounded-lg border-l-2 border-l-primary p-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-foreground text-xs font-semibold">
-                              Response from {d.name}
-                            </span>
-                            {r.owner_reply_at && (
-                              <span className="text-muted text-xs">
-                                {new Date(r.owner_reply_at).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-muted mt-1 text-sm">{r.owner_reply}</p>
-                        </div>
-                      )}
-                      {user && r.user_id === user.id && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <Badge tone="muted">Your review</Badge>
-                          <DeleteButton
-                            action={deleteReview.bind(null, r.id, d.slug)}
-                            label="Delete"
-                            confirmText="Delete your review? This cannot be undone."
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <ReviewList
+                  dispensaryName={d.name}
+                  dispensarySlug={d.slug}
+                  currentUserId={user?.id ?? null}
+                  reviews={reviews.map((r) => ({
+                    id: r.id,
+                    rating: r.rating,
+                    quality: r.quality,
+                    service: r.service,
+                    atmosphere: r.atmosphere,
+                    verified: r.verified,
+                    body: r.body,
+                    createdAt: r.created_at,
+                    authorName: r.author_name,
+                    userId: r.user_id,
+                    ownerReply: r.owner_reply,
+                    ownerReplyAt: r.owner_reply_at,
+                    photoUrls: r.photo_urls ?? [],
+                    helpfulCount: r.helpful_count ?? 0,
+                    votedByMe: myVotes.has(r.id),
+                  }))}
+                />
               ) : (
                 <p className="text-muted">No reviews yet. Be the first.</p>
               )}
