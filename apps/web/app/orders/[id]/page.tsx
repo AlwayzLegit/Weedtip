@@ -83,6 +83,29 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </p>
         )}
 
+        {order.order_type === 'delivery' && order.delivery_address ? (
+          <div className="border-border mt-4 border-t pt-4 text-sm">
+            <p className="font-medium">Delivering to</p>
+            {(() => {
+              const a = order.delivery_address as {
+                street?: string;
+                unit?: string;
+                city?: string;
+                state?: string;
+                zip?: string;
+                phone?: string;
+              };
+              return (
+                <p className="text-muted mt-1">
+                  {a.street}
+                  {a.unit ? `, ${a.unit}` : ''}, {a.city}, {a.state} {a.zip}
+                  {a.phone ? ` · ${a.phone}` : ''}
+                </p>
+              );
+            })()}
+          </div>
+        ) : null}
+
         <ul className="border-border mt-5 space-y-2 border-t pt-4 text-sm">
           {items.map((it, i) => (
             <li key={i} className="flex justify-between">

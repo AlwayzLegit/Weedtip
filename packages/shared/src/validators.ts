@@ -283,6 +283,20 @@ export const orderItemSchema = z.object({
 });
 export type OrderItem = z.infer<typeof orderItemSchema>;
 
+/** Where a delivery order goes. Mirrors create_order's server-side sanitizer. */
+export const deliveryAddressSchema = z.object({
+  street: z.string().trim().min(3, 'Enter a street address.').max(120),
+  unit: z.string().trim().max(40).optional(),
+  city: z.string().trim().min(2, 'Enter a city.').max(80),
+  state: z.string().trim().length(2, 'Use the 2-letter state code.'),
+  zip: z
+    .string()
+    .trim()
+    .regex(/^\d{5}(-\d{4})?$/, 'Enter a valid ZIP code.'),
+  phone: z.string().trim().min(7, 'Enter a phone number for the driver.').max(20),
+});
+export type DeliveryAddress = z.infer<typeof deliveryAddressSchema>;
+
 export const orderCreateSchema = z.object({
   dispensary_id: z.string().uuid(),
   order_type: orderTypeSchema,

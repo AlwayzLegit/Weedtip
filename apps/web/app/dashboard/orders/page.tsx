@@ -54,6 +54,21 @@ function OrderCard({ o }: { o: Order }) {
           {items.length > 4 && <li>+{items.length - 4} more…</li>}
         </ul>
       )}
+      {o.order_type === 'delivery' && o.delivery_address ? (
+        <p className="border-border text-muted mt-2 border-t pt-2 text-xs">
+          <span className="text-foreground font-medium">Deliver to: </span>
+          {(() => {
+            const a = o.delivery_address as {
+              street?: string;
+              unit?: string;
+              city?: string;
+              zip?: string;
+              phone?: string;
+            };
+            return `${a.street ?? ''}${a.unit ? `, ${a.unit}` : ''}, ${a.city ?? ''} ${a.zip ?? ''}${a.phone ? ` · ${a.phone}` : ''}`;
+          })()}
+        </p>
+      ) : null}
       <div className="mt-3">
         <OrderStatusControl orderId={o.id} status={o.status} />
       </div>
