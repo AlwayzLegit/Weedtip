@@ -8,7 +8,10 @@ import { StrainFavoriteButton } from '@/components/strain/strain-favorite-button
 import { Badge } from '@/components/ui/badge';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { pageSeo } from '@/lib/seo';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
+
+// Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
+export const revalidate = 3600;
 
 const TYPE_LABEL: Record<string, string> = {
   indica: 'Indica',
@@ -23,7 +26,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from('strains')
     .select('name,type,description')
@@ -39,7 +42,7 @@ export async function generateMetadata({
 
 export default async function StrainPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data: strain } = await supabase
     .from('strains')

@@ -8,8 +8,11 @@ import { DispensaryCard } from '@/components/dispensary-card';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
+
+// Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
+export const revalidate = 3600;
 
 const LOCATION_SELECT =
   'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
@@ -19,7 +22,7 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
   const code = state.toUpperCase();
   const stateName = US_STATES[code];
   if (!stateName) return null;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   // Page past the 1k cap: in large states a city's shops can all sort beyond
   // row 1,000, which previously 404'd valid (and sitemap-listed) city pages.
   const data = await fetchAll<{ id: string; slug: string; name: string; city: string | null; state: string; cover_image_url: string | null; logo_url: string | null; is_delivery: boolean; is_pickup: boolean; is_medical: boolean; is_recreational: boolean; featured: boolean; rating_avg: number; rating_count: number }>(

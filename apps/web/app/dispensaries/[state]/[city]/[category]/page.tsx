@@ -7,8 +7,11 @@ import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
+
+// Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
+export const revalidate = 3600;
 
 // Cached per request (generateMetadata + page share one run).
 const load = cache(async function load(state: string, city: string, categorySlug: string) {
@@ -16,7 +19,7 @@ const load = cache(async function load(state: string, city: string, categorySlug
   const stateName = US_STATES[code];
   if (!stateName) return null;
 
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data: category } = await supabase
     .from('categories')
     .select('id,name,slug')
