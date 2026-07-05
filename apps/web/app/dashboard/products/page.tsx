@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Pencil, Plus, Upload } from 'lucide-react';
+import { Pencil, Plus, RefreshCw, Upload } from 'lucide-react';
 import { deleteProduct } from '@/app/dashboard/actions';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,11 @@ export default async function DashboardProducts() {
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Products</h1>
         <div className="flex items-center gap-2">
+          <Link href="/dashboard/products/sync">
+            <Button size="sm" variant="outline">
+              <RefreshCw className="h-4 w-4" /> Menu sync
+            </Button>
+          </Link>
           <Link href="/dashboard/products/import">
             <Button size="sm" variant="outline">
               <Upload className="h-4 w-4" /> Import CSV
