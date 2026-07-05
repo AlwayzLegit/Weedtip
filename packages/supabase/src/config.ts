@@ -10,8 +10,15 @@ export interface PublicSupabaseConfig {
 
 function readEnv(name: string): string | undefined {
   // Works in Next.js (process.env), Node, and Deno (Edge Functions).
-  if (typeof process !== 'undefined' && process.env && name in process.env) {
-    return process.env[name];
+  if (typeof process !== 'undefined' && process.env) {
+    // Client bundles only get STATICALLY referenced NEXT_PUBLIC_ vars inlined —
+    // a dynamic process.env[name] lookup is always undefined in the browser, so
+    // spell out the public pair before falling back to the dynamic (server) read.
+    if (name === 'NEXT_PUBLIC_SUPABASE_URL') return process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (name === 'NEXT_PUBLIC_SUPABASE_ANON_KEY') {
+      return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    }
+    if (name in process.env) return process.env[name];
   }
   const denoEnv = (globalThis as { Deno?: { env: { get(k: string): string | undefined } } }).Deno;
   return denoEnv?.env.get(name);

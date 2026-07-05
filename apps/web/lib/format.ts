@@ -44,6 +44,31 @@ export function formatTime(hhmm: string): string {
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
 }
 
+const OPEN_DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
+/**
+ * Open-now in the shop's own timezone, computed client-side so ISR-cached pages
+ * still show a live badge. Server surfaces use is_dispensary_open() in SQL;
+ * keep the two in sync (both treat close < open as an overnight window).
+ */
+export function isOpenNow(hours: OperatingHours | null, timezone: string | null): boolean {
+  if (!hours) return false;
+  const now = new Date(
+    new Date().toLocaleString('en-US', { timeZone: timezone || 'America/New_York' }),
+  );
+  const today = hours[OPEN_DAY_KEYS[now.getDay()]!];
+  if (!today?.open || !today.close) return false;
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const toMins = (t: string) => {
+    const [h = '0', m = '0'] = t.split(':');
+    return Number(h) * 60 + Number(m);
+  };
+  const open = toMins(today.open);
+  const close = toMins(today.close);
+  // Overnight windows (e.g. 20:00–02:00) wrap past midnight.
+  return close > open ? mins >= open && mins < close : mins >= open || mins < close;
+}
+
 /**
  * Short badge label for a deal's discount, covering every deal kind the
  * dashboard can create (percentage, fixed_amount, price_target,

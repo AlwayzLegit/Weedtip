@@ -323,6 +323,35 @@ export const dispensarySearchSchema = z.object({
 });
 export type DispensarySearchParams = z.infer<typeof dispensarySearchSchema>;
 
+export const dispensarySortSchema = z.enum(['default', 'rating', 'distance', 'name']);
+export type DispensarySort = z.infer<typeof dispensarySortSchema>;
+
+/**
+ * Bounding-box variant used by the map-first finder: the viewport is the query.
+ * `origin` is independent of the bounds — when the visitor shared their
+ * location, distance stays available while they pan the map elsewhere.
+ */
+export const dispensaryBoundsSearchSchema = z.object({
+  min_lat: latitudeSchema,
+  min_lng: longitudeSchema,
+  max_lat: latitudeSchema,
+  max_lng: longitudeSchema,
+  query: z.string().max(120).optional(),
+  is_delivery: z.boolean().optional(),
+  is_pickup: z.boolean().optional(),
+  is_medical: z.boolean().optional(),
+  is_recreational: z.boolean().optional(),
+  open_now: z.boolean().optional(),
+  category_slug: slugSchema.optional(),
+  amenities: z.array(amenitySchema).max(AMENITIES.length).optional(),
+  origin_lat: latitudeSchema.optional(),
+  origin_lng: longitudeSchema.optional(),
+  sort: dispensarySortSchema.default('default'),
+  limit: z.number().int().positive().max(200).default(100),
+  offset: z.number().int().nonnegative().default(0),
+});
+export type DispensaryBoundsSearchParams = z.infer<typeof dispensaryBoundsSearchSchema>;
+
 export const productSearchSchema = z.object({
   query: z.string().max(120).optional(),
   category_slug: slugSchema.optional(),

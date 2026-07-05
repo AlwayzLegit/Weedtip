@@ -5,7 +5,11 @@
  * backend can reimplement these without touching callers.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { DispensarySearchParams, ProductSearchParams } from '@weedtip/shared';
+import type {
+  DispensaryBoundsSearchParams,
+  DispensarySearchParams,
+  ProductSearchParams,
+} from '@weedtip/shared';
 import type { Database } from './types/database.types';
 
 type Client = SupabaseClient<Database>;
@@ -25,6 +29,32 @@ export async function searchDispensaries(supabase: Client, params: DispensarySea
     filter_amenities: params.amenities && params.amenities.length ? params.amenities : undefined,
     result_limit: params.page_size,
     result_offset: params.page * params.page_size,
+  });
+}
+
+/** Map-first finder: search whatever the map viewport shows ("Search this area"). */
+export async function searchDispensariesBounds(
+  supabase: Client,
+  params: DispensaryBoundsSearchParams,
+) {
+  return supabase.rpc('search_dispensaries_bounds', {
+    min_lat: params.min_lat,
+    min_lng: params.min_lng,
+    max_lat: params.max_lat,
+    max_lng: params.max_lng,
+    search_query: params.query ?? undefined,
+    filter_delivery: params.is_delivery ?? undefined,
+    filter_pickup: params.is_pickup ?? undefined,
+    filter_medical: params.is_medical ?? undefined,
+    filter_recreational: params.is_recreational ?? undefined,
+    filter_open_now: params.open_now ?? false,
+    filter_category_slug: params.category_slug ?? undefined,
+    filter_amenities: params.amenities && params.amenities.length ? params.amenities : undefined,
+    origin_lat: params.origin_lat ?? undefined,
+    origin_lng: params.origin_lng ?? undefined,
+    sort_by: params.sort,
+    result_limit: params.limit,
+    result_offset: params.offset,
   });
 }
 

@@ -102,3 +102,51 @@ body {
     @apply text-primary text-xs font-semibold uppercase tracking-[0.12em];
   }
 }
+
+/* ── Map-first finder (browse map) ─────────────────────────────────────────── */
+
+/* Hide the scrollbar on horizontally scrolling pill rows. */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mapbox popups default to a white card; restyle to the dark design system. */
+.browse-popup .mapboxgl-popup-content {
+  background: theme('colors.surface');
+  color: theme('colors.foreground');
+  border: 1px solid theme('colors.border');
+  border-radius: theme('borderRadius.card');
+  padding: 0;
+  overflow: hidden;
+  box-shadow: theme('boxShadow.card-hover');
+}
+.browse-popup.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  border-top-color: theme('colors.border');
+}
+.browse-popup.mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+  border-bottom-color: theme('colors.border');
+}
+.browse-popup.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: theme('colors.border');
+}
+.browse-popup.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: theme('colors.border');
+}
+.browse-popup .mapboxgl-popup-close-button {
+  right: 6px;
+  top: 6px;
+  z-index: 10;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: rgba(11, 11, 11, 0.7);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+.browse-popup .mapboxgl-popup-close-button:hover {
+  background: rgba(11, 11, 11, 0.9);
+}

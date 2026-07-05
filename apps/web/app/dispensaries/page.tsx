@@ -1,22 +1,22 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { MapPin } from 'lucide-react';
-import { AMENITIES, type Amenity, dispensarySearchSchema } from '@weedtip/shared';
-import { searchDispensaries } from '@weedtip/supabase/queries';
-import { Breadcrumbs } from '@/components/breadcrumbs';
-import { DispensaryCard } from '@/components/dispensary-card';
-import { DispensaryFilters } from '@/components/dispensary-filters';
-import { DispensaryMap, type MapPoint } from '@/components/dispensary-map';
-import { SearchBar } from '@/components/search-bar';
+import { cookies } from 'next/headers';
+import {
+  AMENITIES,
+  type Amenity,
+  dispensaryBoundsSearchSchema,
+  dispensarySortSchema,
+} from '@weedtip/shared';
+import { searchDispensariesBounds } from '@weedtip/supabase/queries';
+import { type BrowseFilters, DispensariesBrowser } from '@/components/dispensaries-browser';
 import { JsonLd } from '@/components/seo/json-ld';
-import { Button } from '@/components/ui/button';
-import { itemListJsonLd, pageSeo } from '@/lib/seo';
+import { itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
+import { bboxAround, STATE_BOUNDS, US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
 
 export const metadata: Metadata = pageSeo({
   title: 'Dispensaries',
   description:
-    'Browse licensed cannabis dispensaries near you. Filter by pickup, delivery, open now, and category, then view menus, deals, and reviews on Weedtip.',
+    'Explore licensed cannabis dispensaries on a live map. Filter by open now, pickup, delivery, and more, then view menus, deals, and reviews on Weedtip.',
   path: '/dispensaries',
 });
 
@@ -27,8 +27,15 @@ function num(v: string | string[] | undefined): number | undefined {
   const n = Number(v);
   return Number.isFinite(n) ? n : undefined;
 }
-const truthy = (v: string | string[] | undefined) => (v === 'true' ? true : undefined);
+const truthy = (v: string | string[] | undefined) => v === 'true';
 
+/**
+ * Map-first discovery (Weedmaps/Google Maps pattern). The server picks the
+ * opening viewport — shared location > ?state= > the visitor's market cookie >
+ * the whole US — and runs the first bounds search; everything after that
+ * (pan + "Search this area", filter pills, sort) is the client re-querying
+ * the search_dispensaries_bounds RPC directly.
+ */
 export default async function DispensariesPage({
   searchParams,
 }: {
@@ -36,162 +43,112 @@ export default async function DispensariesPage({
 }) {
   const sp = await searchParams;
 
+  const lat = num(sp.lat);
+  const lng = num(sp.lng);
+  const radius = num(sp.radius_meters) ?? 40_000;
+
   // Amenities arrive comma-separated; keep only known facet keys so a bad URL
   // can't throw the whole page.
   const amenityRaw = typeof sp.amenities === 'string' ? sp.amenities.split(',') : [];
   const amenities = amenityRaw.filter((a): a is Amenity =>
     (AMENITIES as readonly string[]).includes(a),
   );
+  const sortParsed = dispensarySortSchema.safeParse(sp.sort);
 
-  const params = dispensarySearchSchema.parse({
-    query: typeof sp.query === 'string' ? sp.query : undefined,
-    lat: num(sp.lat),
-    lng: num(sp.lng),
-    radius_meters: num(sp.radius_meters),
-    is_delivery: truthy(sp.is_delivery),
-    is_pickup: truthy(sp.is_pickup),
-    is_medical: truthy(sp.is_medical),
-    is_recreational: truthy(sp.is_recreational),
-    open_now: truthy(sp.open_now),
-    category_slug: typeof sp.category === 'string' ? sp.category : undefined,
+  const filters: BrowseFilters = {
+    openNow: truthy(sp.open_now),
+    pickup: truthy(sp.is_pickup),
+    delivery: truthy(sp.is_delivery),
+    medical: truthy(sp.is_medical),
+    recreational: truthy(sp.is_recreational),
+    amenities,
+    sort: sortParsed.success ? sortParsed.data : 'default',
+    query: typeof sp.query === 'string' ? sp.query.slice(0, 120) : '',
+    categorySlug: typeof sp.category === 'string' ? sp.category : undefined,
+  };
+
+  // Opening viewport: shared location > explicit ?state= > market cookie > US.
+  const stateParam = typeof sp.state === 'string' ? sp.state.toUpperCase() : undefined;
+  const marketState = (await cookies()).get('wt_state')?.value?.toUpperCase();
+  let bounds: BBox;
+  let regionName: string | undefined;
+  const origin = lat !== undefined && lng !== undefined ? { lat, lng } : null;
+  if (origin) {
+    bounds = bboxAround(origin.lat, origin.lng, Math.min(Math.max(radius, 2_000), 160_000));
+    regionName = 'near you';
+  } else if (stateParam && STATE_BOUNDS[stateParam]) {
+    bounds = STATE_BOUNDS[stateParam];
+    regionName = US_STATES[stateParam];
+  } else if (marketState && STATE_BOUNDS[marketState]) {
+    bounds = STATE_BOUNDS[marketState];
+    regionName = US_STATES[marketState];
+  } else {
+    bounds = US_BOUNDS;
+  }
+
+  const params = dispensaryBoundsSearchSchema.parse({
+    min_lng: bounds[0],
+    min_lat: bounds[1],
+    max_lng: bounds[2],
+    max_lat: bounds[3],
+    query: filters.query || undefined,
+    is_delivery: filters.delivery || undefined,
+    is_pickup: filters.pickup || undefined,
+    is_medical: filters.medical || undefined,
+    is_recreational: filters.recreational || undefined,
+    open_now: filters.openNow || undefined,
+    category_slug: filters.categorySlug,
     amenities: amenities.length ? amenities : undefined,
-    page: num(sp.page),
+    origin_lat: origin?.lat,
+    origin_lng: origin?.lng,
+    sort: filters.sort,
+    limit: 60,
   });
 
   const supabase = await createClient();
-  const { data, error } = await searchDispensaries(supabase, params);
-  const rows = [...(data ?? [])];
+  const { data, error } = await searchDispensariesBounds(supabase, params);
+  const rows = data ?? [];
   const total = rows[0]?.total_count ?? 0;
 
-  // Client-side sort over the page of results.
-  const sort = typeof sp.sort === 'string' ? sp.sort : '';
-  if (sort === 'rating')
-    rows.sort((a, b) => b.rating_avg - a.rating_avg || b.rating_count - a.rating_count);
-  else if (sort === 'name') rows.sort((a, b) => a.name.localeCompare(b.name));
-  else if (sort === 'distance')
-    rows.sort((a, b) => (a.distance_meters ?? Infinity) - (b.distance_meters ?? Infinity));
-  const hasMore = (params.page + 1) * params.page_size < total;
-
-  const points: MapPoint[] = rows
-    // Delivery-only listings have no premise coordinates — keep them off the map.
-    .filter((r) => typeof r.latitude === 'number' && typeof r.longitude === 'number')
-    .map((r) => ({
-      slug: r.slug,
-      name: r.name,
-      lat: r.latitude as number,
-      lng: r.longitude as number,
-      featured: r.featured,
-    }));
-
-  const pageHref = (page: number) => {
-    const next = new URLSearchParams();
-    Object.entries(sp).forEach(([k, v]) => {
-      if (typeof v === 'string') next.set(k, v);
-    });
-    next.set('page', String(page));
-    return `/dispensaries?${next.toString()}`;
-  };
+  const initialShops = rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    name: r.name,
+    city: r.city,
+    state: r.state,
+    coverImageUrl: r.cover_image_url,
+    logoUrl: r.logo_url,
+    isDelivery: r.is_delivery,
+    isPickup: r.is_pickup,
+    isMedical: r.is_medical,
+    isRecreational: r.is_recreational,
+    featured: r.featured,
+    rating: r.rating_avg,
+    reviewCount: r.rating_count,
+    lat: r.latitude,
+    lng: r.longitude,
+    distanceMeters: r.distance_meters,
+    isOpenNow: r.is_open_now,
+  }));
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      <JsonLd data={itemListJsonLd(rows.map((r) => `/dispensary/${r.slug}`))} />
-      <Breadcrumbs
-        items={[
-          { name: 'Home', href: '/' },
-          { name: 'Dispensaries', href: '/dispensaries' },
-        ]}
-      />
-      <div className="mb-6 space-y-4">
-        <div>
-          <p className="eyebrow mb-1">Find your shop</p>
-          <h1 className="text-2xl font-bold sm:text-3xl">Dispensaries</h1>
-        </div>
-        <SearchBar />
-        <DispensaryFilters />
-      </div>
-
+    <main>
+      <JsonLd data={itemListJsonLd(initialShops.map((r) => `/dispensary/${r.slug}`))} />
       {error ? (
-        <p className="text-danger">Couldn&apos;t load dispensaries. Please try again.</p>
+        <p className="text-danger mx-auto max-w-7xl px-4 py-16 text-center">
+          Couldn&apos;t load dispensaries. Please try again.
+        </p>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Results */}
-          <div className="lg:col-span-2">
-            <p className="text-muted mb-4 text-sm">
-              {total} {total === 1 ? 'result' : 'results'}
-              {params.query ? ` for “${params.query}”` : ''}
-            </p>
-
-            {rows.length === 0 ? (
-              <div className="rounded-card border-border bg-surface shadow-card border p-12 text-center">
-                <div className="bg-surface-2 text-muted mx-auto flex h-12 w-12 items-center justify-center rounded-full">
-                  <MapPin className="h-6 w-6" />
-                </div>
-                <p className="mt-3 font-medium">No dispensaries found</p>
-                <p className="text-muted mt-1 text-sm">
-                  Try widening your search or clearing filters.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                {rows.map((r) => (
-                  <DispensaryCard
-                    key={r.id}
-                    d={{
-                      slug: r.slug,
-                      name: r.name,
-                      city: r.city,
-                      state: r.state,
-                      coverImageUrl: r.cover_image_url,
-                      logoUrl: r.logo_url,
-                      isDelivery: r.is_delivery,
-                      isPickup: r.is_pickup,
-                      isMedical: r.is_medical,
-                      isRecreational: r.is_recreational,
-                      featured: r.featured,
-                      distanceMeters: r.distance_meters,
-                      rating: r.rating_avg,
-                      reviewCount: r.rating_count,
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-
-            {(params.page > 0 || hasMore) && (
-              <div className="mt-8 flex items-center justify-between">
-                {params.page > 0 ? (
-                  <Link href={pageHref(params.page - 1)}>
-                    <Button variant="outline" size="sm">
-                      Previous
-                    </Button>
-                  </Link>
-                ) : (
-                  <span />
-                )}
-                <span className="text-muted text-sm">Page {params.page + 1}</span>
-                {hasMore ? (
-                  <Link href={pageHref(params.page + 1)}>
-                    <Button variant="outline" size="sm">
-                      Next
-                    </Button>
-                  </Link>
-                ) : (
-                  <span />
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Map */}
-          <div className="hidden lg:block">
-            <div className="rounded-card border-border shadow-card sticky top-20 h-[70vh] overflow-hidden border">
-              <DispensaryMap
-                points={points}
-                center={params.lat && params.lng ? { lat: params.lat, lng: params.lng } : undefined}
-              />
-            </div>
-          </div>
-        </div>
+        <DispensariesBrowser
+          heading={regionName ? `Dispensaries ${regionName === 'near you' ? regionName : `in ${regionName}`}` : 'Dispensaries'}
+          initialShops={initialShops}
+          initialTotal={total}
+          initialBounds={bounds}
+          initialFilters={filters}
+          initialOrigin={origin}
+          variant="page"
+          syncUrl
+        />
       )}
     </main>
   );
