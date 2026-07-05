@@ -1113,6 +1113,56 @@ export type Database = {
           },
         ]
       }
+      menu_sources: {
+        Row: {
+          auto_sync: boolean
+          created_at: string
+          dispensary_id: string
+          feed_url: string
+          id: string
+          items_imported: number
+          last_error: string | null
+          last_synced_at: string | null
+          provider: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto_sync?: boolean
+          created_at?: string
+          dispensary_id: string
+          feed_url: string
+          id?: string
+          items_imported?: number
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_sync?: boolean
+          created_at?: string
+          dispensary_id?: string
+          feed_url?: string
+          id?: string
+          items_imported?: number
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_sources_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: true
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -1679,6 +1729,7 @@ export type Database = {
           cbd_percentage: number | null
           created_at: string
           description: string | null
+          external_id: string | null
           dispensary_id: string
           id: string
           image_urls: string[]
@@ -1707,6 +1758,7 @@ export type Database = {
           cbd_percentage?: number | null
           created_at?: string
           description?: string | null
+          external_id?: string | null
           dispensary_id: string
           id?: string
           image_urls?: string[]
@@ -1735,6 +1787,7 @@ export type Database = {
           cbd_percentage?: number | null
           created_at?: string
           description?: string | null
+          external_id?: string | null
           dispensary_id?: string
           id?: string
           image_urls?: string[]

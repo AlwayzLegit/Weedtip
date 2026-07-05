@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/ads",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/menu-sync",
+      "schedule": "0 9 * * *"
     }
   ]
 }
