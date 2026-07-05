@@ -47,6 +47,8 @@ export interface BrowserShop {
    */
   hours?: OperatingHours | null;
   timezone?: string | null;
+  /** Short active-deal label for the card ("20% off", "BOGO"). */
+  dealBadge?: string | null;
 }
 
 const clusterLayer: LayerProps = {

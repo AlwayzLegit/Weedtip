@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, MapPin, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react';
+import type { OperatingHours } from '@weedtip/shared';
 import { CategoryTiles } from '@/components/home/category-tiles';
 import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
 import { MarketFeed, type FeedDeal, type FeedShop } from '@/components/home/market-feed';
@@ -68,7 +69,7 @@ export default async function HomePage() {
     supabase
       .from('dispensaries')
       .select(
-        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count',
+        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone',
       )
       .eq('status', 'active')
       .order('featured', { ascending: false })
@@ -147,6 +148,8 @@ export default async function HomePage() {
     featured: d.featured,
     rating: d.rating_avg,
     reviewCount: d.rating_count,
+    hours: (d.hours ?? null) as OperatingHours | null,
+    timezone: d.timezone,
   }));
   const initialDeals: FeedDeal[] = (deals ?? []).flatMap((deal) => {
     const disp = deal.dispensary as unknown as {

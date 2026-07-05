@@ -504,6 +504,9 @@ export function DispensariesBrowser({
                       rating: s.rating,
                       reviewCount: s.reviewCount,
                       openNow: s.isOpenNow,
+                      hours: s.hours,
+                      timezone: s.timezone,
+                      dealBadge: s.dealBadge,
                     }}
                   />
                 </div>

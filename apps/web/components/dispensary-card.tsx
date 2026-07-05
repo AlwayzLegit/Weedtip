@@ -1,9 +1,11 @@
 import Link from 'next/link';
-import { MapPin, Truck, Store } from 'lucide-react';
+import { MapPin, Tag, Truck, Store } from 'lucide-react';
+import type { OperatingHours } from '@weedtip/shared';
 import { formatDistance } from '@/lib/format';
 import { Badge } from './ui/badge';
 import { LogoImage } from './logo-image';
 import { MediaImage } from './media-image';
+import { OpenNowChip } from './open-now-chip';
 import { PlacementBeacon } from './placement-beacon';
 import { RatingStars } from './rating-stars';
 
@@ -27,8 +29,16 @@ export interface DispensaryCardData {
   distanceMeters?: number | null;
   rating?: number | null;
   reviewCount?: number;
-  /** Live open/closed chip on the photo; omit (or null) when unknown. */
+  /** Server-computed open state (search RPCs); omit (or null) when unknown. */
   openNow?: boolean | null;
+  /**
+   * When provided, the Open/Closed chip is computed live client-side in the
+   * shop's own timezone (correct even on ISR-cached pages).
+   */
+  hours?: OperatingHours | null;
+  timezone?: string | null;
+  /** Short active-deal label, e.g. "20% off" or "BOGO". */
+  dealBadge?: string | null;
 }
 
 export function DispensaryCard({ d }: { d: DispensaryCardData }) {
@@ -61,15 +71,16 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
             {distance}
           </Badge>
         )}
-        {typeof d.openNow === 'boolean' && (
-          <Badge
-            className={
-              d.openNow
-                ? 'bg-background/80 text-primary absolute bottom-3 left-3'
-                : 'bg-background/80 text-muted absolute bottom-3 left-3'
-            }
-          >
-            {d.openNow ? 'Open now' : 'Closed'}
+        <OpenNowChip
+          hours={d.hours}
+          timezone={d.timezone}
+          openNow={d.openNow}
+          className="absolute bottom-3 left-3"
+        />
+        {d.dealBadge && (
+          <Badge tone="primary" className="absolute bottom-3 right-3">
+            <Tag className="h-3 w-3" />
+            {d.dealBadge}
           </Badge>
         )}
       </MediaImage>

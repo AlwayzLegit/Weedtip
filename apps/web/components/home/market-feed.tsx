@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, MapPin } from 'lucide-react';
+import type { OperatingHours } from '@weedtip/shared';
+import { dealBadge } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { US_STATES } from '@/lib/seo';
 import { DealCard, type DealCardData } from '../deal-card';
@@ -15,7 +17,7 @@ export type FeedShop = DispensaryCardData;
 export type FeedDeal = DealCardData & { id: string };
 
 const SHOP_FIELDS =
-  'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
+  'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone';
 
 type ShopRow = {
   slug: string;
@@ -31,6 +33,8 @@ type ShopRow = {
   featured: boolean;
   rating_avg: number;
   rating_count: number;
+  hours: unknown;
+  timezone: string | null;
 };
 
 const toShop = (r: ShopRow): FeedShop => ({
@@ -47,6 +51,8 @@ const toShop = (r: ShopRow): FeedShop => ({
   featured: r.featured,
   rating: r.rating_avg,
   reviewCount: r.rating_count,
+  hours: (r.hours ?? null) as OperatingHours | null,
+  timezone: r.timezone,
 });
 
 /**
@@ -150,6 +156,17 @@ export function MarketFeed({
   const stateName = scoped ? US_STATES[market] : null;
   const st = market?.toLowerCase();
 
+  // Card-family deal badge: a shop's soonest-ending live deal, e.g. "20% off".
+  const dealBadgeBySlug = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const d of deals) {
+      if (!m.has(d.dispensarySlug)) {
+        m.set(d.dispensarySlug, dealBadge(d.discountType, d.discountValue));
+      }
+    }
+    return m;
+  }, [deals]);
+
   return (
     <div className="space-y-16">
       {/* Featured dispensaries near you */}
@@ -190,7 +207,10 @@ export function MarketFeed({
         {shops.length > 0 ? (
           <ScrollCarousel itemClassName="w-72" ariaLabel="Featured dispensaries">
             {shops.map((s) => (
-              <DispensaryCard key={s.slug} d={s} />
+              <DispensaryCard
+                key={s.slug}
+                d={{ ...s, dealBadge: dealBadgeBySlug.get(s.slug) ?? null }}
+              />
             ))}
           </ScrollCarousel>
         ) : (
