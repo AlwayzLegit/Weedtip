@@ -2254,6 +2254,48 @@ export type Database = {
           zip: string
         }[]
       }
+      search_dispensaries_bounds: {
+        Args: {
+          filter_amenities?: string[]
+          filter_category_slug?: string
+          filter_delivery?: boolean
+          filter_medical?: boolean
+          filter_open_now?: boolean
+          filter_pickup?: boolean
+          filter_recreational?: boolean
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          origin_lat?: number
+          origin_lng?: number
+          result_limit?: number
+          result_offset?: number
+          search_query?: string
+          sort_by?: string
+        }
+        Returns: {
+          city: string
+          cover_image_url: string
+          distance_meters: number
+          featured: boolean
+          id: string
+          is_delivery: boolean
+          is_medical: boolean
+          is_open_now: boolean
+          is_pickup: boolean
+          is_recreational: boolean
+          latitude: number
+          logo_url: string
+          longitude: number
+          name: string
+          rating_avg: number
+          rating_count: number
+          slug: string
+          state: string
+          total_count: number
+        }[]
+      }
       search_global: {
         Args: { per_kind_limit?: number; search_query: string }
         Returns: {

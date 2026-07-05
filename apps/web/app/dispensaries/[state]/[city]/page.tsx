@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PRODUCT_CATEGORIES, type OperatingHours } from '@weedtip/shared';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { CityBrowser } from '@/components/city-browser';
+import { DispensariesBrowser } from '@/components/dispensaries-browser';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
+import { STATE_BOUNDS, US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
 
 // Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
 export const revalidate = 3600;
@@ -88,6 +89,28 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
   return { stateName, cityName: first.city ?? '', shops: ordered, featuredByDispensary };
 });
 
+/** Fit the map to the city's shops (padded), falling back to the whole state. */
+function cityBounds(
+  shops: { latitude: number | null; longitude: number | null }[],
+  stateCode: string,
+): BBox {
+  let minLat = Infinity;
+  let minLng = Infinity;
+  let maxLat = -Infinity;
+  let maxLng = -Infinity;
+  for (const s of shops) {
+    if (typeof s.latitude !== 'number' || typeof s.longitude !== 'number') continue;
+    minLat = Math.min(minLat, s.latitude);
+    maxLat = Math.max(maxLat, s.latitude);
+    minLng = Math.min(minLng, s.longitude);
+    maxLng = Math.max(maxLng, s.longitude);
+  }
+  if (!Number.isFinite(minLat)) return STATE_BOUNDS[stateCode] ?? US_BOUNDS;
+  const padLat = Math.max((maxLat - minLat) * 0.15, 0.02);
+  const padLng = Math.max((maxLng - minLng) * 0.15, 0.02);
+  return [minLng - padLng, minLat - padLat, maxLng + padLng, maxLat + padLat];
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -148,33 +171,40 @@ export default async function CityDispensariesPage({
         {shops.length} {shops.length === 1 ? 'dispensary' : 'dispensaries'} in {cityName}.
       </p>
 
-      <CityBrowser
-        cityName={cityName}
-        shops={shops.map((s) => {
-          const promo = featuredByDispensary.get(s.id);
-          return {
-            id: s.id,
-            slug: s.slug,
-            name: s.name,
-            city: s.city,
-            state: s.state,
-            coverImageUrl: s.cover_image_url,
-            logoUrl: s.logo_url,
-            isDelivery: s.is_delivery,
-            isPickup: s.is_pickup,
-            isMedical: s.is_medical,
-            isRecreational: s.is_recreational,
-            featured: s.featured || !!promo,
-            placementId: promo?.placementId || undefined,
-            rating: s.rating_avg,
-            reviewCount: s.rating_count,
-            lat: s.latitude,
-            lng: s.longitude,
-            hours: (s.hours ?? null) as OperatingHours | null,
-            timezone: s.timezone,
-          };
-        })}
-      />
+      <div className="mt-6">
+        <DispensariesBrowser
+          variant="embedded"
+          initialBounds={cityBounds(shops, state.toUpperCase())}
+          initialTotal={shops.length}
+          initialShops={shops.map((s) => {
+            const promo = featuredByDispensary.get(s.id);
+            return {
+              id: s.id,
+              slug: s.slug,
+              name: s.name,
+              city: s.city,
+              state: s.state,
+              coverImageUrl: s.cover_image_url,
+              logoUrl: s.logo_url,
+              isDelivery: s.is_delivery,
+              isPickup: s.is_pickup,
+              isMedical: s.is_medical,
+              isRecreational: s.is_recreational,
+              featured: s.featured || !!promo,
+              placementId: promo?.placementId || undefined,
+              rating: s.rating_avg,
+              reviewCount: s.rating_count,
+              lat: s.latitude,
+              lng: s.longitude,
+              distanceMeters: null,
+              // Recomputed live client-side; the page itself is ISR-cached.
+              isOpenNow: null,
+              hours: (s.hours ?? null) as OperatingHours | null,
+              timezone: s.timezone,
+            };
+          })}
+        />
+      </div>
 
       <section className="mt-10">
         <h2 className="mb-3 text-lg font-semibold">Browse {cityName} by category</h2>

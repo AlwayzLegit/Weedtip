@@ -27,6 +27,8 @@ export interface DispensaryCardData {
   distanceMeters?: number | null;
   rating?: number | null;
   reviewCount?: number;
+  /** Live open/closed chip on the photo; omit (or null) when unknown. */
+  openNow?: boolean | null;
 }
 
 export function DispensaryCard({ d }: { d: DispensaryCardData }) {
@@ -57,6 +59,17 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
           <Badge className="bg-background/80 absolute right-3 top-3">
             <MapPin className="h-3 w-3" />
             {distance}
+          </Badge>
+        )}
+        {typeof d.openNow === 'boolean' && (
+          <Badge
+            className={
+              d.openNow
+                ? 'bg-background/80 text-primary absolute bottom-3 left-3'
+                : 'bg-background/80 text-muted absolute bottom-3 left-3'
+            }
+          >
+            {d.openNow ? 'Open now' : 'Closed'}
           </Badge>
         )}
       </MediaImage>
