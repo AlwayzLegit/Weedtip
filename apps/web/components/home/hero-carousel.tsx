@@ -89,7 +89,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                   </span>
                 )}
               </p>
-              <span className="bg-primary-grad text-primary-foreground shadow-glow-sm mt-4 inline-flex h-10 items-center rounded-lg px-5 text-sm font-medium">
+              <span className="bg-primary bg-primary-grad text-primary-foreground shadow-glow-sm mt-4 inline-flex h-10 items-center rounded-lg px-5 text-sm font-medium">
                 Visit shop
               </span>
             </div>

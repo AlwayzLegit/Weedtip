@@ -6,7 +6,9 @@ type Size = 'sm' | 'md' | 'lg' | 'icon';
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-primary-grad text-primary-foreground shadow-glow-sm hover:shadow-glow hover:brightness-[1.05]',
+    // Solid bg-primary sits UNDER the gradient image so the dark label always
+    // has a green fill behind it, even where background-image fails to paint.
+    'bg-primary bg-primary-grad text-primary-foreground shadow-glow-sm hover:shadow-glow hover:brightness-[1.05]',
   secondary: 'bg-surface-2 text-foreground border border-border-strong/60 hover:bg-surface-3',
   outline:
     'border border-border bg-transparent text-foreground hover:bg-surface-2 hover:border-border-strong',

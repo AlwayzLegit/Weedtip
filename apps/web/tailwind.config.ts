@@ -12,13 +12,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Surfaces (low → high elevation)
-        background: '#0B0D12',
-        surface: '#161922',
-        'surface-2': '#1F232E',
-        'surface-3': '#272C39',
-        border: '#2A2F3C',
-        'border-strong': '#3A4150',
+        // Surfaces (low → high elevation). Each level steps up in lightness so
+        // cards visibly separate from the page (surface-vs-background ≥ ~1.25
+        // luminance contrast) — on dark UIs, elevation does the work shadows do
+        // on light UIs. Guarded by lib/__tests__/contrast.test.ts.
+        background: '#0F1216',
+        surface: '#1A1F27',
+        'surface-2': '#232935',
+        'surface-3': '#2E3542',
+        border: '#2A313C',
+        'border-strong': '#3A4250',
         // Brand green
         primary: {
           DEFAULT: '#10B981',
@@ -29,11 +32,12 @@ const config: Config = {
         },
         // Text
         foreground: '#F4F6F8',
-        muted: '#9AA3B2',
-        'muted-foreground': '#6B7280',
-        // Feedback
-        danger: '#EF4444',
-        warning: '#F59E0B',
+        muted: '#AEB6C2',
+        'muted-foreground': '#8A93A1',
+        // Feedback — warm accents that break up the green-on-dark monochrome
+        // (deal/urgency badges), per the branding audit.
+        danger: '#F04438',
+        warning: '#F0B429',
         success: '#22C55E',
         ring: '#10B981',
       },
