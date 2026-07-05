@@ -182,6 +182,7 @@ export function BrowseMap({
 }) {
   const [mounted, setMounted] = useState(false);
   const [overInteractive, setOverInteractive] = useState(false);
+  const [tilesFailed, setTilesFailed] = useState(false);
   const mapRef = useRef<MapRef>(null);
   useEffect(() => setMounted(true), []);
 
@@ -292,6 +293,12 @@ export function BrowseMap({
     <Map
       ref={mapRef}
       mapboxAccessToken={token}
+      // Surface style/tile failures (commonly a URL-restricted token rejecting
+      // this domain with a 403) instead of a silent blank canvas.
+      onError={(e) => {
+        const status = (e.error as { status?: number } | undefined)?.status;
+        if (status === 401 || status === 403) setTilesFailed(true);
+      }}
       initialViewState={{
         bounds: initialBounds,
         fitBoundsOptions: { padding: 48, maxZoom: 15 },
@@ -318,6 +325,12 @@ export function BrowseMap({
       cursor={overInteractive ? 'pointer' : 'grab'}
     >
       <NavigationControl position="top-right" showCompass={false} />
+      {tilesFailed && (
+        <div className="bg-background/85 border-border text-muted absolute inset-x-3 top-3 z-10 rounded-lg border px-3 py-2 text-center text-xs backdrop-blur">
+          Map imagery couldn&apos;t load — the Mapbox token rejected this domain. Pins still work;
+          check the token&apos;s URL restrictions in the Mapbox dashboard.
+        </div>
+      )}
       <GeolocateControl
         position="top-right"
         trackUserLocation={false}
