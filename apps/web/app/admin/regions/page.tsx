@@ -32,6 +32,7 @@ export default async function AdminRegions() {
               <th className="px-4 py-2 font-medium">State</th>
               <th className="px-4 py-2 font-medium">Legality</th>
               <th className="hidden px-4 py-2 font-medium sm:table-cell">Min age</th>
+              <th className="hidden px-4 py-2 font-medium sm:table-cell">Tax</th>
               <th className="px-4 py-2" />
             </tr>
           </thead>
@@ -49,6 +50,9 @@ export default async function AdminRegions() {
                   </div>
                 </td>
                 <td className="text-muted hidden px-4 py-3 sm:table-cell">{r.min_age}</td>
+                <td className="text-muted hidden px-4 py-3 sm:table-cell">
+                  {(Math.round(r.tax_rate * 10000) / 100).toFixed(2)}%
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
                     <Link href={`/admin/regions/${r.state}`}>

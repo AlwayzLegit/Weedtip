@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loader2, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { ESTIMATED_TAX_RATE, type OrderType } from '@weedtip/shared';
-import { previewAutoDiscount, previewPromo, startCheckout } from '@/app/actions/checkout';
+import {
+  getCheckoutRules,
+  previewAutoDiscount,
+  previewPromo,
+  startCheckout,
+  type CheckoutRules,
+} from '@/app/actions/checkout';
 import { cn } from '@/lib/utils';
 import { formatPrice } from '@/lib/format';
 import { Button } from '../ui/button';
@@ -38,9 +44,26 @@ export function CartView({
   const [autoDiscount, setAutoDiscount] = useState<{ discountCents: number; title: string } | null>(
     null,
   );
+  const [rules, setRules] = useState<CheckoutRules | null>(null);
 
   // Auto "spend & save" order discount preview (when no promo code is applied).
   const dispensaryId = cart?.dispensaryId;
+
+  // Market rules for this dispensary's state: tax rate, medical-only notice,
+  // and whether ordering is allowed (create_order re-enforces all of this).
+  useEffect(() => {
+    if (!dispensaryId) {
+      setRules(null);
+      return;
+    }
+    let cancelled = false;
+    getCheckoutRules(dispensaryId).then((r) => {
+      if (!cancelled) setRules(r);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [dispensaryId]);
   useEffect(() => {
     if (!dispensaryId || promo || subtotalCents <= 0) {
       setAutoDiscount(null);
@@ -81,8 +104,10 @@ export function CartView({
     : autoDiscount
       ? Math.min(autoDiscount.discountCents, subtotalCents)
       : 0;
-  const taxCents = Math.round((subtotalCents - discountCents) * ESTIMATED_TAX_RATE);
+  const taxRate = rules?.taxRate ?? ESTIMATED_TAX_RATE;
+  const taxCents = Math.round((subtotalCents - discountCents) * taxRate);
   const totalCents = subtotalCents - discountCents + taxCents;
+  const orderBlocked = rules ? !rules.canOrder : false;
 
   async function applyPromo() {
     if (!cart || !promoInput.trim()) return;
@@ -310,6 +335,19 @@ export function CartView({
             />
           </div>
 
+          {rules?.medicalOnly && !orderBlocked && (
+            <p className="border-border bg-surface-2 text-muted mt-3 rounded-lg border px-3 py-2 text-xs">
+              {rules.state} licenses medical sales only — a valid medical card is required at{' '}
+              {orderType === 'delivery' ? 'delivery' : 'pickup'}.
+            </p>
+          )}
+
+          {orderBlocked && (
+            <p className="border-danger/40 bg-danger/10 text-danger mt-3 rounded-lg border px-3 py-2 text-sm">
+              {rules?.blockReason ?? 'Online ordering is unavailable for this dispensary.'}
+            </p>
+          )}
+
           {error && (
             <p className="border-danger/40 bg-danger/10 text-danger mt-3 rounded-lg border px-3 py-2 text-sm">
               {error}
@@ -317,7 +355,12 @@ export function CartView({
           )}
 
           {isAuthenticated ? (
-            <Button className="mt-4 w-full" size="lg" onClick={checkout} disabled={pending}>
+            <Button
+              className="mt-4 w-full"
+              size="lg"
+              onClick={checkout}
+              disabled={pending || orderBlocked}
+            >
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               {stripeEnabled && payMethod === 'card' ? 'Pay' : 'Place order'} ·{' '}
               {formatPrice(totalCents)}

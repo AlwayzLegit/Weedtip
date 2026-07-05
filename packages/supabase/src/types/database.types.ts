@@ -1030,6 +1030,7 @@ export type Database = {
           min_age: number
           notes: string | null
           state: string
+          tax_rate: number
           updated_at: string
         }
         Insert: {
@@ -1039,6 +1040,7 @@ export type Database = {
           min_age?: number
           notes?: string | null
           state: string
+          tax_rate?: number
           updated_at?: string
         }
         Update: {
@@ -1048,6 +1050,7 @@ export type Database = {
           min_age?: number
           notes?: string | null
           state?: string
+          tax_rate?: number
           updated_at?: string
         }
         Relationships: []
@@ -2007,6 +2010,18 @@ export type Database = {
           state: string
           your_bid_cents: number
           your_bid_id: string
+        }[]
+      }
+      checkout_rules: {
+        Args: { p_dispensary_id: string }
+        Returns: {
+          state: string
+          tax_rate: number
+          is_recreational_legal: boolean
+          is_medical_legal: boolean
+          medical_only: boolean
+          can_order: boolean
+          block_reason: string | null
         }[]
       }
       brand_featured_states: {
