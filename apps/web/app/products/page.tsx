@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { productSearchSchema, type StrainType } from '@weedtip/shared';
 import { searchProducts } from '@weedtip/supabase/queries';
+import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
 import { ProductCard } from '@/components/product-card';
 import { ProductFilters } from '@/components/product-filters';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
@@ -94,9 +95,7 @@ export default async function ProductsPage({
       .lte('starts_at', nowIso)
       .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
       .order('priority', { ascending: false });
-    const promoIds = (promos ?? [])
-      .map((p) => p.target_id)
-      .filter((id): id is string => !!id);
+    const promoIds = (promos ?? []).map((p) => p.target_id).filter((id): id is string => !!id);
     if (promoIds.length > 0) {
       const placementOf = new Map(
         (promos ?? []).map((p) => [p.target_id, { id: p.id, priority: p.priority }] as const),
@@ -111,8 +110,7 @@ export default async function ProductsPage({
       sponsored = ((prods as Omit<SponsoredProduct, 'placementId'>[]) ?? [])
         .map((p) => ({ ...p, placementId: placementOf.get(p.id)?.id ?? '' }))
         .sort(
-          (a, b) =>
-            (placementOf.get(b.id)?.priority ?? 0) - (placementOf.get(a.id)?.priority ?? 0),
+          (a, b) => (placementOf.get(b.id)?.priority ?? 0) - (placementOf.get(a.id)?.priority ?? 0),
         );
     }
   }
@@ -141,6 +139,47 @@ export default async function ProductsPage({
   if (shownIds.length > 0) {
     const { data: sales } = await supabase.rpc('sale_prices_for', { p_product_ids: shownIds });
     for (const s of sales ?? []) saleMap.set(s.product_id, s.sale_cents);
+  }
+
+  // Official brand-catalog lineup rail. On the first page only; honors the
+  // category and strain filters so it always matches the shopper's intent.
+  let lineup: LineupItem[] = [];
+  let lineupTotal = 0;
+  if ((params.page ?? 1) === 1) {
+    let lineupQuery = supabase
+      .from('brand_products')
+      .select(
+        'id,name,strain_type,thc_percentage,description,image_url,category:categories(slug),brand:brands!inner(name,slug,logo_url)',
+        { count: 'exact' },
+      )
+      .order('sort_order')
+      .order('name')
+      .limit(24);
+    if (params.category_slug) {
+      const cat = (categories ?? []).find((c) => c.slug === params.category_slug);
+      const { data: catRow } = cat
+        ? await supabase.from('categories').select('id').eq('slug', cat.slug).maybeSingle()
+        : { data: null };
+      if (catRow) lineupQuery = lineupQuery.eq('category_id', catRow.id);
+    }
+    if (params.strain_type) lineupQuery = lineupQuery.eq('strain_type', params.strain_type);
+    if (params.query) lineupQuery = lineupQuery.ilike('name', `%${params.query}%`);
+    const { data: lineupData, count } = await lineupQuery;
+    lineupTotal = count ?? 0;
+    lineup = (lineupData ?? []).map((it) => {
+      const brand = it.brand as unknown as { name: string; slug: string; logo_url: string | null };
+      return {
+        id: it.id,
+        name: it.name,
+        strainType: it.strain_type,
+        thcPercentage: it.thc_percentage,
+        description: it.description,
+        imageUrl: it.image_url,
+        brandName: brand.name,
+        brandSlug: brand.slug,
+        brandLogoUrl: brand.logo_url,
+      };
+    });
   }
 
   return (
@@ -185,8 +224,12 @@ export default async function ProductsPage({
 
       {organic.length === 0 && sponsored.length === 0 ? (
         <div className="rounded-card border-border bg-surface border p-10 text-center">
-          <p className="font-medium">No products found</p>
-          <p className="text-muted mt-1 text-sm">Try adjusting your filters.</p>
+          <p className="font-medium">No menu products found</p>
+          <p className="text-muted mt-1 text-sm">
+            {lineup.length > 0
+              ? 'Nothing on dispensary menus matches — browse the brand catalogs below.'
+              : 'Try adjusting your filters.'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -210,6 +253,21 @@ export default async function ProductsPage({
             />
           ))}
         </div>
+      )}
+
+      {lineup.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold">From brand catalogs</h2>
+          <p className="text-muted mt-1 text-sm">
+            {lineupTotal.toLocaleString()} products in official brand lineups — open a brand to see
+            where it&apos;s carried.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {lineup.map((it) => (
+              <LineupCard key={it.id} item={it} />
+            ))}
+          </div>
+        </section>
       )}
     </main>
   );

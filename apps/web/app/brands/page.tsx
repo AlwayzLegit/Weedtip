@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = pageSeo({
   title: 'Brands',
-  description: 'Browse cannabis brands by state and find their products at dispensaries near you on Weedtip.',
+  description:
+    'Browse cannabis brands by state and find their products at dispensaries near you on Weedtip.',
   path: '/brands',
 });
 
@@ -26,26 +27,34 @@ export default async function BrandsPage({
   const nowIso = new Date().toISOString();
   const { state: stateParam } = await searchParams;
 
-  const [{ data: brands }, { data: prodBrands }, { data: featured }, { data: bidStates }] =
-    await Promise.all([
-      supabase.from('brands').select('id,slug,name,description,logo_url').order('name'),
-      supabase
-        .from('products')
-        .select('brand_id, dispensary:dispensaries!inner(status,state)')
-        .eq('dispensary.status', 'active')
-        .not('brand_id', 'is', null),
-      supabase
-        .from('placements')
-        .select('id, priority, scope_state, brand:brands!inner(slug,name,description,logo_url)')
-        .eq('type', 'promoted_brand')
-        .eq('is_active', true)
-        .lte('starts_at', nowIso)
-        .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
-        .order('priority', { ascending: false }),
-      // States with a live winning brand bid — so paid markets are selectable
-      // even where there's no organic product coverage yet.
-      supabase.rpc('brand_featured_states'),
-    ]);
+  const [
+    { data: brands },
+    { data: prodBrands },
+    { data: featured },
+    { data: bidStates },
+    { data: lineupRows },
+  ] = await Promise.all([
+    supabase.from('brands').select('id,slug,name,description,logo_url').order('name'),
+    supabase
+      .from('products')
+      .select('brand_id, dispensary:dispensaries!inner(status,state)')
+      .eq('dispensary.status', 'active')
+      .not('brand_id', 'is', null),
+    supabase
+      .from('placements')
+      .select('id, priority, scope_state, brand:brands!inner(slug,name,description,logo_url)')
+      .eq('type', 'promoted_brand')
+      .eq('is_active', true)
+      .lte('starts_at', nowIso)
+      .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+      .order('priority', { ascending: false }),
+    // States with a live winning brand bid — so paid markets are selectable
+    // even where there's no organic product coverage yet.
+    supabase.rpc('brand_featured_states'),
+    // Official lineup sizes — the count shown when a brand isn't on any
+    // dispensary menu yet (previously ~211 of 216 cards read "0 products").
+    supabase.from('brand_products').select('brand_id'),
+  ]);
 
   // Per-brand total + per-state product counts (a brand's states = the states of
   // the active dispensaries that carry it).
@@ -80,15 +89,23 @@ export default async function BrandsPage({
   const allStates = [...selectableStates].sort();
   const selectedState = stateParam && allStates.includes(stateParam) ? stateParam : null;
 
+  const lineupCountByBrand = new Map<string, number>();
+  for (const r of lineupRows ?? []) {
+    lineupCountByBrand.set(r.brand_id, (lineupCountByBrand.get(r.brand_id) ?? 0) + 1);
+  }
+
   const ranked = (brands ?? [])
-    .map((b) => ({
-      ...b,
-      count: selectedState
+    .map((b) => {
+      const storeCount = selectedState
         ? (brandStateCount.get(b.id)?.get(selectedState) ?? 0)
-        : (countByBrand.get(b.id) ?? 0),
-    }))
+        : (countByBrand.get(b.id) ?? 0);
+      const lineupCount = lineupCountByBrand.get(b.id) ?? 0;
+      return { ...b, count: storeCount, lineupCount };
+    })
     .filter((b) => (selectedState ? b.count > 0 : true))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    .sort(
+      (a, b) => b.count - a.count || b.lineupCount - a.lineupCount || a.name.localeCompare(b.name),
+    );
 
   // Featured strip = flat-rate placements + the per-state auction winners.
   const placementCards = ((featured as FeaturedRow[] | null) ?? [])
@@ -125,7 +142,10 @@ export default async function BrandsPage({
   }
 
   const seenFeatured = new Set(placementCards.map((c) => c.slug));
-  const featuredCards = [...placementCards, ...auctionCards.filter((c) => !seenFeatured.has(c.slug))];
+  const featuredCards = [
+    ...placementCards,
+    ...auctionCards.filter((c) => !seenFeatured.has(c.slug)),
+  ];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
@@ -242,8 +262,11 @@ export default async function BrandsPage({
                 )}
                 <p className="text-muted mt-2 flex items-center gap-1 text-xs">
                   <Package className="h-3.5 w-3.5" />
-                  {b.count} {b.count === 1 ? 'product' : 'products'}
-                  {selectedState ? ` in ${selectedState}` : ''}
+                  {b.count > 0
+                    ? `${b.count} ${b.count === 1 ? 'product' : 'products'} in stores${selectedState ? ` in ${selectedState}` : ''}`
+                    : b.lineupCount > 0
+                      ? `${b.lineupCount} ${b.lineupCount === 1 ? 'product' : 'products'} in lineup`
+                      : 'No products yet'}
                 </p>
               </div>
             </Link>

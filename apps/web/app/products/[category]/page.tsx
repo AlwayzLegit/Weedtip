@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
 import { ProductCard } from '@/components/product-card';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -29,11 +30,7 @@ export async function generateMetadata({
   return pageSeo({ title, description, path: `/products/${category}` });
 }
 
-export default async function CategoryPage({
-  params,
-}: {
-  params: Promise<{ category: string }>;
-}) {
+export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category: slug } = await params;
   const supabase = createStaticClient();
 
@@ -62,11 +59,41 @@ export default async function CategoryPage({
     for (const s of sales ?? []) saleMap.set(s.product_id, s.sale_cents);
   }
 
+  // Official brand-catalog lineup for this category — real product depth while
+  // dispensary menus ramp up. Cards link to the brand page, whose "Carried at"
+  // section is the path to purchase.
+  const { data: lineupData, count: lineupCount } = await supabase
+    .from('brand_products')
+    .select(
+      'id,name,strain_type,thc_percentage,description,image_url,brand:brands!inner(name,slug,logo_url)',
+      {
+        count: 'exact',
+      },
+    )
+    .eq('category_id', category.id)
+    .order('sort_order')
+    .order('name')
+    .limit(48);
+  const lineup: LineupItem[] = (lineupData ?? []).map((it) => {
+    const brand = it.brand as unknown as { name: string; slug: string; logo_url: string | null };
+    return {
+      id: it.id,
+      name: it.name,
+      strainType: it.strain_type,
+      thcPercentage: it.thc_percentage,
+      description: it.description,
+      imageUrl: it.image_url,
+      brandName: brand.name,
+      brandSlug: brand.slug,
+      brandLogoUrl: brand.logo_url,
+    };
+  });
+
   const label = category.name.toLowerCase();
   const faqs = [
     {
       question: `What cannabis ${label} can I buy on Weedtip?`,
-      answer: `Weedtip lists ${products.length} ${label} ${products.length === 1 ? 'product' : 'products'} from licensed dispensaries, with prices, THC/CBD, brands, and reviews.`,
+      answer: `Weedtip lists ${products.length} ${label} ${products.length === 1 ? 'product' : 'products'} from licensed dispensary menus, plus ${lineupCount ?? 0} from official brand catalogs, with THC/CBD, brands, and reviews.`,
     },
     {
       question: `How do I order ${label} for pickup or delivery?`,
@@ -97,7 +124,7 @@ export default async function CategoryPage({
 
       {products.length === 0 ? (
         <div className="rounded-card border-border bg-surface text-muted mt-6 border p-10 text-center">
-          No {label} are listed yet. Check back soon.
+          No {label} are on dispensary menus yet — browse the brand catalogs below.
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -122,12 +149,27 @@ export default async function CategoryPage({
         </div>
       )}
 
+      {lineup.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-lg font-semibold">From brand catalogs</h2>
+          <p className="text-muted mt-1 text-sm">
+            {(lineupCount ?? lineup.length).toLocaleString()} {label} in official brand lineups —
+            open a brand to see where it&apos;s carried.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {lineup.map((it) => (
+              <LineupCard key={it.id} item={it} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="mt-12 max-w-3xl">
         <h2 className="mb-2 text-lg font-semibold">About cannabis {label} on Weedtip</h2>
         <p className="text-muted text-sm leading-relaxed">
           Compare cannabis {label} from licensed dispensaries near you. Browse by price, potency,
-          and brand, read reviews, and order online for pickup or delivery. Always bring a valid
-          21+ ID and check your local regulations before ordering.
+          and brand, read reviews, and order online for pickup or delivery. Always bring a valid 21+
+          ID and check your local regulations before ordering.
         </p>
       </section>
 
