@@ -2012,6 +2012,11 @@ export type Database = {
           your_bid_id: string
         }[]
       }
+      admin_delete_dispensary: { Args: { p_id: string }; Returns: undefined }
+      admin_merge_dispensaries: {
+        Args: { p_keep: string; p_dup: string }
+        Returns: undefined
+      }
       checkout_rules: {
         Args: { p_dispensary_id: string }
         Returns: {

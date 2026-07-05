@@ -157,12 +157,20 @@ export default async function AdminDispensaries({
                   </p>
                 )}
               </div>
-              <ModerationButtons
-                id={d.id}
-                status={d.status}
-                featured={d.featured}
-                posAddon={d.pos_addon}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/admin/dispensaries/${d.id}`}
+                  className="border-border hover:border-border-strong rounded-lg border px-3 py-1.5 text-sm font-medium"
+                >
+                  Edit
+                </Link>
+                <ModerationButtons
+                  id={d.id}
+                  status={d.status}
+                  featured={d.featured}
+                  posAddon={d.pos_addon}
+                />
+              </div>
             </div>
           ))}
         </div>
