@@ -2199,9 +2199,12 @@ export type Database = {
           search_query?: string
         }
         Returns: {
+          deal_type: string
+          deal_value: number
           featured: boolean
           is_open_now: boolean
           latitude: number
+          logo_url: string
           longitude: number
           name: string
           slug: string

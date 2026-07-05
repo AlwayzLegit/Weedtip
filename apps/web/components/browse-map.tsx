@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Map, {
   GeolocateControl,
   Layer,
+  Marker,
   NavigationControl,
   Popup,
   Source,
@@ -15,7 +16,9 @@ import type { GeoJSONSource, MapLayerMouseEvent } from 'mapbox-gl';
 import { MapPin, Navigation, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { formatDistance } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import type { BBox } from '@/lib/us-state-bounds';
+import { LogoImage } from './logo-image';
 import { MediaImage } from './media-image';
 import { RatingStars } from './rating-stars';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -60,12 +63,21 @@ export interface MapPinPoint {
   lng: number;
   featured: boolean;
   isOpenNow: boolean | null;
+  /** Featured shops carry their logo → branded logo pin. */
+  logoUrl?: string | null;
+  /** Live-deal tag rendered on the pin, e.g. "20% off". */
+  dealLabel?: string | null;
 }
+
+/** How many merchandised pins (logo/deal markers) we'll put in the DOM. */
+const MAX_MARKER_PINS = 150;
 
 /** Imperative handle the parent uses to steer the map (geocoder, etc.). */
 export interface BrowseMapApi {
   flyTo: (center: { lat: number; lng: number }, zoom?: number) => void;
   fitBounds: (bounds: BBox) => void;
+  /** Gentle recenter at the current zoom (mobile card-strip swipes). */
+  panTo: (center: { lat: number; lng: number }) => void;
 }
 
 const clusterLayer: LayerProps = {
@@ -176,6 +188,8 @@ export function BrowseMap({
         mapRef.current?.flyTo({ center: [center.lng, center.lat], zoom: zoom ?? 12, duration: 1200 }),
       fitBounds: (b) =>
         mapRef.current?.fitBounds([b[0], b[1], b[2], b[3]], { padding: 48, maxZoom: 15, duration: 1200 }),
+      panTo: (center) =>
+        mapRef.current?.easeTo({ center: [center.lng, center.lat], duration: 500 }),
     };
     return () => {
       apiRef.current = null;
@@ -184,17 +198,26 @@ export function BrowseMap({
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-  const geojson = useMemo(
-    () => ({
-      type: 'FeatureCollection' as const,
-      features: pins.map((p) => ({
-        type: 'Feature' as const,
-        properties: { slug: p.slug, name: p.name, featured: p.featured, open: p.isOpenNow },
-        geometry: { type: 'Point' as const, coordinates: [p.lng, p.lat] },
-      })),
-    }),
+  // Merchandised pins (logo pins for featured shops, deal tags) render as HTML
+  // markers so they can carry imagery and stay visible above clusters — the
+  // Weedmaps paid-pin behavior. Everything else stays in the clustered layer.
+  const markerPins = useMemo(
+    () => pins.filter((p) => p.logoUrl || p.dealLabel).slice(0, MAX_MARKER_PINS),
     [pins],
   );
+  const geojson = useMemo(() => {
+    const markerSlugs = new Set(markerPins.map((p) => p.slug));
+    return {
+      type: 'FeatureCollection' as const,
+      features: pins
+        .filter((p) => !markerSlugs.has(p.slug))
+        .map((p) => ({
+          type: 'Feature' as const,
+          properties: { slug: p.slug, name: p.name, featured: p.featured, open: p.isOpenNow },
+          geometry: { type: 'Point' as const, coordinates: [p.lng, p.lat] },
+        })),
+    };
+  }, [pins, markerPins]);
 
   // List-hover → pin highlight: a ring drawn under the hovered shop's pin.
   const highlightLayer: LayerProps = useMemo(
@@ -311,6 +334,59 @@ export function BrowseMap({
         <Layer {...unclusteredLayer} />
         <Layer {...pinLabelLayer} />
       </Source>
+
+      {/* Merchandised pins: featured logos + deal tags (Weedmaps paid-pin look) */}
+      {markerPins.map((p) => (
+        <Marker
+          key={p.slug}
+          latitude={p.lat}
+          longitude={p.lng}
+          anchor="bottom"
+          onClick={(e) => {
+            e.originalEvent.stopPropagation();
+            onSelect(p.slug);
+          }}
+        >
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label={p.name}
+            onMouseEnter={() => onHover(p.slug)}
+            onMouseLeave={() => onHover(null)}
+            onKeyDown={(e) => e.key === 'Enter' && onSelect(p.slug)}
+            className={cn(
+              'flex cursor-pointer flex-col items-center transition-transform',
+              hoveredSlug === p.slug && 'scale-110',
+            )}
+          >
+            {p.dealLabel && (
+              <span className="bg-primary text-primary-foreground mb-0.5 whitespace-nowrap rounded-full px-1.5 py-px text-[10px] font-bold leading-tight shadow">
+                {p.dealLabel}
+              </span>
+            )}
+            {p.logoUrl ? (
+              <LogoImage
+                src={p.logoUrl}
+                name={p.name}
+                hideWhenEmpty={false}
+                className={cn(
+                  'bg-surface h-9 w-9 shadow-md ring-2',
+                  hoveredSlug === p.slug ? 'ring-primary' : 'ring-amber-400',
+                )}
+                rounded="rounded-full"
+              />
+            ) : (
+              <span
+                aria-hidden
+                className={cn(
+                  'block h-3.5 w-3.5 rounded-full border-2 border-black/70 shadow',
+                  p.featured ? 'bg-amber-400' : p.isOpenNow === false ? 'bg-slate-500' : 'bg-primary',
+                )}
+              />
+            )}
+          </div>
+        </Marker>
+      ))}
 
       {selected && typeof selected.lat === 'number' && typeof selected.lng === 'number' && (
         <Popup

@@ -10,13 +10,14 @@ import {
   type OperatingHours,
 } from '@weedtip/shared';
 import { mapPinsBounds, searchDispensariesBounds } from '@weedtip/supabase/queries';
-import { isOpenNow } from '@/lib/format';
+import { dealBadge, formatDistance, isOpenNow } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import type { BBox } from '@/lib/us-state-bounds';
 import { BrowseMap, type BrowseMapApi, type BrowserShop, type MapPinPoint } from './browse-map';
 import { DispensaryCard } from './dispensary-card';
 import { GeoSearch, type GeoPlace } from './geo-search';
+import { MediaImage } from './media-image';
 
 export type { BrowserShop };
 
@@ -171,6 +172,8 @@ export function DispensariesBrowser({
         lng: s.lng as number,
         featured: s.featured,
         isOpenNow: s.isOpenNow,
+        logoUrl: s.featured ? s.logoUrl : null,
+        dealLabel: s.dealBadge ?? null,
       })),
   );
 
@@ -193,7 +196,36 @@ export function DispensariesBrowser({
   const pinsRequestId = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
+  const stripRef = useRef<HTMLDivElement>(null);
+  const stripCardRefs = useRef(new Map<string, HTMLAnchorElement>());
+  const stripScrollDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const stripProgrammatic = useRef(false);
   const mapApi = useRef<BrowseMapApi | null>(null);
+
+  // Mobile map view: swiping the bottom card strip highlights + recenters on
+  // the card closest to the strip's center (Weedmaps' mobile pattern).
+  const handleStripScroll = useCallback(() => {
+    if (stripProgrammatic.current) return;
+    clearTimeout(stripScrollDebounce.current);
+    stripScrollDebounce.current = setTimeout(() => {
+      const strip = stripRef.current;
+      if (!strip) return;
+      const center = strip.scrollLeft + strip.clientWidth / 2;
+      let best: { slug: string; dist: number } | null = null;
+      for (const [slug, el] of stripCardRefs.current) {
+        const mid = el.offsetLeft + el.offsetWidth / 2;
+        const dist = Math.abs(mid - center);
+        if (!best || dist < best.dist) best = { slug, dist };
+      }
+      if (!best) return;
+      const shop = shops.find((s) => s.slug === best.slug);
+      if (!shop) return;
+      setHovered(shop.slug);
+      if (typeof shop.lat === 'number' && typeof shop.lng === 'number') {
+        mapApi.current?.panTo({ lat: shop.lat, lng: shop.lng });
+      }
+    }, 180);
+  }, [shops]);
 
   useEffect(() => {
     const stored = window.localStorage.getItem('wt_map_autosearch');
@@ -232,6 +264,8 @@ export function DispensariesBrowser({
           lng: r.longitude,
           featured: r.featured,
           isOpenNow: r.is_open_now,
+          logoUrl: r.logo_url,
+          dealLabel: r.deal_type ? dealBadge(r.deal_type, Number(r.deal_value)) : null,
         })),
       );
     },
@@ -369,6 +403,18 @@ export function DispensariesBrowser({
     else mapApi.current?.flyTo(place.center, 12);
   }, []);
 
+  // Bring the mobile strip card for a slug into view without re-triggering the
+  // scroll-settle handler (which would pan the map back).
+  const scrollStripTo = useCallback((slug: string) => {
+    const el = stripCardRefs.current.get(slug);
+    if (!el) return;
+    stripProgrammatic.current = true;
+    el.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    setTimeout(() => {
+      stripProgrammatic.current = false;
+    }, 600);
+  }, []);
+
   // Map pin click → popup. Pins cover the whole viewport, so the shop may not
   // be in the paginated list — fetch its card data by slug when it isn't.
   const handleSelect = useCallback(
@@ -377,6 +423,7 @@ export function DispensariesBrowser({
         setPopupShop(null);
         return;
       }
+      scrollStripTo(slug);
       const inList = shops.find((s) => s.slug === slug);
       if (inList) {
         setPopupShop(inList);
@@ -416,7 +463,7 @@ export function DispensariesBrowser({
         });
       })();
     },
-    [shops, supabase],
+    [shops, supabase, scrollStripTo],
   );
 
   const pillClass = (active: boolean) =>
@@ -696,8 +743,66 @@ export function DispensariesBrowser({
           )}
         </div>
 
+        {/* Mobile map view: swipeable card strip over the map (Weedmaps pattern) */}
+        {mobileView === 'map' && shops.length > 0 && (
+          <div className="absolute inset-x-0 bottom-3 z-10 lg:hidden">
+            <div
+              ref={stripRef}
+              onScroll={handleStripScroll}
+              className="scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1"
+            >
+              {shops.slice(0, 30).map((s) => (
+                <a
+                  key={s.id}
+                  href={`/dispensary/${s.slug}`}
+                  ref={(el) => {
+                    if (el) stripCardRefs.current.set(s.slug, el);
+                    else stripCardRefs.current.delete(s.slug);
+                  }}
+                  className={cn(
+                    'bg-surface border-border shadow-card-hover flex w-[17rem] shrink-0 snap-center items-center gap-3 rounded-xl border p-2.5',
+                    hovered === s.slug && 'border-primary/70',
+                  )}
+                >
+                  <MediaImage
+                    url={s.coverImageUrl}
+                    alt={s.name}
+                    className="h-16 w-16 shrink-0 rounded-lg"
+                    iconClassName="h-6 w-6"
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{s.name}</p>
+                    <p className="text-muted truncate text-xs">
+                      {s.rating > 0 ? `★ ${s.rating.toFixed(1)} · ` : ''}
+                      {s.city ?? 'Delivery only'}
+                      {formatDistance(s.distanceMeters) ? ` · ${formatDistance(s.distanceMeters)}` : ''}
+                    </p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px]">
+                      {s.isOpenNow !== null && (
+                        <span className={s.isOpenNow ? 'text-primary' : 'text-muted'}>
+                          {s.isOpenNow ? 'Open now' : 'Closed'}
+                        </span>
+                      )}
+                      {s.dealBadge && (
+                        <span className="bg-primary-muted text-primary rounded-full px-1.5 py-px font-semibold">
+                          {s.dealBadge}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Mobile list/map toggle */}
-        <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2 lg:hidden">
+        <div
+          className={cn(
+            'absolute left-1/2 z-10 -translate-x-1/2 lg:hidden',
+            mobileView === 'map' && shops.length > 0 ? 'bottom-28' : 'bottom-5',
+          )}
+        >
           <button
             type="button"
             onClick={() => setMobileView((v) => (v === 'list' ? 'map' : 'list'))}
