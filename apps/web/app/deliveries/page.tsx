@@ -1,3 +1,4 @@
+import { MarketBanner } from '@/components/market-banner';
 import type { Metadata } from 'next';
 import { Truck } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -74,6 +75,7 @@ export default async function DeliveriesPage() {
         <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
           <Truck className="text-primary h-7 w-7" /> Cannabis delivery
         </h1>
+      <MarketBanner hrefPrefix="/dispensaries" label="dispensaries" />
         <p className="text-muted mt-1 text-sm">
           {shops.length} {shops.length === 1 ? 'dispensary delivers' : 'dispensaries deliver'} near
           you.
