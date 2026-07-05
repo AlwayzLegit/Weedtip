@@ -1,12 +1,14 @@
 import Link from 'next/link';
-import { ArrowRight, MapPin, ShoppingBag, Sparkles, Store, Tag, Truck } from 'lucide-react';
-import { CategoryPills } from '@/components/category-pills';
-import { DispensaryCard } from '@/components/dispensary-card';
+import { ArrowRight, MapPin, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react';
+import { CategoryTiles } from '@/components/home/category-tiles';
 import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
+import { MarketFeed, type FeedDeal, type FeedShop } from '@/components/home/market-feed';
+import { RegionGrid, type RegionEntry } from '@/components/home/region-grid';
+import { ScrollCarousel } from '@/components/home/scroll-carousel';
+import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
 import { JsonLd } from '@/components/seo/json-ld';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
@@ -17,12 +19,6 @@ export const revalidate = 300;
 
 const DISP_FIELDS =
   'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,rating_avg,rating_count,status';
-
-function discountLabel(type: string, value: number): string {
-  if (type === 'percentage') return `${value}% off`;
-  if (type === 'fixed') return `$${value} off`;
-  return 'BOGO';
-}
 
 function SectionHeading({
   eyebrow,
@@ -61,6 +57,9 @@ export default async function HomePage() {
     { data: heroPlacements },
     { data: deals },
     { data: popular },
+    { data: brands },
+    { data: lineupSizes },
+    { data: regions },
     dispCount,
     prodCount,
     lineupCount,
@@ -74,7 +73,7 @@ export default async function HomePage() {
       .eq('status', 'active')
       .order('featured', { ascending: false })
       .order('rating_count', { ascending: false })
-      .limit(8),
+      .limit(12),
     supabase.from('categories').select('name,slug').order('sort_order'),
     supabase
       .from('placements')
@@ -95,7 +94,7 @@ export default async function HomePage() {
       .gte('end_date', nowIso)
       .eq('dispensary.status', 'active')
       .order('end_date')
-      .limit(6),
+      .limit(12),
     supabase
       .from('products')
       .select(
@@ -105,7 +104,10 @@ export default async function HomePage() {
       .eq('in_stock', true)
       .order('rating_count', { ascending: false })
       .order('rating_avg', { ascending: false })
-      .limit(10),
+      .limit(12),
+    supabase.from('brands').select('id,slug,name,logo_url').order('name'),
+    supabase.from('brand_products').select('brand_id'),
+    supabase.rpc('region_directory', { top_cities_limit: 5 }),
     supabase.from('dispensaries').select('id', head).eq('status', 'active'),
     supabase.from('products').select('id', head),
     supabase.from('brand_products').select('id', head),
@@ -128,6 +130,64 @@ export default async function HomePage() {
       rating: (d.rating_avg as number | null) ?? null,
       reviewCount: (d.rating_count as number) ?? 0,
     }));
+
+  // Nationwide defaults for the location-aware feed; the client swaps in the
+  // visitor's market after hydration (wt_state cookie).
+  const initialShops: FeedShop[] = (featured ?? []).map((d) => ({
+    slug: d.slug,
+    name: d.name,
+    city: d.city,
+    state: d.state,
+    coverImageUrl: d.cover_image_url,
+    logoUrl: d.logo_url,
+    isDelivery: d.is_delivery,
+    isPickup: d.is_pickup,
+    isMedical: d.is_medical,
+    isRecreational: d.is_recreational,
+    featured: d.featured,
+    rating: d.rating_avg,
+    reviewCount: d.rating_count,
+  }));
+  const initialDeals: FeedDeal[] = (deals ?? []).flatMap((deal) => {
+    const disp = deal.dispensary as unknown as {
+      slug: string;
+      name: string;
+      city: string | null;
+      state: string;
+    } | null;
+    if (!disp) return [];
+    return [
+      {
+        id: deal.id,
+        title: deal.title,
+        description: deal.description,
+        code: deal.code,
+        discountType: deal.discount_type,
+        discountValue: deal.discount_value,
+        dispensarySlug: disp.slug,
+        dispensaryName: disp.name,
+        city: disp.city ?? '',
+        state: disp.state,
+      },
+    ];
+  });
+
+  // Top brands by official lineup size — the merchandised brand rail.
+  const lineupByBrand = new Map<string, number>();
+  for (const r of lineupSizes ?? []) {
+    if (r.brand_id) lineupByBrand.set(r.brand_id, (lineupByBrand.get(r.brand_id) ?? 0) + 1);
+  }
+  const topBrands = (brands ?? [])
+    .map((b) => ({ ...b, products: lineupByBrand.get(b.id) ?? 0 }))
+    .filter((b) => b.products > 0)
+    .sort((a, b) => b.products - a.products)
+    .slice(0, 14);
+
+  const regionEntries: RegionEntry[] = (regions ?? []).map((r) => ({
+    state: r.state,
+    dispensaryCount: r.dispensary_count,
+    topCities: (r.top_cities as { city: string; count: number }[] | null) ?? [],
+  }));
 
   const stateCount = stateCountRes.data ?? 0;
   const nf = new Intl.NumberFormat('en-US');
@@ -152,7 +212,7 @@ export default async function HomePage() {
 
       {/* Hero */}
       <section className="border-border/70 bg-hero-glow relative overflow-hidden border-b">
-        <div className="relative mx-auto max-w-3xl px-4 py-20 text-center sm:py-28">
+        <div className="relative mx-auto max-w-3xl px-4 py-16 text-center sm:py-24">
           <span className="border-primary/20 bg-primary-muted text-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
             <Sparkles className="h-3.5 w-3.5" />
             Find licensed dispensaries near you
@@ -186,80 +246,34 @@ export default async function HomePage() {
       )}
 
       <div className="mx-auto max-w-7xl space-y-16 px-4 py-16">
-        {/* Browse by category */}
+        {/* Shop by category */}
         <section>
-          <SectionHeading eyebrow="Explore" title="Browse by category" />
-          <CategoryPills categories={categories ?? []} />
+          <SectionHeading eyebrow="Explore" title="Shop by category" href="/products" />
+          <CategoryTiles categories={categories ?? []} />
         </section>
 
-        {/* Featured dispensaries */}
-        <section>
-          <SectionHeading eyebrow="Top rated" title="Featured dispensaries" href="/dispensaries" />
-          {featured && featured.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {featured.map((d) => (
-                <DispensaryCard
-                  key={d.slug}
-                  d={{
-                    slug: d.slug,
-                    name: d.name,
-                    city: d.city,
-                    state: d.state,
-                    coverImageUrl: d.cover_image_url,
-                    logoUrl: d.logo_url,
-                    isDelivery: d.is_delivery,
-                    isPickup: d.is_pickup,
-                    isMedical: d.is_medical,
-                    isRecreational: d.is_recreational,
-                    featured: d.featured,
-                    rating: d.rating_avg,
-                    reviewCount: d.rating_count,
-                  }}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted">No dispensaries yet. Check back soon.</p>
-          )}
-        </section>
+        {/* Location-aware: featured dispensaries + deals in the visitor's market */}
+        <MarketFeed initialShops={initialShops} initialDeals={initialDeals} />
 
-        {/* Live deals */}
-        {deals && deals.length > 0 && (
+        {/* Brand rail */}
+        {topBrands.length > 0 && (
           <section>
-            <SectionHeading eyebrow="Save today" title="Deals near you" href="/deals" />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {deals.map((deal) => {
-                const disp = deal.dispensary as {
-                  slug: string;
-                  name: string;
-                  city: string;
-                  state: string;
-                } | null;
-                return (
-                  <Link
-                    key={deal.id}
-                    href={disp ? `/dispensary/${disp.slug}` : '/deals'}
-                    className="rounded-card border-primary/25 bg-primary-subtle hover:border-primary/60 hover:shadow-card-hover group flex items-start justify-between gap-3 border p-5 transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    <div className="min-w-0">
-                      <Tag className="text-primary mb-2 h-4 w-4" />
-                      <p className="text-primary font-semibold">{deal.title}</p>
-                      {deal.description && (
-                        <p className="text-muted mt-1 line-clamp-2 text-sm">{deal.description}</p>
-                      )}
-                      {disp && (
-                        <p className="text-muted mt-2 text-xs">
-                          {disp.name} · {disp.city}, {disp.state}
-                        </p>
-                      )}
-                    </div>
-                    <Badge tone="primary" className="shrink-0">
-                      {discountLabel(deal.discount_type, deal.discount_value)}
-                    </Badge>
-                  </Link>
-                );
-              })}
-            </div>
+            <SectionHeading eyebrow="Official lineups" title="Shop by brand" href="/brands" />
+            <ScrollCarousel itemClassName="w-44" ariaLabel="Popular brands">
+              {topBrands.map((b) => (
+                <Link
+                  key={b.slug}
+                  href={`/brand/${b.slug}`}
+                  className="card card-interactive flex h-full flex-col items-center gap-3 p-5 text-center"
+                >
+                  <LogoImage src={b.logo_url} name={b.name} className="h-14 w-14" />
+                  <span className="line-clamp-2 text-sm font-semibold leading-tight">
+                    {b.name}
+                  </span>
+                  <span className="text-muted text-xs">{b.products} products</span>
+                </Link>
+              ))}
+            </ScrollCarousel>
           </section>
         )}
 
@@ -267,8 +281,8 @@ export default async function HomePage() {
         {popular && popular.length > 0 && (
           <section>
             <SectionHeading eyebrow="Trending" title="Popular products" href="/products" />
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {popular.slice(0, 5).map((p) => {
+            <ScrollCarousel itemClassName="w-52" ariaLabel="Popular products">
+              {popular.map((p) => {
                 const disp = p.dispensary as { slug: string } | null;
                 return (
                   <ProductCard
@@ -289,7 +303,19 @@ export default async function HomePage() {
                   />
                 );
               })}
-            </div>
+            </ScrollCarousel>
+          </section>
+        )}
+
+        {/* Region / city directory (SEO link grid) */}
+        {regionEntries.length > 0 && (
+          <section>
+            <SectionHeading
+              eyebrow="Every market"
+              title="Find dispensaries by state"
+              href="/dispensaries"
+            />
+            <RegionGrid regions={regionEntries} />
           </section>
         )}
 
