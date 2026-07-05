@@ -2,21 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MapPin, Search } from 'lucide-react';
+import { geocodePlaces, type GeoPlace } from '@/lib/geocode';
 import { cn } from '@/lib/utils';
-import type { BBox } from '@/lib/us-state-bounds';
 
-export interface GeoPlace {
-  name: string;
-  center: { lat: number; lng: number };
-  bbox: BBox | null;
-}
-
-type Suggestion = { id: string; place_name: string; center: [number, number]; bbox?: number[] };
+export type { GeoPlace };
 
 /**
- * Combined finder search box: type a shop name and press Enter to full-text
- * search, or pick a suggested place (city / zip / address via Mapbox
- * geocoding) to fly the map there. Suggestions are US-only and debounced.
+ * Combined finder search box: suggested places (city / zip / address via
+ * Mapbox geocoding) fly the map there, and — Google Maps behavior — Enter
+ * takes the top suggestion when one is showing. The dropdown's last row runs
+ * a dispensary-name text search instead, which is also what Enter falls back
+ * to when nothing geocodes. Suggestions are US-only and debounced.
  */
 export function GeoSearch({
   initialQuery = '',
@@ -29,9 +25,8 @@ export function GeoSearch({
   onPlace: (place: GeoPlace) => void;
   className?: string;
 }) {
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const [draft, setDraft] = useState(initialQuery);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<GeoPlace[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -46,27 +41,14 @@ export function GeoSearch({
     return () => document.removeEventListener('mousedown', onDown);
   }, []);
 
-  const fetchSuggestions = useCallback(
-    (q: string) => {
-      if (!token || q.trim().length < 3) {
-        setSuggestions([]);
-        return;
-      }
-      const id = ++requestId.current;
-      const url =
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q.trim())}.json` +
-        `?access_token=${token}&country=us&limit=5&types=region,postcode,district,place,locality,neighborhood,address`;
-      fetch(url)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((j: { features?: Suggestion[] } | null) => {
-          if (id !== requestId.current) return;
-          setSuggestions(j?.features ?? []);
-          setActive(-1);
-        })
-        .catch(() => {});
-    },
-    [token],
-  );
+  const fetchSuggestions = useCallback((q: string) => {
+    const id = ++requestId.current;
+    void geocodePlaces(q).then((places) => {
+      if (id !== requestId.current) return;
+      setSuggestions(places);
+      setActive(-1);
+    });
+  }, []);
 
   const change = (value: string) => {
     setDraft(value);
@@ -75,21 +57,14 @@ export function GeoSearch({
     timer.current = setTimeout(() => fetchSuggestions(value), 300);
   };
 
-  const pick = (s: Suggestion) => {
+  const pick = (place: GeoPlace) => {
     setOpen(false);
     setSuggestions([]);
     setDraft('');
-    onPlace({
-      name: s.place_name,
-      center: { lat: s.center[1], lng: s.center[0] },
-      bbox:
-        s.bbox && s.bbox.length === 4
-          ? [s.bbox[0]!, s.bbox[1]!, s.bbox[2]!, s.bbox[3]!]
-          : null,
-    });
+    onPlace(place);
   };
 
-  const submit = () => {
+  const submitText = () => {
     setOpen(false);
     onSubmitQuery(draft.trim());
   };
@@ -100,8 +75,10 @@ export function GeoSearch({
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
-          if (active >= 0 && suggestions[active]) pick(suggestions[active]);
-          else submit();
+          // Enter = highlighted suggestion > top suggestion > name search.
+          const chosen = active >= 0 ? suggestions[active] : suggestions[0];
+          if (open && chosen) pick(chosen);
+          else submitText();
         }}
       >
         <Search className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
@@ -140,13 +117,13 @@ export function GeoSearch({
               )}
             >
               <MapPin className="text-primary h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{s.place_name}</span>
+              <span className="truncate">{s.name}</span>
             </button>
           ))}
           {draft.trim().length >= 3 && (
             <button
               type="button"
-              onClick={submit}
+              onClick={submitText}
               className="text-muted hover:bg-surface-2 hover:text-foreground flex w-full items-center gap-2 px-3 py-2 text-left"
             >
               <Search className="h-3.5 w-3.5 shrink-0" />
