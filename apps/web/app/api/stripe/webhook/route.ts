@@ -45,6 +45,32 @@ async function syncPosAddon(service: ServiceClient, sub: Stripe.Subscription) {
   await service.rpc('grant_pos_addon', { p_dispensary_id: dispensaryId, p_enabled: enabled });
 }
 
+/**
+ * Sync a regional ad-slot subscription (scarce slot inventory) from Stripe.
+ * `canceled` frees the slot instantly — the partial unique index only counts
+ * pending/active/past_due rows.
+ */
+async function syncAdSlotSubscription(service: ServiceClient, sub: Stripe.Subscription) {
+  const adSubId = sub.metadata?.ad_subscription_id;
+  if (!adSubId) return;
+  const status = mapSubStatus(sub.status);
+  const { data: row } = await service
+    .from('ad_subscriptions')
+    .select('starts_at')
+    .eq('id', adSubId)
+    .maybeSingle();
+  if (!row) return;
+  await service
+    .from('ad_subscriptions')
+    .update({
+      status,
+      stripe_subscription_id: sub.id,
+      starts_at: row.starts_at ?? (status === 'active' ? new Date().toISOString() : null),
+      ends_at: status === 'canceled' ? new Date().toISOString() : null,
+    })
+    .eq('id', adSubId);
+}
+
 /** Activate a paid placement and re-sync the dispensary's featured flag. */
 async function activatePlacement(
   service: ServiceClient,
@@ -113,20 +139,17 @@ export async function POST(req: NextRequest) {
         // Subscription checkout → sync the subscription (or the POS add-on) from Stripe.
         if (session.mode === 'subscription' && typeof session.subscription === 'string') {
           const sub = await stripe.subscriptions.retrieve(session.subscription);
-          if (sub.metadata?.addon === 'pos') await syncPosAddon(service, sub);
+          if (sub.metadata?.kind === 'ad_slot') await syncAdSlotSubscription(service, sub);
+          else if (sub.metadata?.addon === 'pos') await syncPosAddon(service, sub);
           else await syncSubscription(service, sub);
           break;
         }
 
-        // Featured-auction bid (brand or dispensary) → activate it for its term.
-        if (
-          (session.metadata?.kind === 'brand_bid' || session.metadata?.kind === 'ad_bid') &&
-          session.payment_status === 'paid'
-        ) {
+        // Featured-auction bid (brands) → activate it for its term.
+        if (session.metadata?.kind === 'brand_bid' && session.payment_status === 'paid') {
           const bidId = session.metadata.bid_id;
           if (bidId) {
-            const rpc = session.metadata.kind === 'brand_bid' ? 'activate_brand_bid' : 'activate_ad_bid';
-            await service.rpc(rpc, {
+            await service.rpc('activate_brand_bid', {
               p_bid_id: bidId,
               p_payment_intent:
                 typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
@@ -168,7 +191,8 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
         const service = createServiceClient();
-        if (sub.metadata?.addon === 'pos') await syncPosAddon(service, sub);
+        if (sub.metadata?.kind === 'ad_slot') await syncAdSlotSubscription(service, sub);
+        else if (sub.metadata?.addon === 'pos') await syncPosAddon(service, sub);
         else await syncSubscription(service, sub);
         break;
       }
