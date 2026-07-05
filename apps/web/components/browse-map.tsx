@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import Link from 'next/link';
 import Map, {
   GeolocateControl,
@@ -12,8 +12,9 @@ import Map, {
   type MapRef,
 } from 'react-map-gl';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'mapbox-gl';
-import { MapPin } from 'lucide-react';
+import { MapPin, Navigation, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
+import { formatDistance } from '@/lib/format';
 import type { BBox } from '@/lib/us-state-bounds';
 import { MediaImage } from './media-image';
 import { RatingStars } from './rating-stars';
@@ -43,12 +44,28 @@ export interface BrowserShop {
   isOpenNow: boolean | null;
   /**
    * When set (statically rendered pages), the browser recomputes isOpenNow
-   * client-side on mount so ISR-cached HTML still shows a live badge.
+   * client-side on mount so ISR-cached pages still show a live badge.
    */
   hours?: OperatingHours | null;
   timezone?: string | null;
   /** Short active-deal label for the card ("20% off", "BOGO"). */
   dealBadge?: string | null;
+}
+
+/** Pin-sized shop: every match in the viewport gets one of these. */
+export interface MapPinPoint {
+  slug: string;
+  name: string;
+  lat: number;
+  lng: number;
+  featured: boolean;
+  isOpenNow: boolean | null;
+}
+
+/** Imperative handle the parent uses to steer the map (geocoder, etc.). */
+export interface BrowseMapApi {
+  flyTo: (center: { lat: number; lng: number }, zoom?: number) => void;
+  fitBounds: (bounds: BBox) => void;
 }
 
 const clusterLayer: LayerProps = {
@@ -96,23 +113,49 @@ const unclusteredLayer: LayerProps = {
   },
 };
 
+// Shop names appear under pins once zoomed in enough to read the streets.
+const pinLabelLayer: LayerProps = {
+  id: 'pin-labels',
+  type: 'symbol',
+  minzoom: 12,
+  filter: ['!', ['has', 'point_count']],
+  layout: {
+    'text-field': ['get', 'name'],
+    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+    'text-size': 11,
+    'text-offset': [0, 1.1],
+    'text-anchor': 'top',
+    'text-max-width': 9,
+    'text-optional': true,
+  },
+  paint: {
+    'text-color': '#d7dde4',
+    'text-halo-color': '#0b0e13',
+    'text-halo-width': 1.2,
+  },
+};
+
 export function BrowseMap({
-  shops,
+  pins,
   initialBounds,
   hoveredSlug,
   selected,
+  apiRef,
   onHover,
   onSelect,
   onLoadBounds,
   onMoveEnd,
   onGeolocate,
 }: {
-  shops: BrowserShop[];
+  /** Every matching shop in the viewport (clustered client-side). */
+  pins: MapPinPoint[];
   /** [minLng, minLat, maxLng, maxLat] the map opens fitted to. */
   initialBounds: BBox;
   hoveredSlug: string | null;
   /** Shop whose popup card is open (must have coords). */
   selected: BrowserShop | null;
+  /** Receives an imperative handle for flyTo/fitBounds (geocoder jumps). */
+  apiRef?: MutableRefObject<BrowseMapApi | null>;
   onHover: (slug: string | null) => void;
   onSelect: (slug: string | null) => void;
   /** Fires once with the fitted viewport when the map finishes loading. */
@@ -126,20 +169,31 @@ export function BrowseMap({
   const mapRef = useRef<MapRef>(null);
   useEffect(() => setMounted(true), []);
 
+  useEffect(() => {
+    if (!apiRef) return;
+    apiRef.current = {
+      flyTo: (center, zoom) =>
+        mapRef.current?.flyTo({ center: [center.lng, center.lat], zoom: zoom ?? 12, duration: 1200 }),
+      fitBounds: (b) =>
+        mapRef.current?.fitBounds([b[0], b[1], b[2], b[3]], { padding: 48, maxZoom: 15, duration: 1200 }),
+    };
+    return () => {
+      apiRef.current = null;
+    };
+  }, [apiRef]);
+
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   const geojson = useMemo(
     () => ({
       type: 'FeatureCollection' as const,
-      features: shops
-        .filter((s) => typeof s.lat === 'number' && typeof s.lng === 'number')
-        .map((s) => ({
-          type: 'Feature' as const,
-          properties: { slug: s.slug, featured: s.featured, open: s.isOpenNow },
-          geometry: { type: 'Point' as const, coordinates: [s.lng as number, s.lat as number] },
-        })),
+      features: pins.map((p) => ({
+        type: 'Feature' as const,
+        properties: { slug: p.slug, name: p.name, featured: p.featured, open: p.isOpenNow },
+        geometry: { type: 'Point' as const, coordinates: [p.lng, p.lat] },
+      })),
     }),
-    [shops],
+    [pins],
   );
 
   // List-hover → pin highlight: a ring drawn under the hovered shop's pin.
@@ -172,8 +226,8 @@ export function BrowseMap({
         <p className="text-sm font-medium">Map preview</p>
         <p className="text-muted max-w-xs text-xs">
           Set <code className="text-primary">NEXT_PUBLIC_MAPBOX_TOKEN</code> to enable the
-          interactive map. {shops.length.toLocaleString()} location
-          {shops.length === 1 ? '' : 's'} in view.
+          interactive map. {pins.length.toLocaleString()} location
+          {pins.length === 1 ? '' : 's'} in view.
         </p>
       </div>
     );
@@ -204,6 +258,8 @@ export function BrowseMap({
     const pin = e.features?.find((f) => f.layer?.id === 'unclustered-point');
     onHover(pin ? ((pin.properties?.slug as string) ?? null) : null);
   };
+
+  const distance = selected ? formatDistance(selected.distanceMeters) : null;
 
   return (
     <Map
@@ -253,6 +309,7 @@ export function BrowseMap({
         <Layer {...clusterLayer} />
         <Layer {...clusterCountLayer} />
         <Layer {...unclusteredLayer} />
+        <Layer {...pinLabelLayer} />
       </Source>
 
       {selected && typeof selected.lat === 'number' && typeof selected.lng === 'number' && (
@@ -264,47 +321,80 @@ export function BrowseMap({
           closeButton
           closeOnClick={false}
           onClose={() => onSelect(null)}
-          maxWidth="272px"
+          maxWidth="288px"
           className="browse-popup"
         >
-          <Link href={`/dispensary/${selected.slug}`} prefetch={false} className="block w-64">
-            <MediaImage
-              url={selected.coverImageUrl}
-              alt={selected.name}
-              className="h-28"
-              iconClassName="h-8 w-8"
-            >
-              {selected.isOpenNow !== null && (
-                <span
-                  className={
-                    selected.isOpenNow
-                      ? 'bg-background/85 text-primary absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold'
-                      : 'bg-background/85 text-muted absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold'
-                  }
-                >
-                  {selected.isOpenNow ? 'Open now' : 'Closed'}
-                </span>
-              )}
-            </MediaImage>
-            <div className="space-y-1 p-3">
-              <p className="text-sm font-semibold leading-tight">{selected.name}</p>
-              <p className="text-muted text-xs">
-                {selected.city ? `${selected.city}, ${selected.state}` : 'Delivery only'}
-              </p>
-              {selected.rating > 0 && (
-                <p className="flex items-center gap-1 text-xs">
-                  <RatingStars rating={selected.rating} size={12} />
-                  <span className="text-muted">
-                    {selected.rating.toFixed(1)}
-                    {selected.reviewCount ? ` (${selected.reviewCount})` : ''}
+          <div className="w-[17rem]">
+            <Link href={`/dispensary/${selected.slug}`} prefetch={false} className="block">
+              <MediaImage
+                url={selected.coverImageUrl}
+                alt={selected.name}
+                className="h-28"
+                iconClassName="h-8 w-8"
+              >
+                {selected.isOpenNow !== null && (
+                  <span
+                    className={
+                      selected.isOpenNow
+                        ? 'bg-background/85 text-primary absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold'
+                        : 'bg-background/85 text-muted absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold'
+                    }
+                  >
+                    {selected.isOpenNow ? 'Open now' : 'Closed'}
                   </span>
+                )}
+                {distance && (
+                  <span className="bg-background/85 text-foreground absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-medium">
+                    {distance}
+                  </span>
+                )}
+              </MediaImage>
+              <div className="space-y-1 p-3 pb-2">
+                <p className="text-sm font-semibold leading-tight">{selected.name}</p>
+                <p className="text-muted text-xs">
+                  {selected.city ? `${selected.city}, ${selected.state}` : 'Delivery only'}
                 </p>
-              )}
-              <span className="text-primary inline-block pt-0.5 text-xs font-semibold">
+                {selected.rating > 0 && (
+                  <p className="flex items-center gap-1 text-xs">
+                    <RatingStars rating={selected.rating} size={12} />
+                    <span className="text-muted">
+                      {selected.rating.toFixed(1)}
+                      {selected.reviewCount ? ` (${selected.reviewCount})` : ''}
+                    </span>
+                  </p>
+                )}
+                <p className="text-muted flex items-center gap-2 text-[11px]">
+                  {selected.isPickup && (
+                    <span className="inline-flex items-center gap-0.5">
+                      <Store className="h-3 w-3" /> Pickup
+                    </span>
+                  )}
+                  {selected.isDelivery && (
+                    <span className="inline-flex items-center gap-0.5">
+                      <Truck className="h-3 w-3" /> Delivery
+                    </span>
+                  )}
+                </p>
+              </div>
+            </Link>
+            <div className="flex items-center gap-3 px-3 pb-2.5">
+              <Link
+                href={`/dispensary/${selected.slug}`}
+                prefetch={false}
+                className="text-primary text-xs font-semibold hover:underline"
+              >
                 View menu →
-              </span>
+              </Link>
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted hover:text-foreground inline-flex items-center gap-1 text-xs font-medium"
+              >
+                <Navigation className="h-3 w-3" /> Directions
+              </a>
             </div>
-          </Link>
+          </div>
         </Popup>
       )}
     </Map>

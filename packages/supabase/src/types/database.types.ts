@@ -680,6 +680,7 @@ export type Database = {
           featured_manual: boolean
           google_enriched_at: string | null
           google_photo_name: string | null
+          google_photo_names: string[] | null
           google_place_id: string | null
           hours: Json | null
           id: string
@@ -728,6 +729,7 @@ export type Database = {
           featured_manual?: boolean
           google_enriched_at?: string | null
           google_photo_name?: string | null
+          google_photo_names?: string[] | null
           google_place_id?: string | null
           hours?: Json | null
           id?: string
@@ -776,6 +778,7 @@ export type Database = {
           featured_manual?: boolean
           google_enriched_at?: string | null
           google_photo_name?: string | null
+          google_photo_names?: string[] | null
           google_place_id?: string | null
           hours?: Json | null
           id?: string
@@ -2177,6 +2180,31 @@ export type Database = {
         Args: { p_state: string }
         Returns: {
           brand_id: string
+        }[]
+      }
+      map_pins_bounds: {
+        Args: {
+          filter_amenities?: string[]
+          filter_category_slug?: string
+          filter_delivery?: boolean
+          filter_medical?: boolean
+          filter_open_now?: boolean
+          filter_pickup?: boolean
+          filter_recreational?: boolean
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          result_limit?: number
+          search_query?: string
+        }
+        Returns: {
+          featured: boolean
+          is_open_now: boolean
+          latitude: number
+          longitude: number
+          name: string
+          slug: string
         }[]
       }
       region_directory: {

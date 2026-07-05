@@ -1,20 +1,22 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { List, Loader2, Map as MapIcon, RotateCw, Search, SlidersHorizontal } from 'lucide-react';
+import { List, Loader2, Map as MapIcon, RotateCw, SlidersHorizontal } from 'lucide-react';
 import {
   AMENITY_GROUPS,
   AMENITY_LABELS,
   type Amenity,
   type DispensarySort,
+  type OperatingHours,
 } from '@weedtip/shared';
-import { searchDispensariesBounds } from '@weedtip/supabase/queries';
+import { mapPinsBounds, searchDispensariesBounds } from '@weedtip/supabase/queries';
 import { isOpenNow } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import type { BBox } from '@/lib/us-state-bounds';
-import { BrowseMap, type BrowserShop } from './browse-map';
+import { BrowseMap, type BrowseMapApi, type BrowserShop, type MapPinPoint } from './browse-map';
 import { DispensaryCard } from './dispensary-card';
+import { GeoSearch, type GeoPlace } from './geo-search';
 
 export type { BrowserShop };
 
@@ -146,17 +148,31 @@ export function DispensariesBrowser({
   const supabase = useMemo(() => createClient(), []);
 
   const [filters, setFilters] = useState<BrowseFilters>(initialFilters);
-  const [queryDraft, setQueryDraft] = useState(initialFilters.query);
   const [shops, setShops] = useState<BrowserShop[]>(initialShops);
   const [total, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [origin, setOrigin] = useState(initialOrigin);
   const [hovered, setHovered] = useState<string | null>(null);
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [popupShop, setPopupShop] = useState<BrowserShop | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
   const [showMore, setShowMore] = useState(false);
   const [areaChanged, setAreaChanged] = useState(false);
+  // Google Maps-style "search as I move": on by default, persisted per browser.
+  const [autoSearch, setAutoSearch] = useState(true);
+  // Every matching shop in the viewport (the list stays paginated).
+  const [pins, setPins] = useState<MapPinPoint[]>(() =>
+    initialShops
+      .filter((s) => typeof s.lat === 'number' && typeof s.lng === 'number')
+      .map((s) => ({
+        slug: s.slug,
+        name: s.name,
+        lat: s.lat as number,
+        lng: s.lng as number,
+        featured: s.featured,
+        isOpenNow: s.isOpenNow,
+      })),
+  );
 
   // The bbox the current result set was searched with vs. what the map shows now.
   // Statically rendered callers (ISR city pages) pass hours/timezone instead of
@@ -172,9 +188,61 @@ export function DispensariesBrowser({
   const searchedBounds = useRef<BBox>(initialBounds);
   const viewBounds = useRef<BBox>(initialBounds);
   const autoSearchNextMove = useRef(false);
+  const moveDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const requestId = useRef(0);
+  const pinsRequestId = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
+  const mapApi = useRef<BrowseMapApi | null>(null);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem('wt_map_autosearch');
+    if (stored !== null) setAutoSearch(stored === '1');
+  }, []);
+  const toggleAutoSearch = () => {
+    setAutoSearch((v) => {
+      window.localStorage.setItem('wt_map_autosearch', v ? '0' : '1');
+      return !v;
+    });
+  };
+
+  const fetchPins = useCallback(
+    async (bounds: BBox, nextFilters: BrowseFilters) => {
+      const id = ++pinsRequestId.current;
+      const { data } = await mapPinsBounds(supabase, {
+        min_lng: bounds[0],
+        min_lat: bounds[1],
+        max_lng: bounds[2],
+        max_lat: bounds[3],
+        query: nextFilters.query || undefined,
+        is_delivery: nextFilters.delivery || undefined,
+        is_pickup: nextFilters.pickup || undefined,
+        is_medical: nextFilters.medical || undefined,
+        is_recreational: nextFilters.recreational || undefined,
+        open_now: nextFilters.openNow || undefined,
+        category_slug: nextFilters.categorySlug,
+        amenities: nextFilters.amenities.length ? nextFilters.amenities : undefined,
+      });
+      if (id !== pinsRequestId.current || !data) return;
+      setPins(
+        data.map((r) => ({
+          slug: r.slug,
+          name: r.name,
+          lat: r.latitude,
+          lng: r.longitude,
+          featured: r.featured,
+          isOpenNow: r.is_open_now,
+        })),
+      );
+    },
+    [supabase],
+  );
+
+  // Initial render only carries the first page of pins — swap in the full
+  // viewport's pins as soon as we're client-side.
+  useEffect(() => {
+    void fetchPins(initialBounds, initialFilters);
+  }, []);
 
   const runSearch = useCallback(
     async (
@@ -215,13 +283,14 @@ export function DispensariesBrowser({
       setTotal(data?.[0]?.total_count ?? (opts.append ? total : 0));
       setShops((prev) => (opts.append ? [...prev, ...rows] : rows));
       if (!opts.append) {
-        setSelectedSlug(null);
+        setPopupShop(null);
         listRef.current?.scrollTo({ top: 0 });
+        void fetchPins(bounds, nextFilters);
       }
       searchedBounds.current = bounds;
       setAreaChanged(false);
     },
-    [supabase, origin, total],
+    [supabase, origin, total, fetchPins],
   );
 
   // Reflect filters into the URL (share/refresh keeps state) without a server nav.
@@ -274,9 +343,17 @@ export function DispensariesBrowser({
         void runSearch(bounds, filters, {});
         return;
       }
+      if (autoSearch) {
+        // Debounced so a chain of pans/zooms settles into one query.
+        clearTimeout(moveDebounce.current);
+        if (boundsChanged(searchedBounds.current, bounds)) {
+          moveDebounce.current = setTimeout(() => void runSearch(bounds, filters, {}), 500);
+        }
+        return;
+      }
       setAreaChanged(boundsChanged(searchedBounds.current, bounds));
     },
-    [filters, runSearch],
+    [filters, runSearch, autoSearch],
   );
 
   const handleGeolocate = useCallback((coords: { lat: number; lng: number }) => {
@@ -285,17 +362,61 @@ export function DispensariesBrowser({
     autoSearchNextMove.current = true;
   }, []);
 
-  // Map pin click → open popup and bring the matching card into view.
-  const handleSelect = useCallback((slug: string | null) => {
-    setSelectedSlug(slug);
-    if (slug) {
-      cardRefs.current.get(slug)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
+  // Geocoder pick: fly the map to the place; the resulting moveend re-searches.
+  const handlePlace = useCallback((place: GeoPlace) => {
+    autoSearchNextMove.current = true;
+    if (place.bbox) mapApi.current?.fitBounds(place.bbox);
+    else mapApi.current?.flyTo(place.center, 12);
   }, []);
 
-  const selected = useMemo(
-    () => shops.find((s) => s.slug === selectedSlug) ?? null,
-    [shops, selectedSlug],
+  // Map pin click → popup. Pins cover the whole viewport, so the shop may not
+  // be in the paginated list — fetch its card data by slug when it isn't.
+  const handleSelect = useCallback(
+    (slug: string | null) => {
+      if (!slug) {
+        setPopupShop(null);
+        return;
+      }
+      const inList = shops.find((s) => s.slug === slug);
+      if (inList) {
+        setPopupShop(inList);
+        cardRefs.current.get(slug)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        return;
+      }
+      void (async () => {
+        const { data } = await supabase
+          .from('dispensaries')
+          .select(
+            'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone',
+          )
+          .eq('slug', slug)
+          .eq('status', 'active')
+          .maybeSingle();
+        if (!data) return;
+        const hours = (data.hours ?? null) as OperatingHours | null;
+        setPopupShop({
+          id: data.id,
+          slug: data.slug,
+          name: data.name,
+          city: data.city,
+          state: data.state,
+          coverImageUrl: data.cover_image_url,
+          logoUrl: data.logo_url,
+          isDelivery: data.is_delivery,
+          isPickup: data.is_pickup,
+          isMedical: data.is_medical,
+          isRecreational: data.is_recreational,
+          featured: data.featured,
+          rating: data.rating_avg,
+          reviewCount: data.rating_count,
+          lat: data.latitude,
+          lng: data.longitude,
+          distanceMeters: null,
+          isOpenNow: hours ? isOpenNow(hours, data.timezone) : null,
+        });
+      })();
+    },
+    [shops, supabase],
   );
 
   const pillClass = (active: boolean) =>
@@ -314,23 +435,12 @@ export function DispensariesBrowser({
             {heading}
           </h1>
         )}
-        <form
-          role="search"
-          className="relative w-full sm:w-auto sm:min-w-0 sm:max-w-xs sm:flex-1"
-          onSubmit={(e) => {
-            e.preventDefault();
-            applyFilters({ query: queryDraft.trim() });
-          }}
-        >
-          <Search className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-          <input
-            value={queryDraft}
-            onChange={(e) => setQueryDraft(e.target.value)}
-            placeholder="Search this map…"
-            aria-label="Search dispensaries"
-            className="border-border bg-surface focus:border-primary h-9 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors"
-          />
-        </form>
+        <GeoSearch
+          initialQuery={filters.query}
+          onSubmitQuery={(q) => applyFilters({ query: q })}
+          onPlace={handlePlace}
+          className="w-full sm:w-auto sm:min-w-0 sm:max-w-xs sm:flex-1"
+        />
         <div className="scrollbar-none -my-1 flex w-full min-w-0 items-center gap-2 overflow-x-auto py-1 sm:w-auto sm:flex-1">
           {PILLS.map(({ key, label }) => (
             <button
@@ -482,7 +592,7 @@ export function DispensariesBrowser({
                   onMouseLeave={() => setHovered(null)}
                   className={cn(
                     'rounded-card transition-shadow',
-                    (hovered === s.slug || selectedSlug === s.slug) &&
+                    (hovered === s.slug || popupShop?.slug === s.slug) &&
                       'ring-primary/60 ring-2 ring-offset-0',
                   )}
                 >
@@ -541,10 +651,11 @@ export function DispensariesBrowser({
           )}
         >
           <BrowseMap
-            shops={shops}
+            pins={pins}
             initialBounds={initialBounds}
             hoveredSlug={hovered}
-            selected={selected}
+            selected={popupShop}
+            apiRef={mapApi}
             onHover={setHovered}
             onSelect={handleSelect}
             onLoadBounds={handleLoadBounds}
@@ -552,7 +663,7 @@ export function DispensariesBrowser({
             onGeolocate={handleGeolocate}
           />
 
-          {areaChanged && (
+          {!autoSearch && areaChanged && (
             <button
               type="button"
               onClick={() => void runSearch(viewBounds.current, filters, {})}
@@ -565,6 +676,23 @@ export function DispensariesBrowser({
               )}
               Search this area
             </button>
+          )}
+
+          {/* Google Maps-style auto-search toggle */}
+          <label className="bg-surface/90 border-border text-foreground absolute left-3 top-3 z-10 inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium backdrop-blur">
+            <input
+              type="checkbox"
+              checked={autoSearch}
+              onChange={toggleAutoSearch}
+              className="accent-primary h-3.5 w-3.5"
+            />
+            Search as map moves
+          </label>
+
+          {loading && autoSearch && (
+            <span className="bg-surface/90 border-border text-muted absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium backdrop-blur">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Updating…
+            </span>
           )}
         </div>
 
