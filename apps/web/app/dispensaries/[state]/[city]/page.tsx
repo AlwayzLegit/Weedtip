@@ -7,6 +7,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DispensariesBrowser } from '@/components/dispensaries-browser';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
+import { dealBadge } from '@/lib/format';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
@@ -86,7 +87,33 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     return 0;
   });
 
-  return { stateName, cityName: first.city ?? '', shops: ordered, featuredByDispensary };
+  // Card-family deal badges: each shop's soonest-ending live deal in this city.
+  // Filtered through the joined dispensary (state + city) so the query stays
+  // small regardless of how many shops the city has.
+  const { data: liveDeals } = await supabase
+    .from('deals')
+    .select('dispensary_id,discount_type,discount_value,dispensary:dispensaries!inner(state,city,status)')
+    .eq('is_active', true)
+    .lte('start_date', nowIso)
+    .gte('end_date', nowIso)
+    .eq('dispensary.status', 'active')
+    .eq('dispensary.state', code)
+    .ilike('dispensary.city', first.city ?? '')
+    .order('end_date');
+  const dealByDispensary = new Map<string, { type: string; value: number }>();
+  for (const d of liveDeals ?? []) {
+    if (d.dispensary_id && !dealByDispensary.has(d.dispensary_id)) {
+      dealByDispensary.set(d.dispensary_id, { type: d.discount_type, value: d.discount_value });
+    }
+  }
+
+  return {
+    stateName,
+    cityName: first.city ?? '',
+    shops: ordered,
+    featuredByDispensary,
+    dealByDispensary,
+  };
 });
 
 /** Fit the map to the city's shops (padded), falling back to the whole state. */
@@ -136,7 +163,7 @@ export default async function CityDispensariesPage({
   const { state, city } = await params;
   const found = await loadCity(state, city);
   if (!found) notFound();
-  const { stateName, cityName, shops, featuredByDispensary } = found;
+  const { stateName, cityName, shops, featuredByDispensary, dealByDispensary } = found;
 
   const faqs = [
     {
@@ -178,6 +205,7 @@ export default async function CityDispensariesPage({
           initialTotal={shops.length}
           initialShops={shops.map((s) => {
             const promo = featuredByDispensary.get(s.id);
+            const deal = dealByDispensary.get(s.id);
             return {
               id: s.id,
               slug: s.slug,
@@ -201,6 +229,7 @@ export default async function CityDispensariesPage({
               isOpenNow: null,
               hours: (s.hours ?? null) as OperatingHours | null,
               timezone: s.timezone,
+              dealBadge: deal ? dealBadge(deal.type, deal.value) : null,
             };
           })}
         />

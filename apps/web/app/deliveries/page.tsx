@@ -1,4 +1,5 @@
 import { MarketBanner } from '@/components/market-banner';
+import type { OperatingHours } from '@weedtip/shared';
 import type { Metadata } from 'next';
 import { Truck } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -20,7 +21,7 @@ export const metadata: Metadata = pageSeo({
 });
 
 const SELECT =
-  'id,slug,name,city,state,latitude,longitude,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
+  'id,slug,name,city,state,latitude,longitude,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone';
 
 export default async function DeliveriesPage() {
   const supabase = createStaticClient();
@@ -109,6 +110,8 @@ export default async function DeliveriesPage() {
                     featured: s.featured,
                     rating: s.rating_avg,
                     reviewCount: s.rating_count,
+                    hours: (s.hours ?? null) as OperatingHours | null,
+                    timezone: s.timezone,
                   }}
                 />
               ))}
