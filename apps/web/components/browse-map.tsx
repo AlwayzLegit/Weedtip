@@ -15,6 +15,7 @@ import Map, {
 import type { GeoJSONSource, MapLayerMouseEvent } from 'mapbox-gl';
 import { MapPin, Navigation, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
+import type { AdSlotMeta } from './ads/ad-slot-beacon';
 import { formatDistance } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { BBox } from '@/lib/us-state-bounds';
@@ -38,6 +39,9 @@ export interface BrowserShop {
   isRecreational: boolean;
   featured: boolean;
   placementId?: string;
+  /** Paid regional ad slot metadata — the card fires ad_impression/ad_click. */
+  adSlot?: AdSlotMeta;
+  sponsored?: boolean;
   rating: number;
   reviewCount: number;
   lat: number | null;

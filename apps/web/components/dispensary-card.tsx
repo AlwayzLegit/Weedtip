@@ -5,6 +5,7 @@ import { formatDistance } from '@/lib/format';
 import { Badge } from './ui/badge';
 import { LogoImage } from './logo-image';
 import { MediaImage } from './media-image';
+import { AdSlotBeacon, type AdSlotMeta } from './ads/ad-slot-beacon';
 import { OpenNowChip } from './open-now-chip';
 import { PlacementBeacon } from './placement-beacon';
 import { RatingStars } from './rating-stars';
@@ -26,6 +27,8 @@ export interface DispensaryCardData {
   sponsored?: boolean;
   /** When set, records placement impression/click analytics for this card. */
   placementId?: string;
+  /** When set, this card is a paid regional ad slot — fires ad_impression/ad_click. */
+  adSlot?: AdSlotMeta;
   distanceMeters?: number | null;
   rating?: number | null;
   reviewCount?: number;
@@ -53,6 +56,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group block overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
       {d.placementId && <PlacementBeacon placementId={d.placementId} />}
+      {d.adSlot && <AdSlotBeacon slot={d.adSlot} />}
       <MediaImage url={d.coverImageUrl} alt={d.name} className="h-36" iconClassName="h-12 w-12">
         {d.sponsored ? (
           <Badge tone="primary" className="absolute left-3 top-3">

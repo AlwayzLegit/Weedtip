@@ -10,7 +10,9 @@ export type AnalyticsEvent =
   | 'checkout_started'
   | 'order_placed'
   | 'claim_started'
-  | 'claim_submitted';
+  | 'claim_submitted'
+  | 'ad_impression'
+  | 'ad_click';
 
 /**
  * Safe wrapper around posthog.capture: no-ops on the server and when PostHog

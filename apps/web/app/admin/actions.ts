@@ -126,56 +126,6 @@ export async function adminMergeDispensaries(
   revalidatePath(`/admin/dispensaries/${keepId}`);
 }
 
-// ─── Advertising regions ─────────────────────────────────────────────────────
-
-const adRegionSchema = z.object({
-  name: z.string().min(1).max(120),
-  slug: z
-    .string()
-    .min(2)
-    .max(80)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Must be a lowercase, hyphen-separated slug'),
-  state: z.string().length(2, 'Use the 2-letter state code'),
-  city: z.string().max(100).nullable(),
-  featured_rate_cents: z.number().int().min(0).max(100_000_00),
-  slots: z.number().int().min(1).max(20),
-  is_active: z.boolean(),
-});
-
-export async function upsertAdRegion(_prev: FormState, fd: FormData): Promise<FormState> {
-  const name = str(fd, 'name') ?? '';
-  const rate = numOpt(fd, 'rate_dollars');
-  const parsed = adRegionSchema.safeParse({
-    name,
-    slug: str(fd, 'slug') ?? slugify(name),
-    state: (str(fd, 'state') ?? '').toUpperCase(),
-    city: str(fd, 'city') ?? null,
-    featured_rate_cents: rate !== undefined ? Math.round(rate * 100) : 0,
-    slots: numOpt(fd, 'slots') ?? 1,
-    is_active: bool(fd, 'is_active'),
-  });
-  if (!parsed.success) return fromZodError(parsed.error);
-
-  const supabase = await createClient();
-  const id = str(fd, 'id');
-  const { error } = id
-    ? await supabase.from('ad_regions').update(parsed.data).eq('id', id)
-    : await supabase.from('ad_regions').insert(parsed.data);
-  if (error) {
-    return error.code === '23505'
-      ? formError('A region with that slug already exists.')
-      : formError(error.message);
-  }
-  revalidatePath('/admin/ad-regions');
-  redirect('/admin/ad-regions');
-}
-
-export async function deleteAdRegion(id: string): Promise<void> {
-  const supabase = await createClient();
-  await supabase.from('ad_regions').delete().eq('id', id);
-  revalidatePath('/admin/ad-regions');
-}
-
 // ─── Brand markets (per-state featured auction) ──────────────────────────────
 
 const brandAdRegionSchema = z.object({

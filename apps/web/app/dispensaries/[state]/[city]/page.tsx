@@ -9,6 +9,8 @@ import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { dealBadge } from '@/lib/format';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
+import { getRegionPlacements, resolveGeo, type ResolvedGeo } from '@/lib/ad-serving';
+import { SponsorHero, type SponsorHeroData } from '@/components/ads/sponsor-hero';
 import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
 import { STATE_BOUNDS, US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
@@ -65,25 +67,72 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     }
   }
 
-  // Winning ad bids for this market are featured too (pinned, no beacon).
-  const { data: bidWinners } = await supabase.rpc('region_featured_dispensaries', {
-    p_state: code,
-    p_city: first.city ?? '',
-  });
-  const shopIdSet = new Set(shopIds);
-  for (const w of bidWinners ?? []) {
-    if (shopIdSet.has(w.dispensary_id) && !featuredByDispensary.has(w.dispensary_id)) {
-      featuredByDispensary.set(w.dispensary_id, { placementId: '', priority: 1 });
+  // Regional ad placements: resolve the advertiser region from a
+  // representative point in this city, then fetch its active paid slots
+  // (cached per region). Featured slot-holders pin above organic results,
+  // premium slot-holders get a rank boost + Sponsored badge, and the
+  // exclusive sponsor renders as a hero unit in EVERY zone of the region.
+  let geo: ResolvedGeo | null = null;
+  let featuredSlotIds: string[] = [];
+  let premiumSlotIds = new Set<string>();
+  let sponsor: SponsorHeroData | null = null;
+  const anchorShop = shops.find(
+    (s) => typeof s.latitude === 'number' && typeof s.longitude === 'number',
+  );
+  if (anchorShop) {
+    geo = await resolveGeo(anchorShop.longitude!, anchorShop.latitude!);
+    if (geo) {
+      const placements = await getRegionPlacements(geo.regionId);
+      const cityShopIds = new Set(shopIds);
+      // Rotate the (max 3) featured order per ISR render for fair exposure.
+      featuredSlotIds = [...placements.featuredIds]
+        .filter((id) => cityShopIds.has(id))
+        .sort(() => Math.random() - 0.5);
+      premiumSlotIds = new Set(placements.premiumIds.filter((id) => cityShopIds.has(id)));
+      if (placements.exclusiveId) {
+        // The sponsor may sit in another city of the same region — fetch it.
+        const { data: sp } = await supabase
+          .from('dispensaries')
+          .select('id,slug,name,city,state,cover_image_url,logo_url,rating_avg,rating_count,is_delivery,is_pickup,status')
+          .eq('id', placements.exclusiveId)
+          .eq('status', 'active')
+          .maybeSingle();
+        if (sp) {
+          sponsor = {
+            id: sp.id,
+            slug: sp.slug,
+            name: sp.name,
+            city: sp.city,
+            state: sp.state,
+            coverImageUrl: sp.cover_image_url,
+            logoUrl: sp.logo_url,
+            rating: sp.rating_avg,
+            reviewCount: sp.rating_count,
+            isDelivery: sp.is_delivery,
+            isPickup: sp.is_pickup,
+          };
+        }
+      }
     }
   }
 
-  // Pin featured shops first (by placement priority), keep the rest A→Z.
+  // Serving order: featured slots → legacy featured placements → premium
+  // slots → organic A→Z. The exclusive sponsor renders as a separate hero.
+  const featuredSlotRank = new Map(featuredSlotIds.map((id, i) => [id, i] as const));
+  const rank = (id: string) => {
+    if (featuredSlotRank.has(id)) return 0;
+    if (featuredByDispensary.has(id)) return 1;
+    if (premiumSlotIds.has(id)) return 2;
+    return 3;
+  };
   const ordered = [...shops].sort((a, b) => {
-    const fa = featuredByDispensary.get(a.id);
-    const fb = featuredByDispensary.get(b.id);
-    if (fa && fb) return fb.priority - fa.priority;
-    if (fa) return -1;
-    if (fb) return 1;
+    const ra = rank(a.id);
+    const rb = rank(b.id);
+    if (ra !== rb) return ra - rb;
+    if (ra === 0) return featuredSlotRank.get(a.id)! - featuredSlotRank.get(b.id)!;
+    if (ra === 1) {
+      return featuredByDispensary.get(b.id)!.priority - featuredByDispensary.get(a.id)!.priority;
+    }
     return 0;
   });
 
@@ -112,7 +161,11 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     cityName: first.city ?? '',
     shops: ordered,
     featuredByDispensary,
+    featuredSlotIds: new Set(featuredSlotIds),
+    premiumSlotIds,
     dealByDispensary,
+    geo,
+    sponsor,
   };
 });
 
@@ -163,7 +216,17 @@ export default async function CityDispensariesPage({
   const { state, city } = await params;
   const found = await loadCity(state, city);
   if (!found) notFound();
-  const { stateName, cityName, shops, featuredByDispensary, dealByDispensary } = found;
+  const {
+    stateName,
+    cityName,
+    shops,
+    featuredByDispensary,
+    featuredSlotIds,
+    premiumSlotIds,
+    dealByDispensary,
+    geo,
+    sponsor,
+  } = found;
 
   const faqs = [
     {
@@ -198,6 +261,17 @@ export default async function CityDispensariesPage({
         {shops.length} {shops.length === 1 ? 'dispensary' : 'dispensaries'} in {cityName}.
       </p>
 
+      {sponsor && geo && (
+        <div className="mt-6">
+          <SponsorHero
+            d={sponsor}
+            regionSlug={geo.regionSlug}
+            regionName={geo.regionName}
+            zoneSlug={geo.zoneSlug}
+          />
+        </div>
+      )}
+
       <div className="mt-6">
         <DispensariesBrowser
           variant="embedded"
@@ -206,6 +280,11 @@ export default async function CityDispensariesPage({
           initialShops={shops.map((s) => {
             const promo = featuredByDispensary.get(s.id);
             const deal = dealByDispensary.get(s.id);
+            const slotType = featuredSlotIds.has(s.id)
+              ? ('featured' as const)
+              : premiumSlotIds.has(s.id)
+                ? ('premium' as const)
+                : null;
             return {
               id: s.id,
               slug: s.slug,
@@ -218,8 +297,18 @@ export default async function CityDispensariesPage({
               isPickup: s.is_pickup,
               isMedical: s.is_medical,
               isRecreational: s.is_recreational,
-              featured: s.featured || !!promo,
+              featured: s.featured || !!promo || slotType === 'featured',
+              sponsored: slotType === 'premium',
               placementId: promo?.placementId || undefined,
+              adSlot:
+                slotType && geo
+                  ? {
+                      slotType,
+                      regionSlug: geo.regionSlug,
+                      zoneSlug: geo.zoneSlug,
+                      dispensaryId: s.id,
+                    }
+                  : undefined,
               rating: s.rating_avg,
               reviewCount: s.rating_count,
               lat: s.latitude,

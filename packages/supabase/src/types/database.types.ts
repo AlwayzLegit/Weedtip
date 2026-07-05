@@ -14,59 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      ad_bids: {
+      ad_markets: {
         Row: {
-          bid_cents: number
-          contract_end: string
-          contract_start: string
           created_at: string
-          dispensary_id: string
           id: string
-          paid_at: string | null
-          region_id: string
-          status: string
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string | null
-          updated_at: string
+          name: string
+          slug: string
+          state: string
         }
         Insert: {
-          bid_cents: number
-          contract_end: string
-          contract_start?: string
           created_at?: string
-          dispensary_id: string
           id?: string
-          paid_at?: string | null
-          region_id: string
-          status?: string
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
-          updated_at?: string
+          name: string
+          slug: string
+          state?: string
         }
         Update: {
-          bid_cents?: number
-          contract_end?: string
-          contract_start?: string
           created_at?: string
-          dispensary_id?: string
           id?: string
-          paid_at?: string | null
-          region_id?: string
-          status?: string
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
-          updated_at?: string
+          name?: string
+          slug?: string
+          state?: string
+        }
+        Relationships: []
+      }
+      ad_products: {
+        Row: {
+          id: string
+          launch_price: number
+          list_price: number
+          slot_type: Database["public"]["Enums"]["ad_slot_type"]
+          stripe_price_id: string | null
+          tier: Database["public"]["Enums"]["region_tier"]
+        }
+        Insert: {
+          id?: string
+          launch_price: number
+          list_price: number
+          slot_type: Database["public"]["Enums"]["ad_slot_type"]
+          stripe_price_id?: string | null
+          tier: Database["public"]["Enums"]["region_tier"]
+        }
+        Update: {
+          id?: string
+          launch_price?: number
+          list_price?: number
+          slot_type?: Database["public"]["Enums"]["ad_slot_type"]
+          stripe_price_id?: string | null
+          tier?: Database["public"]["Enums"]["region_tier"]
+        }
+        Relationships: []
+      }
+      ad_regions: {
+        Row: {
+          boundary: unknown | null
+          created_at: string
+          exclusive_price_max: number | null
+          exclusive_price_min: number | null
+          id: string
+          is_active: boolean
+          market_id: string
+          name: string
+          slug: string
+          sort_order: number
+          tier: Database["public"]["Enums"]["region_tier"]
+        }
+        Insert: {
+          boundary?: unknown | null
+          created_at?: string
+          exclusive_price_max?: number | null
+          exclusive_price_min?: number | null
+          id?: string
+          is_active?: boolean
+          market_id: string
+          name: string
+          slug: string
+          sort_order?: number
+          tier: Database["public"]["Enums"]["region_tier"]
+        }
+        Update: {
+          boundary?: unknown | null
+          created_at?: string
+          exclusive_price_max?: number | null
+          exclusive_price_min?: number | null
+          id?: string
+          is_active?: boolean
+          market_id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          tier?: Database["public"]["Enums"]["region_tier"]
         }
         Relationships: [
           {
-            foreignKeyName: "ad_bids_dispensary_id_fkey"
-            columns: ["dispensary_id"]
+            foreignKeyName: "ad_regions_market_id_fkey"
+            columns: ["market_id"]
             isOneToOne: false
-            referencedRelation: "dispensaries"
+            referencedRelation: "ad_markets"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      ad_slots: {
+        Row: {
+          id: string
+          position: number
+          region_id: string
+          slot_type: Database["public"]["Enums"]["ad_slot_type"]
+        }
+        Insert: {
+          id?: string
+          position: number
+          region_id: string
+          slot_type: Database["public"]["Enums"]["ad_slot_type"]
+        }
+        Update: {
+          id?: string
+          position?: number
+          region_id?: string
+          slot_type?: Database["public"]["Enums"]["ad_slot_type"]
+        }
+        Relationships: [
           {
-            foreignKeyName: "ad_bids_region_id_fkey"
+            foreignKeyName: "ad_slots_region_id_fkey"
             columns: ["region_id"]
             isOneToOne: false
             referencedRelation: "ad_regions"
@@ -74,41 +144,94 @@ export type Database = {
           },
         ]
       }
-      ad_regions: {
+      ad_subscriptions: {
         Row: {
-          city: string | null
           created_at: string
-          featured_rate_cents: number
+          dispensary_id: string
+          ends_at: string | null
           id: string
-          is_active: boolean
-          name: string
-          slots: number
-          slug: string
-          state: string
+          price_paid: number
+          slot_id: string
+          starts_at: string | null
+          status: Database["public"]["Enums"]["ad_sub_status"]
+          stripe_subscription_id: string | null
         }
         Insert: {
-          city?: string | null
           created_at?: string
-          featured_rate_cents?: number
+          dispensary_id: string
+          ends_at?: string | null
           id?: string
-          is_active?: boolean
-          name: string
-          slots?: number
-          slug: string
-          state: string
+          price_paid: number
+          slot_id: string
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["ad_sub_status"]
+          stripe_subscription_id?: string | null
         }
         Update: {
-          city?: string | null
           created_at?: string
-          featured_rate_cents?: number
+          dispensary_id?: string
+          ends_at?: string | null
           id?: string
-          is_active?: boolean
-          name?: string
-          slots?: number
-          slug?: string
-          state?: string
+          price_paid?: number
+          slot_id?: string
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["ad_sub_status"]
+          stripe_subscription_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ad_subscriptions_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_subscriptions_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_zones: {
+        Row: {
+          boundary: unknown | null
+          centroid: unknown | null
+          created_at: string
+          id: string
+          name: string
+          region_id: string
+          slug: string
+        }
+        Insert: {
+          boundary?: unknown | null
+          centroid?: unknown | null
+          created_at?: string
+          id?: string
+          name: string
+          region_id: string
+          slug: string
+        }
+        Update: {
+          boundary?: unknown | null
+          centroid?: unknown | null
+          created_at?: string
+          id?: string
+          name?: string
+          region_id?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_zones_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "ad_regions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       brand_ad_bids: {
         Row: {
@@ -2019,29 +2142,9 @@ export type Database = {
       }
     }
     Functions: {
-      activate_ad_bid: {
-        Args: { p_bid_id: string; p_payment_intent?: string }
-        Returns: undefined
-      }
       activate_brand_bid: {
         Args: { p_bid_id: string; p_payment_intent?: string }
         Returns: undefined
-      }
-      ad_bids_for_owner: {
-        Args: { p_dispensary_id: string }
-        Returns: {
-          city: string
-          contract_end: string
-          floor_cents: number
-          is_winning: boolean
-          min_winning_cents: number
-          region_id: string
-          region_name: string
-          slots: number
-          state: string
-          your_bid_cents: number
-          your_bid_id: string
-        }[]
       }
       add_pos_staff: {
         Args: { p_dispensary_id: string; p_name: string; p_pin: string }
@@ -2095,8 +2198,11 @@ export type Database = {
         }[]
       }
       brand_follower_count: { Args: { p_brand_id: string }; Returns: number }
-      cancel_ad_bid: { Args: { p_bid_id: string }; Returns: undefined }
       cancel_brand_bid: { Args: { p_bid_id: string }; Returns: undefined }
+      claim_slot: {
+        Args: { p_slot_id: string; p_dispensary_id: string; p_price: number }
+        Returns: string
+      }
       compute_auto_order_discount: {
         Args: { p_dispensary_id: string; p_subtotal_cents: number }
         Returns: {
@@ -2172,6 +2278,14 @@ export type Database = {
         }[]
       }
       get_active_dispensary_state_count: { Args: never; Returns: number }
+      get_region_placements: {
+        Args: { p_region_id: string }
+        Returns: {
+          slot_type: Database["public"]["Enums"]["ad_slot_type"]
+          position: number
+          dispensary_id: string
+        }[]
+      }
       grant_pos_addon: {
         Args: { p_dispensary_id: string; p_enabled: boolean }
         Returns: undefined
@@ -2185,14 +2299,6 @@ export type Database = {
       owns_dispensary: {
         Args: { target_dispensary_id: string }
         Returns: boolean
-      }
-      place_ad_bid: {
-        Args: {
-          p_bid_cents: number
-          p_dispensary_id: string
-          p_region_id: string
-        }
-        Returns: undefined
       }
       place_brand_bid: {
         Args: { p_bid_cents: number; p_brand_id: string; p_region_id: string }
@@ -2257,16 +2363,22 @@ export type Database = {
           top_cities: Json
         }[]
       }
-      region_featured_dispensaries: {
-        Args: { p_city?: string; p_state: string }
-        Returns: {
-          dispensary_id: string
-        }[]
-      }
       reject_brand_claim: { Args: { p_claim_id: string }; Returns: undefined }
       reject_ownership_request: {
         Args: { p_request_id: string }
         Returns: undefined
+      }
+      release_stale_ad_claims: { Args: never; Returns: number }
+      resolve_geo: {
+        Args: { lng: number; lat: number }
+        Returns: {
+          zone_id: string
+          zone_slug: string
+          zone_name: string
+          region_id: string
+          region_slug: string
+          region_name: string
+        }[]
       }
       reply_to_review: {
         Args: { p_reply: string; p_review_id: string }
@@ -2445,6 +2557,8 @@ export type Database = {
       }
     }
     Enums: {
+      ad_slot_type: "exclusive" | "featured" | "premium" | "standard"
+      ad_sub_status: "pending" | "active" | "past_due" | "canceled"
       deal_kind:
         | "percentage"
         | "fixed_amount"
@@ -2464,6 +2578,7 @@ export type Database = {
         | "cancelled"
       order_type: "pickup" | "delivery"
       payment_status: "unpaid" | "paid" | "refunded"
+      region_tier: "A_PLUS" | "A" | "B_PLUS" | "B"
       placement_type:
         | "featured"
         | "hero"

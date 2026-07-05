@@ -43,7 +43,7 @@ const OWNER_NAV: NavItem[] = [
   { href: '/dashboard/qr', label: 'QR codes', icon: QrCode },
   { href: '/dashboard/google', label: 'Google', icon: Globe },
   { href: '/dashboard/promote', label: 'Promote', icon: Megaphone },
-  { href: '/dashboard/ads', label: 'Advertise', icon: Gavel },
+  { href: '/advertise', label: 'Advertise', icon: Gavel },
 ];
 
 const ADMIN_NAV: NavItem[] = [
@@ -55,7 +55,6 @@ const ADMIN_NAV: NavItem[] = [
   { href: '/admin/strains', label: 'Strains', icon: Leaf },
   { href: '/admin/brands', label: 'Brands', icon: Award },
   { href: '/admin/regions', label: 'Regions', icon: MapPin },
-  { href: '/admin/ad-regions', label: 'Ad regions', icon: Gavel },
   { href: '/admin/brand-regions', label: 'Brand markets', icon: Award },
   { href: '/admin/reviews', label: 'Reviews', icon: Star },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
