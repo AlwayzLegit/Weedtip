@@ -8,6 +8,8 @@ import {
   Mail,
   MapPin,
   Megaphone,
+  Navigation,
+  PenLine,
   Phone,
   Store,
   Tag,
@@ -21,6 +23,7 @@ import { ClaimListing } from '@/components/claim-listing';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { LogoImage } from '@/components/logo-image';
 import { FavoriteButton } from '@/components/favorite-button';
+import { ScrollCarousel } from '@/components/home/scroll-carousel';
 import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
 import { RatingStars } from '@/components/rating-stars';
@@ -308,26 +311,36 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       <div className="mx-auto max-w-7xl px-4 pt-4">
         <Breadcrumbs items={crumbs} />
       </div>
-      {/* Header */}
+      {/* Hero banner (claimed look: cover photo + overlapping logo) */}
       <MediaImage
         url={d.cover_image_url}
         alt={d.name}
-        className="h-48 sm:h-72"
+        className="h-56 sm:h-80"
         iconClassName="h-16 w-16"
       >
         <div
-          className="from-background absolute inset-0 bg-gradient-to-t via-transparent to-transparent"
+          className="from-background via-background/20 absolute inset-0 bg-gradient-to-t to-transparent"
           aria-hidden
         />
       </MediaImage>
       <div className="mx-auto max-w-7xl px-4">
-        <div className="-mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="rounded-card border-border bg-surface shadow-card-hover sheen border p-5">
-            <div className="flex items-center gap-3">
-              <LogoImage src={d.logo_url} name={d.name} className="h-12 w-12" rounded="rounded-lg" />
-              <h1 className="text-2xl font-bold sm:text-3xl">{d.name}</h1>
-            </div>
-            <p className="text-muted mt-1 flex items-center gap-1 text-sm">
+        <div className="relative z-10 -mt-10 sm:-mt-14">
+          <LogoImage
+            src={d.logo_url}
+            name={d.name}
+            hideWhenEmpty={false}
+            textClassName="text-3xl"
+            className="ring-background bg-surface h-20 w-20 shadow-lg ring-4 sm:h-28 sm:w-28"
+            rounded="rounded-2xl"
+          />
+        </div>
+
+        {/* relative: the hero's absolute gradient overlay must not paint over
+            this row (static content stacks below positioned elements). */}
+        <div className="relative mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold sm:text-4xl">{d.name}</h1>
+            <p className="text-muted mt-1.5 flex items-center gap-1 text-sm">
               {d.is_delivery && !d.is_pickup ? (
                 <>
                   <Truck className="h-4 w-4" /> Delivery only
@@ -344,18 +357,30 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             {d.legal_name && d.legal_name.toLowerCase() !== d.name.toLowerCase() && (
               <p className="text-muted/80 mt-0.5 text-xs">Licensed as {d.legal_name}</p>
             )}
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+
+            {/* Rating summary + live status, up top */}
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
               {avgRating > 0 && (
-                <span className="flex items-center gap-1.5">
+                <a href="#reviews" className="flex items-center gap-1.5 hover:underline">
                   <RatingStars rating={avgRating} />
-                  <span className="text-muted text-sm">
-                    {avgRating.toFixed(1)} ({reviews!.length})
-                  </span>
-                </span>
+                  <span className="text-sm font-semibold">{avgRating.toFixed(1)}</span>
+                  <span className="text-muted text-sm">({reviews!.length} reviews)</span>
+                </a>
               )}
               {avgRating >= 4.5 && reviews && reviews.length >= 10 && (
                 <Badge tone="primary">Top Rated</Badge>
               )}
+              {hours && (
+                <span
+                  className={`text-sm font-medium ${isOpenNow ? 'text-primary' : 'text-muted'}`}
+                >
+                  {isOpenNow && todayHours
+                    ? `Open until ${formatTime(todayHours.close)}`
+                    : 'Closed now'}
+                </span>
+              )}
+            </div>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
               {d.is_pickup && (
                 <Badge tone="outline">
                   <Store className="h-3 w-3" /> Pickup
@@ -370,7 +395,47 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               {d.is_recreational && <Badge tone="outline">Recreational</Badge>}
             </div>
           </div>
-          <div className="flex gap-2">
+
+          {/* Action row: Directions · Call · Website · Add review */}
+          <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
+            {(d.latitude != null || d.address) && (
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                  d.latitude != null && d.longitude != null
+                    ? `${d.latitude},${d.longitude}`
+                    : [d.address, d.city, d.state, d.zip].filter(Boolean).join(', '),
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+              >
+                <Navigation className="h-4 w-4" /> Directions
+              </a>
+            )}
+            {d.phone && (
+              <a
+                href={`tel:${d.phone.replace(/[^+\d]/g, '')}`}
+                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+              >
+                <Phone className="h-4 w-4" /> Call
+              </a>
+            )}
+            {d.website && (
+              <a
+                href={d.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+              >
+                <Globe className="h-4 w-4" /> Website
+              </a>
+            )}
+            <a
+              href="#reviews"
+              className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+            >
+              <PenLine className="h-4 w-4" /> Add review
+            </a>
             {user && !isOwner && (
               <FavoriteButton dispensaryId={d.id} slug={d.slug} isFavorite={isFavorite} />
             )}
@@ -383,6 +448,80 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             )}
           </div>
         </div>
+
+        {/* Sticky section bar (Weedmaps-style menu-category nav) */}
+        {(menu.length > 0 || (deals?.length ?? 0) > 0) && (
+          <nav
+            aria-label="Page sections"
+            className="border-border/70 bg-background/85 sticky top-16 z-30 -mx-4 mt-6 border-b px-4 backdrop-blur-xl"
+          >
+            <div className="scrollbar-none flex items-center gap-1 overflow-x-auto py-2">
+              {(deals?.length ?? 0) > 0 && (
+                <a
+                  href="#deals"
+                  className="text-primary hover:bg-primary-muted shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold"
+                >
+                  Deals
+                </a>
+              )}
+              {saleItems.length > 0 && (
+                <a
+                  href="#menu-sale"
+                  className="text-primary hover:bg-primary-muted shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold"
+                >
+                  Sale
+                </a>
+              )}
+              {menu.map((section) => (
+                <a
+                  key={section.name}
+                  href={`#menu-${citySlug(section.name)}`}
+                  className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
+                >
+                  {section.name}
+                </a>
+              ))}
+              <a
+                href="#reviews"
+                className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
+              >
+                Reviews
+              </a>
+            </div>
+          </nav>
+        )}
+
+        {/* Deals strip */}
+        {deals && deals.length > 0 && (
+          <section id="deals" className="mt-6 scroll-mt-32">
+            <h2 className="mb-3 text-lg font-semibold">Active deals</h2>
+            <ScrollCarousel itemClassName="w-80" ariaLabel="Active deals">
+              {deals.map((deal) => (
+                <div
+                  key={deal.id}
+                  className="rounded-card border-primary/25 bg-primary-subtle flex h-full items-start justify-between gap-3 border p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="text-primary font-semibold">{deal.title}</p>
+                    {deal.description && (
+                      <p className="text-muted mt-1 line-clamp-2 text-sm">{deal.description}</p>
+                    )}
+                    {deal.code && (
+                      <p className="mt-2 text-xs">
+                        <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono font-medium">
+                          Use code {deal.code}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                  <Badge tone="primary" className="shrink-0">
+                    {dealBadge(deal.discount_type, deal.discount_value)}
+                  </Badge>
+                </div>
+              ))}
+            </ScrollCarousel>
+          </section>
+        )}
 
         {canClaim && (
           <div className="mt-6">
@@ -502,38 +641,6 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               </section>
             )}
 
-            {/* Deals */}
-            {deals && deals.length > 0 && (
-              <section>
-                <h2 className="mb-3 text-lg font-semibold">Active deals</h2>
-                <div className="space-y-3">
-                  {deals.map((deal) => (
-                    <div
-                      key={deal.id}
-                      className="rounded-card border-primary/25 bg-primary-subtle flex items-start justify-between border p-4"
-                    >
-                      <div>
-                        <p className="text-primary font-semibold">{deal.title}</p>
-                        {deal.description && (
-                          <p className="text-muted mt-1 text-sm">{deal.description}</p>
-                        )}
-                        {deal.code && (
-                          <p className="mt-2 text-xs">
-                            <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono font-medium">
-                              Use code {deal.code}
-                            </span>
-                          </p>
-                        )}
-                      </div>
-                      <Badge tone="primary">
-                        {dealBadge(deal.discount_type, deal.discount_value)}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* Menu */}
             <section>
               <h2 className="mb-3 text-lg font-semibold">Menu</h2>
@@ -551,7 +658,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               ) : (
                 <div className="space-y-8">
                   {saleItems.length > 0 && (
-                    <div>
+                    <div id="menu-sale" className="scroll-mt-32">
                       <h3 className="text-primary mb-3 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide">
                         <Tag className="h-4 w-4" /> Sale
                       </h3>
@@ -561,7 +668,11 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                     </div>
                   )}
                   {menu.map((section) => (
-                    <div key={section.name}>
+                    <div
+                      key={section.name}
+                      id={`menu-${citySlug(section.name)}`}
+                      className="scroll-mt-32"
+                    >
                       <h3 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
                         {section.name}
                       </h3>
@@ -597,7 +708,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             )}
 
             {/* Reviews */}
-            <section>
+            <section id="reviews" className="scroll-mt-32">
               <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
               {d.rating_count > 0 &&
                 (d.rating_quality > 0 || d.rating_service > 0 || d.rating_atmosphere > 0) && (
