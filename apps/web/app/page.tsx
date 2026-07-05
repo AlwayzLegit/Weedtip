@@ -6,6 +6,7 @@ import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
 import { MarketFeed, type FeedDeal, type FeedShop } from '@/components/home/market-feed';
 import { RegionGrid, type RegionEntry } from '@/components/home/region-grid';
 import { ScrollCarousel } from '@/components/home/scroll-carousel';
+import { DispensaryCard } from '@/components/dispensary-card';
 import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
@@ -60,6 +61,7 @@ export default async function HomePage() {
     { data: popular },
     { data: brands },
     { data: lineupSizes },
+    { data: deliveryShops },
     { data: regions },
     dispCount,
     prodCount,
@@ -108,6 +110,15 @@ export default async function HomePage() {
       .limit(12),
     supabase.from('brands').select('id,slug,name,logo_url').order('name'),
     supabase.from('brand_products').select('brand_id'),
+    supabase
+      .from('dispensaries')
+      .select(
+        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone',
+      )
+      .eq('status', 'active')
+      .eq('is_delivery', true)
+      .order('rating_count', { ascending: false })
+      .limit(12),
     supabase.rpc('region_directory', { top_cities_limit: 5 }),
     supabase.from('dispensaries').select('id', head).eq('status', 'active'),
     supabase.from('products').select('id', head),
@@ -234,24 +245,32 @@ export default async function HomePage() {
       <JsonLd data={organizationJsonLd()} />
       <JsonLd data={websiteJsonLd()} />
 
-      {/* Hero */}
+      {/* Promo hero carousel FIRST (Weedmaps order) — this is the money-making
+          merchandising surface dispensaries and brands buy into. */}
+      {heroSlides.length > 0 && (
+        <div className="mx-auto max-w-7xl px-4 pt-6">
+          <HeroCarousel slides={heroSlides} />
+        </div>
+      )}
+
+      {/* Search band + stat strip */}
       <section className="border-border/70 bg-hero-glow relative overflow-hidden border-b">
-        <div className="relative mx-auto max-w-3xl px-4 py-16 text-center sm:py-24">
+        <div className="relative mx-auto max-w-3xl px-4 py-12 text-center sm:py-16">
           <span className="border-primary/20 bg-primary-muted text-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
             <Sparkles className="h-3.5 w-3.5" />
             Find licensed dispensaries near you
           </span>
-          <h1 className="animate-slide-up mt-6 text-4xl font-bold tracking-tight sm:text-6xl">
+          <h1 className="animate-slide-up mt-5 text-4xl font-bold tracking-tight sm:text-5xl">
             The Google Maps of <span className="gradient-text">cannabis</span>
           </h1>
-          <p className="text-muted mx-auto mt-5 max-w-xl text-lg">
+          <p className="text-muted mx-auto mt-4 max-w-xl text-lg">
             Discover dispensaries, browse menus, read reviews, find deals, and order for pickup or
             delivery — all in one place.
           </p>
-          <div className="mx-auto mt-8 max-w-2xl">
+          <div className="mx-auto mt-7 max-w-2xl">
             <SearchBar size="lg" />
           </div>
-          <div className="text-muted mt-10 flex items-center justify-center gap-8 text-sm">
+          <div className="text-muted mt-8 flex items-center justify-center gap-8 text-sm">
             {stats.map((s) => (
               <div key={s.label} className="text-center">
                 <p className="text-foreground text-2xl font-bold">{s.value}</p>
@@ -262,13 +281,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Promoted hero banner carousel (paid hero placements) */}
-      {heroSlides.length > 0 && (
-        <div className="mx-auto max-w-7xl px-4 pt-10">
-          <HeroCarousel slides={heroSlides} />
-        </div>
-      )}
-
       <div className="mx-auto max-w-7xl space-y-16 px-4 py-16">
         {/* Shop by category */}
         <section>
@@ -276,13 +288,10 @@ export default async function HomePage() {
           <CategoryTiles categories={categories ?? []} />
         </section>
 
-        {/* Location-aware: featured dispensaries + deals in the visitor's market */}
-        <MarketFeed initialShops={initialShops} initialDeals={initialDeals} />
-
-        {/* Brand rail */}
+        {/* Featured brands */}
         {topBrands.length > 0 && (
           <section>
-            <SectionHeading eyebrow="Official lineups" title="Shop by brand" href="/brands" />
+            <SectionHeading eyebrow="Official lineups" title="Featured brands" href="/brands" />
             <ScrollCarousel itemClassName="w-44" ariaLabel="Popular brands">
               {topBrands.map((b) => (
                 <Link
@@ -300,6 +309,40 @@ export default async function HomePage() {
             </ScrollCarousel>
           </section>
         )}
+
+        {/* Delivery services */}
+        {deliveryShops && deliveryShops.length > 0 && (
+          <section>
+            <SectionHeading eyebrow="To your door" title="Delivery services" href="/deliveries" />
+            <ScrollCarousel itemClassName="w-72" ariaLabel="Delivery services">
+              {deliveryShops.map((d) => (
+                <DispensaryCard
+                  key={d.slug}
+                  d={{
+                    slug: d.slug,
+                    name: d.name,
+                    city: d.city,
+                    state: d.state,
+                    coverImageUrl: d.cover_image_url,
+                    logoUrl: d.logo_url,
+                    isDelivery: d.is_delivery,
+                    isPickup: d.is_pickup,
+                    isMedical: d.is_medical,
+                    isRecreational: d.is_recreational,
+                    featured: d.featured,
+                    rating: d.rating_avg,
+                    reviewCount: d.rating_count,
+                    hours: (d.hours ?? null) as OperatingHours | null,
+                    timezone: d.timezone,
+                  }}
+                />
+              ))}
+            </ScrollCarousel>
+          </section>
+        )}
+
+        {/* Location-aware: dispensary storefronts + deals in the visitor's market */}
+        <MarketFeed initialShops={initialShops} initialDeals={initialDeals} />
 
         {/* Popular products */}
         {popular && popular.length > 0 && (
@@ -330,6 +373,37 @@ export default async function HomePage() {
             </ScrollCarousel>
           </section>
         )}
+
+        {/* Promo banner pair (Weedmaps-style paired merchandising banners) */}
+        <section className="grid gap-4 sm:grid-cols-2">
+          <Link
+            href="/advertise"
+            className="rounded-card border-primary/30 bg-hero-glow group relative overflow-hidden border p-6 transition-all duration-200 hover:-translate-y-0.5"
+          >
+            <p className="eyebrow">For dispensaries &amp; brands</p>
+            <h3 className="mt-1 text-lg font-bold">Own your neighborhood</h3>
+            <p className="text-muted mt-1 text-sm">
+              One exclusive sponsor, three featured spots, ten premium listings per region — at
+              launch pricing.
+            </p>
+            <span className="text-primary mt-3 inline-flex items-center gap-1 text-sm font-semibold">
+              See regions <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </Link>
+          <Link
+            href="/deals"
+            className="rounded-card border-warning/30 group relative overflow-hidden border bg-gradient-to-br from-amber-500/10 to-transparent p-6 transition-all duration-200 hover:-translate-y-0.5"
+          >
+            <p className="eyebrow">Save on every order</p>
+            <h3 className="mt-1 text-lg font-bold">Today&apos;s best deals near you</h3>
+            <p className="text-muted mt-1 text-sm">
+              BOGOs, first-visit discounts, and daily specials from licensed shops in your market.
+            </p>
+            <span className="text-warning mt-3 inline-flex items-center gap-1 text-sm font-semibold">
+              Browse deals <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </Link>
+        </section>
 
         {/* Region / city directory (SEO link grid) */}
         {regionEntries.length > 0 && (

@@ -25,11 +25,13 @@ import { Button } from './ui/button';
 
 const BROWSE = [
   { href: '/dispensaries', label: 'Dispensaries' },
-  { href: '/deliveries', label: 'Delivery' },
-  { href: '/products', label: 'Products' },
-  { href: '/strains', label: 'Strains' },
+  { href: '/deliveries', label: 'Deliveries' },
+  { href: '/map', label: 'Map' },
   { href: '/brands', label: 'Brands' },
+  { href: '/products', label: 'Products' },
   { href: '/deals', label: 'Deals' },
+  { href: '/strains', label: 'Strains' },
+  { href: '/learn', label: 'Learn' },
 ];
 
 export function NavMenu({
@@ -125,7 +127,7 @@ export function NavMenu({
   return (
     <>
       {/* Desktop */}
-      <nav className="hidden items-center gap-6 md:flex">
+      <nav className="hidden items-center gap-5 lg:flex">
         {browseLinks}
         <CartButton />
         {email && (
@@ -190,7 +192,7 @@ export function NavMenu({
       </nav>
 
       {/* Mobile: cart + hamburger */}
-      <div className="flex items-center gap-1 md:hidden">
+      <div className="flex items-center gap-1 lg:hidden">
         <CartButton />
         <button
           className="text-foreground"
@@ -209,9 +211,9 @@ export function NavMenu({
             aria-hidden
             tabIndex={-1}
             onClick={() => setDrawerOpen(false)}
-            className="bg-background/60 animate-fade-in fixed inset-0 top-16 z-40 md:hidden"
+            className="bg-background/60 animate-fade-in fixed inset-0 top-16 z-40 lg:hidden"
           />
-          <div className="glass animate-slide-up shadow-card-hover absolute inset-x-0 top-16 z-50 border-b p-4 md:hidden">
+          <div className="glass animate-slide-up shadow-card-hover absolute inset-x-0 top-16 z-50 border-b p-4 lg:hidden">
             <nav className="flex flex-col gap-4">
               <GlobalSearch />
               <div className="flex flex-col gap-1">
