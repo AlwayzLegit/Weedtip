@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { cookies, headers } from 'next/headers';
 import type Stripe from 'stripe';
 import { z } from 'zod';
-import { orderTypeSchema, type OrderItem } from '@weedtip/shared';
+import { deliveryAddressSchema, orderTypeSchema, type OrderItem } from '@weedtip/shared';
 import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { isStripeConfigured, stripe } from '@/lib/stripe';
@@ -23,21 +23,29 @@ export type StartCheckoutResult =
   | { ok: true; mode: 'order'; orderId: string }
   | { ok: false; error: string };
 
-const inputSchema = z.object({
-  dispensary_id: z.string().uuid(),
-  order_type: orderTypeSchema,
-  notes: z.string().max(1000).optional(),
-  promo_code: z.string().max(40).optional(),
-  pay_now: z.boolean().optional(),
-  items: z
-    .array(
-      z.object({
-        product_id: z.string().uuid(),
-        quantity: z.number().int().positive().max(99),
-      }),
-    )
-    .min(1, 'Your cart is empty.'),
-});
+const inputSchema = z
+  .object({
+    dispensary_id: z.string().uuid(),
+    order_type: orderTypeSchema,
+    notes: z.string().max(1000).optional(),
+    promo_code: z.string().max(40).optional(),
+    pay_now: z.boolean().optional(),
+    delivery_address: deliveryAddressSchema.optional(),
+    /** Remember this address on the profile for next time. */
+    save_address: z.boolean().optional(),
+    items: z
+      .array(
+        z.object({
+          product_id: z.string().uuid(),
+          quantity: z.number().int().positive().max(99),
+        }),
+      )
+      .min(1, 'Your cart is empty.'),
+  })
+  .refine((v) => v.order_type !== 'delivery' || !!v.delivery_address, {
+    message: 'Enter a delivery address to place a delivery order.',
+    path: ['delivery_address'],
+  });
 
 export type StartCheckoutInput = z.infer<typeof inputSchema>;
 
@@ -169,8 +177,20 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
     p_promo_code: input.promo_code?.trim() || undefined,
     p_source: source,
     p_device: device,
+    p_delivery_address:
+      input.order_type === 'delivery' && input.delivery_address
+        ? input.delivery_address
+        : undefined,
   });
   if (rpcError || !orderId) return { ok: false, error: rpcError?.message ?? 'Could not create order.' };
+
+  // Remember the address as the shopper's default for the next checkout.
+  if (input.order_type === 'delivery' && input.delivery_address && input.save_address) {
+    await supabase
+      .from('profiles')
+      .update({ delivery_address: input.delivery_address })
+      .eq('id', user.id);
+  }
 
   revalidatePath('/orders');
   revalidatePath('/dashboard/orders');

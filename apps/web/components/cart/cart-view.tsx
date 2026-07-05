@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loader2, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
-import { ESTIMATED_TAX_RATE, type OrderType } from '@weedtip/shared';
+import {
+  deliveryAddressSchema,
+  ESTIMATED_TAX_RATE,
+  type DeliveryAddress,
+  type OrderType,
+} from '@weedtip/shared';
 import {
   getCheckoutRules,
   previewAutoDiscount,
@@ -19,16 +24,30 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { useCart } from './cart-provider';
 
+const EMPTY_ADDRESS: DeliveryAddress = {
+  street: '',
+  unit: '',
+  city: '',
+  state: '',
+  zip: '',
+  phone: '',
+};
+
 export function CartView({
   isAuthenticated,
   stripeEnabled = false,
+  savedAddress = null,
 }: {
   isAuthenticated: boolean;
   stripeEnabled?: boolean;
+  savedAddress?: DeliveryAddress | null;
 }) {
   const { cart, subtotalCents, setQuantity, removeItem, clear } = useCart();
   const router = useRouter();
   const [orderType, setOrderType] = useState<OrderType>('pickup');
+  const [address, setAddress] = useState<DeliveryAddress>(savedAddress ?? EMPTY_ADDRESS);
+  const [saveAddress, setSaveAddress] = useState(true);
+  const [addressError, setAddressError] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState<'card' | 'in_person'>(
     stripeEnabled ? 'card' : 'in_person',
   );
@@ -131,6 +150,20 @@ export function CartView({
 
   async function checkout() {
     if (!cart) return;
+    // Delivery orders need a valid address before we bother the server.
+    let parsedAddress: DeliveryAddress | undefined;
+    if (orderType === 'delivery') {
+      const check = deliveryAddressSchema.safeParse({
+        ...address,
+        unit: address.unit?.trim() ? address.unit : undefined,
+      });
+      if (!check.success) {
+        setAddressError(check.error.errors[0]?.message ?? 'Check the delivery address.');
+        return;
+      }
+      parsedAddress = check.data;
+      setAddressError(null);
+    }
     setPending(true);
     setError(null);
     const res = await startCheckout({
@@ -139,6 +172,8 @@ export function CartView({
       notes: notes.trim() || undefined,
       promo_code: promo?.code,
       pay_now: stripeEnabled && payMethod === 'card',
+      delivery_address: parsedAddress,
+      save_address: orderType === 'delivery' ? saveAddress : undefined,
       items: cart.items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
     });
     if (res.ok && res.mode === 'redirect') {
@@ -296,6 +331,74 @@ export function CartView({
               ))}
             </div>
           </div>
+
+          {orderType === 'delivery' && (
+            <div className="mt-4">
+              <p className="mb-1.5 text-sm font-medium">Delivery address</p>
+              <div className="space-y-2">
+                <Input
+                  value={address.street}
+                  onChange={(e) => setAddress((a) => ({ ...a, street: e.target.value }))}
+                  placeholder="Street address"
+                  autoComplete="street-address"
+                  aria-label="Street address"
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  <Input
+                    value={address.unit ?? ''}
+                    onChange={(e) => setAddress((a) => ({ ...a, unit: e.target.value }))}
+                    placeholder="Unit (opt.)"
+                    aria-label="Unit or apartment"
+                  />
+                  <Input
+                    value={address.city}
+                    onChange={(e) => setAddress((a) => ({ ...a, city: e.target.value }))}
+                    placeholder="City"
+                    autoComplete="address-level2"
+                    aria-label="City"
+                    className="col-span-2"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <Input
+                    value={address.state}
+                    onChange={(e) =>
+                      setAddress((a) => ({ ...a, state: e.target.value.toUpperCase() }))
+                    }
+                    placeholder="ST"
+                    maxLength={2}
+                    autoComplete="address-level1"
+                    aria-label="State"
+                  />
+                  <Input
+                    value={address.zip}
+                    onChange={(e) => setAddress((a) => ({ ...a, zip: e.target.value }))}
+                    placeholder="ZIP"
+                    autoComplete="postal-code"
+                    aria-label="ZIP code"
+                  />
+                  <Input
+                    value={address.phone}
+                    onChange={(e) => setAddress((a) => ({ ...a, phone: e.target.value }))}
+                    placeholder="Phone"
+                    type="tel"
+                    autoComplete="tel"
+                    aria-label="Phone number"
+                  />
+                </div>
+                <label className="text-muted flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={saveAddress}
+                    onChange={(e) => setSaveAddress(e.target.checked)}
+                    className="accent-primary h-3.5 w-3.5"
+                  />
+                  Save as my default delivery address
+                </label>
+              </div>
+              {addressError && <p className="text-danger mt-1.5 text-xs">{addressError}</p>}
+            </div>
+          )}
 
           {stripeEnabled && (
             <div className="mt-4">

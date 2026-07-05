@@ -1068,6 +1068,7 @@ export type Database = {
         Row: {
           created_at: string
           deal_id: string | null
+          delivery_address: Json | null
           device: string | null
           discount_cents: number
           dispensary_id: string
@@ -1094,6 +1095,7 @@ export type Database = {
         Insert: {
           created_at?: string
           deal_id?: string | null
+          delivery_address?: Json | null
           device?: string | null
           discount_cents?: number
           dispensary_id: string
@@ -1120,6 +1122,7 @@ export type Database = {
         Update: {
           created_at?: string
           deal_id?: string | null
+          delivery_address?: Json | null
           device?: string | null
           discount_cents?: number
           dispensary_id?: string
@@ -1671,6 +1674,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           date_of_birth: string | null
+          delivery_address: Json | null
           display_name: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -1680,6 +1684,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           date_of_birth?: string | null
+          delivery_address?: Json | null
           display_name?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -1689,6 +1694,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           date_of_birth?: string | null
+          delivery_address?: Json | null
           display_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -2089,6 +2095,7 @@ export type Database = {
       }
       create_order: {
         Args: {
+          p_delivery_address?: Json
           p_device?: string
           p_dispensary_id: string
           p_items: Json
