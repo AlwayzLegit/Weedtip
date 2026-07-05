@@ -34,6 +34,98 @@ export async function setDispensaryStatus(id: string, status: string): Promise<v
   revalidatePath('/admin');
 }
 
+// ─── Dispensary data editing (audit #21: was raw-SQL-only) ───────────────────
+
+const adminDispensarySchema = z.object({
+  name: z.string().min(2).max(120),
+  legal_name: z.string().max(200).nullable(),
+  description: z.string().max(5000).nullable(),
+  address: z.string().min(3).max(200).nullable(),
+  city: z.string().min(1).max(100).nullable(),
+  state: z.string().length(2, 'Use the 2-letter state code'),
+  zip: z
+    .string()
+    .regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code')
+    .nullable(),
+  county: z.string().max(100).nullable(),
+  phone: z.string().max(30).nullable(),
+  email: z.string().email().nullable(),
+  website: z.string().url().nullable(),
+  license_number: z.string().max(80).nullable(),
+  is_medical: z.boolean(),
+  is_recreational: z.boolean(),
+  is_delivery: z.boolean(),
+  is_pickup: z.boolean(),
+  location: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }).nullable(),
+});
+
+export async function adminUpdateDispensary(_prev: FormState, fd: FormData): Promise<FormState> {
+  const id = str(fd, 'id');
+  if (!id) return formError('Missing listing id.');
+  const lat = numOpt(fd, 'latitude');
+  const lng = numOpt(fd, 'longitude');
+  const parsed = adminDispensarySchema.safeParse({
+    name: str(fd, 'name') ?? '',
+    legal_name: str(fd, 'legal_name') ?? null,
+    description: str(fd, 'description') ?? null,
+    address: str(fd, 'address') ?? null,
+    city: str(fd, 'city') ?? null,
+    state: (str(fd, 'state') ?? '').toUpperCase(),
+    zip: str(fd, 'zip') ?? null,
+    county: str(fd, 'county') ?? null,
+    phone: str(fd, 'phone') ?? null,
+    email: str(fd, 'email') ?? null,
+    website: str(fd, 'website') ?? null,
+    license_number: str(fd, 'license_number') ?? null,
+    is_medical: bool(fd, 'is_medical'),
+    is_recreational: bool(fd, 'is_recreational'),
+    is_delivery: bool(fd, 'is_delivery'),
+    is_pickup: bool(fd, 'is_pickup'),
+    location: lat !== undefined && lng !== undefined ? { lat, lng } : null,
+  });
+  if (!parsed.success) return fromZodError(parsed.error);
+
+  const { location, ...rest } = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('dispensaries')
+    .update({
+      ...rest,
+      // Only write the geography when real coordinates were supplied.
+      ...(location
+        ? { location: `SRID=4326;POINT(${location.lng} ${location.lat})` }
+        : {}),
+    })
+    .eq('id', id);
+  if (error) return formError(error.message);
+
+  revalidatePath('/admin/dispensaries');
+  revalidatePath(`/admin/dispensaries/${id}`);
+  return { status: 'success', message: 'Listing saved.' };
+}
+
+export async function adminDeleteDispensary(id: string): Promise<{ error?: string } | void> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('admin_delete_dispensary', { p_id: id });
+  if (error) return { error: error.message };
+  revalidatePath('/admin/dispensaries');
+  redirect('/admin/dispensaries');
+}
+
+export async function adminMergeDispensaries(
+  keepId: string,
+  dupId: string,
+): Promise<{ error?: string } | void> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('admin_merge_dispensaries', {
+    p_keep: keepId,
+    p_dup: dupId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath('/admin/dispensaries');
+  revalidatePath(`/admin/dispensaries/${keepId}`);
+}
+
 // ─── Advertising regions ─────────────────────────────────────────────────────
 
 const adRegionSchema = z.object({
