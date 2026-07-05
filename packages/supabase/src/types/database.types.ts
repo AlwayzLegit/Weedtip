@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_events: {
+        Row: {
+          created_at: string
+          dispensary_id: string | null
+          event: string
+          id: string
+          region_id: string
+          slot_type: Database["public"]["Enums"]["ad_slot_type"] | null
+          zone_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dispensary_id?: string | null
+          event: string
+          id?: string
+          region_id: string
+          slot_type?: Database["public"]["Enums"]["ad_slot_type"] | null
+          zone_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dispensary_id?: string | null
+          event?: string
+          id?: string
+          region_id?: string
+          slot_type?: Database["public"]["Enums"]["ad_slot_type"] | null
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_events_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "ad_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_events_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "ad_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_markets: {
         Row: {
           created_at: string
@@ -2255,6 +2300,50 @@ export type Database = {
       claim_slot: {
         Args: { p_slot_id: string; p_dispensary_id: string; p_price: number }
         Returns: string
+      }
+      admin_cancel_ad_subscription: {
+        Args: { p_subscription_id: string }
+        Returns: undefined
+      }
+      admin_comp_slot: {
+        Args: { p_slot_id: string; p_dispensary_id: string; p_price: number }
+        Returns: string
+      }
+      admin_set_ad_boundary: {
+        Args: { p_kind: string; p_id: string; p_geojson: string }
+        Returns: undefined
+      }
+      admin_upsert_ad_zone: {
+        Args: {
+          p_region_id: string
+          p_slug: string
+          p_name: string
+          p_lng: number
+          p_lat: number
+          p_id?: string | null
+        }
+        Returns: string
+      }
+      record_ad_event: {
+        Args: {
+          p_region_id: string
+          p_event: string
+          p_zone_id?: string | null
+          p_dispensary_id?: string | null
+          p_slot_type?: Database["public"]["Enums"]["ad_slot_type"] | null
+        }
+        Returns: undefined
+      }
+      region_metrics: {
+        Args: { p_days?: number }
+        Returns: {
+          region_id: string
+          searches: number
+          impressions: number
+          clicks: number
+          live_subs: number
+          active_revenue_cents: number
+        }[]
       }
       compute_auto_order_discount: {
         Args: { p_dispensary_id: string; p_subtotal_cents: number }

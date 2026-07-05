@@ -10,6 +10,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { dealBadge } from '@/lib/format';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { getRegionPlacements, resolveGeo, type ResolvedGeo } from '@/lib/ad-serving';
+import { RegionSearchBeacon } from '@/components/ads/region-search-beacon';
 import { SponsorHero, type SponsorHeroData } from '@/components/ads/sponsor-hero';
 import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
@@ -261,6 +262,8 @@ export default async function CityDispensariesPage({
         {shops.length} {shops.length === 1 ? 'dispensary' : 'dispensaries'} in {cityName}.
       </p>
 
+      {geo && <RegionSearchBeacon regionId={geo.regionId} zoneId={geo.zoneId} />}
+
       {sponsor && geo && (
         <div className="mt-6">
           <SponsorHero
@@ -268,6 +271,8 @@ export default async function CityDispensariesPage({
             regionSlug={geo.regionSlug}
             regionName={geo.regionName}
             zoneSlug={geo.zoneSlug}
+            regionId={geo.regionId}
+            zoneId={geo.zoneId}
           />
         </div>
       )}
@@ -306,6 +311,8 @@ export default async function CityDispensariesPage({
                       slotType,
                       regionSlug: geo.regionSlug,
                       zoneSlug: geo.zoneSlug,
+                      regionId: geo.regionId,
+                      zoneId: geo.zoneId,
                       dispensaryId: s.id,
                     }
                   : undefined,

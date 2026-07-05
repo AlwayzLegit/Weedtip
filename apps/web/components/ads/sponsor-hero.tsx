@@ -30,11 +30,15 @@ export function SponsorHero({
   regionSlug,
   regionName,
   zoneSlug,
+  regionId,
+  zoneId,
 }: {
   d: SponsorHeroData;
   regionSlug: string;
   regionName: string;
   zoneSlug: string | null;
+  regionId?: string;
+  zoneId?: string | null;
 }) {
   return (
     <Link
@@ -43,7 +47,7 @@ export function SponsorHero({
       className="rounded-card border-primary/40 bg-surface shadow-card hover:shadow-card-hover group relative block overflow-hidden border-2 transition-all duration-200 hover:-translate-y-0.5"
     >
       <AdSlotBeacon
-        slot={{ slotType: 'exclusive', regionSlug, zoneSlug, dispensaryId: d.id }}
+        slot={{ slotType: 'exclusive', regionSlug, zoneSlug, regionId, zoneId, dispensaryId: d.id }}
       />
       <div className="flex flex-col sm:flex-row">
         <MediaImage
