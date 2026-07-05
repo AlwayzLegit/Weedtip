@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export type HeroSlide = {
+  /** Paid hero placement id; empty string for organic (unsold-slot) slides. */
   placementId: string;
   slug: string;
   name: string;
@@ -45,7 +46,8 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
 
   useEffect(() => {
     const s = slides[i];
-    if (s) track(s.placementId, 'impression');
+    // Organic filler slides have no placement — nothing to bill/track.
+    if (s?.placementId) track(s.placementId, 'impression');
   }, [i, slides]);
 
   const s = slides[i];
@@ -56,7 +58,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
       <div className="rounded-2xl border-border bg-surface shadow-card relative overflow-hidden border">
         <Link
           href={`/dispensary/${s.slug}`}
-          onClick={() => track(s.placementId, 'click')}
+          onClick={() => s.placementId && track(s.placementId, 'click')}
           className="block"
         >
           <MediaImage
@@ -71,7 +73,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
               aria-hidden
             />
             <Badge tone="primary" className="absolute left-4 top-4">
-              Sponsored
+              {s.placementId ? 'Sponsored' : 'Featured'}
             </Badge>
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
               <h2 className="text-2xl font-bold tracking-tight sm:text-4xl">{s.name}</h2>
@@ -115,7 +117,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
             <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
               {slides.map((sl, idx) => (
                 <button
-                  key={sl.placementId}
+                  key={sl.placementId || sl.slug}
                   type="button"
                   aria-label={`Go to slide ${idx + 1}`}
                   aria-current={idx === i}

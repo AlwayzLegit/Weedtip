@@ -132,6 +132,27 @@ export default async function HomePage() {
       reviewCount: (d.rating_count as number) ?? 0,
     }));
 
+  // The hero band is a merchandising surface — it should never sit empty.
+  // Unsold slots fill with organic top shops (with cover photos), badged
+  // "Featured" instead of "Sponsored" and untracked.
+  if (heroSlides.length < 4) {
+    const sold = new Set(heroSlides.map((s) => s.slug));
+    for (const d of featured ?? []) {
+      if (heroSlides.length >= 4) break;
+      if (sold.has(d.slug) || !d.cover_image_url || !d.city) continue;
+      heroSlides.push({
+        placementId: '',
+        slug: d.slug,
+        name: d.name,
+        city: d.city,
+        state: d.state,
+        coverUrl: d.cover_image_url,
+        rating: d.rating_avg,
+        reviewCount: d.rating_count,
+      });
+    }
+  }
+
   // Nationwide defaults for the location-aware feed; the client swaps in the
   // visitor's market after hydration (wt_state cookie).
   const initialShops: FeedShop[] = (featured ?? []).map((d) => ({
