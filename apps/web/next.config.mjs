@@ -9,7 +9,7 @@ const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://js.stripe.com https://api.mapbox.com https://us-assets.i.posthog.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.supabase.co https://*.mapbox.com https://api.mapbox.com",
+  "img-src 'self' data: blob: https://*.supabase.co https://*.mapbox.com https://api.mapbox.com https://www.google.com https://*.gstatic.com https://*.googleusercontent.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.mapbox.com https://us.i.posthog.com https://us-assets.i.posthog.com",
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",

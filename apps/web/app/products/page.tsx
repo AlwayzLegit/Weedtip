@@ -37,6 +37,9 @@ export default async function ProductsPage({
     in_stock_only: sp.in_stock === 'false' ? false : true,
     page: int(sp.page),
   });
+  // The brand catalog paginates independently of the menu grid.
+  const catPage = Math.max(1, int(sp.cat_page) ?? 1);
+  const CAT_PAGE_SIZE = 24;
 
   const supabase = await createClient();
   const [{ data: categories }, productsRes] = await Promise.all([
@@ -141,11 +144,11 @@ export default async function ProductsPage({
     for (const s of sales ?? []) saleMap.set(s.product_id, s.sale_cents);
   }
 
-  // Official brand-catalog lineup rail. On the first page only; honors the
-  // category and strain filters so it always matches the shopper's intent.
+  // Official brand-catalog section — the full scraped catalog is browsable
+  // here with its own pagination; honors the category/strain/query filters.
   let lineup: LineupItem[] = [];
   let lineupTotal = 0;
-  if ((params.page ?? 1) === 1) {
+  {
     let lineupQuery = supabase
       .from('brand_products')
       .select(
@@ -154,7 +157,7 @@ export default async function ProductsPage({
       )
       .order('sort_order')
       .order('name')
-      .limit(24);
+      .range((catPage - 1) * CAT_PAGE_SIZE, catPage * CAT_PAGE_SIZE - 1);
     if (params.category_slug) {
       const cat = (categories ?? []).find((c) => c.slug === params.category_slug);
       const { data: catRow } = cat
@@ -193,7 +196,8 @@ export default async function ProductsPage({
       </div>
 
       <p className="text-muted mb-4 text-sm">
-        {total} {total === 1 ? 'product' : 'products'}
+        {total.toLocaleString()} on dispensary menus · {lineupTotal.toLocaleString()} in brand
+        catalogs
       </p>
 
       {sponsored.length > 0 && (
@@ -256,7 +260,7 @@ export default async function ProductsPage({
       )}
 
       {lineup.length > 0 && (
-        <section className="mt-10">
+        <section id="catalog" className="mt-10 scroll-mt-20">
           <h2 className="text-lg font-semibold">From brand catalogs</h2>
           <p className="text-muted mt-1 text-sm">
             {lineupTotal.toLocaleString()} products in official brand lineups — open a brand to see
@@ -267,6 +271,43 @@ export default async function ProductsPage({
               <LineupCard key={it.id} item={it} />
             ))}
           </div>
+          {lineupTotal > CAT_PAGE_SIZE && (
+            <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+              {catPage > 1 && (
+                <a
+                  href={`?${new URLSearchParams({
+                    ...Object.fromEntries(
+                      Object.entries(sp).filter(
+                        (e): e is [string, string] => typeof e[1] === 'string',
+                      ),
+                    ),
+                    cat_page: String(catPage - 1),
+                  }).toString()}#catalog`}
+                  className="border-border bg-surface hover:border-primary/50 rounded-full border px-4 py-2 font-medium transition-colors"
+                >
+                  ← Previous
+                </a>
+              )}
+              <span className="text-muted">
+                Page {catPage} of {Math.ceil(lineupTotal / CAT_PAGE_SIZE)}
+              </span>
+              {catPage * CAT_PAGE_SIZE < lineupTotal && (
+                <a
+                  href={`?${new URLSearchParams({
+                    ...Object.fromEntries(
+                      Object.entries(sp).filter(
+                        (e): e is [string, string] => typeof e[1] === 'string',
+                      ),
+                    ),
+                    cat_page: String(catPage + 1),
+                  }).toString()}#catalog`}
+                  className="border-border bg-surface hover:border-primary/50 rounded-full border px-4 py-2 font-medium transition-colors"
+                >
+                  Next →
+                </a>
+              )}
+            </div>
+          )}
         </section>
       )}
     </main>

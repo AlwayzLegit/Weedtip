@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Store } from 'lucide-react';
+import { Sparkles, Store, Tag } from 'lucide-react';
 import { deleteProductReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { AddToCart } from '@/components/cart/add-to-cart';
@@ -11,7 +11,7 @@ import { ProductReviewForm } from '@/components/product-review-form';
 import { RatingStars } from '@/components/rating-stars';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
-import { formatPrice } from '@/lib/format';
+import { dealBadge, formatPrice } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
@@ -59,7 +59,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { data: product } = await supabase
     .from('products')
     .select(
-      '*, dispensary:dispensaries(id,slug,name), strain:strains(slug,name), brand:brands(slug,name), catalog:brand_products(image_url,description)',
+      '*, dispensary:dispensaries(id,slug,name), strain:strains(slug,name,description,effects,flavors), brand:brands(slug,name), catalog:brand_products(image_url,description)',
     )
     .eq('id', id)
     .maybeSingle();
@@ -75,17 +75,47 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         : [];
   const description = product.description ?? catalog?.description ?? null;
 
-  const [{ data: reviews }, { user }] = await Promise.all([
+  const nowIso = new Date().toISOString();
+  const [{ data: reviews }, { user }, { data: shopDeals }, { data: siblings }] = await Promise.all([
     supabase
       .from('product_reviews')
       .select('id,rating,body,created_at,author_name,user_id')
       .eq('product_id', id)
       .order('created_at', { ascending: false }),
     getAuth(),
+    // "Save with these deals" — the selling shop's live offers.
+    product.dispensary_id
+      ? supabase
+          .from('deals')
+          .select('id,title,discount_type,discount_value,code')
+          .eq('dispensary_id', product.dispensary_id)
+          .eq('is_active', true)
+          .lte('start_date', nowIso)
+          .gte('end_date', nowIso)
+          .order('end_date')
+          .limit(3)
+      : Promise.resolve({ data: [] }),
+    // Multi-retailer compare: other shops carrying the same catalog item.
+    product.catalog_id
+      ? supabase
+          .from('products')
+          .select('id,price_cents,in_stock,dispensary:dispensaries!inner(slug,name,city,state,status)')
+          .eq('catalog_id', product.catalog_id)
+          .neq('id', id)
+          .eq('dispensary.status', 'active')
+          .order('price_cents')
+          .limit(6)
+      : Promise.resolve({ data: [] }),
   ]);
 
   const dispensary = product.dispensary as { id: string; slug: string; name: string } | null;
-  const strain = product.strain as { slug: string; name: string } | null;
+  const strain = product.strain as {
+    slug: string;
+    name: string;
+    description: string | null;
+    effects: string[];
+    flavors: string[];
+  } | null;
   const brand = product.brand as { slug: string; name: string } | null;
   const myReview = user ? (reviews ?? []).find((r) => r.user_id === user.id) : undefined;
 
@@ -214,8 +244,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           )}
 
           {product.in_stock && dispensary && (
-            <div className="mt-5 max-w-xs">
+            <div className="mt-5 max-w-sm">
               <AddToCart
+                showQuantity
                 dispensary={{ id: dispensary.id, slug: dispensary.slug, name: dispensary.name }}
                 product={{
                   productId: product.id,
@@ -225,6 +256,30 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               />
             </div>
           )}
+
+          {shopDeals && shopDeals.length > 0 && dispensary && (
+            <div className="border-primary/25 bg-primary-subtle mt-5 rounded-lg border p-3">
+              <p className="text-primary flex items-center gap-1.5 text-sm font-semibold">
+                <Tag className="h-4 w-4" /> Save with these deals
+              </p>
+              <ul className="mt-2 space-y-1.5 text-sm">
+                {shopDeals.map((dl) => (
+                  <li key={dl.id} className="flex items-center justify-between gap-2">
+                    <span className="text-muted truncate">{dl.title}</span>
+                    <Badge tone="primary" className="shrink-0">
+                      {dealBadge(dl.discount_type, dl.discount_value)}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href={`/dispensary/${dispensary.slug}#deals`}
+                className="text-primary mt-2 inline-block text-xs font-medium hover:underline"
+              >
+                All deals at {dispensary.name} →
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -232,6 +287,96 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <section className="mt-8">
           <h2 className="mb-2 text-lg font-semibold">Description</h2>
           <p className="text-muted">{description}</p>
+        </section>
+      )}
+
+      {strain && (strain.effects.length > 0 || strain.flavors.length > 0 || strain.description) && (
+        <section className="mt-8">
+          <h2 className="mb-2 text-lg font-semibold">About this strain: {strain.name}</h2>
+          {strain.description && (
+            <p className="text-muted line-clamp-4 text-sm leading-relaxed">{strain.description}</p>
+          )}
+          {strain.effects.length > 0 && (
+            <div className="mt-3">
+              <p className="text-muted mb-1.5 text-xs font-semibold uppercase tracking-wide">
+                Top reported effects
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {strain.effects.slice(0, 8).map((e) => (
+                  <span
+                    key={e}
+                    className="border-primary/30 bg-primary-muted text-primary inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium capitalize"
+                  >
+                    <Sparkles className="h-3 w-3" /> {e}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {strain.flavors.length > 0 && (
+            <div className="mt-3">
+              <p className="text-muted mb-1.5 text-xs font-semibold uppercase tracking-wide">
+                Top reported flavors
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {strain.flavors.slice(0, 8).map((f) => (
+                  <span
+                    key={f}
+                    className="border-warning/30 text-warning inline-flex items-center rounded-full border bg-amber-500/10 px-3 py-1 text-xs font-medium capitalize"
+                  >
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          <Link
+            href={`/strain/${strain.slug}`}
+            className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
+          >
+            Full strain profile →
+          </Link>
+        </section>
+      )}
+
+      {siblings && siblings.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-lg font-semibold">Also available at</h2>
+          <div className="rounded-card border-border bg-surface divide-border divide-y overflow-hidden border">
+            {siblings.map((sib) => {
+              const shop = sib.dispensary as unknown as {
+                slug: string;
+                name: string;
+                city: string | null;
+                state: string;
+              } | null;
+              if (!shop) return null;
+              return (
+                <Link
+                  key={sib.id}
+                  href={`/product/${sib.id}`}
+                  className="hover:bg-surface-2 flex items-center justify-between gap-3 px-4 py-3 text-sm transition-colors"
+                >
+                  <span className="min-w-0">
+                    <span className="text-foreground block truncate font-medium">{shop.name}</span>
+                    <span className="text-muted text-xs">
+                      {shop.city ? `${shop.city}, ${shop.state}` : shop.state}
+                      {!sib.in_stock ? ' · Out of stock' : ''}
+                    </span>
+                  </span>
+                  <span
+                    className={
+                      sib.price_cents < product.price_cents
+                        ? 'text-primary shrink-0 font-semibold'
+                        : 'shrink-0 font-semibold'
+                    }
+                  >
+                    {formatPrice(sib.price_cents)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </section>
       )}
 

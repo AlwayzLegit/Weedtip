@@ -12,8 +12,9 @@ import { useEffect, useRef, useState } from 'react';
  * also check `complete && naturalWidth === 0` (a finished-but-failed load) and
  * fall back. onError covers failures that happen after hydration.
  *
- * `hideWhenEmpty` keeps the prior name-only layout where a logo is optional
- * (dispensary cards); set it false to always show the initial avatar (brands).
+ * `hideWhenEmpty` opts back into the name-only layout for tight spots; the
+ * default always shows the initial avatar (Weedmaps-style identity slot) so
+ * cards read consistently whether or not a logo exists.
  */
 export function LogoImage({
   src,
@@ -21,7 +22,7 @@ export function LogoImage({
   className = 'h-8 w-8',
   rounded = 'rounded-md',
   textClassName = 'text-sm',
-  hideWhenEmpty = true,
+  hideWhenEmpty = false,
 }: {
   src?: string | null;
   name: string;
