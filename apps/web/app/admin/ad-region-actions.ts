@@ -3,9 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { requireAdmin } from '@/lib/admin';
 import { formError, formSuccess, type FormState } from '@/lib/forms';
+import { stripe } from '@/lib/stripe';
 import { slugify } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 /**
  * Admin console actions for the geographic ad system (Phase 4). Region/zone
@@ -168,4 +171,78 @@ export async function cancelAdSubscription(subscriptionId: string): Promise<void
   const supabase = await createClient();
   await supabase.rpc('admin_cancel_ad_subscription', { p_subscription_id: subscriptionId });
   revalidatePath('/admin/ad-regions');
+}
+
+const TIER_LABEL: Record<string, string> = { A_PLUS: 'A+', A: 'A', B_PLUS: 'B+', B: 'B' };
+const SLOT_LABEL: Record<string, string> = {
+  featured: 'Featured',
+  premium: 'Premium Listing',
+  standard: 'Standard Listing',
+};
+
+/**
+ * One-click version of scripts/seed-stripe-ad-products.mjs: creates a Stripe
+ * Product + monthly Price (at LAUNCH price) for every sellable (slot_type,
+ * tier) and writes the price id back to ad_products. Idempotent — rows that
+ * already have a stripe_price_id are skipped, as is `exclusive` (negotiated,
+ * never self-serve). Runs on the server with the deployment's env vars, so no
+ * local setup is needed.
+ */
+export async function syncStripeAdPrices(_prev: FormState, _fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  if (!stripe) {
+    return formError('Stripe is not configured — set STRIPE_SECRET_KEY in Vercel and redeploy.');
+  }
+
+  const supabase = createServiceClient();
+  const { data: products, error } = await supabase
+    .from('ad_products')
+    .select('id, slot_type, tier, launch_price, stripe_price_id')
+    .order('slot_type')
+    .order('tier');
+  if (error) return formError(`Could not read ad_products: ${error.message}`);
+
+  let created = 0;
+  let skipped = 0;
+  for (const p of products ?? []) {
+    if (p.stripe_price_id || p.slot_type === 'exclusive') {
+      skipped += 1;
+      continue;
+    }
+    const name = `${SLOT_LABEL[p.slot_type] ?? p.slot_type} — Tier ${TIER_LABEL[p.tier] ?? p.tier}`;
+    try {
+      const product = await stripe.products.create({
+        name,
+        metadata: { kind: 'ad_slot', slot_type: p.slot_type, tier: p.tier },
+      });
+      const price = await stripe.prices.create({
+        product: product.id,
+        currency: 'usd',
+        unit_amount: p.launch_price,
+        recurring: { interval: 'month' },
+        metadata: { kind: 'ad_slot', slot_type: p.slot_type, tier: p.tier, basis: 'launch_price' },
+      });
+      const { error: upErr } = await supabase
+        .from('ad_products')
+        .update({ stripe_price_id: price.id })
+        .eq('id', p.id);
+      if (upErr) {
+        return formError(
+          `Created ${created}, then failed to save ${name}: ${upErr.message}. Re-run to continue — existing prices are skipped.`,
+        );
+      }
+      created += 1;
+    } catch (e) {
+      return formError(
+        `Created ${created}, then Stripe rejected ${name}: ${e instanceof Error ? e.message : 'unknown error'}. Re-run to continue.`,
+      );
+    }
+  }
+
+  revalidatePath('/admin/ad-regions');
+  return formSuccess(
+    created > 0
+      ? `Created ${created} Stripe price(s); ${skipped} already set or not self-serve. Slots are now buyable on /advertise.`
+      : `Nothing to do — all ${skipped} products already have prices or are negotiated-only.`,
+  );
 }
