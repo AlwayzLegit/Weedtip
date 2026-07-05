@@ -9,15 +9,22 @@ import { Label } from '../ui/label';
 import { FormMessage } from './form-message';
 import { SubmitButton } from './submit-button';
 
-export function SignUpForm() {
+export function SignUpForm({
+  defaultRole = 'consumer',
+  next,
+}: {
+  defaultRole?: 'consumer' | 'dispensary_owner';
+  next?: string;
+}) {
   const [state, action] = useActionState<AuthState, FormData>(signUp, {});
-  const [role, setRole] = useState<'consumer' | 'dispensary_owner'>('consumer');
+  const [role, setRole] = useState<'consumer' | 'dispensary_owner'>(defaultRole);
 
   return (
     <form action={action} className="space-y-4">
       <FormMessage state={state} />
 
       <input type="hidden" name="role" value={role} />
+      {next && <input type="hidden" name="next" value={next} />}
       <div className="grid grid-cols-2 gap-2">
         {(
           [
