@@ -103,6 +103,33 @@ export async function previewAutoDiscount(
   return { ok: true, discountCents: best.discount_cents, title: best.title };
 }
 
+export type CheckoutRules = {
+  state: string;
+  taxRate: number;
+  medicalOnly: boolean;
+  canOrder: boolean;
+  blockReason: string | null;
+};
+
+/**
+ * The dispensary's market rules: per-state estimated tax rate, whether the
+ * state is medical-only, and whether online ordering is allowed at all.
+ * Mirrors the checks create_order enforces server-side.
+ */
+export async function getCheckoutRules(dispensaryId: string): Promise<CheckoutRules | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc('checkout_rules', { p_dispensary_id: dispensaryId });
+  const row = data?.[0];
+  if (!row) return null;
+  return {
+    state: row.state,
+    taxRate: Number(row.tax_rate),
+    medicalOnly: row.medical_only,
+    canOrder: row.can_order,
+    blockReason: row.block_reason,
+  };
+}
+
 export async function startCheckout(rawInput: StartCheckoutInput): Promise<StartCheckoutResult> {
   if (!(await rateLimit('checkout', { limit: 15, window: '60 s' })).success) {
     return { ok: false, error: 'Too many checkout attempts. Please wait a moment and try again.' };

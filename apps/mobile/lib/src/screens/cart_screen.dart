@@ -7,7 +7,9 @@ import '../models.dart';
 import '../providers.dart';
 import '../../theme.dart';
 
-// Keep in sync with @weedtip/shared ESTIMATED_TAX_RATE and the create_order RPC.
+// Display-only fallback estimate. The order total is server-authoritative:
+// create_order charges the shop's per-state rate from operating_regions.tax_rate
+// (readable via the checkout_rules() RPC).
 const _taxRate = 0.15;
 
 class CartScreen extends ConsumerStatefulWidget {

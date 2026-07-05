@@ -83,6 +83,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     { data: updates },
     { data: promos },
     { user, profile },
+    { data: region },
   ] = await Promise.all([
       supabase
         .from('products')
@@ -121,7 +122,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         .order('sort_order')
         .limit(10),
       getAuth(),
+      supabase
+        .from('operating_regions')
+        .select('is_medical_legal,is_recreational_legal')
+        .eq('state', d.state)
+        .maybeSingle(),
     ]);
+  const medicalOnly = !!region && region.is_medical_legal && !region.is_recreational_legal;
 
   const avgRating = reviews?.length
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
@@ -390,6 +397,16 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           <div className="rounded-card border-primary/30 bg-primary-muted mt-6 flex items-start gap-2 border p-4">
             <Megaphone className="text-primary mt-0.5 h-5 w-5 shrink-0" />
             <p className="text-foreground text-sm">{d.announcement}</p>
+          </div>
+        )}
+
+        {medicalOnly && (
+          <div className="rounded-card border-border bg-surface-2 mt-6 border p-4">
+            <p className="text-sm font-medium">Medical patients only</p>
+            <p className="text-muted mt-0.5 text-sm">
+              {d.state} licenses medical cannabis sales only. A valid medical card (or qualifying
+              patient registration) is required to purchase.
+            </p>
           </div>
         )}
 

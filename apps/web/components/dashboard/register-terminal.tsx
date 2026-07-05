@@ -26,7 +26,6 @@ type Receipt = {
   at: string;
 };
 
-const TAX_RATE = 0.15;
 const METHODS = ['cash', 'card', 'debit'] as const;
 
 function escapeHtml(s: string): string {
@@ -37,10 +36,13 @@ export function RegisterTerminal({
   products,
   hasStaff = false,
   dispensaryName,
+  taxRate = 0.15,
 }: {
   products: Product[];
   hasStaff?: boolean;
   dispensaryName: string;
+  /** The shop's state tax rate — must match what create_pos_order charges. */
+  taxRate?: number;
 }) {
   const [query, setQuery] = useState('');
   const [ticket, setTicket] = useState<Record<string, number>>({});
@@ -81,7 +83,7 @@ export function RegisterTerminal({
 
   const lines = Object.entries(ticket).filter(([, q]) => q > 0);
   const subtotal = lines.reduce((s, [id, q]) => s + (priceById.get(id)?.price_cents ?? 0) * q, 0);
-  const tax = Math.round(subtotal * TAX_RATE);
+  const tax = Math.round(subtotal * taxRate);
   const total = subtotal + tax;
 
   function add(id: string) {

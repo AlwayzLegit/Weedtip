@@ -51,6 +51,22 @@ export function RegionForm({ region }: { region: Tables<'operating_regions'> | n
           defaultValue={r?.min_age ?? 21}
         />
       </Field>
+      <Field
+        label="Estimated tax rate (%)"
+        htmlFor="tax_percent"
+        error={fe.tax_rate}
+        hint="Combined state cannabis tax charged at checkout in this market."
+      >
+        <Input
+          id="tax_percent"
+          name="tax_percent"
+          type="number"
+          step="0.01"
+          min="0"
+          max="100"
+          defaultValue={r ? Math.round(r.tax_rate * 10000) / 100 : 15}
+        />
+      </Field>
       <Field label="Notes" htmlFor="notes" error={fe.notes}>
         <Textarea id="notes" name="notes" defaultValue={r?.notes ?? ''} rows={2} />
       </Field>

@@ -53,9 +53,10 @@ export const DEFAULT_MIN_AGE = 21;
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
 /**
- * Placeholder estimated tax rate applied to order subtotals. Real per-jurisdiction
- * cannabis excise/sales tax tables are a compliance follow-up — do not treat this
- * as accurate for any market.
+ * Fallback estimated tax rate, used only until the per-state rate loads (or if a
+ * state has no operating_regions row). The authoritative rate lives on
+ * operating_regions.tax_rate and is what create_order / create_pos_order charge —
+ * clients should read it via the checkout_rules() RPC.
  */
 export const ESTIMATED_TAX_RATE = 0.15;
 

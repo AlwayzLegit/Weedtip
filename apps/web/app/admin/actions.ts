@@ -325,6 +325,8 @@ const regionSchema = z.object({
   is_medical_legal: z.boolean(),
   is_recreational_legal: z.boolean(),
   min_age: z.number().int().min(18).max(25),
+  // Entered as a percentage in the form (e.g. 13 for NY); stored as a fraction.
+  tax_rate: z.number().min(0).max(100),
   notes: z.string().max(500).nullable(),
 });
 
@@ -334,6 +336,7 @@ export async function upsertRegion(_prev: FormState, fd: FormData): Promise<Form
     is_medical_legal: bool(fd, 'is_medical_legal'),
     is_recreational_legal: bool(fd, 'is_recreational_legal'),
     min_age: numOpt(fd, 'min_age') ?? DEFAULT_MIN_AGE,
+    tax_rate: numOpt(fd, 'tax_percent') ?? 15,
     notes: str(fd, 'notes') ?? null,
   });
   if (!parsed.success) return fromZodError(parsed.error);
@@ -341,7 +344,7 @@ export async function upsertRegion(_prev: FormState, fd: FormData): Promise<Form
   const supabase = await createClient();
   const { error } = await supabase
     .from('operating_regions')
-    .upsert(parsed.data, { onConflict: 'state' });
+    .upsert({ ...parsed.data, tax_rate: parsed.data.tax_rate / 100 }, { onConflict: 'state' });
   if (error) return formError(error.message);
 
   revalidatePath('/admin/regions');

@@ -109,6 +109,13 @@ export default async function RegisterPage({
   const recentShifts = recentShiftsRes.data ?? [];
   const hasStaff = (staffCount ?? 0) > 0;
 
+  // The shop's state tax rate, so the on-screen ticket and printed receipt
+  // match what create_pos_order actually charges.
+  const { data: rulesRows } = await supabase.rpc('checkout_rules', {
+    p_dispensary_id: dispensary.id,
+  });
+  const taxRate = Number(rulesRows?.[0]?.tax_rate ?? 0.15);
+
   // Live cash-drawer tally for the open shift.
   const live = { cash: 0, card: 0, debit: 0, count: 0 };
   if (openShift) {
@@ -201,7 +208,12 @@ export default async function RegisterPage({
 
       <ShiftBar shift={openShift} live={live} />
 
-      <RegisterTerminal products={items} hasStaff={hasStaff} dispensaryName={dispensary.name} />
+      <RegisterTerminal
+        products={items}
+        hasStaff={hasStaff}
+        dispensaryName={dispensary.name}
+        taxRate={taxRate}
+      />
 
       {recentShifts.length > 0 && (
         <section>
