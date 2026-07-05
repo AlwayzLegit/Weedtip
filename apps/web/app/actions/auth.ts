@@ -72,12 +72,16 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     return { error: 'You must be 21 or older to use Weedtip.' };
   }
 
+  // Internal single-slash paths only — same rule as sign-in.
+  const nextRaw = formData.get('next');
+  const dest = typeof nextRaw === 'string' && /^\/(?!\/)/.test(nextRaw) ? nextRaw : '/';
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${siteUrl()}/auth/callback`,
+      emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(dest)}`,
       // Picked up by the handle_new_user trigger to seed the profile.
       data: {
         display_name: parsed.data.display_name,
@@ -88,13 +92,14 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   });
   if (error) return { error: error.message };
 
-  // Email confirmation enabled → no session yet.
+  // Email confirmation enabled → no session yet; the confirmation link lands
+  // back on `dest` (e.g. the listing they came to claim).
   if (!data.session) {
     return { message: 'Check your email to confirm your account, then sign in.' };
   }
 
   revalidatePath('/', 'layout');
-  redirect('/');
+  redirect(dest);
 }
 
 export async function signOut(): Promise<void> {

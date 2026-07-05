@@ -150,8 +150,11 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
   // Unclaimed, active listings can be claimed by dispensary-owner accounts —
   // but only when we hold the state license on file to verify the claim against.
-  const canClaim =
-    !d.owner_id && !!d.license_number && profile?.role === 'dispensary_owner' && !!user;
+  // Any unclaimed, license-verified listing advertises the claim path to
+  // EVERYONE (Yelp/Weedmaps pattern) — the wizard itself needs a business
+  // account, so visitors are funneled through sign-up and back here.
+  const claimable = !d.owner_id && !!d.license_number;
+  const canClaim = claimable && profile?.role === 'dispensary_owner' && !!user;
   let ownershipStatus: 'pending' | 'approved' | 'rejected' | null = null;
   if (canClaim && user) {
     const { data: req } = await supabase
@@ -390,6 +393,24 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               legalName={d.legal_name}
               licenseNumber={d.license_number}
             />
+          </div>
+        )}
+
+        {claimable && !canClaim && (
+          <div className="rounded-card border-border bg-surface mt-6 flex flex-wrap items-center justify-between gap-3 border p-4">
+            <div className="min-w-0">
+              <p className="font-medium">Own this dispensary?</p>
+              <p className="text-muted text-sm">
+                Claim this free listing to manage your menu, hours, photos, deals, and orders —
+                verified against the state license on file.
+              </p>
+            </div>
+            <Link
+              href={`/sign-up?role=dispensary_owner&next=/dispensary/${d.slug}`}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+            >
+              Claim this listing
+            </Link>
           </div>
         )}
 
