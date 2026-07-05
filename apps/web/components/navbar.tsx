@@ -4,6 +4,7 @@ import { ownsAnyBrand } from '@/lib/brand-owner';
 import { createClient } from '@/lib/supabase/server';
 import { Logo } from './brand/logo';
 import { GlobalSearch } from './global-search';
+import { MarketSelector } from './market-selector';
 import { NavMenu } from './nav-menu';
 
 export async function Navbar() {
@@ -28,6 +29,7 @@ export async function Navbar() {
           <Logo />
         </Link>
         <GlobalSearch className="mx-4 hidden max-w-md flex-1 md:block" />
+        <MarketSelector className="mr-3 hidden sm:block" />
         <NavMenu
           email={user?.email ?? null}
           displayName={profile?.display_name ?? null}

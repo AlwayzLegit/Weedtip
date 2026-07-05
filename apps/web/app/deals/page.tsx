@@ -1,3 +1,4 @@
+import { MarketBanner } from '@/components/market-banner';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Tag } from 'lucide-react';
@@ -125,6 +126,7 @@ export default async function DealsPage() {
       <div className="mb-6">
         <p className="eyebrow mb-1">Save today</p>
         <h1 className="text-2xl font-bold sm:text-3xl">Deals</h1>
+      <MarketBanner hrefPrefix="/deals" label="deals" />
         <p className="text-muted mt-1">Live discounts from dispensaries near you.</p>
       </div>
 
