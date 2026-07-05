@@ -6,7 +6,10 @@ import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { itemListJsonLd, pageSeo } from '@/lib/seo';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
+
+// Public, anon-only page — serve cached HTML and refresh every 15 min (ISR).
+export const revalidate = 900;
 
 export async function generateMetadata({
   params,
@@ -14,7 +17,7 @@ export async function generateMetadata({
   params: Promise<{ category: string }>;
 }): Promise<Metadata> {
   const { category } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from('categories')
     .select('name')
@@ -32,7 +35,7 @@ export default async function CategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category: slug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data: category } = await supabase
     .from('categories')

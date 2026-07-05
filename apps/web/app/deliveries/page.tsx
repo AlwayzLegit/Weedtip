@@ -6,7 +6,10 @@ import { DispensaryMap, type MapPoint } from '@/components/dispensary-map';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { itemListJsonLd, pageSeo } from '@/lib/seo';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
+
+// Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
+export const revalidate = 3600;
 
 export const metadata: Metadata = pageSeo({
   title: 'Cannabis Delivery',
@@ -19,7 +22,7 @@ const SELECT =
   'id,slug,name,city,state,latitude,longitude,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
 
 export default async function DeliveriesPage() {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from('dispensaries')
     .select(SELECT)

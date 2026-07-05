@@ -6,8 +6,11 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
+
+// Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -32,7 +35,7 @@ export default async function StateDispensariesPage({
   const stateName = US_STATES[code];
   if (!stateName) notFound();
 
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   // A single state can exceed PostgREST's 1k cap, so page the full set. We only
   // read the columns needed to build the city directory (not full shop rows),
   // so even the largest states stay cheap.

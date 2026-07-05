@@ -10,7 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
+
+// Public, anon-only page — serve cached HTML and refresh every 5 min (ISR).
+export const revalidate = 300;
 
 const DISP_FIELDS =
   'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,rating_avg,rating_count,status';
@@ -48,7 +51,7 @@ function SectionHeading({
 }
 
 export default async function HomePage() {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const nowIso = new Date().toISOString();
   const head = { count: 'exact' as const, head: true };
 

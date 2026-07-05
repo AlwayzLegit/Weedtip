@@ -7,8 +7,11 @@ import { DealCard } from '@/components/deal-card';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
+
+// Public, anon-only page — serve cached HTML and refresh every 15 min (ISR).
+export const revalidate = 900;
 
 const DEAL_SELECT = '*, dispensary:dispensaries!inner(slug,name,city,state,status)';
 
@@ -26,7 +29,7 @@ const loadCityDeals = cache(async function loadCityDeals(state: string, city: st
   const code = state.toUpperCase();
   const stateName = US_STATES[code];
   if (!stateName) return null;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const nowIso = new Date().toISOString();
   const { data } = await supabase
     .from('deals')
