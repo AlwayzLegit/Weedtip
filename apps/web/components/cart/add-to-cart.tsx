@@ -2,6 +2,7 @@
 
 import { Check, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { track } from '@/lib/analytics';
 import { Button } from '../ui/button';
 import { useCart, type DispensaryRef } from './cart-provider';
 
@@ -23,6 +24,13 @@ export function AddToCart({
       className="w-full"
       onClick={() => {
         addItem(dispensary, product);
+        track('add_to_cart', {
+          dispensary_id: dispensary.id,
+          dispensary_slug: dispensary.slug,
+          product_id: product.productId,
+          product_name: product.name,
+          price_cents: product.priceCents,
+        });
         setAdded(true);
         setTimeout(() => setAdded(false), 1200);
       }}

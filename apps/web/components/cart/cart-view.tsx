@@ -17,6 +17,7 @@ import {
   startCheckout,
   type CheckoutRules,
 } from '@/app/actions/checkout';
+import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { formatPrice } from '@/lib/format';
 import { Button } from '../ui/button';
@@ -166,6 +167,15 @@ export function CartView({
     }
     setPending(true);
     setError(null);
+    track('checkout_started', {
+      dispensary_id: cart.dispensaryId,
+      dispensary_slug: cart.dispensarySlug,
+      order_type: orderType,
+      item_count: cart.items.length,
+      subtotal_cents: subtotalCents,
+      total_cents: totalCents,
+      pay_online: stripeEnabled && payMethod === 'card',
+    });
     const res = await startCheckout({
       dispensary_id: cart.dispensaryId,
       order_type: orderType,
@@ -176,6 +186,24 @@ export function CartView({
       save_address: orderType === 'delivery' ? saveAddress : undefined,
       items: cart.items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
     });
+    if (res.ok) {
+      // The order row exists in both modes (Stripe payment settles it later);
+      // beacon so the capture survives the hard redirect to Stripe.
+      track(
+        'order_placed',
+        {
+          dispensary_id: cart.dispensaryId,
+          dispensary_slug: cart.dispensarySlug,
+          order_type: orderType,
+          item_count: cart.items.length,
+          subtotal_cents: subtotalCents,
+          discount_cents: discountCents,
+          total_cents: totalCents,
+          paid_online: res.mode === 'redirect',
+        },
+        { beacon: res.mode === 'redirect' },
+      );
+    }
     if (res.ok && res.mode === 'redirect') {
       clear();
       window.location.href = res.url; // hand off to Stripe Checkout
