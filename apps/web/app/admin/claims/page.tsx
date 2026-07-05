@@ -12,7 +12,7 @@ export default async function AdminClaims() {
     supabase
       .from('ownership_requests')
       .select(
-        'id, status, message, license_number, created_at, dispensary:dispensaries(name,slug,city,state), requester:profiles(display_name)',
+        'id, status, message, license_number, license_match, claimant_role, business_email, business_phone, created_at, dispensary:dispensaries(name,slug,city,state), requester:profiles(display_name)',
       )
       .eq('status', 'pending')
       .order('created_at', { ascending: true }),
@@ -72,9 +72,25 @@ export default async function AdminClaims() {
                     Requested by {requester?.display_name ?? 'an owner'} ·{' '}
                     {new Date(r.created_at).toLocaleDateString()}
                   </p>
+                  <p className="text-muted mt-1 text-xs">
+                    {r.claimant_role
+                      ? { owner: 'Owner', manager: 'Manager', authorized_rep: 'Authorized rep' }[
+                          r.claimant_role as 'owner' | 'manager' | 'authorized_rep'
+                        ]
+                      : 'Role not given'}
+                    {r.business_email ? ` · ${r.business_email}` : ''}
+                    {r.business_phone ? ` · ${r.business_phone}` : ''}
+                  </p>
                   {r.license_number && (
                     <p className="mt-2 text-sm">
-                      <span className="text-muted">License #</span> {r.license_number}
+                      <span className="text-muted">License #</span> {r.license_number}{' '}
+                      {r.license_match ? (
+                        <span className="text-primary text-xs font-semibold">
+                          ✓ matches state record
+                        </span>
+                      ) : (
+                        <span className="text-muted text-xs">— does not match record on file</span>
+                      )}
                     </p>
                   )}
                   {r.message && <p className="text-muted mt-1 text-sm">“{r.message}”</p>}
