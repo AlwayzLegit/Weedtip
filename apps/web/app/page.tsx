@@ -63,6 +63,7 @@ export default async function HomePage() {
     { data: popular },
     dispCount,
     prodCount,
+    lineupCount,
     stateCountRes,
   ] = await Promise.all([
     supabase
@@ -107,6 +108,7 @@ export default async function HomePage() {
       .limit(10),
     supabase.from('dispensaries').select('id', head).eq('status', 'active'),
     supabase.from('products').select('id', head),
+    supabase.from('brand_products').select('id', head),
     supabase.rpc('get_active_dispensary_state_count'),
   ]);
 
@@ -131,7 +133,9 @@ export default async function HomePage() {
   const nf = new Intl.NumberFormat('en-US');
   const stats = [
     { label: 'Dispensaries', value: `${nf.format(dispCount.count ?? 0)}` },
-    { label: 'Products', value: `${nf.format(prodCount.count ?? 0)}` },
+    // Menu items plus official brand-catalog products — the real breadth of what
+    // a shopper can browse (a raw menu count under-sold the platform badly).
+    { label: 'Products', value: `${nf.format((prodCount.count ?? 0) + (lineupCount.count ?? 0))}` },
     { label: 'States', value: `${stateCount}` },
   ];
 
