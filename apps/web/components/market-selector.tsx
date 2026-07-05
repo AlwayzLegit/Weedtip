@@ -15,7 +15,7 @@ export function readMarketCookie(): string | null {
   return code && US_STATES[code] ? code : null;
 }
 
-function writeMarketCookie(code: string | null) {
+export function writeMarketCookie(code: string | null) {
   if (code) {
     document.cookie = `${MARKET_COOKIE}=${code}; max-age=${60 * 60 * 24 * 365}; path=/; samesite=lax`;
   } else {

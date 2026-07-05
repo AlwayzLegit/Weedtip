@@ -2179,6 +2179,14 @@ export type Database = {
           brand_id: string
         }[]
       }
+      region_directory: {
+        Args: { top_cities_limit?: number }
+        Returns: {
+          dispensary_count: number
+          state: string
+          top_cities: Json
+        }[]
+      }
       region_featured_dispensaries: {
         Args: { p_city?: string; p_state: string }
         Returns: {
