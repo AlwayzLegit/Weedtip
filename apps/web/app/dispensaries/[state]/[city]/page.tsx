@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { PRODUCT_CATEGORIES } from '@weedtip/shared';
+import { PRODUCT_CATEGORIES, type OperatingHours } from '@weedtip/shared';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { DispensaryCard } from '@/components/dispensary-card';
+import { CityBrowser } from '@/components/city-browser';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
@@ -15,7 +15,7 @@ import { fetchAll } from '@/lib/supabase/fetch-all';
 export const revalidate = 3600;
 
 const LOCATION_SELECT =
-  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count';
+  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone';
 
 // Cached per request so generateMetadata + the page don't each run the query.
 const loadCity = cache(async function loadCity(state: string, city: string) {
@@ -25,7 +25,7 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
   const supabase = createStaticClient();
   // Page past the 1k cap: in large states a city's shops can all sort beyond
   // row 1,000, which previously 404'd valid (and sitemap-listed) city pages.
-  const data = await fetchAll<{ id: string; slug: string; name: string; city: string | null; state: string; cover_image_url: string | null; logo_url: string | null; is_delivery: boolean; is_pickup: boolean; is_medical: boolean; is_recreational: boolean; featured: boolean; rating_avg: number; rating_count: number }>(
+  const data = await fetchAll<{ id: string; slug: string; name: string; city: string | null; state: string; cover_image_url: string | null; logo_url: string | null; is_delivery: boolean; is_pickup: boolean; is_medical: boolean; is_recreational: boolean; featured: boolean; rating_avg: number; rating_count: number; latitude: number | null; longitude: number | null; hours: unknown; timezone: string | null }>(
     (from, to) =>
       supabase
         .from('dispensaries')
@@ -148,32 +148,33 @@ export default async function CityDispensariesPage({
         {shops.length} {shops.length === 1 ? 'dispensary' : 'dispensaries'} in {cityName}.
       </p>
 
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {shops.map((s) => {
+      <CityBrowser
+        cityName={cityName}
+        shops={shops.map((s) => {
           const promo = featuredByDispensary.get(s.id);
-          return (
-            <DispensaryCard
-              key={s.id}
-              d={{
-                slug: s.slug,
-                name: s.name,
-                city: s.city,
-                state: s.state,
-                coverImageUrl: s.cover_image_url,
-                logoUrl: s.logo_url,
-                isDelivery: s.is_delivery,
-                isPickup: s.is_pickup,
-                isMedical: s.is_medical,
-                isRecreational: s.is_recreational,
-                featured: s.featured || !!promo,
-                placementId: promo?.placementId,
-                rating: s.rating_avg,
-                reviewCount: s.rating_count,
-              }}
-            />
-          );
+          return {
+            id: s.id,
+            slug: s.slug,
+            name: s.name,
+            city: s.city,
+            state: s.state,
+            coverImageUrl: s.cover_image_url,
+            logoUrl: s.logo_url,
+            isDelivery: s.is_delivery,
+            isPickup: s.is_pickup,
+            isMedical: s.is_medical,
+            isRecreational: s.is_recreational,
+            featured: s.featured || !!promo,
+            placementId: promo?.placementId || undefined,
+            rating: s.rating_avg,
+            reviewCount: s.rating_count,
+            lat: s.latitude,
+            lng: s.longitude,
+            hours: (s.hours ?? null) as OperatingHours | null,
+            timezone: s.timezone,
+          };
         })}
-      </div>
+      />
 
       <section className="mt-10">
         <h2 className="mb-3 text-lg font-semibold">Browse {cityName} by category</h2>
