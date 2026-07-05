@@ -1,8 +1,9 @@
 'use client';
 
 import { Store } from 'lucide-react';
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { requestOwnership, withdrawOwnership } from '@/app/actions/ownership';
+import { track } from '@/lib/analytics';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
 import { SubmitButton } from './auth/submit-button';
 import { Button } from './ui/button';
@@ -30,6 +31,12 @@ export function ClaimListing({
 }) {
   const [state, action] = useActionState(requestOwnership, EMPTY_FORM_STATE);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (state.status === 'success') {
+      track('claim_submitted', { dispensary_id: dispensaryId, slug });
+    }
+  }, [state.status, dispensaryId, slug]);
 
   if (existingStatus === 'pending' || state.status === 'success') {
     return (
@@ -64,7 +71,13 @@ export function ClaimListing({
           )}
         </div>
         {!open && (
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button
+            size="sm"
+            onClick={() => {
+              setOpen(true);
+              track('claim_started', { dispensary_id: dispensaryId, slug });
+            }}
+          >
             <Store className="h-4 w-4" /> Claim listing
           </Button>
         )}

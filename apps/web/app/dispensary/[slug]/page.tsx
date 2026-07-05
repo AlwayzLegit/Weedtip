@@ -15,6 +15,7 @@ import {
   Truck,
 } from 'lucide-react';
 import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
+import { ShopViewTracker } from '@/components/analytics/shop-view-tracker';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ClaimListing } from '@/components/claim-listing';
 import { MenuBrowser, type MenuBrowserItem } from '@/components/dispensary/menu-browser';
@@ -300,6 +301,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   return (
     <main>
       <JsonLd data={jsonLd} />
+      <ShopViewTracker
+        dispensaryId={d.id}
+        slug={d.slug}
+        name={d.name}
+        city={d.city}
+        state={d.state}
+      />
       <div className="mx-auto max-w-7xl px-4 pt-4">
         <Breadcrumbs items={crumbs} />
       </div>
