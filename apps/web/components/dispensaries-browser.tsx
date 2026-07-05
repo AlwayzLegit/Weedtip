@@ -316,6 +316,32 @@ export function DispensariesBrowser({
       const rows = (data ?? []).map(toShop);
       setTotal(data?.[0]?.total_count ?? (opts.append ? total : 0));
       setShops((prev) => (opts.append ? [...prev, ...rows] : rows));
+      // Deal badges for the visible page of results (soonest-ending live deal
+      // per shop) — the bounds RPC itself stays lean.
+      if (rows.length > 0) {
+        const nowIso = new Date().toISOString();
+        void supabase
+          .from('deals')
+          .select('dispensary_id,discount_type,discount_value')
+          .in('dispensary_id', rows.map((r) => r.id))
+          .eq('is_active', true)
+          .lte('start_date', nowIso)
+          .gte('end_date', nowIso)
+          .order('end_date')
+          .then(({ data: liveDeals }) => {
+            if (id !== requestId.current || !liveDeals?.length) return;
+            const byShop = new Map<string, string>();
+            for (const dl of liveDeals) {
+              if (dl.dispensary_id && !byShop.has(dl.dispensary_id)) {
+                byShop.set(dl.dispensary_id, dealBadge(dl.discount_type, Number(dl.discount_value)));
+              }
+            }
+            if (byShop.size === 0) return;
+            setShops((prev) =>
+              prev.map((sh) => (byShop.has(sh.id) ? { ...sh, dealBadge: byShop.get(sh.id) } : sh)),
+            );
+          });
+      }
       if (!opts.append) {
         setPopupShop(null);
         listRef.current?.scrollTo({ top: 0 });

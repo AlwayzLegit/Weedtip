@@ -1,9 +1,10 @@
 import { MarketBanner } from '@/components/market-banner';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Tag } from 'lucide-react';
+import { Star, Store, Tag, Truck } from 'lucide-react';
 import { PlacementBeacon } from '@/components/placement-beacon';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { dealBadge } from '@/lib/format';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
@@ -14,7 +15,16 @@ export const metadata: Metadata = pageSeo({
   path: '/deals',
 });
 
-type DealDispensary = { slug: string; name: string; city: string; state: string } | null;
+type DealDispensary = {
+  slug: string;
+  name: string;
+  city: string;
+  state: string;
+  is_delivery: boolean;
+  is_pickup: boolean;
+  rating_avg: number;
+  rating_count: number;
+} | null;
 type DealRow = {
   id: string;
   title: string;
@@ -59,8 +69,27 @@ function DealTile({
           </p>
         )}
         {dispensary && (
-          <p className="text-muted mt-2 text-xs">
-            {dispensary.name} · {dispensary.city}, {dispensary.state}
+          <p className="text-muted mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+            <span>
+              {dispensary.name} · {dispensary.city}, {dispensary.state}
+            </span>
+            {dispensary.rating_avg > 0 && (
+              <span className="inline-flex items-center gap-0.5">
+                <Star className="text-primary h-3 w-3 fill-current" />
+                {dispensary.rating_avg.toFixed(1)}
+                {dispensary.rating_count ? ` (${dispensary.rating_count})` : ''}
+              </span>
+            )}
+            {dispensary.is_pickup && (
+              <span className="inline-flex items-center gap-0.5">
+                <Store className="h-3 w-3" /> Pickup
+              </span>
+            )}
+            {dispensary.is_delivery && (
+              <span className="inline-flex items-center gap-0.5">
+                <Truck className="h-3 w-3" /> Delivery
+              </span>
+            )}
           </p>
         )}
       </div>
@@ -71,11 +100,18 @@ function DealTile({
   );
 }
 
-export default async function DealsPage() {
+export default async function DealsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ fulfillment?: string }>;
+}) {
+  const { fulfillment } = await searchParams;
+  const mode = fulfillment === 'delivery' || fulfillment === 'pickup' ? fulfillment : null;
   const supabase = await createClient();
   const nowIso = new Date().toISOString();
 
-  const DEAL_SELECT = '*, dispensary:dispensaries!inner(slug,name,city,state,status)';
+  const DEAL_SELECT =
+    '*, dispensary:dispensaries!inner(slug,name,city,state,status,is_delivery,is_pickup,rating_avg,rating_count)';
 
   // Live promoted-deal placements → the sponsored rail.
   const { data: promos } = await supabase
@@ -100,14 +136,18 @@ export default async function DealsPage() {
           .gte('end_date', nowIso)
           .eq('dispensary.status', 'active')
       : Promise.resolve({ data: [] as DealRow[] }),
-    supabase
-      .from('deals')
-      .select(DEAL_SELECT)
-      .eq('is_active', true)
-      .lte('start_date', nowIso)
-      .gte('end_date', nowIso)
-      .eq('dispensary.status', 'active')
-      .order('end_date'),
+    (() => {
+      let q = supabase
+        .from('deals')
+        .select(DEAL_SELECT)
+        .eq('is_active', true)
+        .lte('start_date', nowIso)
+        .gte('end_date', nowIso)
+        .eq('dispensary.status', 'active');
+      if (mode === 'delivery') q = q.eq('dispensary.is_delivery', true);
+      if (mode === 'pickup') q = q.eq('dispensary.is_pickup', true);
+      return q.order('end_date');
+    })(),
   ]);
 
   // Order sponsored by placement priority and keep them out of the main grid.
@@ -115,9 +155,12 @@ export default async function DealsPage() {
   const placementOf = new Map(
     (promos ?? []).map((p) => [p.target_id, p.id] as const),
   );
-  const sponsored = ((sponsoredDeals as DealRow[]) ?? []).sort(
-    (a, b) => (priorityOf.get(b.id) ?? 0) - (priorityOf.get(a.id) ?? 0),
-  );
+  const matchesMode = (d: DealRow) =>
+    !mode ||
+    (mode === 'delivery' ? !!d.dispensary?.is_delivery : !!d.dispensary?.is_pickup);
+  const sponsored = ((sponsoredDeals as DealRow[]) ?? [])
+    .filter(matchesMode)
+    .sort((a, b) => (priorityOf.get(b.id) ?? 0) - (priorityOf.get(a.id) ?? 0));
   const sponsoredIds = new Set(sponsored.map((d) => d.id));
   const rest = ((deals as DealRow[]) ?? []).filter((d) => !sponsoredIds.has(d.id));
 
@@ -128,6 +171,30 @@ export default async function DealsPage() {
         <h1 className="text-2xl font-bold sm:text-3xl">Deals</h1>
       <MarketBanner hrefPrefix="/deals" label="deals" />
         <p className="text-muted mt-1">Live discounts from dispensaries near you.</p>
+      </div>
+
+      {/* Fulfilment toggles (Weedmaps-style) — plain links so the page stays server-rendered. */}
+      <div className="mb-6 flex items-center gap-2">
+        {(
+          [
+            [null, 'All deals'],
+            ['pickup', 'Pickup'],
+            ['delivery', 'Delivery'],
+          ] as const
+        ).map(([value, label]) => (
+          <Link
+            key={label}
+            href={value ? `/deals?fulfillment=${value}` : '/deals'}
+            className={cn(
+              'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+              mode === value
+                ? 'border-primary bg-primary-muted text-primary'
+                : 'border-border text-muted hover:text-foreground',
+            )}
+          >
+            {label}
+          </Link>
+        ))}
       </div>
 
       {sponsored.length > 0 && (

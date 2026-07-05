@@ -420,6 +420,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 <Phone className="h-4 w-4" /> Call
               </a>
             )}
+            {d.email && (
+              <a
+                href={`mailto:${d.email}`}
+                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+              >
+                <Mail className="h-4 w-4" /> Email
+              </a>
+            )}
             {d.website && (
               <a
                 href={d.website}
