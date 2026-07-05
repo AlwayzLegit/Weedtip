@@ -17,6 +17,7 @@ const SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
 const FIELD_MASK = [
   'places.id',
   'places.displayName',
+  'places.formattedAddress',
   'places.location',
   'places.nationalPhoneNumber',
   'places.websiteUri',
@@ -55,6 +56,7 @@ type GooglePeriodPoint = { day: number; hour: number; minute: number };
 type Place = {
   id: string;
   displayName?: { text?: string };
+  formattedAddress?: string;
   location?: { latitude: number; longitude: number };
   nationalPhoneNumber?: string;
   websiteUri?: string;
@@ -139,7 +141,11 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
       }
       const json = (await res.json()) as { places?: Place[] };
       const ours = nameTokens(d.name);
-      const hit = (json.places ?? []).find((p) => {
+      const sharedTokens = (p: Place) => {
+        const theirs = nameTokens(p.displayName?.text ?? '');
+        return [...ours].filter((t) => theirs.has(t)).length;
+      };
+      let hit = (json.places ?? []).find((p) => {
         if (!p.location) return false;
         const dist = haversineMeters(
           d.latitude as number,
@@ -148,9 +154,26 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
           p.location.longitude,
         );
         if (dist > 150) return false;
-        const theirs = nameTokens(p.displayName?.text ?? '');
-        return [...ours].some((t) => theirs.has(t));
+        return sharedTokens(p) >= 1;
       });
+
+      // Many seed rows carry centroid-grade geocodes, so the 150m gate misses
+      // real matches. Fallback: same city+state in Google's address AND a
+      // strong (≥2 shared token) name match. Google's coordinates are the
+      // trustworthy ones here — adopt them.
+      let adoptGoogleLocation = false;
+      if (!hit && d.city && d.state) {
+        const city = d.city.toLowerCase();
+        const state = d.state.toUpperCase();
+        hit = (json.places ?? []).find((p) => {
+          if (!p.location || !p.formattedAddress) return false;
+          const addr = p.formattedAddress.toLowerCase();
+          if (!addr.includes(city)) return false;
+          if (!new RegExp(`\\b${state}\\b`).test(p.formattedAddress)) return false;
+          return sharedTokens(p) >= 2;
+        });
+        adoptGoogleLocation = Boolean(hit);
+      }
 
       if (!hit) {
         unmatched += 1;
@@ -169,6 +192,11 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
           google_place_id: hit.id,
           google_enriched_at: new Date().toISOString(),
           ...(photo ? { google_photo_name: photo, cover_image_url: `/api/dispensary-cover/${d.slug}` } : {}),
+          // Address-verified fallback: replace our centroid-grade point with
+          // Google's premise coordinates (EWKT for the geography column).
+          ...(adoptGoogleLocation && hit.location
+            ? { location: `SRID=4326;POINT(${hit.location.longitude} ${hit.location.latitude})` }
+            : {}),
           // Fill contact/hours only where we have nothing — never overwrite.
           ...(!d.phone && hit.nationalPhoneNumber ? { phone: hit.nationalPhoneNumber } : {}),
           ...(!d.website && hit.websiteUri ? { website: hit.websiteUri } : {}),
