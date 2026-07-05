@@ -8,8 +8,17 @@ export interface LearnSection {
   paragraphs: string[];
 }
 
+export type LearnTopic =
+  | 'Ordering'
+  | 'Plant'
+  | 'Body'
+  | 'Products'
+  | 'Laws'
+  | 'Dictionary';
+
 export interface Article {
   slug: string;
+  topic: LearnTopic;
   title: string;
   description: string;
   datePublished: string;
@@ -21,6 +30,7 @@ export interface Article {
 export const ARTICLES: Article[] = [
   {
     slug: 'how-to-order-cannabis-online',
+    topic: 'Ordering',
     title: 'How to order cannabis online for pickup or delivery',
     description:
       'A step-by-step guide to finding a licensed dispensary, building your cart, and ordering cannabis for pickup or delivery.',
@@ -61,6 +71,7 @@ export const ARTICLES: Article[] = [
   },
   {
     slug: 'indica-vs-sativa-vs-hybrid',
+    topic: 'Plant',
     title: 'Indica vs Sativa vs Hybrid: what’s the difference?',
     description:
       'A plain-English explainer of indica, sativa, and hybrid cannabis — what the labels mean, and why effects vary from person to person.',
@@ -101,6 +112,7 @@ export const ARTICLES: Article[] = [
   },
   {
     slug: 'understanding-thc-and-cbd',
+    topic: 'Body',
     title: 'Understanding THC and CBD',
     description:
       'What THC and CBD are, how they differ, and how to read potency percentages so you can choose products with confidence.',
@@ -135,6 +147,7 @@ export const ARTICLES: Article[] = [
   },
   {
     slug: 'what-to-bring-to-a-dispensary',
+    topic: 'Ordering',
     title: 'What to bring to a dispensary',
     description:
       'A quick checklist for your first dispensary visit — ID requirements, payment, and what to expect at pickup.',

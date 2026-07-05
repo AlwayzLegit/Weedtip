@@ -26,7 +26,6 @@ import { Button } from './ui/button';
 const BROWSE = [
   { href: '/dispensaries', label: 'Dispensaries' },
   { href: '/deliveries', label: 'Deliveries' },
-  { href: '/map', label: 'Map' },
   { href: '/brands', label: 'Brands' },
   { href: '/products', label: 'Products' },
   { href: '/deals', label: 'Deals' },
@@ -127,7 +126,7 @@ export function NavMenu({
   return (
     <>
       {/* Desktop */}
-      <nav className="hidden items-center gap-5 lg:flex">
+      <nav className="hidden items-center gap-4 lg:flex">
         {browseLinks}
         <CartButton />
         {email && (
