@@ -73,15 +73,17 @@ export default async function DispensariesPage({
   let bounds: BBox;
   let regionName: string | undefined;
   const origin = lat !== undefined && lng !== undefined ? { lat, lng } : null;
+  // Geocoded searches ("Los Angeles, CA") carry the place label for the heading.
+  const placeName = typeof sp.place === 'string' ? sp.place.slice(0, 80) : undefined;
   if (origin) {
     bounds = bboxAround(origin.lat, origin.lng, Math.min(Math.max(radius, 2_000), 160_000));
-    regionName = 'near you';
+    regionName = placeName ? `in ${placeName}` : 'near you';
   } else if (stateParam && STATE_BOUNDS[stateParam]) {
     bounds = STATE_BOUNDS[stateParam];
-    regionName = US_STATES[stateParam];
+    regionName = US_STATES[stateParam] ? `in ${US_STATES[stateParam]}` : undefined;
   } else if (marketState && STATE_BOUNDS[marketState]) {
     bounds = STATE_BOUNDS[marketState];
-    regionName = US_STATES[marketState];
+    regionName = US_STATES[marketState] ? `in ${US_STATES[marketState]}` : undefined;
   } else {
     bounds = US_BOUNDS;
   }
@@ -140,7 +142,7 @@ export default async function DispensariesPage({
         </p>
       ) : (
         <DispensariesBrowser
-          heading={regionName ? `Dispensaries ${regionName === 'near you' ? regionName : `in ${regionName}`}` : 'Dispensaries'}
+          heading={regionName ? `Dispensaries ${regionName}` : 'Dispensaries'}
           initialShops={initialShops}
           initialTotal={total}
           initialBounds={bounds}
