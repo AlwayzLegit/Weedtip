@@ -686,6 +686,7 @@ export type Database = {
           is_medical: boolean
           is_pickup: boolean
           is_recreational: boolean
+          last_google_sync: string | null
           latitude: number | null
           legal_name: string | null
           license_number: string | null
@@ -732,6 +733,7 @@ export type Database = {
           is_medical?: boolean
           is_pickup?: boolean
           is_recreational?: boolean
+          last_google_sync?: string | null
           latitude?: number | null
           legal_name?: string | null
           license_number?: string | null
@@ -778,6 +780,7 @@ export type Database = {
           is_medical?: boolean
           is_pickup?: boolean
           is_recreational?: boolean
+          last_google_sync?: string | null
           latitude?: number | null
           legal_name?: string | null
           license_number?: string | null
@@ -1170,6 +1173,10 @@ export type Database = {
           created_at: string
           dispensary_id: string
           id: string
+          business_email: string | null
+          business_phone: string | null
+          claimant_role: string | null
+          license_match: boolean
           license_number: string | null
           message: string | null
           status: string
@@ -1180,6 +1187,10 @@ export type Database = {
           created_at?: string
           dispensary_id: string
           id?: string
+          business_email?: string | null
+          business_phone?: string | null
+          claimant_role?: string | null
+          license_match?: boolean
           license_number?: string | null
           message?: string | null
           status?: string
@@ -1190,6 +1201,10 @@ export type Database = {
           created_at?: string
           dispensary_id?: string
           id?: string
+          business_email?: string | null
+          business_phone?: string | null
+          claimant_role?: string | null
+          license_match?: boolean
           license_number?: string | null
           message?: string | null
           status?: string

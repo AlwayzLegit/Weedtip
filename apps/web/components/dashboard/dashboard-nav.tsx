@@ -8,6 +8,7 @@ import {
   BarChart3,
   Calculator,
   Gavel,
+  Globe,
   LayoutDashboard,
   Leaf,
   MapPin,
@@ -40,6 +41,7 @@ const OWNER_NAV: NavItem[] = [
   { href: '/studio', label: 'Brand Studio', icon: Award },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/qr', label: 'QR codes', icon: QrCode },
+  { href: '/dashboard/google', label: 'Google', icon: Globe },
   { href: '/dashboard/promote', label: 'Promote', icon: Megaphone },
   { href: '/dashboard/ads', label: 'Advertise', icon: Gavel },
 ];

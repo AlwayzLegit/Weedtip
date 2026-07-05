@@ -79,10 +79,43 @@ export function ClaimListing({
               Your previous claim was declined. Add details below and try again.
             </p>
           )}
-          <Input name="license_number" placeholder="State license # (helps us verify)" maxLength={120} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <select
+              name="claimant_role"
+              required
+              defaultValue=""
+              className="border-border bg-surface-2 text-foreground h-11 w-full rounded-lg border px-3.5 text-sm"
+              aria-label="Your role at this business"
+            >
+              <option value="" disabled>
+                Your role at this business…
+              </option>
+              <option value="owner">Owner</option>
+              <option value="manager">Manager</option>
+              <option value="authorized_rep">Authorized representative</option>
+            </select>
+            <Input
+              name="business_email"
+              type="email"
+              placeholder="Business email"
+              required
+              maxLength={254}
+            />
+            <Input name="business_phone" placeholder="Business phone (optional)" maxLength={30} />
+            <Input
+              name="license_number"
+              placeholder="State license #"
+              maxLength={120}
+              required
+            />
+          </div>
+          <p className="text-muted text-xs">
+            Entering the license number exactly as issued verifies your claim against the state
+            record instantly and speeds up review.
+          </p>
           <Textarea
             name="message"
-            placeholder="Anything that helps verify you own this dispensary (optional)"
+            placeholder="Anything else that helps verify you own this dispensary (optional)"
             maxLength={2000}
           />
           {state.status === 'error' && state.message && (

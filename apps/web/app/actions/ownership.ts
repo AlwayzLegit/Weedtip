@@ -9,9 +9,17 @@ import { createClient } from '@/lib/supabase/server';
 const claimSchema = z.object({
   dispensary_id: z.string().uuid(),
   slug: z.string().min(1).max(120),
+  claimant_role: z.enum(['owner', 'manager', 'authorized_rep']),
+  business_email: z.string().email('Enter a valid business email').max(254),
+  business_phone: z.string().max(30).nullable(),
   message: z.string().max(2000).nullable(),
   license_number: z.string().max(120).nullable(),
 });
+
+/** Loose license comparison: case/spacing/punctuation insensitive. */
+function normalizeLicense(v: string | null | undefined): string {
+  return (v ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
 
 /**
  * A dispensary_owner requests to claim an unclaimed, active listing. The DB's RLS
@@ -29,6 +37,9 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
   const parsed = claimSchema.safeParse({
     dispensary_id: str(fd, 'dispensary_id') ?? '',
     slug: str(fd, 'slug') ?? '',
+    claimant_role: str(fd, 'claimant_role') ?? '',
+    business_email: str(fd, 'business_email') ?? '',
+    business_phone: str(fd, 'business_phone') ?? null,
     message: str(fd, 'message') ?? null,
     license_number: str(fd, 'license_number') ?? null,
   });
@@ -57,11 +68,21 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
     .eq('dispensary_id', parsed.data.dispensary_id)
     .eq('user_id', user.id);
 
+  // The strongest self-serve signal an admin has: does the license the claimer
+  // typed match the state record on file?
+  const licenseMatch =
+    !!parsed.data.license_number &&
+    normalizeLicense(parsed.data.license_number) === normalizeLicense(target.license_number);
+
   const { error } = await supabase.from('ownership_requests').insert({
     dispensary_id: parsed.data.dispensary_id,
     user_id: user.id,
+    claimant_role: parsed.data.claimant_role,
+    business_email: parsed.data.business_email,
+    business_phone: parsed.data.business_phone,
     message: parsed.data.message,
     license_number: parsed.data.license_number,
+    license_match: licenseMatch,
   });
 
   if (error) {
