@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Leaf, Sprout } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
+import { StrainCard } from '@/components/strain-card';
 import { StrainFavoriteButton } from '@/components/strain/strain-favorite-button';
 import { Badge } from '@/components/ui/badge';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
@@ -58,6 +59,24 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
     .eq('strain_id', strain.id)
     .eq('dispensary.status', 'active')
     .order('price_cents');
+
+  // Lineage links resolve to real strain pages where the parent is in the
+  // library (most classics are), falling back to search for the rest.
+  const parentNames: string[] = strain.parents ?? [];
+  const { data: parentRows } = parentNames.length
+    ? await supabase.from('strains').select('name,slug').in('name', parentNames)
+    : { data: [] };
+  const parentSlug = new Map((parentRows ?? []).map((p) => [p.name, p.slug]));
+
+  // Related strains: same family first, most-saved first (Weedmaps pattern).
+  const { data: related } = await supabase
+    .from('strains')
+    .select('slug,name,type,effects,thc_low,thc_high')
+    .eq('type', strain.type)
+    .neq('id', strain.id)
+    .order('saves_count', { ascending: false })
+    .order('name')
+    .limit(8);
 
   const saleMap = new Map<string, number>();
   if (products && products.length) {
@@ -228,7 +247,14 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
             {strain.parents.map((p, i) => (
               <span key={p}>
                 {i > 0 && ' × '}
-                <Link href={`/search?q=${encodeURIComponent(p)}`} className="text-primary hover:underline">
+                <Link
+                  href={
+                    parentSlug.has(p)
+                      ? `/strain/${parentSlug.get(p)}`
+                      : `/search?q=${encodeURIComponent(p)}`
+                  }
+                  className="text-primary hover:underline"
+                >
                   {p}
                 </Link>
               </span>
@@ -274,7 +300,26 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
       <section className="mt-10">
         <h2 className="mb-3 text-lg font-semibold">Where to buy</h2>
         {!products || products.length === 0 ? (
-          <p className="text-muted">No dispensaries currently list this strain.</p>
+          <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-5">
+            <p className="text-muted text-sm">
+              No menus currently list {strain.name} by name — check{' '}
+              {TYPE_LABEL[strain.type]?.toLowerCase()} products near you or ask your local shop.
+            </p>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Link
+                href={`/products?strain_type=${strain.type}`}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+              >
+                Shop {TYPE_LABEL[strain.type]} products
+              </Link>
+              <Link
+                href="/dispensaries"
+                className="border-border bg-surface hover:border-primary/50 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Find shops near you
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {products.map((p) => {
@@ -300,6 +345,37 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
           </div>
         )}
       </section>
+
+      {related && related.length > 0 && (
+        <section className="mt-10">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">
+              More {TYPE_LABEL[strain.type]?.toLowerCase()} strains
+            </h2>
+            <Link
+              href={`/strains?type=${strain.type}`}
+              className="text-primary shrink-0 text-sm font-medium hover:underline"
+            >
+              View all →
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {related.map((s) => (
+              <StrainCard
+                key={s.slug}
+                s={{
+                  slug: s.slug,
+                  name: s.name,
+                  type: s.type,
+                  effects: s.effects ?? [],
+                  thcLow: s.thc_low,
+                  thcHigh: s.thc_high,
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

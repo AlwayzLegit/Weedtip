@@ -653,7 +653,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         )}
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
-          <div className="space-y-8 lg:col-span-2">
+          {/* min-w-0: grid items default to min-width auto, so the horizontal
+              carousels inside would otherwise stretch the page sideways. */}
+          <div className="min-w-0 space-y-8 lg:col-span-2">
             <section>
               <h2 className="mb-2 text-lg font-semibold">About</h2>
               <p className="text-muted">{d.description ?? generatedAbout(d, hours)}</p>

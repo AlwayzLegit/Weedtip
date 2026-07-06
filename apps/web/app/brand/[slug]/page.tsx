@@ -111,6 +111,32 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
     .order('sort_order')
     .order('name');
 
+  // Adaptive stat strip: catalog size always; store metrics only once real
+  // menus carry the brand (a '0 in stores / — rating' row reads as broken).
+  const stats: { value: string; label: string }[] = [
+    { value: String(lineup?.length ?? 0), label: 'Products' },
+  ];
+  if (list.length > 0) stats.push({ value: String(list.length), label: 'In stores' });
+  if (shops.size > 0) stats.push({ value: String(shops.size), label: 'Shops' });
+  if (ratingN > 0) stats.push({ value: avgRating, label: 'Avg rating' });
+
+  // Related brands (biggest official lineups) keep discovery moving when this
+  // brand has no store inventory yet.
+  const { data: lineupSizes } = await supabase.from('brand_products').select('brand_id');
+  const sizeByBrand = new Map<string, number>();
+  for (const r of lineupSizes ?? []) {
+    if (r.brand_id) sizeByBrand.set(r.brand_id, (sizeByBrand.get(r.brand_id) ?? 0) + 1);
+  }
+  const { data: allBrands } = await supabase
+    .from('brands')
+    .select('id,slug,name,logo_url')
+    .neq('id', brand.id);
+  const relatedBrands = (allBrands ?? [])
+    .map((b) => ({ ...b, products: sizeByBrand.get(b.id) ?? 0 }))
+    .filter((b) => b.products > 0)
+    .sort((a, b) => b.products - a.products)
+    .slice(0, 8);
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <Breadcrumbs
@@ -133,9 +159,10 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         <div className="min-w-0 flex-1">
           <p className="eyebrow mb-1">Brand</p>
           <h1 className="text-2xl font-bold sm:text-3xl">{brand.name}</h1>
-          {brand.description && (
-            <p className="text-muted mt-2 max-w-2xl text-sm">{brand.description}</p>
-          )}
+          <p className="text-muted mt-2 max-w-2xl text-sm">
+            {brand.description ??
+              `Official ${brand.name} lineup — ${lineup?.length ?? 0} product${(lineup?.length ?? 0) === 1 ? '' : 's'} on Weedtip. Follow the brand to catch new drops and find shops that carry it.`}
+          </p>
           {brand.website && (
             <a
               href={brand.website}
@@ -156,9 +183,9 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           )}
         </div>
         <div className="flex gap-6 sm:flex-col sm:gap-3">
-          <Stat value={String(list.length)} label="In stores" />
-          <Stat value={String(shops.size)} label="Shops" />
-          <Stat value={avgRating} label="Avg rating" />
+          {stats.map((s) => (
+            <Stat key={s.label} value={s.value} label={s.label} />
+          ))}
         </div>
       </div>
 
@@ -228,7 +255,18 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-semibold">Available at dispensaries</h2>
         {list.length === 0 ? (
-          <p className="text-muted">No products from this brand are listed yet.</p>
+          <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-5">
+            <p className="text-muted text-sm">
+              No live menus list {brand.name} yet — ask for it at your local shop, or follow the
+              brand to hear when it lands.
+            </p>
+            <Link
+              href="/dispensaries"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+            >
+              Find shops near you
+            </Link>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {list.map((p) => {
@@ -256,6 +294,32 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           </div>
         )}
       </section>
+
+      {relatedBrands.length > 0 && (
+        <section className="mt-10">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">More brands to explore</h2>
+            <Link href="/brands" className="text-primary shrink-0 text-sm font-medium hover:underline">
+              View all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {relatedBrands.map((b) => (
+              <Link
+                key={b.slug}
+                href={`/brand/${b.slug}`}
+                className="card card-interactive flex items-center gap-3 p-4"
+              >
+                <LogoImage src={b.logo_url} name={b.name} className="h-10 w-10 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold">{b.name}</span>
+                  <span className="text-muted block text-xs">{b.products} products</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
