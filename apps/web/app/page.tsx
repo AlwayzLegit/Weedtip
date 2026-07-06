@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, MapPin, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react';
+import { ArrowRight, MapPin, ShoppingBag, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { CategoryTiles } from '@/components/home/category-tiles';
 import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
@@ -15,7 +15,7 @@ import { StrainCard } from '@/components/strain-card';
 import { Button } from '@/components/ui/button';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { ARTICLES } from '@/lib/learn';
-import { citySlug, organizationJsonLd, websiteJsonLd } from '@/lib/seo';
+import { citySlug, organizationJsonLd, US_STATES, websiteJsonLd } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
 
 // Public, anon-only page — serve cached HTML and refresh every 5 min (ISR).
@@ -53,7 +53,6 @@ function SectionHeading({
 export default async function HomePage() {
   const supabase = createStaticClient();
   const nowIso = new Date().toISOString();
-  const head = { count: 'exact' as const, head: true };
 
   const [
     { data: featured },
@@ -66,10 +65,6 @@ export default async function HomePage() {
     { data: deliveryShops },
     { data: regions },
     { data: strains },
-    dispCount,
-    prodCount,
-    lineupCount,
-    stateCountRes,
   ] = await Promise.all([
     supabase
       .from('dispensaries')
@@ -132,10 +127,6 @@ export default async function HomePage() {
       .order('saves_count', { ascending: false })
       .order('name')
       .limit(10),
-    supabase.from('dispensaries').select('id', head).eq('status', 'active'),
-    supabase.from('products').select('id', head),
-    supabase.from('brand_products').select('id', head),
-    supabase.rpc('get_active_dispensary_state_count'),
   ]);
 
   const heroSlides: HeroSlide[] = (heroPlacements ?? [])
@@ -236,25 +227,18 @@ export default async function HomePage() {
     topCities: (r.top_cities as { city: string; count: number }[] | null) ?? [],
   }));
 
-  const stateCount = stateCountRes.data ?? 0;
-  const nf = new Intl.NumberFormat('en-US');
-  const stats = [
-    { label: 'Dispensaries', count: dispCount.count ?? 0 },
-    // Menu items plus official brand-catalog products — the real breadth of what
-    // a shopper can browse (a raw menu count under-sold the platform badly).
-    { label: 'Products', count: (prodCount.count ?? 0) + (lineupCount.count ?? 0) },
-    { label: 'States', count: stateCount },
-  ]
-    // A zero here means a fetch hiccup, not an empty platform — never show it.
-    .filter((s) => s.count > 0)
-    .map((s) => ({ label: s.label, value: nf.format(s.count) }));
-
   // Popular cities (Weedmaps SEO pattern): the biggest city markets across all
   // states, as direct links into the map-first city pages.
   const popularCities = regionEntries
     .flatMap((r) => r.topCities.map((c) => ({ ...c, state: r.state })))
     .sort((a, b) => b.count - a.count)
     .slice(0, 12);
+
+  // Top markets get visible links; the long tail collapses (Weedmaps keeps
+  // its full geo directory off the homepage entirely).
+  const topStates = [...regionEntries]
+    .sort((a, b) => b.dispensaryCount - a.dispensaryCount)
+    .slice(0, 8);
 
   const steps = [
     { icon: MapPin, title: 'Find shops near you', body: 'Search licensed dispensaries by location, then filter by pickup, delivery, and more.' },
@@ -275,30 +259,18 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* Search band + stat strip */}
+      {/* Search band — task-first like Weedmaps: what you can do, then the box. */}
       <section className="border-border/70 bg-hero-glow relative overflow-hidden border-b">
-        <div className="relative mx-auto max-w-3xl px-4 py-12 text-center sm:py-16">
-          <span className="border-primary/20 bg-primary-muted text-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-            <Sparkles className="h-3.5 w-3.5" />
-            Find licensed dispensaries near you
-          </span>
-          <h1 className="animate-slide-up mt-5 text-4xl font-bold tracking-tight sm:text-5xl">
-            The Google Maps of <span className="gradient-text">cannabis</span>
+        <div className="relative mx-auto max-w-3xl px-4 py-10 text-center sm:py-12">
+          <h1 className="animate-slide-up text-3xl font-bold tracking-tight sm:text-4xl">
+            Find cannabis near you
           </h1>
-          <p className="text-muted mx-auto mt-4 max-w-xl text-lg">
-            Discover dispensaries, browse menus, read reviews, find deals, and order for pickup or
-            delivery — all in one place.
+          <p className="text-muted mx-auto mt-3 max-w-xl">
+            Browse menus, deals, and reviews from licensed dispensaries — order for pickup or
+            delivery.
           </p>
-          <div className="mx-auto mt-7 max-w-2xl">
+          <div className="mx-auto mt-6 max-w-2xl">
             <SearchBar size="lg" />
-          </div>
-          <div className="text-muted mt-8 flex items-center justify-center gap-8 text-sm">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <p className="text-foreground text-2xl font-bold">{s.value}</p>
-                <p className="text-xs uppercase tracking-wide">{s.label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -471,16 +443,17 @@ export default async function HomePage() {
           </Link>
         </section>
 
-        {/* Region / city directory (SEO link grid) */}
+        {/* Geo directory, Weedmaps-style: a curated row of big markets up
+            front, the full SEO link grid collapsed out of the visual flow. */}
         {regionEntries.length > 0 && (
           <section>
             <SectionHeading
-              eyebrow="Every market"
-              title="Find dispensaries by state"
+              eyebrow="Shop your market"
+              title="Popular destinations"
               href="/dispensaries"
             />
             {popularCities.length > 0 && (
-              <div className="mb-6 flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {popularCities.map((c) => (
                   <Link
                     key={`${c.state}-${c.city}`}
@@ -493,7 +466,29 @@ export default async function HomePage() {
                 ))}
               </div>
             )}
-            <RegionGrid regions={regionEntries} />
+            {topStates.length > 0 && (
+              <div className="text-muted mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+                {topStates.map((r) => (
+                  <Link
+                    key={r.state}
+                    href={`/dispensaries/${r.state.toLowerCase()}`}
+                    className="hover:text-primary transition-colors"
+                  >
+                    {US_STATES[r.state] ?? r.state}
+                    <span className="text-muted/60"> ({r.dispensaryCount.toLocaleString()})</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+            <details className="group mt-5">
+              <summary className="text-primary inline-flex cursor-pointer list-none items-center gap-1 text-sm font-medium hover:underline">
+                Browse all states and cities
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+              </summary>
+              <div className="mt-5">
+                <RegionGrid regions={regionEntries} />
+              </div>
+            </details>
           </section>
         )}
 
