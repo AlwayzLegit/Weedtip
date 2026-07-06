@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, MapPin, ShoppingBag, Store, Truck } from 'lucide-react';
+import { ArrowRight, MapPin } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { CategoryTiles } from '@/components/home/category-tiles';
 import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
@@ -240,11 +240,6 @@ export default async function HomePage() {
     .sort((a, b) => b.dispensaryCount - a.dispensaryCount)
     .slice(0, 8);
 
-  const steps = [
-    { icon: MapPin, title: 'Find shops near you', body: 'Search licensed dispensaries by location, then filter by pickup, delivery, and more.' },
-    { icon: ShoppingBag, title: 'Browse live menus', body: 'Compare real-time prices, deals, THC/CBD, brands, and verified reviews.' },
-    { icon: Truck, title: 'Order pickup or delivery', body: 'Check out in a few taps and pick up in-store or get it delivered.' },
-  ];
 
   return (
     <main>
@@ -276,6 +271,40 @@ export default async function HomePage() {
       </section>
 
       <div className="mx-auto max-w-7xl space-y-16 px-4 py-16">
+        {/* Weedmaps section order: dispensaries near you → deliveries → deals,
+            then categories, brands, strains, products, learn, geo links. */}
+        <MarketFeed initialShops={initialShops} initialDeals={initialDeals}>
+          {deliveryShops && deliveryShops.length > 0 && (
+            <section>
+              <SectionHeading eyebrow="To your door" title="Delivery services" href="/deliveries" />
+              <ScrollCarousel itemClassName="w-72" ariaLabel="Delivery services">
+                {deliveryShops.map((d) => (
+                  <DispensaryCard
+                    key={d.slug}
+                    d={{
+                      slug: d.slug,
+                      name: d.name,
+                      city: d.city,
+                      state: d.state,
+                      coverImageUrl: d.cover_image_url,
+                      logoUrl: d.logo_url,
+                      isDelivery: d.is_delivery,
+                      isPickup: d.is_pickup,
+                      isMedical: d.is_medical,
+                      isRecreational: d.is_recreational,
+                      featured: d.featured,
+                      rating: d.rating_avg,
+                      reviewCount: d.rating_count,
+                      hours: (d.hours ?? null) as OperatingHours | null,
+                      timezone: d.timezone,
+                    }}
+                  />
+                ))}
+              </ScrollCarousel>
+            </section>
+          )}
+        </MarketFeed>
+
         {/* Shop by category */}
         <section>
           <SectionHeading eyebrow="Explore" title="Shop by category" href="/products" />
@@ -304,39 +333,28 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* Delivery services */}
-        {deliveryShops && deliveryShops.length > 0 && (
+        {/* Popular strains (Weedmaps pattern — the strain library is a core
+            discovery surface, not a buried hub page) */}
+        {strains && strains.length > 0 && (
           <section>
-            <SectionHeading eyebrow="To your door" title="Delivery services" href="/deliveries" />
-            <ScrollCarousel itemClassName="w-72" ariaLabel="Delivery services">
-              {deliveryShops.map((d) => (
-                <DispensaryCard
-                  key={d.slug}
-                  d={{
-                    slug: d.slug,
-                    name: d.name,
-                    city: d.city,
-                    state: d.state,
-                    coverImageUrl: d.cover_image_url,
-                    logoUrl: d.logo_url,
-                    isDelivery: d.is_delivery,
-                    isPickup: d.is_pickup,
-                    isMedical: d.is_medical,
-                    isRecreational: d.is_recreational,
-                    featured: d.featured,
-                    rating: d.rating_avg,
-                    reviewCount: d.rating_count,
-                    hours: (d.hours ?? null) as OperatingHours | null,
-                    timezone: d.timezone,
+            <SectionHeading eyebrow="Know your high" title="Popular strains" href="/strains" />
+            <ScrollCarousel itemClassName="w-64" ariaLabel="Popular strains">
+              {strains.map((s) => (
+                <StrainCard
+                  key={s.slug}
+                  s={{
+                    slug: s.slug,
+                    name: s.name,
+                    type: s.type,
+                    effects: s.effects ?? [],
+                    thcLow: s.thc_low,
+                    thcHigh: s.thc_high,
                   }}
                 />
               ))}
             </ScrollCarousel>
           </section>
         )}
-
-        {/* Location-aware: dispensary storefronts + deals in the visitor's market */}
-        <MarketFeed initialShops={initialShops} initialDeals={initialDeals} />
 
         {/* Popular products */}
         {popular && popular.length > 0 && (
@@ -368,29 +386,6 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* Popular strains (Weedmaps pattern — the strain library is a core
-            discovery surface, not a buried hub page) */}
-        {strains && strains.length > 0 && (
-          <section>
-            <SectionHeading eyebrow="Know your high" title="Popular strains" href="/strains" />
-            <ScrollCarousel itemClassName="w-64" ariaLabel="Popular strains">
-              {strains.map((s) => (
-                <StrainCard
-                  key={s.slug}
-                  s={{
-                    slug: s.slug,
-                    name: s.name,
-                    type: s.type,
-                    effects: s.effects ?? [],
-                    thcLow: s.thc_low,
-                    thcHigh: s.thc_high,
-                  }}
-                />
-              ))}
-            </ScrollCarousel>
-          </section>
-        )}
-
         {/* Learn rail (editorial content, Weedmaps pattern) */}
         <section>
           <SectionHeading eyebrow="Cannabis 101" title="New here? Start with the basics" href="/learn" />
@@ -410,37 +405,6 @@ export default async function HomePage() {
               </Link>
             ))}
           </div>
-        </section>
-
-        {/* Promo banner pair (Weedmaps-style paired merchandising banners) */}
-        <section className="grid gap-4 sm:grid-cols-2">
-          <Link
-            href="/advertise"
-            className="rounded-card border-primary/30 bg-hero-glow group relative overflow-hidden border p-6 transition-all duration-200 hover:-translate-y-0.5"
-          >
-            <p className="eyebrow">For dispensaries &amp; brands</p>
-            <h3 className="mt-1 text-lg font-bold">Own your neighborhood</h3>
-            <p className="text-muted mt-1 text-sm">
-              One exclusive sponsor, three featured spots, ten premium listings per region — at
-              launch pricing.
-            </p>
-            <span className="text-primary mt-3 inline-flex items-center gap-1 text-sm font-semibold">
-              See regions <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </span>
-          </Link>
-          <Link
-            href="/deals"
-            className="rounded-card border-warning/30 group relative overflow-hidden border bg-gradient-to-br from-amber-500/10 to-transparent p-6 transition-all duration-200 hover:-translate-y-0.5"
-          >
-            <p className="eyebrow">Save on every order</p>
-            <h3 className="mt-1 text-lg font-bold">Today&apos;s best deals near you</h3>
-            <p className="text-muted mt-1 text-sm">
-              BOGOs, first-visit discounts, and daily specials from licensed shops in your market.
-            </p>
-            <span className="text-warning mt-3 inline-flex items-center gap-1 text-sm font-semibold">
-              Browse deals <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </span>
-          </Link>
         </section>
 
         {/* Geo directory, Weedmaps-style: a curated row of big markets up
@@ -491,45 +455,6 @@ export default async function HomePage() {
             </details>
           </section>
         )}
-
-        {/* How it works */}
-        <section>
-          <SectionHeading eyebrow="How it works" title="Order in three steps" />
-          <div className="grid gap-5 sm:grid-cols-3">
-            {steps.map((s, i) => (
-              <div key={s.title} className="card sheen relative p-6">
-                <span className="bg-primary-muted text-primary ring-primary/20 flex h-11 w-11 items-center justify-center rounded-xl ring-1">
-                  <s.icon className="h-5 w-5" />
-                </span>
-                <p className="text-muted mt-4 text-xs font-semibold">STEP {i + 1}</p>
-                <h3 className="mt-1 font-semibold">{s.title}</h3>
-                <p className="text-muted mt-1.5 text-sm leading-relaxed">{s.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Owner CTA */}
-        <section className="rounded-2xl border-primary/20 bg-hero-glow relative overflow-hidden border p-8 text-center sm:p-14">
-          <span className="bg-primary-muted text-primary ring-primary/20 mx-auto flex h-12 w-12 items-center justify-center rounded-xl ring-1">
-            <Store className="h-6 w-6" />
-          </span>
-          <h2 className="mt-5 text-2xl font-bold sm:text-3xl">Own a dispensary?</h2>
-          <p className="text-muted mx-auto mt-2 max-w-md">
-            List your shop on Weedtip, manage your menu and deals, run promotions, and reach
-            customers searching nearby.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/sign-up">
-              <Button size="lg">List your dispensary</Button>
-            </Link>
-            <Link href="/dispensaries">
-              <Button variant="outline" size="lg">
-                Explore the marketplace
-              </Button>
-            </Link>
-          </div>
-        </section>
       </div>
     </main>
   );
