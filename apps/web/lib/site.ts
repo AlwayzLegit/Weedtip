@@ -10,7 +10,12 @@ const fromVercel = process.env.NEXT_PUBLIC_VERCEL_URL
   ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
   : undefined;
 
-export const SITE_URL = fromEnv ?? fromVercel ?? 'https://weedtip.com';
+// Production serves from www (the apex 308-redirects to it), so canonicals,
+// sitemap entries, and JSON-LD must all use the www host — Google won't index
+// sitemap URLs that redirect. Normalize the apex even if the env var uses it.
+const CANONICAL_PROD = 'https://www.weedtip.com';
+const raw = fromEnv ?? fromVercel ?? CANONICAL_PROD;
+export const SITE_URL = raw === 'https://weedtip.com' ? CANONICAL_PROD : raw;
 export const SITE_NAME = 'Weedtip';
 export const SITE_DESCRIPTION =
   'Discover licensed dispensaries near you, browse menus, read reviews, find deals, and order for pickup or delivery.';

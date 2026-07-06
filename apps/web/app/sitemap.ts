@@ -59,13 +59,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       fetchAll<{ slug: string; city: string | null; state: string; updated_at: string }>((f, t) =>
         supabase.from('dispensaries').select('slug, city, state, updated_at').range(f, t),
       ),
-      fetchAll<{ id: string; updated_at: string }>((f, t) =>
-        supabase.from('products').select('id, updated_at').range(f, t),
+      fetchAll<{
+        id: string;
+        updated_at: string;
+        category: { slug: string } | null;
+        dispensary: { city: string | null; state: string } | null;
+      }>((f, t) =>
+        supabase
+          .from('products')
+          .select(
+            'id, updated_at, category:categories(slug), dispensary:dispensaries(city, state)',
+          )
+          .range(f, t),
       ),
       supabase.from('strains').select('slug, updated_at'),
       supabase.from('brands').select('slug, updated_at'),
       supabase.from('categories').select('slug'),
     ]);
+
+    // Which city × category pages actually list products — the long-tail pages
+    // render an empty grid otherwise, and advertising thousands of empty pages
+    // to crawlers reads as doorway spam on a young domain.
+    const stockedCityCategories = new Set<string>();
+    for (const p of productRows) {
+      const cat = p.category?.slug;
+      const d = p.dispensary;
+      if (!cat || !d?.city) continue;
+      stockedCityCategories.add(`${d.state.toLowerCase()}/${citySlug(d.city)}/${cat}`);
+    }
 
     // Which locations actually have live deals — so we don't advertise thousands
     // of empty /deals pages (their JSON-LD would self-report "0 deals").
@@ -126,14 +147,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: 'daily' as const,
           priority: 0.6,
         })),
-      // Category × city long-tail (e.g. /dispensaries/co/denver/flower).
+      // Category × city long-tail (e.g. /dispensaries/co/denver/flower) — only
+      // where that category actually has products listed in that city.
       ...[...citySet].flatMap((loc) =>
-        PRODUCT_CATEGORIES.map((c) => ({
-          url: `${SITE_URL}/dispensaries/${loc}/${c.slug}`,
-          lastModified: now,
-          changeFrequency: 'weekly' as const,
-          priority: 0.6,
-        })),
+        PRODUCT_CATEGORIES.filter((c) => stockedCityCategories.has(`${loc}/${c.slug}`)).map(
+          (c) => ({
+            url: `${SITE_URL}/dispensaries/${loc}/${c.slug}`,
+            lastModified: now,
+            changeFrequency: 'weekly' as const,
+            priority: 0.6,
+          }),
+        ),
       ),
     ];
 

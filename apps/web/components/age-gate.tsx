@@ -42,9 +42,11 @@ export function AgeGate() {
         <div className="mb-6 flex justify-center">
           <Logo className="text-2xl" />
         </div>
-        <h1 id="age-gate-title" className="text-xl font-bold">
+        {/* h2, not h1: this dialog renders on every page, and a second h1
+            trips "multiple h1" checks site-wide. */}
+        <h2 id="age-gate-title" className="text-xl font-bold">
           Are you 21 or older?
-        </h1>
+        </h2>
         <p className="text-muted mt-2 text-sm">
           You must be of legal age to enter Weedtip and browse cannabis products.
         </p>

@@ -92,8 +92,13 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): Json 
   };
 }
 
-/** ItemList schema for a results/listing page (ordered URLs). */
-export function itemListJsonLd(paths: string[]): Json {
+/**
+ * ItemList schema for a results/listing page (ordered URLs). Returns null for
+ * an empty list — an ItemList without itemListElement is invalid carousel
+ * markup, so empty listing pages emit no ItemList at all.
+ */
+export function itemListJsonLd(paths: string[]): Json | null {
+  if (paths.length === 0) return null;
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
