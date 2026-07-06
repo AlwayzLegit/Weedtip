@@ -6,7 +6,6 @@ import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
 import { MarketFeed, type FeedDeal, type FeedShop } from '@/components/home/market-feed';
 import { RegionGrid, type RegionEntry } from '@/components/home/region-grid';
 import { ScrollCarousel } from '@/components/home/scroll-carousel';
-import { DispensaryCard } from '@/components/dispensary-card';
 import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
@@ -215,9 +214,11 @@ export default async function HomePage() {
   for (const r of lineupSizes ?? []) {
     if (r.brand_id) lineupByBrand.set(r.brand_id, (lineupByBrand.get(r.brand_id) ?? 0) + 1);
   }
+  // Logo-backed brands only — this is a visual rail, and letter tiles at 14-up
+  // read as missing assets. (74 brands carry logos; all have products.)
   const topBrands = (brands ?? [])
     .map((b) => ({ ...b, products: lineupByBrand.get(b.id) ?? 0 }))
-    .filter((b) => b.products > 0)
+    .filter((b) => b.products > 0 && b.logo_url)
     .sort((a, b) => b.products - a.products)
     .slice(0, 14);
 
@@ -277,28 +278,32 @@ export default async function HomePage() {
           {deliveryShops && deliveryShops.length > 0 && (
             <section>
               <SectionHeading eyebrow="To your door" title="Delivery services" href="/deliveries" />
-              <ScrollCarousel itemClassName="w-72" ariaLabel="Delivery services">
+              {/* Compact logo rows, not cover cards — delivery listings rarely
+                  have storefront photos, and a rail of empty frames reads as
+                  missing assets. */}
+              <ScrollCarousel itemClassName="w-64" ariaLabel="Delivery services">
                 {deliveryShops.map((d) => (
-                  <DispensaryCard
+                  <Link
                     key={d.slug}
-                    d={{
-                      slug: d.slug,
-                      name: d.name,
-                      city: d.city,
-                      state: d.state,
-                      coverImageUrl: d.cover_image_url,
-                      logoUrl: d.logo_url,
-                      isDelivery: d.is_delivery,
-                      isPickup: d.is_pickup,
-                      isMedical: d.is_medical,
-                      isRecreational: d.is_recreational,
-                      featured: d.featured,
-                      rating: d.rating_avg,
-                      reviewCount: d.rating_count,
-                      hours: (d.hours ?? null) as OperatingHours | null,
-                      timezone: d.timezone,
-                    }}
-                  />
+                    href={`/dispensary/${d.slug}`}
+                    prefetch={false}
+                    className="card card-interactive flex h-full items-center gap-3 p-4"
+                  >
+                    <LogoImage
+                      src={d.logo_url}
+                      name={d.name}
+                      hideWhenEmpty={false}
+                      className="h-11 w-11 shrink-0"
+                      rounded="rounded-xl"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">{d.name}</span>
+                      <span className="text-muted block truncate text-xs">
+                        {d.city ? `${d.city}, ${d.state}` : `Delivery · ${d.state}`}
+                        {d.rating_avg > 0 ? ` · ★ ${d.rating_avg.toFixed(1)}` : ''}
+                      </span>
+                    </span>
+                  </Link>
                 ))}
               </ScrollCarousel>
             </section>

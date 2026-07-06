@@ -31,8 +31,15 @@ export function LineupCard({ item }: { item: LineupItem }) {
           className="bg-surface-2 h-32 w-full object-cover"
         />
       ) : (
-        // Same on-brand placeholder frame the rest of the card family uses.
-        <MediaImage url={null} alt={item.name} className="h-32" iconClassName="h-10 w-10" />
+        // Same on-brand placeholder frame the rest of the card family uses,
+        // tinted per item so catalogs without photos still read as designed.
+        <MediaImage
+          url={null}
+          alt={item.name}
+          artSeed={item.name}
+          className="h-32"
+          iconClassName="h-10 w-10"
+        />
       )}
       <div className="p-3">
         <p className="truncate text-sm font-medium">{item.name}</p>

@@ -37,7 +37,13 @@ export function ProductCard({ p }: { p: ProductCardData }) {
   const onSale = typeof p.originalPriceCents === 'number' && p.originalPriceCents > p.priceCents;
   const body = (
     <div className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover h-full overflow-hidden border transition-all duration-200 hover:-translate-y-0.5">
-      <MediaImage url={p.imageUrl} alt={p.name} className="h-32" iconClassName="h-10 w-10">
+      <MediaImage
+        url={p.imageUrl}
+        alt={p.name}
+        artSeed={p.name}
+        className="h-32"
+        iconClassName="h-10 w-10"
+      >
         {p.sponsored ? (
           <Badge tone="primary" className="absolute left-2 top-2">
             Sponsored
