@@ -104,9 +104,14 @@ export function MarketFeed({
       ]);
 
       const scopedShops = (shopRes.data ?? []).map(toShop);
-      // A market with a couple of listings still deserves its own rail; only
-      // an empty market falls back to the nationwide set.
-      setShops(scopedShops.length > 0 ? scopedShops : initialShops);
+      // State listings lead, but a thin market's rail fills out with the
+      // nationwide set so the band never looks half-stocked.
+      const scopedSlugs = new Set(scopedShops.map((s) => s.slug));
+      setShops(
+        scopedShops.length >= 4
+          ? scopedShops
+          : [...scopedShops, ...initialShops.filter((s) => !scopedSlugs.has(s.slug))].slice(0, 12),
+      );
       setDeals(
         (dealRes.data ?? []).flatMap((d) => {
           const disp = d.dispensary as unknown as {

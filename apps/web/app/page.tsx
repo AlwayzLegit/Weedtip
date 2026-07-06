@@ -74,6 +74,9 @@ export default async function HomePage() {
         'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone',
       )
       .eq('status', 'active')
+      // Photo-backed only: these seed the hero carousel + featured rail, both
+      // merchandising surfaces that must never render image-less or thin.
+      .not('cover_image_url', 'is', null)
       .order('featured', { ascending: false })
       .order('rating_count', { ascending: false })
       .limit(12),
