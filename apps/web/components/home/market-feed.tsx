@@ -65,9 +65,13 @@ const toShop = (r: ShopRow): FeedShop => ({
 export function MarketFeed({
   initialShops,
   initialDeals,
+  children,
 }: {
   initialShops: FeedShop[];
   initialDeals: FeedDeal[];
+  /** Rendered between the shops and deals rails (Weedmaps order:
+      dispensaries near you → deliveries → deals). */
+  children?: React.ReactNode;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [market, setMarket] = useState<string | null>(null);
@@ -183,7 +187,7 @@ export function MarketFeed({
               {stateName ? `Shopping in ${stateName}` : 'Shopping nationwide'}
             </p>
             <h2 className="text-xl font-semibold sm:text-2xl">
-              {stateName ? `Featured dispensaries in ${stateName}` : 'Featured dispensaries'}
+              {stateName ? `Dispensaries in ${stateName}` : 'Dispensaries near you'}
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -222,6 +226,8 @@ export function MarketFeed({
           <p className="text-muted">No dispensaries yet. Check back soon.</p>
         )}
       </section>
+
+      {children}
 
       {/* Deals near you */}
       {deals.length > 0 && (
