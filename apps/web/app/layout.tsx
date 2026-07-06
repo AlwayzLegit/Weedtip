@@ -59,6 +59,9 @@ export const viewport: Viewport = {
   themeColor: '#0F1117',
   width: 'device-width',
   initialScale: 1,
+  // Enables env(safe-area-inset-*) so floating mobile controls clear the
+  // iPhone home indicator.
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

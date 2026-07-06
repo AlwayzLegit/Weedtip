@@ -773,7 +773,7 @@ export function DispensariesBrowser({
 
         {/* Mobile map view: swipeable card strip over the map (Weedmaps pattern) */}
         {mobileView === 'map' && shops.length > 0 && (
-          <div className="absolute inset-x-0 bottom-3 z-10 lg:hidden">
+          <div className="absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-10 lg:hidden">
             <div
               ref={stripRef}
               onScroll={handleStripScroll}
@@ -828,7 +828,9 @@ export function DispensariesBrowser({
         <div
           className={cn(
             'absolute left-1/2 z-10 -translate-x-1/2 lg:hidden',
-            mobileView === 'map' && shops.length > 0 ? 'bottom-28' : 'bottom-5',
+            mobileView === 'map' && shops.length > 0
+              ? 'bottom-[calc(7rem+env(safe-area-inset-bottom))]'
+              : 'bottom-[calc(1.25rem+env(safe-area-inset-bottom))]',
           )}
         >
           <button

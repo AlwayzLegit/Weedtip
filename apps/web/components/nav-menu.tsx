@@ -194,7 +194,7 @@ export function NavMenu({
       <div className="flex items-center gap-1 lg:hidden">
         <CartButton />
         <button
-          className="text-foreground"
+          className="text-foreground -m-2 p-2"
           onClick={() => setDrawerOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={drawerOpen}

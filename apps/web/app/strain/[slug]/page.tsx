@@ -305,7 +305,7 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
               No menus currently list {strain.name} by name — check{' '}
               {TYPE_LABEL[strain.type]?.toLowerCase()} products near you or ask your local shop.
             </p>
-            <div className="flex shrink-0 flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               <Link
                 href={`/products?strain_type=${strain.type}`}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"

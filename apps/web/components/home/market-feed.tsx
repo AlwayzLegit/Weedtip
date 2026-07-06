@@ -193,12 +193,13 @@ export function MarketFeed({
               {stateName ? `Dispensaries in ${stateName}` : 'Dispensaries near you'}
             </h2>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Full-width row on phones so the select never collides with the heading. */}
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <select
               value={market ?? ''}
               onChange={(e) => choose(e.target.value)}
               aria-label="Choose your state"
-              className="border-border bg-surface h-9 rounded-full border px-3 text-sm"
+              className="border-border bg-surface h-9 min-w-0 flex-1 rounded-full border px-3 text-sm sm:flex-none"
             >
               <option value="" disabled>
                 Change state…
