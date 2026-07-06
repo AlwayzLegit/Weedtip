@@ -271,7 +271,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl space-y-16 px-4 py-16">
+      <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:space-y-16 sm:py-16">
         {/* Weedmaps section order: dispensaries near you → deliveries → deals,
             then categories, brands, strains, products, learn, geo links. */}
         <MarketFeed initialShops={initialShops} initialDeals={initialDeals}>

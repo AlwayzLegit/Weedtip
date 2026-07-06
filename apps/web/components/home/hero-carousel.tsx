@@ -35,6 +35,7 @@ function track(id: string, type: 'impression' | 'click') {
  */
 export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   const [i, setI] = useState(0);
+  const [touchX, setTouchX] = useState<number | null>(null);
   const n = slides.length;
   const go = useCallback((idx: number) => setI(((idx % n) + n) % n), [n]);
 
@@ -55,7 +56,19 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
 
   return (
     <section aria-label="Featured partners" aria-roledescription="carousel">
-      <div className="rounded-2xl border-border bg-surface shadow-card relative overflow-hidden border">
+      <div
+        className="rounded-2xl border-border bg-surface shadow-card relative overflow-hidden border"
+        // Mobile hides the arrow buttons, so swiping is the manual nav there.
+        onTouchStart={(e) => setTouchX(e.touches[0]?.clientX ?? null)}
+        onTouchEnd={(e) => {
+          const start = touchX;
+          setTouchX(null);
+          const end = e.changedTouches[0]?.clientX;
+          if (start == null || end == null || n <= 1) return;
+          const dx = end - start;
+          if (Math.abs(dx) > 48) go(dx < 0 ? i + 1 : i - 1);
+        }}
+      >
         <Link
           href={`/dispensary/${s.slug}`}
           onClick={() => s.placementId && track(s.placementId, 'click')}
@@ -98,11 +111,12 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
 
         {n > 1 && (
           <>
+            {/* Arrows overlap the slide title on phones — swipe covers mobile. */}
             <button
               type="button"
               aria-label="Previous"
               onClick={() => go(i - 1)}
-              className="glass absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full"
+              className="glass absolute left-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full sm:flex"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -110,11 +124,11 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
               type="button"
               aria-label="Next"
               onClick={() => go(i + 1)}
-              className="glass absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full"
+              className="glass absolute right-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full sm:flex"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+            <div className="absolute bottom-1 left-1/2 flex -translate-x-1/2">
               {slides.map((sl, idx) => (
                 <button
                   key={sl.placementId || sl.slug}
@@ -122,11 +136,18 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                   aria-label={`Go to slide ${idx + 1}`}
                   aria-current={idx === i}
                   onClick={() => go(idx)}
-                  className={cn(
-                    'h-1.5 rounded-full transition-all',
-                    idx === i ? 'bg-primary w-6' : 'bg-foreground/40 w-1.5 hover:bg-foreground/70',
-                  )}
-                />
+                  // Generous hit area around a small visual dot (thumb-friendly).
+                  className="group flex h-8 items-center px-1.5"
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 rounded-full transition-all',
+                      idx === i
+                        ? 'bg-primary w-6'
+                        : 'bg-foreground/40 group-hover:bg-foreground/70 w-1.5',
+                    )}
+                  />
+                </button>
               ))}
             </div>
           </>
