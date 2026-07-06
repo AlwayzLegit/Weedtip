@@ -12,7 +12,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "clean": "rimraf .next .turbo *.tsbuildinfo",
-    "seed:stripe-ads": "node scripts/seed-stripe-ad-products.mjs"
+    "seed:stripe-ads": "node scripts/seed-stripe-ad-products.mjs",
+    "scrape:brand-images": "node scripts/scrape-brand-product-images.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.56.0",

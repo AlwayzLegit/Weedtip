@@ -234,3 +234,84 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
     remaining: count ?? 0,
   };
 }
+
+export type PhotoBackfillResult =
+  | { ok: true; processed: number; withPhotos: number; noPhotos: number; failed: number; remaining: number }
+  | { ok: false; error: string };
+
+const PHOTO_BATCH = 60;
+const PHOTO_CONCURRENCY = 8;
+
+/**
+ * Backfill photo galleries for listings enriched before google_photo_names
+ * existed: one Place Details (photos field) call per already-matched place_id.
+ * Rows with no photos get an empty array so they're never re-billed. Also
+ * fills the single cover reference + cover URL where those are still missing.
+ */
+export async function backfillPhotoGalleriesBatch(): Promise<PhotoBackfillResult> {
+  await requireAdmin();
+  const key = process.env.GOOGLE_PLACES_API_KEY;
+  if (!key) return { ok: false, error: 'GOOGLE_PLACES_API_KEY is not configured here.' };
+
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from('dispensaries')
+    .select('id,slug,google_place_id,google_photo_name,cover_image_url')
+    .not('google_place_id', 'is', null)
+    .is('google_photo_names', null)
+    .eq('status', 'active')
+    .limit(PHOTO_BATCH);
+
+  const batch = rows ?? [];
+  let withPhotos = 0;
+  let noPhotos = 0;
+  let failed = 0;
+
+  async function processOne(d: (typeof batch)[number]): Promise<void> {
+    try {
+      const res = await fetch(`https://places.googleapis.com/v1/places/${d.google_place_id}`, {
+        headers: { 'X-Goog-Api-Key': key as string, 'X-Goog-FieldMask': 'photos' },
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        // A dead place_id would fail forever — stamp it done with no photos.
+        if (res.status === 404) {
+          noPhotos += 1;
+          await supabase.from('dispensaries').update({ google_photo_names: [] }).eq('id', d.id);
+          return;
+        }
+        failed += 1;
+        return;
+      }
+      const json = (await res.json()) as { photos?: { name: string }[] };
+      const names = (json.photos ?? []).slice(0, 8).map((p) => p.name);
+      await supabase
+        .from('dispensaries')
+        .update({
+          google_photo_names: names,
+          ...(names[0] && !d.google_photo_name ? { google_photo_name: names[0] } : {}),
+          ...(names[0] && !d.cover_image_url
+            ? { cover_image_url: `/api/dispensary-cover/${d.slug}` }
+            : {}),
+        })
+        .eq('id', d.id);
+      if (names.length > 0) withPhotos += 1;
+      else noPhotos += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  for (let i = 0; i < batch.length; i += PHOTO_CONCURRENCY) {
+    await Promise.all(batch.slice(i, i + PHOTO_CONCURRENCY).map(processOne));
+  }
+
+  const { count } = await supabase
+    .from('dispensaries')
+    .select('id', { count: 'exact', head: true })
+    .not('google_place_id', 'is', null)
+    .is('google_photo_names', null)
+    .eq('status', 'active');
+
+  return { ok: true, processed: batch.length, withPhotos, noPhotos, failed, remaining: count ?? 0 };
+}

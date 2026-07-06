@@ -7,7 +7,7 @@ import { ClaimBrandButton } from '@/components/brand/claim-brand-button';
 import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { getAuth } from '@/lib/auth';
-import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
+import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -213,7 +213,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
             {lineup.map((it) => (
               <div key={it.id} className="rounded-card border-border bg-surface overflow-hidden border">
                 {it.image_url ? (
-                  <img src={it.image_url} alt={it.name} className="bg-surface-2 h-32 w-full object-cover" />
+                  <img src={catalogImageSrc(it.id, it.image_url) ?? undefined} alt={it.name} className="bg-surface-2 h-32 w-full object-cover" />
                 ) : (
                   <div className="bg-surface-2 flex h-32 w-full items-center justify-center text-3xl font-bold text-muted">
                     {it.name.charAt(0).toUpperCase()}

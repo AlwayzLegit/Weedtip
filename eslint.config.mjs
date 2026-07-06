@@ -31,6 +31,8 @@ export default tseslint.config(
         URL: 'readonly',
         Buffer: 'readonly',
         setTimeout: 'readonly',
+        // page.evaluate() callbacks execute in the browser context.
+        document: 'readonly',
       },
     },
   },
