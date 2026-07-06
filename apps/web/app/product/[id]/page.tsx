@@ -130,20 +130,27 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     '@type': 'Product',
     name: product.name,
     ...(description ? { description } : {}),
-    ...(images[0] ? { image: images[0] } : {}),
     ...(brand?.name || product.brand
       ? { brand: { '@type': 'Brand', name: brand?.name ?? product.brand } }
       : {}),
-    offers: {
-      '@type': 'Offer',
-      price: (priceCents / 100).toFixed(2),
-      priceCurrency: 'USD',
-      availability: product.in_stock
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
-      url: `${SITE_URL}/product/${product.id}`,
-      ...(dispensary ? { seller: { '@type': 'Organization', name: dispensary.name } } : {}),
-    },
+    // Google's merchant-listing rich result requires an image; Product+offers
+    // without one is invalid markup, so imageless listings stay a plain
+    // Product node until they get a photo.
+    ...(images[0]
+      ? {
+          image: images[0],
+          offers: {
+            '@type': 'Offer',
+            price: (priceCents / 100).toFixed(2),
+            priceCurrency: 'USD',
+            availability: product.in_stock
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+            url: `${SITE_URL}/product/${product.id}`,
+            ...(dispensary ? { seller: { '@type': 'Organization', name: dispensary.name } } : {}),
+          },
+        }
+      : {}),
     ...(product.rating_count > 0
       ? {
           aggregateRating: {

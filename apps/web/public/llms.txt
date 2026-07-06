@@ -1,0 +1,29 @@
+# Weedtip
+
+> Weedtip is a cannabis marketplace for the United States: find licensed
+> dispensaries and delivery services near you, browse menus and deals, compare
+> strains and brands, read reviews, and order for pickup or delivery. Users
+> must be 21+ (or qualifying medical patients where permitted).
+
+## Browse
+
+- [Dispensaries](https://www.weedtip.com/dispensaries): map-first directory of licensed dispensaries across 40+ states, searchable by city or address
+- [Deliveries](https://www.weedtip.com/deliveries): cannabis delivery services by area
+- [Deals](https://www.weedtip.com/deals): live dispensary deals and promo codes
+- [Products](https://www.weedtip.com/products): cannabis products by category (flower, vapes, edibles, concentrates, pre-rolls, tinctures, topicals, accessories)
+- [Strains](https://www.weedtip.com/strains): strain library with effects, flavors, terpenes, and lineage
+- [Brands](https://www.weedtip.com/brands): cannabis brand directory
+
+## Learn
+
+- [Learn hub](https://www.weedtip.com/learn): beginner guides on strain types, edible dosing, terpenes, and buying legally
+
+## For businesses
+
+- [Advertise](https://www.weedtip.com/advertise): featured and premium placement for dispensaries by region
+- [Claim your listing](https://www.weedtip.com/claim): dispensary owners can claim and manage their storefront
+
+## Notes
+
+- Listing pages follow the pattern /dispensaries/{state}/{city} (e.g. /dispensaries/ca/los-angeles); each dispensary has a page at /dispensary/{slug}
+- Content is informational; cannabis laws vary by state and purchases require age verification
