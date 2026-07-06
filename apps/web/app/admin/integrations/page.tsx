@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { AlertTriangle, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { GoogleEnrichConsole } from '@/components/admin/google-enrich-console';
+import { PhotoBackfillConsole } from '@/components/admin/photo-backfill-console';
 import { integrationStatuses } from '@/lib/integration-status';
 import { createClient } from '@/lib/supabase/server';
 
@@ -22,6 +23,14 @@ export default async function AdminIntegrations() {
     .is('google_place_id', null)
     .is('google_enriched_at', null)
     .not('location', 'is', null)
+    .eq('status', 'active');
+
+  // Matched listings enriched before the photo-gallery field existed.
+  const { count: photoRemaining } = await supabase
+    .from('dispensaries')
+    .select('id', { count: 'exact', head: true })
+    .not('google_place_id', 'is', null)
+    .is('google_photo_names', null)
     .eq('status', 'active');
 
   return (
@@ -47,6 +56,7 @@ export default async function AdminIntegrations() {
       )}
 
       <GoogleEnrichConsole initialRemaining={enrichRemaining ?? 0} />
+      <PhotoBackfillConsole initialRemaining={photoRemaining ?? 0} />
 
       <div className="rounded-card border-border bg-surface divide-border divide-y border">
         {statuses.map((s) => (

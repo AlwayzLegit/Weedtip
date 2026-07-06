@@ -33,7 +33,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, dealBadge, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
-import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
+import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
 import { generatedAbout } from '@/lib/shop-copy';
 import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
@@ -246,7 +246,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         strainType: it.strain_type,
         thcPercentage: it.thc_percentage,
         description: it.description,
-        imageUrl: it.image_url,
+        imageUrl: catalogImageSrc(it.id, it.image_url),
         brandName: brand.name,
         brandSlug: brand.slug,
         brandLogoUrl: brand.logo_url,

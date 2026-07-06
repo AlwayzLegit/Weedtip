@@ -4,7 +4,7 @@ import { searchProducts } from '@weedtip/supabase/queries';
 import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
 import { ProductCard } from '@/components/product-card';
 import { ProductFilters } from '@/components/product-filters';
-import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
+import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -84,7 +84,7 @@ export default async function ProductsPage({
     rating_avg: number;
     rating_count: number;
     dispensary: { slug: string; status: string } | null;
-    catalog: { image_url: string | null } | null;
+    catalog: { id: string; image_url: string | null } | null;
     placementId: string;
   };
   let sponsored: SponsoredProduct[] = [];
@@ -131,7 +131,8 @@ export default async function ProductsPage({
       .select(`id, ${CATALOG_IMAGE_EMBED}`)
       .in('id', organicNoImg);
     for (const c of cat ?? []) {
-      const img = (c.catalog as { image_url: string | null } | null)?.image_url;
+      const cat = c.catalog as { id: string; image_url: string | null } | null;
+      const img = cat ? catalogImageSrc(cat.id, cat.image_url) : null;
       if (img) catalogImageById.set(c.id, img);
     }
   }
@@ -177,7 +178,7 @@ export default async function ProductsPage({
         strainType: it.strain_type,
         thcPercentage: it.thc_percentage,
         description: it.description,
-        imageUrl: it.image_url,
+        imageUrl: catalogImageSrc(it.id, it.image_url),
         brandName: brand.name,
         brandSlug: brand.slug,
         brandLogoUrl: brand.logo_url,
