@@ -89,6 +89,9 @@ export function MarketFeed({
           .select(SHOP_FIELDS)
           .eq('status', 'active')
           .eq('state', code)
+          // Photo-backed like the server-rendered rail; the nationwide fill
+          // below keeps thin states at a full band.
+          .not('cover_image_url', 'is', null)
           .order('featured', { ascending: false })
           .order('rating_count', { ascending: false })
           .order('rating_avg', { ascending: false })

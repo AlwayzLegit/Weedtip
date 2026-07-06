@@ -4,9 +4,30 @@ import { Leaf } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
+ * Seeded placeholder palettes (complete class strings so Tailwind keeps them).
+ * A grid of photo-less cards varies tastefully instead of repeating one frame —
+ * the Dutchie-menu pattern for catalogs where most items ship without photos.
+ */
+const ART_TINTS = [
+  'from-emerald-500/30 via-emerald-500/[0.08] to-surface-2',
+  'from-teal-500/30 via-teal-500/[0.08] to-surface-2',
+  'from-sky-500/30 via-sky-500/[0.08] to-surface-2',
+  'from-violet-500/30 via-violet-500/[0.08] to-surface-2',
+  'from-amber-500/30 via-amber-500/[0.08] to-surface-2',
+  'from-rose-500/30 via-rose-500/[0.08] to-surface-2',
+] as const;
+
+function seededTint(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return ART_TINTS[h % ART_TINTS.length]!;
+}
+
+/**
  * Media frame that renders a cover/product photo when available, or a tasteful
- * on-brand placeholder (gradient + cannabis-leaf watermark) when not. Seed and
- * unclaimed listings have no photos; owners upload their own via the dashboard.
+ * on-brand placeholder (gradient + watermark icon) when not. Pass `artSeed`
+ * (e.g. the item name) to vary the placeholder tint per item and `artIcon` to
+ * swap the watermark (category glyphs, etc.).
  *
  * Real photos use next/image (`fill`) for responsive, optimized delivery. Pass
  * sizing/rounding via `className`, `sizes` for the responsive hint, and overlay
@@ -19,6 +40,8 @@ export function MediaImage({
   className,
   iconClassName,
   sizes = '(max-width: 768px) 100vw, 400px',
+  artSeed,
+  artIcon,
   children,
 }: {
   url?: string | null;
@@ -28,22 +51,28 @@ export function MediaImage({
   iconClassName?: string;
   /** Responsive sizes hint for the optimized image. */
   sizes?: string;
+  /** Varies the placeholder tint deterministically (use the item name). */
+  artSeed?: string;
+  /** Replaces the default leaf watermark on the placeholder. */
+  artIcon?: ReactNode;
   children?: ReactNode;
 }) {
+  const tint = artSeed
+    ? seededTint(artSeed)
+    : 'from-primary/25 via-primary/[0.07] to-surface-2';
   return (
     <div
       role={!url && alt ? 'img' : undefined}
       aria-label={!url && alt ? alt : undefined}
-      className={cn(
-        'from-primary/25 via-primary/[0.07] to-surface-2 relative overflow-hidden bg-gradient-to-br',
-        className,
-      )}
+      className={cn('relative overflow-hidden bg-gradient-to-br', tint, className)}
     >
       {url ? (
         <Image src={url} alt={alt ?? ''} fill sizes={sizes} className="object-cover" />
       ) : (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <Leaf className={cn('text-primary/25', iconClassName)} strokeWidth={1.5} />
+          {artIcon ?? (
+            <Leaf className={cn('text-foreground/20', iconClassName)} strokeWidth={1.5} />
+          )}
         </div>
       )}
       {children}
