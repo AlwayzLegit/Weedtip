@@ -2,6 +2,8 @@ import { MarketBanner } from '@/components/market-banner';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Star, Store, Tag, Truck } from 'lucide-react';
+import type { OperatingHours } from '@weedtip/shared';
+import { DispensaryCard } from '@/components/dispensary-card';
 import { PlacementBeacon } from '@/components/placement-beacon';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -164,6 +166,23 @@ export default async function DealsPage({
   const sponsoredIds = new Set(sponsored.map((d) => d.id));
   const rest = ((deals as DealRow[]) ?? []).filter((d) => !sponsoredIds.has(d.id));
 
+  // A thin deals inventory shouldn't dead-end the page — keep shoppers moving
+  // with top shops (where new deals land first) when there's little to list.
+  const totalDeals = sponsored.length + rest.length;
+  const { data: fallbackShops } =
+    totalDeals < 6
+      ? await supabase
+          .from('dispensaries')
+          .select(
+            'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone',
+          )
+          .eq('status', 'active')
+          .not('cover_image_url', 'is', null)
+          .order('featured', { ascending: false })
+          .order('rating_count', { ascending: false })
+          .limit(8)
+      : { data: null };
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6">
@@ -222,6 +241,55 @@ export default async function DealsPage({
             <DealTile key={deal.id} deal={deal} />
           ))}
         </div>
+      )}
+
+      {fallbackShops && fallbackShops.length > 0 && (
+        <section className="mt-12" aria-label="Popular dispensaries">
+          <h2 className="text-xl font-semibold">Shops worth following</h2>
+          <p className="text-muted mt-1 text-sm">
+            New deals land on dispensary pages first — these are the most popular shops on
+            Weedtip right now.
+          </p>
+          <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {fallbackShops.map((s) => (
+              <DispensaryCard
+                key={s.slug}
+                d={{
+                  slug: s.slug,
+                  name: s.name,
+                  city: s.city,
+                  state: s.state,
+                  coverImageUrl: s.cover_image_url,
+                  logoUrl: s.logo_url,
+                  isDelivery: s.is_delivery,
+                  isPickup: s.is_pickup,
+                  isMedical: s.is_medical,
+                  isRecreational: s.is_recreational,
+                  featured: s.featured,
+                  rating: s.rating_avg,
+                  reviewCount: s.rating_count,
+                  hours: (s.hours ?? null) as OperatingHours | null,
+                  timezone: s.timezone,
+                }}
+              />
+            ))}
+          </div>
+          <div className="border-border bg-surface rounded-card mt-8 flex flex-wrap items-center justify-between gap-3 border p-5">
+            <div>
+              <p className="font-medium">Run a dispensary?</p>
+              <p className="text-muted text-sm">
+                Post deals free from your dashboard — they show up here, on your listing, and on
+                the map.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/deals"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+            >
+              Post a deal
+            </Link>
+          </div>
+        </section>
       )}
     </main>
   );

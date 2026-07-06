@@ -11,9 +11,11 @@ import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
 import { JsonLd } from '@/components/seo/json-ld';
+import { StrainCard } from '@/components/strain-card';
 import { Button } from '@/components/ui/button';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
-import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
+import { ARTICLES } from '@/lib/learn';
+import { citySlug, organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
 
 // Public, anon-only page — serve cached HTML and refresh every 5 min (ISR).
@@ -63,6 +65,7 @@ export default async function HomePage() {
     { data: lineupSizes },
     { data: deliveryShops },
     { data: regions },
+    { data: strains },
     dispCount,
     prodCount,
     lineupCount,
@@ -74,6 +77,9 @@ export default async function HomePage() {
         'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone',
       )
       .eq('status', 'active')
+      // Photo-backed only: these seed the hero carousel + featured rail, both
+      // merchandising surfaces that must never render image-less or thin.
+      .not('cover_image_url', 'is', null)
       .order('featured', { ascending: false })
       .order('rating_count', { ascending: false })
       .limit(12),
@@ -120,6 +126,12 @@ export default async function HomePage() {
       .order('rating_count', { ascending: false })
       .limit(12),
     supabase.rpc('region_directory', { top_cities_limit: 5 }),
+    supabase
+      .from('strains')
+      .select('slug,name,type,effects,thc_low,thc_high')
+      .order('saves_count', { ascending: false })
+      .order('name')
+      .limit(10),
     supabase.from('dispensaries').select('id', head).eq('status', 'active'),
     supabase.from('products').select('id', head),
     supabase.from('brand_products').select('id', head),
@@ -227,12 +239,22 @@ export default async function HomePage() {
   const stateCount = stateCountRes.data ?? 0;
   const nf = new Intl.NumberFormat('en-US');
   const stats = [
-    { label: 'Dispensaries', value: `${nf.format(dispCount.count ?? 0)}` },
+    { label: 'Dispensaries', count: dispCount.count ?? 0 },
     // Menu items plus official brand-catalog products — the real breadth of what
     // a shopper can browse (a raw menu count under-sold the platform badly).
-    { label: 'Products', value: `${nf.format((prodCount.count ?? 0) + (lineupCount.count ?? 0))}` },
-    { label: 'States', value: `${stateCount}` },
-  ];
+    { label: 'Products', count: (prodCount.count ?? 0) + (lineupCount.count ?? 0) },
+    { label: 'States', count: stateCount },
+  ]
+    // A zero here means a fetch hiccup, not an empty platform — never show it.
+    .filter((s) => s.count > 0)
+    .map((s) => ({ label: s.label, value: nf.format(s.count) }));
+
+  // Popular cities (Weedmaps SEO pattern): the biggest city markets across all
+  // states, as direct links into the map-first city pages.
+  const popularCities = regionEntries
+    .flatMap((r) => r.topCities.map((c) => ({ ...c, state: r.state })))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 12);
 
   const steps = [
     { icon: MapPin, title: 'Find shops near you', body: 'Search licensed dispensaries by location, then filter by pickup, delivery, and more.' },
@@ -374,6 +396,50 @@ export default async function HomePage() {
           </section>
         )}
 
+        {/* Popular strains (Weedmaps pattern — the strain library is a core
+            discovery surface, not a buried hub page) */}
+        {strains && strains.length > 0 && (
+          <section>
+            <SectionHeading eyebrow="Know your high" title="Popular strains" href="/strains" />
+            <ScrollCarousel itemClassName="w-64" ariaLabel="Popular strains">
+              {strains.map((s) => (
+                <StrainCard
+                  key={s.slug}
+                  s={{
+                    slug: s.slug,
+                    name: s.name,
+                    type: s.type,
+                    effects: s.effects ?? [],
+                    thcLow: s.thc_low,
+                    thcHigh: s.thc_high,
+                  }}
+                />
+              ))}
+            </ScrollCarousel>
+          </section>
+        )}
+
+        {/* Learn rail (editorial content, Weedmaps pattern) */}
+        <section>
+          <SectionHeading eyebrow="Cannabis 101" title="New here? Start with the basics" href="/learn" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {ARTICLES.slice(0, 4).map((a) => (
+              <Link
+                key={a.slug}
+                href={`/learn/${a.slug}`}
+                className="card card-interactive flex h-full flex-col p-5"
+              >
+                <p className="eyebrow">{a.topic}</p>
+                <h3 className="mt-1.5 font-semibold leading-snug">{a.title}</h3>
+                <p className="text-muted mt-2 line-clamp-3 text-sm leading-relaxed">
+                  {a.description}
+                </p>
+                <span className="text-muted mt-auto pt-3 text-xs">{a.readMinutes} min read</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {/* Promo banner pair (Weedmaps-style paired merchandising banners) */}
         <section className="grid gap-4 sm:grid-cols-2">
           <Link
@@ -413,6 +479,20 @@ export default async function HomePage() {
               title="Find dispensaries by state"
               href="/dispensaries"
             />
+            {popularCities.length > 0 && (
+              <div className="mb-6 flex flex-wrap gap-2">
+                {popularCities.map((c) => (
+                  <Link
+                    key={`${c.state}-${c.city}`}
+                    href={`/dispensaries/${c.state.toLowerCase()}/${citySlug(c.city)}`}
+                    className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors"
+                  >
+                    <MapPin className="text-muted h-3.5 w-3.5" />
+                    {c.city}, {c.state}
+                  </Link>
+                ))}
+              </div>
+            )}
             <RegionGrid regions={regionEntries} />
           </section>
         )}

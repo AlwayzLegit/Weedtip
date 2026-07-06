@@ -18,6 +18,8 @@ import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/sh
 import { ShopViewTracker } from '@/components/analytics/shop-view-tracker';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ClaimListing } from '@/components/claim-listing';
+import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
+import { DispensaryCard } from '@/components/dispensary-card';
 import { MenuBrowser, type MenuBrowserItem } from '@/components/dispensary/menu-browser';
 import { ReviewList } from '@/components/dispensary/review-list';
 import { MiniMap } from '@/components/dispensary/mini-map';
@@ -32,6 +34,7 @@ import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, dealBadge, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
+import { generatedAbout } from '@/lib/shop-copy';
 import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
@@ -186,6 +189,70 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   const saleByProduct = new Map(
     (salePrices ?? []).map((s) => [s.product_id, s] as const),
   );
+
+  // Nearby shops rail (Weedmaps pattern): same city first, top state shops as
+  // fill — always photo-backed so the rail merchandises well. Also the main
+  // internal-linking surface between the 9k+ listing pages.
+  const NEARBY_FIELDS =
+    'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone';
+  let nearbyBase = supabase
+    .from('dispensaries')
+    .select(NEARBY_FIELDS)
+    .eq('status', 'active')
+    .neq('id', d.id)
+    .eq('state', d.state)
+    .not('cover_image_url', 'is', null)
+    .order('featured', { ascending: false })
+    .order('rating_count', { ascending: false })
+    .limit(8);
+  if (d.city) nearbyBase = nearbyBase.eq('city', d.city);
+  let { data: nearby } = await nearbyBase;
+  nearby = nearby ?? [];
+  if (nearby.length < 4) {
+    const seen = new Set([...nearby.map((n) => n.slug), d.slug]);
+    const { data: stateFill } = await supabase
+      .from('dispensaries')
+      .select(NEARBY_FIELDS)
+      .eq('status', 'active')
+      .eq('state', d.state)
+      .not('cover_image_url', 'is', null)
+      .order('featured', { ascending: false })
+      .order('rating_count', { ascending: false })
+      .limit(12);
+    for (const s of stateFill ?? []) {
+      if (nearby.length >= 8) break;
+      if (!seen.has(s.slug)) {
+        nearby.push(s);
+        seen.add(s.slug);
+      }
+    }
+  }
+
+  // When the shop has no published menu, merchandise the official brand
+  // catalog instead of dead-ending — the page still shows real products.
+  let catalogSpotlight: LineupItem[] = [];
+  if ((products ?? []).length === 0) {
+    const { data: lineup } = await supabase
+      .from('brand_products')
+      .select('id,name,strain_type,thc_percentage,description,image_url,brand:brands!inner(name,slug,logo_url)')
+      .not('image_url', 'is', null)
+      .order('sort_order')
+      .limit(8);
+    catalogSpotlight = (lineup ?? []).map((it) => {
+      const brand = it.brand as unknown as { name: string; slug: string; logo_url: string | null };
+      return {
+        id: it.id,
+        name: it.name,
+        strainType: it.strain_type,
+        thcPercentage: it.thc_percentage,
+        description: it.description,
+        imageUrl: it.image_url,
+        brandName: brand.name,
+        brandSlug: brand.slug,
+        brandLogoUrl: brand.logo_url,
+      };
+    });
+  }
 
   // Flatten the menu for the interactive browser (search + category tabs + sort).
   const menuItems: MenuBrowserItem[] = (products ?? []).map((p) => {
@@ -587,12 +654,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
-            {d.description && (
-              <section>
-                <h2 className="mb-2 text-lg font-semibold">About</h2>
-                <p className="text-muted">{d.description}</p>
-              </section>
-            )}
+            <section>
+              <h2 className="mb-2 text-lg font-semibold">About</h2>
+              <p className="text-muted">{d.description ?? generatedAbout(d, hours)}</p>
+            </section>
 
             {d.amenities && d.amenities.length > 0 && (
               <section>
@@ -660,15 +725,52 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             <section id="menu" className="scroll-mt-32">
               <h2 className="mb-3 text-lg font-semibold">Menu</h2>
               {menuItems.length === 0 ? (
-                <div className="rounded-card border-border bg-surface text-muted border border-dashed p-6 text-center text-sm">
-                  <p className="text-foreground font-medium">Menu coming soon</p>
-                  <p className="mt-1">
-                    {d.owner_id
-                      ? 'This dispensary hasn’t published its menu yet.'
-                      : d.license_number
-                        ? 'This is an unclaimed listing. Are you the owner? Claim it to add your live menu, deals, and photos.'
-                        : 'This is an unclaimed listing. Claiming opens once its state license is verified on our end.'}
-                  </p>
+                <div className="space-y-5">
+                  <div className="rounded-card border-border bg-surface text-muted border border-dashed p-6 text-center text-sm">
+                    <p className="text-foreground font-medium">Menu coming soon</p>
+                    <p className="mt-1">
+                      {d.owner_id
+                        ? 'This dispensary hasn’t published its menu yet.'
+                        : d.license_number
+                          ? 'This is an unclaimed listing. Are you the owner? Claim it to add your live menu, deals, and photos.'
+                          : 'This is an unclaimed listing. Claiming opens once its state license is verified on our end.'}
+                    </p>
+                    {d.phone && (
+                      <p className="mt-2">
+                        Call{' '}
+                        <a
+                          href={`tel:${d.phone.replace(/[^+\d]/g, '')}`}
+                          className="text-primary font-medium hover:underline"
+                        >
+                          {d.phone}
+                        </a>{' '}
+                        for today&apos;s menu and availability.
+                      </p>
+                    )}
+                  </div>
+                  {catalogSpotlight.length > 0 && (
+                    <div>
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <h3 className="font-semibold">
+                          Popular products {d.state ? `in ${US_STATES[d.state] ?? d.state}` : ''}
+                        </h3>
+                        <Link
+                          href="/products"
+                          className="text-primary shrink-0 text-sm font-medium hover:underline"
+                        >
+                          Browse all →
+                        </Link>
+                      </div>
+                      <p className="text-muted mb-3 text-sm">
+                        Official brand lineups you can ask for at licensed shops like this one.
+                      </p>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        {catalogSpotlight.map((item) => (
+                          <LineupCard key={item.id} item={item} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <MenuBrowser
@@ -789,6 +891,52 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 <p className="text-muted">No reviews yet. Be the first.</p>
               )}
             </section>
+
+            {/* Nearby shops (Weedmaps pattern) — keeps discovery going and
+                interlinks listing pages for SEO. */}
+            {nearby.length > 0 && (
+              <section aria-label="Nearby dispensaries">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h2 className="text-lg font-semibold">
+                    {d.city ? `More dispensaries near ${d.city}` : `More in ${US_STATES[d.state] ?? d.state}`}
+                  </h2>
+                  <Link
+                    href={
+                      d.city
+                        ? `/dispensaries/${d.state.toLowerCase()}/${citySlug(d.city)}`
+                        : `/dispensaries/${d.state.toLowerCase()}`
+                    }
+                    className="text-primary shrink-0 text-sm font-medium hover:underline"
+                  >
+                    View all →
+                  </Link>
+                </div>
+                <ScrollCarousel itemClassName="w-72" ariaLabel="Nearby dispensaries">
+                  {nearby.map((s) => (
+                    <DispensaryCard
+                      key={s.slug}
+                      d={{
+                        slug: s.slug,
+                        name: s.name,
+                        city: s.city,
+                        state: s.state,
+                        coverImageUrl: s.cover_image_url,
+                        logoUrl: s.logo_url,
+                        isDelivery: s.is_delivery,
+                        isPickup: s.is_pickup,
+                        isMedical: s.is_medical,
+                        isRecreational: s.is_recreational,
+                        featured: s.featured,
+                        rating: s.rating_avg,
+                        reviewCount: s.rating_count,
+                        hours: (s.hours ?? null) as OperatingHours | null,
+                        timezone: s.timezone,
+                      }}
+                    />
+                  ))}
+                </ScrollCarousel>
+              </section>
+            )}
           </div>
 
           {/* Sidebar: location + hours + contact */}
