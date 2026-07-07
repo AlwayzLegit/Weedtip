@@ -4,7 +4,6 @@ import { ownsAnyBrand } from '@/lib/brand-owner';
 import { createClient } from '@/lib/supabase/server';
 import { Logo } from './brand/logo';
 import { GlobalSearch } from './global-search';
-import { MarketSelector } from './market-selector';
 import { NavMenu } from './nav-menu';
 
 export async function Navbar() {
@@ -28,9 +27,9 @@ export async function Navbar() {
         <Link href="/" aria-label="Weedtip home" className="shrink-0">
           <Logo />
         </Link>
-        {/* Wider on desktop now that the nav folded into fewer items. */}
-        <GlobalSearch className="mx-4 hidden max-w-lg flex-1 md:block" />
-        <MarketSelector className="mr-3 hidden sm:block" />
+        {/* Location is set by searching (type a city → map) — no separate
+            state dropdown. Wider search fills the freed space. */}
+        <GlobalSearch className="mx-4 hidden max-w-xl flex-1 md:block" />
         <NavMenu
           email={user?.email ?? null}
           displayName={profile?.display_name ?? null}
