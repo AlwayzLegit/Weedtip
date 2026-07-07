@@ -1,5 +1,5 @@
 import { Link } from 'next-view-transitions';
-import { MapPin, Tag, Truck, Store } from 'lucide-react';
+import { BadgeCheck, MapPin, Tag, Truck, Store } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { formatDistance } from '@/lib/format';
 import { Badge } from './ui/badge';
@@ -32,6 +32,8 @@ export interface DispensaryCardData {
   distanceMeters?: number | null;
   rating?: number | null;
   reviewCount?: number;
+  /** State cannabis license on file — the strongest trust signal we can show. */
+  licensed?: boolean;
   /** Server-computed open state (search RPCs); omit (or null) when unknown. */
   openNow?: boolean | null;
   /**
@@ -110,8 +112,10 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
               : 'Delivery only'}
         </p>
 
-        {/* Rating row is always present (a "New" state when unrated) so every
-            card in a row shares the same vertical rhythm. */}
+        {/* Rating row is always present so every card in a row shares the same
+            vertical rhythm. Nearly every shop is pre-reviews, so the unrated
+            state leads with the licensed trust cue instead of an apologetic
+            "no reviews yet" — the license on file is the credible signal. */}
         <div className="flex min-h-[20px] items-center gap-1.5">
           {typeof d.rating === 'number' && d.rating > 0 ? (
             <>
@@ -126,8 +130,13 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
                 </Badge>
               )}
             </>
+          ) : d.licensed ? (
+            <span className="text-primary inline-flex items-center gap-1 text-xs font-medium">
+              <BadgeCheck className="h-3.5 w-3.5" />
+              Licensed
+            </span>
           ) : (
-            <span className="text-muted text-xs">New · no reviews yet</span>
+            <span className="text-muted text-xs">New listing</span>
           )}
         </div>
 
