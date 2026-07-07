@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
 import { ShopViewTracker } from '@/components/analytics/shop-view-tracker';
+import { RecordRecentlyViewed } from '@/components/recently-viewed';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ClaimListing } from '@/components/claim-listing';
 import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
@@ -374,6 +375,15 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         name={d.name}
         city={d.city}
         state={d.state}
+      />
+      <RecordRecentlyViewed
+        item={{
+          kind: 'dispensary',
+          href: `/dispensary/${d.slug}`,
+          name: d.name,
+          image: d.cover_image_url,
+          sub: d.city ? `${d.city}, ${d.state}` : d.state,
+        }}
       />
       <div className="mx-auto max-w-7xl px-4 pt-4">
         <Breadcrumbs items={crumbs} />

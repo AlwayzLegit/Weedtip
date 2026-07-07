@@ -6,6 +6,7 @@ import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
 import { MarketFeed, type FeedDeal, type FeedShop } from '@/components/home/market-feed';
 import { RegionGrid, type RegionEntry } from '@/components/home/region-grid';
 import { ScrollCarousel } from '@/components/home/scroll-carousel';
+import { RecentlyViewedRail } from '@/components/recently-viewed';
 import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
@@ -275,6 +276,10 @@ export default async function HomePage() {
       </section>
 
       <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:space-y-16 sm:py-16">
+        {/* Returning-visitor shortcut: their recently viewed shops/products/
+            strains (client-only, localStorage). Renders nothing for first-time
+            visitors, so it never pushes the feed down on a cold visit. */}
+        <RecentlyViewedRail />
         {/* Weedmaps section order: dispensaries near you → deliveries → deals,
             then categories, brands, strains, products, learn, geo links. */}
         <MarketFeed initialShops={initialShops} initialDeals={initialDeals}>
