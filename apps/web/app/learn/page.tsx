@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Search } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, Search } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { MediaImage } from '@/components/media-image';
 import { ARTICLES, type LearnTopic } from '@/lib/learn';
 import { cn } from '@/lib/utils';
 import { pageSeo } from '@/lib/seo';
@@ -9,9 +10,9 @@ import { pageSeo } from '@/lib/seo';
 const TOPICS: LearnTopic[] = ['Ordering', 'Plant', 'Body', 'Products', 'Laws', 'Dictionary'];
 
 export const metadata: Metadata = pageSeo({
-  title: 'Learn',
+  title: 'Learn about cannabis',
   description:
-    'Cannabis guides for beginners and connoisseurs — how to order online, indica vs sativa, THC and CBD explained, and more from Weedtip.',
+    'Cannabis guides for beginners and connoisseurs — edible dosing, indica vs sativa, terpenes, concentrates, travel laws, and more from Weedtip.',
   path: '/learn',
 });
 
@@ -30,8 +31,16 @@ export default async function LearnIndexPage({
         a.title.toLowerCase().includes(query) ||
         a.description.toLowerCase().includes(query)),
   );
+  // Newest first; the freshest article becomes the featured lead card on the
+  // unfiltered view.
+  const sorted = [...articles].sort(
+    (a, b) => +new Date(b.datePublished) - +new Date(a.datePublished),
+  );
+  const showFeatured = !activeTopic && !query && sorted.length > 3;
+  const [featured, ...rest] = showFeatured ? sorted : [null, ...sorted];
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="mx-auto max-w-5xl px-4 py-8">
       <Breadcrumbs
         items={[
           { name: 'Home', href: '/' },
@@ -42,11 +51,12 @@ export default async function LearnIndexPage({
         <BookOpen className="text-primary h-6 w-6" />
         <h1 className="text-3xl font-bold tracking-tight">Learn</h1>
       </div>
-      <p className="text-muted mt-2">
-        Plain-English cannabis guides — how to order, what the labels mean, and what to expect.
+      <p className="text-muted mt-2 max-w-2xl">
+        Plain-English cannabis guides — dosing, strain types, product formats, and the rules of the
+        road. No jargon, no medical claims, just what you need to shop and consume confidently.
       </p>
 
-      {/* Search + topic tiles (Weedmaps Learn-hub pattern) */}
+      {/* Search + topic chips (Weedmaps Learn-hub pattern) */}
       <form method="get" action="/learn" className="relative mt-6 max-w-md">
         <Search className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
         <input
@@ -63,7 +73,7 @@ export default async function LearnIndexPage({
         <Link
           href="/learn"
           className={cn(
-            'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+            'inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors',
             !activeTopic
               ? 'border-primary bg-primary-muted text-primary'
               : 'border-border text-muted hover:text-foreground',
@@ -79,7 +89,7 @@ export default async function LearnIndexPage({
               key={t}
               href={`/learn?topic=${t}`}
               className={cn(
-                'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+                'inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors',
                 activeTopic === t
                   ? 'border-primary bg-primary-muted text-primary'
                   : 'border-border text-muted hover:text-foreground',
@@ -100,23 +110,66 @@ export default async function LearnIndexPage({
         </p>
       )}
 
-      <div className="mt-8 space-y-4">
-        {articles.map((a) => (
-          <Link
-            key={a.slug}
-            href={`/learn/${a.slug}`}
-            className="rounded-card border-border bg-surface hover:border-primary/50 group block border p-5 transition-colors"
-          >
+      {featured && (
+        <Link
+          href={`/learn/${featured.slug}`}
+          className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group mt-8 block overflow-hidden border transition-all sm:grid sm:grid-cols-5"
+        >
+          <MediaImage
+            url={null}
+            artSeed={featured.title}
+            artIcon={<BookOpen className="text-foreground/20 h-10 w-10" strokeWidth={1.5} />}
+            className="h-40 sm:col-span-2 sm:h-full"
+          />
+          <div className="p-6 sm:col-span-3">
             <p className="text-primary text-xs font-semibold uppercase tracking-wide">
-              {a.topic} · {a.readMinutes} min read
+              Latest · {featured.topic}
             </p>
-            <h2 className="group-hover:text-primary mt-1 text-lg font-semibold">{a.title}</h2>
-            <p className="text-muted mt-1 text-sm">{a.description}</p>
-            <p className="text-primary mt-3 inline-flex items-center gap-1 text-sm font-medium">
-              Read article <ArrowRight className="h-4 w-4" />
+            <h2 className="group-hover:text-primary mt-2 text-xl font-bold sm:text-2xl">
+              {featured.title}
+            </h2>
+            <p className="text-muted mt-2 text-sm leading-relaxed">{featured.description}</p>
+            <p className="text-muted mt-4 flex items-center gap-3 text-xs">
+              <span className="inline-flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" /> {featured.readMinutes} min read
+              </span>
+              <span className="text-primary inline-flex items-center gap-1 font-medium">
+                Read article <ArrowRight className="h-3.5 w-3.5" />
+              </span>
             </p>
-          </Link>
-        ))}
+          </div>
+        </Link>
+      )}
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        {rest
+          .filter((a): a is NonNullable<typeof a> => !!a)
+          .map((a) => (
+            <Link
+              key={a.slug}
+              href={`/learn/${a.slug}`}
+              className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group flex flex-col overflow-hidden border transition-all"
+            >
+              <MediaImage
+                url={null}
+                artSeed={a.title}
+                artIcon={<BookOpen className="text-foreground/20 h-8 w-8" strokeWidth={1.5} />}
+                className="h-28"
+              />
+              <div className="flex flex-1 flex-col p-5">
+                <p className="text-primary text-xs font-semibold uppercase tracking-wide">
+                  {a.topic}
+                </p>
+                <h2 className="group-hover:text-primary mt-1 font-semibold leading-snug">
+                  {a.title}
+                </h2>
+                <p className="text-muted mt-1.5 line-clamp-2 text-sm">{a.description}</p>
+                <p className="text-muted mt-auto flex items-center gap-1 pt-3 text-xs">
+                  <Clock className="h-3.5 w-3.5" /> {a.readMinutes} min read
+                </p>
+              </div>
+            </Link>
+          ))}
       </div>
     </main>
   );
