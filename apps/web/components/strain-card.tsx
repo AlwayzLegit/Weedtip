@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import type { StrainType } from '@weedtip/shared';
 import { Badge } from './ui/badge';
 

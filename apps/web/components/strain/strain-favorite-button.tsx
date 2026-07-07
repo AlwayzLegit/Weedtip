@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { useState, useTransition } from 'react';
 import { Heart } from 'lucide-react';
 import { toggleStrainFavorite } from '@/app/actions/strains';

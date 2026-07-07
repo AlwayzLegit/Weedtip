@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import type { StrainType } from '@weedtip/shared';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';

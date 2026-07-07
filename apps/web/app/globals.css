@@ -121,6 +121,16 @@ body {
   }
 }
 
+/* Page view transitions (next-view-transitions): a quick, soft crossfade
+   between routes so navigation feels like an app, not a reload. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.26s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
 /* Global reduced-motion escape hatch — honor the OS setting everywhere. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -130,6 +140,12 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+  /* Skip the route crossfade entirely for reduced-motion users. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 

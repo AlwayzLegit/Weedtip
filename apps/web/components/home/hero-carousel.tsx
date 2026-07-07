@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { ChevronLeft, ChevronRight, MapPin, Star } from 'lucide-react';
 import { MediaImage } from '@/components/media-image';
 import { Badge } from '@/components/ui/badge';

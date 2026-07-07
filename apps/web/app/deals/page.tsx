@@ -1,6 +1,6 @@
 import { MarketBanner } from '@/components/market-banner';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { Star, Store, Tag, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { DispensaryCard } from '@/components/dispensary-card';

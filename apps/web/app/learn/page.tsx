@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { ArrowRight, BookOpen, Clock, Search } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { MediaImage } from '@/components/media-image';

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { ChevronRight } from 'lucide-react';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { JsonLd } from './seo/json-ld';

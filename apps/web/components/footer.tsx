@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { getAuth } from '@/lib/auth';
 import { Logo } from './brand/logo';
 

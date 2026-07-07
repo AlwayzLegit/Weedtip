@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
+import { ViewTransitions } from 'next-view-transitions';
 import { AgeGate } from '@/components/age-gate';
 import { PostHogProvider } from '@/components/analytics/posthog-provider';
 import { CartProvider } from '@/components/cart/cart-provider';
@@ -72,7 +73,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${manrope.variable} dark`}>
+    <ViewTransitions>
+      <html lang="en" className={`${manrope.variable} dark`}>
       <body className="bg-background text-foreground flex min-h-screen flex-col font-sans antialiased">
         <a
           href="#main-content"
@@ -92,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AgeGate />
         </PostHogProvider>
       </body>
-    </html>
+      </html>
+    </ViewTransitions>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import Map, {
   GeolocateControl,
   Layer,
