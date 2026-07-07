@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowRight, BookOpen, Clock, Leaf, MapPin } from 'lucide-react';
+import { ArrowRight, BookOpen, ChevronDown, Clock, Leaf, MapPin } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Button } from '@/components/ui/button';
@@ -154,8 +154,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                   key={f.question}
                   className="rounded-card border-border bg-surface group border p-4"
                 >
-                  <summary className="cursor-pointer list-none text-sm font-semibold">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold">
                     {f.question}
+                    <ChevronDown className="chev text-muted h-4 w-4 shrink-0" />
                   </summary>
                   <p className="text-muted mt-2 text-sm leading-relaxed">{f.answer}</p>
                 </details>

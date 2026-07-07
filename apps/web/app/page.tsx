@@ -12,6 +12,7 @@ import { SearchBar } from '@/components/search-bar';
 import { JsonLd } from '@/components/seo/json-ld';
 import { StrainCard } from '@/components/strain-card';
 import { Button } from '@/components/ui/button';
+import { Reveal } from '@/components/ui/reveal';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { ARTICLES } from '@/lib/learn';
 import { citySlug, organizationJsonLd, US_STATES, websiteJsonLd } from '@/lib/seo';
@@ -311,13 +312,16 @@ export default async function HomePage() {
         </MarketFeed>
 
         {/* Shop by category */}
-        <section>
-          <SectionHeading eyebrow="Explore" title="Shop by category" href="/products" />
-          <CategoryTiles categories={categories ?? []} />
-        </section>
+        <Reveal>
+          <section>
+            <SectionHeading eyebrow="Explore" title="Shop by category" href="/products" />
+            <CategoryTiles categories={categories ?? []} />
+          </section>
+        </Reveal>
 
         {/* Featured brands */}
         {topBrands.length > 0 && (
+          <Reveal>
           <section>
             <SectionHeading eyebrow="Official lineups" title="Featured brands" href="/brands" />
             <ScrollCarousel itemClassName="w-44" ariaLabel="Popular brands">
@@ -336,11 +340,13 @@ export default async function HomePage() {
               ))}
             </ScrollCarousel>
           </section>
+          </Reveal>
         )}
 
         {/* Popular strains (Weedmaps pattern — the strain library is a core
             discovery surface, not a buried hub page) */}
         {strains && strains.length > 0 && (
+          <Reveal>
           <section>
             <SectionHeading eyebrow="Know your high" title="Popular strains" href="/strains" />
             <ScrollCarousel itemClassName="w-64" ariaLabel="Popular strains">
@@ -359,10 +365,12 @@ export default async function HomePage() {
               ))}
             </ScrollCarousel>
           </section>
+          </Reveal>
         )}
 
         {/* Popular products */}
         {popular && popular.length > 0 && (
+          <Reveal>
           <section>
             <SectionHeading eyebrow="Trending" title="Popular products" href="/products" />
             <ScrollCarousel itemClassName="w-52" ariaLabel="Popular products">
@@ -389,9 +397,11 @@ export default async function HomePage() {
               })}
             </ScrollCarousel>
           </section>
+          </Reveal>
         )}
 
         {/* Learn rail (editorial content, Weedmaps pattern) */}
+        <Reveal>
         <section>
           <SectionHeading eyebrow="Cannabis 101" title="New here? Start with the basics" href="/learn" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -411,10 +421,12 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+        </Reveal>
 
         {/* Geo directory, Weedmaps-style: a curated row of big markets up
             front, the full SEO link grid collapsed out of the visual flow. */}
         {regionEntries.length > 0 && (
+          <Reveal>
           <section>
             <SectionHeading
               eyebrow="Shop your market"
@@ -459,6 +471,7 @@ export default async function HomePage() {
               </div>
             </details>
           </section>
+          </Reveal>
         )}
       </div>
     </main>

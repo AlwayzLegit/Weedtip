@@ -74,12 +74,15 @@ body {
     @apply rounded-card border-border bg-surface border shadow-card;
   }
 
-  /* Interactive card: lifts and highlights its border on hover. */
+  /* Interactive card: lifts and highlights its border on hover, dips on press. */
   .card-interactive {
     @apply card transition-all duration-200;
   }
   .card-interactive:hover {
     @apply border-primary/40 shadow-card-hover -translate-y-0.5;
+  }
+  .card-interactive:active {
+    @apply translate-y-0 scale-[0.995] duration-75;
   }
 
   /* Frosted panel for overlays / sticky bars. */
@@ -100,6 +103,33 @@ body {
   /* Section heading eyebrow. */
   .eyebrow {
     @apply text-primary text-xs font-semibold uppercase tracking-[0.12em];
+  }
+}
+
+/* Smooth <details> accordions: the body eases in, the chevron rotates. Used
+   across FAQ blocks and the geo directory. */
+@media (prefers-reduced-motion: no-preference) {
+  details[open] > *:not(summary) {
+    animation: fade-in 0.28s ease both;
+  }
+  details > summary .chev,
+  details[open] > summary .chev {
+    transition: transform 0.2s ease;
+  }
+  details[open] > summary .chev {
+    transform: rotate(180deg);
+  }
+}
+
+/* Global reduced-motion escape hatch — honor the OS setting everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
