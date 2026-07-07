@@ -161,17 +161,12 @@ export function NavMenu({
     </>
   );
 
+  // One auth entry point (marketplace convention) — the sign-in page carries
+  // the "create an account" path, so the header doesn't need two buttons.
   const signedOutButtons = (
-    <div className="flex items-center gap-2">
-      <Link href="/sign-in">
-        <Button variant="ghost" size="sm">
-          Sign in
-        </Button>
-      </Link>
-      <Link href="/sign-up">
-        <Button size="sm">Sign up</Button>
-      </Link>
-    </div>
+    <Link href="/sign-in">
+      <Button size="sm">Sign in</Button>
+    </Link>
   );
 
   return (

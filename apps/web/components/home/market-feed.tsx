@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { US_STATES } from '@/lib/seo';
 import { DealCard, type DealCardData } from '../deal-card';
 import { DispensaryCard, type DispensaryCardData } from '../dispensary-card';
-import { readMarketCookie, writeMarketCookie } from '../market-selector';
+import { readMarketCookie } from '../market-selector';
 import { Button } from '../ui/button';
 import { ScrollCarousel } from './scroll-carousel';
 
@@ -157,13 +157,6 @@ export function MarketFeed({
     }
   }, [loadMarket]);
 
-  const choose = (code: string) => {
-    if (!code) return;
-    writeMarketCookie(code);
-    setMarket(code);
-    void loadMarket(code);
-  };
-
   const scoped = market !== null && loadedFor === market;
   const stateName = scoped ? US_STATES[market] : null;
   const st = market?.toLowerCase();
@@ -193,29 +186,13 @@ export function MarketFeed({
               {stateName ? `Dispensaries in ${stateName}` : 'Dispensaries near you'}
             </h2>
           </div>
-          {/* Full-width row on phones so the select never collides with the heading. */}
-          <div className="flex w-full items-center gap-2 sm:w-auto">
-            <select
-              value={market ?? ''}
-              onChange={(e) => choose(e.target.value)}
-              aria-label="Choose your state"
-              className="border-border bg-surface h-9 min-w-0 flex-1 rounded-full border px-3 text-sm sm:flex-none"
-            >
-              <option value="" disabled>
-                Change state…
-              </option>
-              {Object.entries(US_STATES).map(([code, name]) => (
-                <option key={code} value={code}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            <Link href={scoped && st ? `/dispensaries?state=${market}` : '/dispensaries'}>
-              <Button variant="ghost" size="sm">
-                View all <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
+          {/* Location changes live in the header's market picker — one
+              location control for the session, not a second one per rail. */}
+          <Link href={scoped && st ? `/dispensaries?state=${market}` : '/dispensaries'}>
+            <Button variant="ghost" size="sm">
+              View all <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
         {shops.length > 0 ? (
           <ScrollCarousel itemClassName="w-72" ariaLabel="Featured dispensaries">

@@ -44,6 +44,73 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
   const first = shops[0];
   if (!first) return null;
 
+  // Nearby-city directory: the state query above already holds every shop in
+  // the state, so neighboring markets cost nothing extra. Compare city
+  // centroids and keep the six closest (falls back to biggest markets when
+  // coordinates are missing).
+  const cityAgg = new Map<
+    string,
+    { count: number; latSum: number; lngSum: number; located: number }
+  >();
+  for (const s of data) {
+    if (!s.city || citySlug(s.city) === city.toLowerCase()) continue;
+    const agg = cityAgg.get(s.city) ?? { count: 0, latSum: 0, lngSum: 0, located: 0 };
+    agg.count += 1;
+    if (typeof s.latitude === 'number' && typeof s.longitude === 'number') {
+      agg.latSum += s.latitude;
+      agg.lngSum += s.longitude;
+      agg.located += 1;
+    }
+    cityAgg.set(s.city, agg);
+  }
+  const located = shops.filter(
+    (s) => typeof s.latitude === 'number' && typeof s.longitude === 'number',
+  );
+  const hereLat = located.length
+    ? located.reduce((sum, s) => sum + s.latitude!, 0) / located.length
+    : null;
+  const hereLng = located.length
+    ? located.reduce((sum, s) => sum + s.longitude!, 0) / located.length
+    : null;
+  const nearbyCities = [...cityAgg.entries()]
+    .map(([name, agg]) => ({
+      name,
+      count: agg.count,
+      distance:
+        hereLat != null && agg.located > 0
+          ? Math.hypot(
+              agg.latSum / agg.located - hereLat,
+              (agg.lngSum / agg.located - hereLng!) * Math.cos((hereLat * Math.PI) / 180),
+            )
+          : Infinity,
+    }))
+    .sort((a, b) => a.distance - b.distance || b.count - a.count)
+    .slice(0, 6);
+
+  // Service mix + name-drops for the generated market copy (facts only — no
+  // rating claims until the review base exists).
+  const stats = {
+    delivery: shops.filter((s) => s.is_delivery).length,
+    pickup: shops.filter((s) => s.is_pickup).length,
+    medical: shops.filter((s) => s.is_medical).length,
+    recreational: shops.filter((s) => s.is_recreational).length,
+    withHours: shops.filter((s) => s.hours != null).length,
+  };
+  const notable = [...shops]
+    .sort(
+      (a, b) =>
+        Number(b.featured) - Number(a.featured) ||
+        Number(!!b.cover_image_url) - Number(!!a.cover_image_url) ||
+        b.rating_count - a.rating_count ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, 3)
+    .map((s) => ({ name: s.name, slug: s.slug }));
+  const deliveryShops = shops
+    .filter((s) => s.is_delivery)
+    .slice(0, 3)
+    .map((s) => s.name);
+
   // Geo-scoped featured: live featured placements whose scope matches this
   // location, for shops located here. Pins them to the top with tracking.
   const nowIso = new Date().toISOString();
@@ -167,8 +234,19 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     dealByDispensary,
     geo,
     sponsor,
+    stats,
+    notable,
+    deliveryShops,
+    nearbyCities,
   };
 });
+
+/** Oxford-comma name list for generated copy ("A, B, and C"). */
+function nameList(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+}
 
 /** Fit the map to the city's shops (padded), falling back to the whole state. */
 function cityBounds(
@@ -227,6 +305,10 @@ export default async function CityDispensariesPage({
     dealByDispensary,
     geo,
     sponsor,
+    stats,
+    notable,
+    deliveryShops,
+    nearbyCities,
   } = found;
 
   const faqs = [
@@ -236,8 +318,19 @@ export default async function CityDispensariesPage({
     },
     {
       question: `Can I order cannabis for pickup or delivery in ${cityName}?`,
-      answer: `Many ${cityName} dispensaries on Weedtip offer in-store pickup, and some offer delivery. Each dispensary's page shows the options it supports.`,
+      answer:
+        stats.delivery > 0
+          ? `Yes — ${stats.pickup} ${cityName} ${stats.pickup === 1 ? 'dispensary offers' : 'dispensaries offer'} in-store pickup and ${stats.delivery} ${stats.delivery === 1 ? 'offers' : 'offer'} delivery${deliveryShops.length > 0 ? `, including ${nameList(deliveryShops)}` : ''}. Each dispensary's page shows the options it supports.`
+          : `${stats.pickup} ${cityName} ${stats.pickup === 1 ? 'dispensary offers' : 'dispensaries offer'} in-store pickup. None currently list delivery in ${cityName} — check the delivery directory for services covering the wider area.`,
     },
+    ...(stats.medical > 0
+      ? [
+          {
+            question: `Do dispensaries in ${cityName} serve medical patients?`,
+            answer: `Yes — ${stats.medical} of ${cityName}'s ${shops.length} ${shops.length === 1 ? 'dispensary serves' : 'dispensaries serve'} medical patients${stats.recreational > 0 ? `, and ${stats.recreational} ${stats.recreational === 1 ? 'serves' : 'serve'} recreational customers 21+` : ''}. Filter the list above by medical or recreational to match your needs.`,
+          },
+        ]
+      : []),
     {
       question: `Do I need to be 21 to buy cannabis in ${cityName}?`,
       answer: `You must be 21 or older (or a qualifying medical patient where permitted) and present a valid government-issued ID at pickup or delivery.`,
@@ -356,12 +449,67 @@ export default async function CityDispensariesPage({
         <h2 className="mb-2 text-lg font-semibold">
           About cannabis dispensaries in {cityName}
         </h2>
-        <p className="text-muted text-sm leading-relaxed">
-          Find and compare licensed cannabis dispensaries in {cityName}, {stateName} on Weedtip.
-          Browse menus, prices, and deals, read reviews, and order online for pickup or delivery.
-          Bring a valid 21+ ID and check local regulations before ordering.
-        </p>
+        {/* Generated from live listing data so every city page carries unique,
+            factual copy instead of shared boilerplate. */}
+        <div className="text-muted space-y-3 text-sm leading-relaxed">
+          <p>
+            {cityName}, {stateName} has {shops.length} licensed cannabis{' '}
+            {shops.length === 1 ? 'dispensary' : 'dispensaries'} listed on Weedtip
+            {stats.pickup > 0 && (
+              <>
+                {' — '}
+                {stats.pickup} {stats.pickup === 1 ? 'offers' : 'offer'} in-store pickup
+                {stats.delivery > 0 &&
+                  ` and ${stats.delivery} ${stats.delivery === 1 ? 'delivers' : 'deliver'} locally`}
+              </>
+            )}
+            .{' '}
+            {stats.medical > 0 && stats.recreational > 0
+              ? `The market serves both sides: ${stats.recreational} ${stats.recreational === 1 ? 'shop welcomes' : 'shops welcome'} recreational customers 21+ and ${stats.medical} ${stats.medical === 1 ? 'serves' : 'serve'} registered medical patients.`
+              : stats.medical > 0
+                ? `${cityName}'s ${shops.length === 1 ? 'shop is' : 'shops are'} medical-focused — a valid patient registration is required to purchase.`
+                : `${cityName}'s ${shops.length === 1 ? 'shop serves' : 'shops serve'} adult-use customers 21 and older.`}
+            {notable.length >= 2 && (
+              <>
+                {' '}
+                Local names to know include{' '}
+                {notable.map((n, i) => (
+                  <span key={n.slug}>
+                    {i > 0 && (i === notable.length - 1 ? ', and ' : ', ')}
+                    <Link href={`/dispensary/${n.slug}`} className="text-primary hover:underline">
+                      {n.name}
+                    </Link>
+                  </span>
+                ))}
+                .
+              </>
+            )}
+          </p>
+          <p>
+            Compare menus, prices, and current deals above, or narrow the list with the pickup,
+            delivery, and open-now filters. Every listing shows hours, services, and directions.
+            Bring a valid 21+ ID and check local regulations before ordering.
+          </p>
+        </div>
       </section>
+
+      {nearbyCities.length > 0 && (
+        <section className="mt-10">
+          <h2 className="mb-3 text-lg font-semibold">Dispensaries near {cityName}</h2>
+          <div className="flex flex-wrap gap-2">
+            {nearbyCities.map((c) => (
+              <Link
+                key={c.name}
+                href={`/dispensaries/${state.toLowerCase()}/${citySlug(c.name)}`}
+                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors"
+              >
+                {c.name}
+                <span className="text-muted text-xs">({c.count})</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <FaqSection items={faqs} />
     </main>
