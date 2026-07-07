@@ -28,7 +28,8 @@ export async function Navbar() {
         <Link href="/" aria-label="Weedtip home" className="shrink-0">
           <Logo />
         </Link>
-        <GlobalSearch className="mx-4 hidden max-w-md flex-1 md:block" />
+        {/* Wider on desktop now that the nav folded into fewer items. */}
+        <GlobalSearch className="mx-4 hidden max-w-lg flex-1 md:block" />
         <MarketSelector className="mr-3 hidden sm:block" />
         <NavMenu
           email={user?.email ?? null}

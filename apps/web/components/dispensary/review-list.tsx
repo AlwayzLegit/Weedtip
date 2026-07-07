@@ -71,7 +71,8 @@ function HelpfulButton({
         disabled={pending}
         aria-pressed={voted}
         className={cn(
-          'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+          // h-8 keeps the tap target at 32px (was 26px — tight on phones).
+          'inline-flex h-8 items-center gap-1 rounded-full border px-3 text-xs font-medium transition-colors',
           voted
             ? 'border-primary bg-primary-muted text-primary'
             : 'border-border text-muted hover:text-foreground',
@@ -132,7 +133,8 @@ export function ReviewList({
 
   const chip = (active: boolean) =>
     cn(
-      'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+      // h-8 matches the sort select and keeps taps at 32px.
+      'inline-flex h-8 items-center rounded-full border px-3 text-xs font-medium transition-colors',
       active
         ? 'border-primary bg-primary-muted text-primary'
         : 'border-border text-muted hover:text-foreground',
@@ -215,6 +217,12 @@ export function ReviewList({
                         alt={`Photo ${i + 1} from ${r.authorName ?? 'a shopper'}'s review`}
                         loading="lazy"
                         className="border-border h-24 w-24 rounded-lg border object-cover"
+                        // A dead photo URL renders a broken-image glyph — hide
+                        // the whole thumbnail instead.
+                        onError={(e) => {
+                          const a = e.currentTarget.closest('a');
+                          if (a) a.style.display = 'none';
+                        }}
                       />
                     </a>
                   ))}
@@ -249,7 +257,7 @@ export function ReviewList({
                           void deleteReview(r.id, dispensarySlug);
                         }
                       }}
-                      className="text-muted hover:text-danger text-xs underline"
+                      className="text-muted hover:text-danger -my-2 py-2 text-xs underline"
                     >
                       Delete
                     </button>

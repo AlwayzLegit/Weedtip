@@ -33,7 +33,8 @@ function Column({ title, links }: { title: string; links: { href: string; label:
       <ul className="space-y-2 text-sm">
         {links.map((l) => (
           <li key={l.href}>
-            <Link href={l.href} className="text-muted hover:text-foreground">
+            {/* -my/py grow the tap target to ~36px without changing spacing. */}
+            <Link href={l.href} className="text-muted hover:text-foreground -my-2 inline-block py-2">
               {l.label}
             </Link>
           </li>
@@ -77,7 +78,7 @@ export async function Footer() {
         <div className="border-border text-muted mt-10 border-t pt-6 text-xs">
           <nav className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
             {LEGAL.map((l) => (
-              <Link key={l.href} href={l.href} className="hover:text-foreground">
+              <Link key={l.href} href={l.href} className="hover:text-foreground -my-2 py-2">
                 {l.label}
               </Link>
             ))}
