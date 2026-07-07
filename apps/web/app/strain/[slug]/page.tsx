@@ -376,6 +376,27 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
           </div>
         </section>
       )}
+
+      {/* Strain pages ↔ Learn hub interlinking (helps both rank). */}
+      <section className="mt-10">
+        <h2 className="text-sm font-semibold uppercase tracking-wide">Keep learning</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            { href: '/learn/indica-vs-sativa-vs-hybrid', label: 'Indica vs sativa vs hybrid' },
+            { href: '/learn/what-are-terpenes', label: 'What are terpenes?' },
+            { href: '/learn/understanding-thc-and-cbd', label: 'Understanding THC & CBD' },
+            { href: '/learn/edible-dosing-guide', label: 'Edible dosing guide' },
+          ].map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }

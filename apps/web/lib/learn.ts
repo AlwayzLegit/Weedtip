@@ -3,6 +3,8 @@
  * with Article structured data. Kept as data (not a CMS) for simplicity; swap for
  * MDX/a CMS later without changing the routes or schema.
  */
+import { MORE_ARTICLES } from './learn-articles-2';
+
 export interface LearnSection {
   heading?: string;
   paragraphs: string[];
@@ -25,9 +27,15 @@ export interface Article {
   dateModified: string;
   readMinutes: number;
   body: LearnSection[];
+  /** Question/answer pairs rendered on-page and as FAQPage structured data. */
+  faq?: { question: string; answer: string }[];
+  /** Strain pages worth linking from this article ({ name, slug }). */
+  relatedStrains?: { name: string; slug: string }[];
+  /** Slugs of related articles (falls back to same-topic when omitted). */
+  related?: string[];
 }
 
-export const ARTICLES: Article[] = [
+const CORE_ARTICLES: Article[] = [
   {
     slug: 'how-to-order-cannabis-online',
     topic: 'Ordering',
@@ -182,6 +190,20 @@ export const ARTICLES: Article[] = [
   },
 ];
 
+export const ARTICLES: Article[] = [...CORE_ARTICLES, ...MORE_ARTICLES];
+
 export function getArticle(slug: string): Article | null {
   return ARTICLES.find((a) => a.slug === slug) ?? null;
+}
+
+/** Related reading for an article: explicit list first, same-topic fill. */
+export function relatedArticles(article: Article, limit = 3): Article[] {
+  const explicit = (article.related ?? [])
+    .map((s) => ARTICLES.find((a) => a.slug === s))
+    .filter((a): a is Article => !!a);
+  const sameTopic = ARTICLES.filter(
+    (a) =>
+      a.slug !== article.slug && a.topic === article.topic && !explicit.some((e) => e.slug === a.slug),
+  );
+  return [...explicit, ...sameTopic].slice(0, limit);
 }
