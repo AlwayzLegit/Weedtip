@@ -70,7 +70,7 @@ export default async function HomePage() {
     supabase
       .from('dispensaries')
       .select(
-        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone',
+        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number',
       )
       .eq('status', 'active')
       // Photo-backed only: these seed the hero carousel + featured rail, both
@@ -115,7 +115,7 @@ export default async function HomePage() {
     supabase
       .from('dispensaries')
       .select(
-        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone',
+        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number',
       )
       .eq('status', 'active')
       .eq('is_delivery', true)
@@ -186,6 +186,7 @@ export default async function HomePage() {
     reviewCount: d.rating_count,
     hours: (d.hours ?? null) as OperatingHours | null,
     timezone: d.timezone,
+    licensed: !!d.license_number,
   }));
   const initialDeals: FeedDeal[] = (deals ?? []).flatMap((deal) => {
     const disp = deal.dispensary as unknown as {
@@ -302,7 +303,11 @@ export default async function HomePage() {
                       <span className="block truncate text-sm font-semibold">{d.name}</span>
                       <span className="text-muted block truncate text-xs">
                         {d.city ? `${d.city}, ${d.state}` : `Delivery · ${d.state}`}
-                        {d.rating_avg > 0 ? ` · ★ ${d.rating_avg.toFixed(1)}` : ''}
+                        {d.rating_avg > 0
+                          ? ` · ★ ${d.rating_avg.toFixed(1)}`
+                          : d.license_number
+                            ? ' · Licensed'
+                            : ''}
                       </span>
                     </span>
                   </Link>

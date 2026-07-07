@@ -17,7 +17,7 @@ export type FeedShop = DispensaryCardData;
 export type FeedDeal = DealCardData & { id: string };
 
 const SHOP_FIELDS =
-  'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone';
+  'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number';
 
 type ShopRow = {
   slug: string;
@@ -35,6 +35,7 @@ type ShopRow = {
   rating_count: number;
   hours: unknown;
   timezone: string | null;
+  license_number: string | null;
 };
 
 const toShop = (r: ShopRow): FeedShop => ({
@@ -53,6 +54,7 @@ const toShop = (r: ShopRow): FeedShop => ({
   reviewCount: r.rating_count,
   hours: (r.hours ?? null) as OperatingHours | null,
   timezone: r.timezone,
+  licensed: !!r.license_number,
 });
 
 /**
