@@ -123,8 +123,14 @@ export function GlobalSearch({ className }: { className?: string }) {
           onKeyDown={onKeyDown}
           placeholder="Search stores, products, brands, strains…"
           aria-label="Search Weedtip"
-          className="border-border bg-surface focus-visible:ring-primary/40 focus-visible:border-primary/60 h-10 w-full rounded-full border pl-9 pr-4 text-sm outline-none transition-colors focus-visible:ring-2"
+          className="border-border bg-surface focus-visible:ring-primary/40 focus-visible:border-primary/60 h-10 w-full rounded-full border pl-9 pr-14 text-sm outline-none transition-colors focus-visible:ring-2"
         />
+        {/* Discoverability hint for the ⌘K palette (hidden while typing). */}
+        {!query && (
+          <kbd className="border-border text-muted pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded border px-1.5 py-0.5 text-[10px] font-medium lg:flex">
+            ⌘K
+          </kbd>
+        )}
       </div>
 
       {showDropdown && (

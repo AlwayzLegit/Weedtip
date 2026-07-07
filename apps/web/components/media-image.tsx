@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { Leaf } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FadeImage } from './ui/fade-image';
 
 /**
  * Seeded placeholder palettes (complete class strings so Tailwind keeps them).
@@ -67,7 +67,7 @@ export function MediaImage({
       className={cn('relative overflow-hidden bg-gradient-to-br', tint, className)}
     >
       {url ? (
-        <Image src={url} alt={alt ?? ''} fill sizes={sizes} className="object-cover" />
+        <FadeImage src={url} alt={alt ?? ''} fill sizes={sizes} className="object-cover" />
       ) : (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           {artIcon ?? (
