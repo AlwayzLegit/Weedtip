@@ -18,7 +18,7 @@ export function DealCard({ deal }: { deal: DealCardData }) {
   return (
     <Link
       href={`/dispensary/${deal.dispensarySlug}`}
-      className="rounded-card border-primary/30 bg-primary-muted hover:border-primary flex items-start justify-between gap-3 border p-5 transition-colors"
+      className="rounded-card border-primary/30 bg-primary-muted hover:border-primary flex h-full items-start justify-between gap-3 border p-5 transition-colors"
     >
       <div className="min-w-0">
         <p className="text-primary font-semibold">{deal.title}</p>

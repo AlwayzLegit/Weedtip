@@ -49,11 +49,19 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
   // Best-of style trust signal: highly rated with enough reviews to be credible.
   const topRated = (d.rating ?? 0) >= 4.5 && (d.reviewCount ?? 0) >= 10;
 
+  // Service tags in priority order; the card shows at most three on one row.
+  const serviceBadges: { label: string; icon?: React.ReactNode }[] = [
+    ...(d.isPickup ? [{ label: 'Pickup', icon: <Store className="h-3 w-3" /> }] : []),
+    ...(d.isDelivery ? [{ label: 'Delivery', icon: <Truck className="h-3 w-3" /> }] : []),
+    ...(d.isMedical ? [{ label: 'Medical' }] : []),
+    ...(d.isRecreational ? [{ label: 'Rec' }] : []),
+  ];
+
   return (
     <Link
       href={`/dispensary/${d.slug}`}
       prefetch={false}
-      className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group block overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
+      className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group flex h-full flex-col overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
       {d.placementId && <PlacementBeacon placementId={d.placementId} />}
       {d.adSlot && <AdSlotBeacon slot={d.adSlot} />}
@@ -89,7 +97,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
         )}
       </MediaImage>
 
-      <div className="space-y-2 p-4">
+      <div className="flex-1 space-y-2 p-4">
         <div className="flex items-center gap-2">
           <LogoImage src={d.logoUrl} name={d.name} className="h-8 w-8" />
           <h3 className="group-hover:text-primary truncate font-semibold">{d.name}</h3>
@@ -102,34 +110,36 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
               : 'Delivery only'}
         </p>
 
-        {typeof d.rating === 'number' && d.rating > 0 && (
-          <div className="flex items-center gap-1.5">
-            <RatingStars rating={d.rating} />
-            <span className="text-muted text-xs">
-              {d.rating.toFixed(1)}
-              {d.reviewCount ? ` (${d.reviewCount})` : ''}
-            </span>
-            {topRated && (
-              <Badge tone="primary" className="ml-0.5">
-                Top Rated
-              </Badge>
-            )}
-          </div>
-        )}
+        {/* Rating row is always present (a "New" state when unrated) so every
+            card in a row shares the same vertical rhythm. */}
+        <div className="flex min-h-[20px] items-center gap-1.5">
+          {typeof d.rating === 'number' && d.rating > 0 ? (
+            <>
+              <RatingStars rating={d.rating} />
+              <span className="text-muted text-xs">
+                {d.rating.toFixed(1)}
+                {d.reviewCount ? ` (${d.reviewCount})` : ''}
+              </span>
+              {topRated && (
+                <Badge tone="primary" className="ml-0.5">
+                  Top Rated
+                </Badge>
+              )}
+            </>
+          ) : (
+            <span className="text-muted text-xs">New · no reviews yet</span>
+          )}
+        </div>
 
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {d.isPickup && (
-            <Badge tone="outline">
-              <Store className="h-3 w-3" /> Pickup
+        {/* One non-wrapping row — capped so 4 services never spill to a second
+            line and clip against the card's bottom edge. */}
+        <div className="flex gap-1.5 overflow-hidden pt-1">
+          {serviceBadges.slice(0, 3).map((b) => (
+            <Badge key={b.label} tone="outline" className="shrink-0">
+              {b.icon}
+              {b.label}
             </Badge>
-          )}
-          {d.isDelivery && (
-            <Badge tone="outline">
-              <Truck className="h-3 w-3" /> Delivery
-            </Badge>
-          )}
-          {d.isMedical && <Badge tone="outline">Medical</Badge>}
-          {d.isRecreational && <Badge tone="outline">Rec</Badge>}
+          ))}
         </div>
       </div>
     </Link>
