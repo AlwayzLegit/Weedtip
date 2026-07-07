@@ -96,6 +96,7 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     recreational: shops.filter((s) => s.is_recreational).length,
     withHours: shops.filter((s) => s.hours != null).length,
   };
+  const notableSeen = new Set<string>();
   const notable = [...shops]
     .sort(
       (a, b) =>
@@ -104,12 +105,19 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
         b.rating_count - a.rating_count ||
         a.name.localeCompare(b.name),
     )
+    // Chains repeat a name across locations — one entry per display name so the
+    // copy never reads "Affinity, and Affinity".
+    .filter((s) => {
+      const key = s.name.trim().toLowerCase();
+      if (notableSeen.has(key)) return false;
+      notableSeen.add(key);
+      return true;
+    })
     .slice(0, 3)
     .map((s) => ({ name: s.name, slug: s.slug }));
-  const deliveryShops = shops
-    .filter((s) => s.is_delivery)
-    .slice(0, 3)
-    .map((s) => s.name);
+  const deliveryShops = [
+    ...new Set(shops.filter((s) => s.is_delivery).map((s) => s.name.trim())),
+  ].slice(0, 3);
 
   // Geo-scoped featured: live featured placements whose scope matches this
   // location, for shops located here. Pins them to the top with tracking.
