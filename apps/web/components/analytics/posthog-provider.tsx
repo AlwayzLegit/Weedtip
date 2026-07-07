@@ -19,6 +19,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       api_host: HOST,
       capture_pageview: false, // captured manually on route change below
       capture_pageleave: true,
+      // Collect real Core Web Vitals (LCP/CLS/INP/FCP/TTFB) from field traffic
+      // so performance work can target actual offenders instead of lab guesses.
+      capture_performance: { web_vitals: true },
       person_profiles: 'identified_only',
     });
   }, []);

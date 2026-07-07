@@ -40,6 +40,7 @@ export function MediaImage({
   className,
   iconClassName,
   sizes = '(max-width: 768px) 100vw, 400px',
+  priority,
   artSeed,
   artIcon,
   children,
@@ -51,6 +52,12 @@ export function MediaImage({
   iconClassName?: string;
   /** Responsive sizes hint for the optimized image. */
   sizes?: string;
+  /**
+   * Marks this as an above-the-fold LCP image: next/image preloads it with
+   * fetchpriority=high instead of lazy-loading. Set only on the hero / first
+   * visible image — priority on off-screen images hurts more than it helps.
+   */
+  priority?: boolean;
   /** Varies the placeholder tint deterministically (use the item name). */
   artSeed?: string;
   /** Replaces the default leaf watermark on the placeholder. */
@@ -67,7 +74,14 @@ export function MediaImage({
       className={cn('relative overflow-hidden bg-gradient-to-br', tint, className)}
     >
       {url ? (
-        <FadeImage src={url} alt={alt ?? ''} fill sizes={sizes} className="object-cover" />
+        <FadeImage
+          src={url}
+          alt={alt ?? ''}
+          fill
+          sizes={sizes}
+          priority={priority}
+          className="object-cover"
+        />
       ) : (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           {artIcon ?? (
