@@ -1125,6 +1125,30 @@ export type Database = {
           },
         ]
       }
+      deal_alert_signups: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string | null
+          state: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string | null
+          state?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string | null
+          state?: string | null
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
