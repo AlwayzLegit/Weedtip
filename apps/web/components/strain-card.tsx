@@ -23,7 +23,7 @@ export function StrainCard({ s }: { s: StrainCardData }) {
   return (
     <Link
       href={`/strain/${s.slug}`}
-      className="rounded-card border-border bg-surface hover:border-primary/50 block border p-4 transition-colors"
+      className="rounded-card border-border bg-surface hover:border-primary/50 flex h-full flex-col border p-4 transition-colors"
     >
       <div className="flex items-center justify-between gap-2">
         <h3 className="truncate font-semibold">{s.name}</h3>

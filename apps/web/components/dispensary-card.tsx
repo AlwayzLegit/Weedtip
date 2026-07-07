@@ -53,7 +53,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
     <Link
       href={`/dispensary/${d.slug}`}
       prefetch={false}
-      className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group block overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
+      className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group flex h-full flex-col overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
       {d.placementId && <PlacementBeacon placementId={d.placementId} />}
       {d.adSlot && <AdSlotBeacon slot={d.adSlot} />}
@@ -89,7 +89,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
         )}
       </MediaImage>
 
-      <div className="space-y-2 p-4">
+      <div className="flex-1 space-y-2 p-4">
         <div className="flex items-center gap-2">
           <LogoImage src={d.logoUrl} name={d.name} className="h-8 w-8" />
           <h3 className="group-hover:text-primary truncate font-semibold">{d.name}</h3>
