@@ -20,7 +20,7 @@ import { STATE_BOUNDS, US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
 export const revalidate = 3600;
 
 const LOCATION_SELECT =
-  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone';
+  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone,license_number';
 
 // Cached per request so generateMetadata + the page don't each run the query.
 const loadCity = cache(async function loadCity(state: string, city: string) {
@@ -30,7 +30,7 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
   const supabase = createStaticClient();
   // Page past the 1k cap: in large states a city's shops can all sort beyond
   // row 1,000, which previously 404'd valid (and sitemap-listed) city pages.
-  const data = await fetchAll<{ id: string; slug: string; name: string; city: string | null; state: string; cover_image_url: string | null; logo_url: string | null; is_delivery: boolean; is_pickup: boolean; is_medical: boolean; is_recreational: boolean; featured: boolean; rating_avg: number; rating_count: number; latitude: number | null; longitude: number | null; hours: unknown; timezone: string | null }>(
+  const data = await fetchAll<{ id: string; slug: string; name: string; city: string | null; state: string; cover_image_url: string | null; logo_url: string | null; is_delivery: boolean; is_pickup: boolean; is_medical: boolean; is_recreational: boolean; featured: boolean; rating_avg: number; rating_count: number; latitude: number | null; longitude: number | null; hours: unknown; timezone: string | null; license_number: string | null }>(
     (from, to) =>
       supabase
         .from('dispensaries')
@@ -419,6 +419,7 @@ export default async function CityDispensariesPage({
                   : undefined,
               rating: s.rating_avg,
               reviewCount: s.rating_count,
+              licensed: !!s.license_number,
               lat: s.latitude,
               lng: s.longitude,
               distanceMeters: null,

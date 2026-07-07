@@ -89,6 +89,7 @@ type RpcRow = {
   featured: boolean;
   rating_avg: number;
   rating_count: number;
+  licensed: boolean;
   distance_meters: number;
   is_open_now: boolean;
   total_count: number;
@@ -110,6 +111,7 @@ function toShop(r: RpcRow): BrowserShop {
     featured: r.featured,
     rating: r.rating_avg,
     reviewCount: r.rating_count,
+    licensed: r.licensed,
     lat: r.latitude,
     lng: r.longitude,
     distanceMeters: r.distance_meters,
@@ -460,7 +462,7 @@ export function DispensariesBrowser({
         const { data } = await supabase
           .from('dispensaries')
           .select(
-            'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone',
+            'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone,license_number',
           )
           .eq('slug', slug)
           .eq('status', 'active')
@@ -482,6 +484,7 @@ export function DispensariesBrowser({
           featured: data.featured,
           rating: data.rating_avg,
           reviewCount: data.rating_count,
+          licensed: !!data.license_number,
           lat: data.latitude,
           lng: data.longitude,
           distanceMeters: null,
@@ -688,6 +691,7 @@ export function DispensariesBrowser({
                       distanceMeters: s.distanceMeters,
                       rating: s.rating,
                       reviewCount: s.reviewCount,
+                      licensed: s.licensed,
                       openNow: s.isOpenNow,
                       hours: s.hours,
                       timezone: s.timezone,
@@ -801,7 +805,7 @@ export function DispensariesBrowser({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{s.name}</p>
                     <p className="text-muted truncate text-xs">
-                      {s.rating > 0 ? `★ ${s.rating.toFixed(1)} · ` : ''}
+                      {s.rating > 0 ? `★ ${s.rating.toFixed(1)} · ` : s.licensed ? 'Licensed · ' : ''}
                       {s.city ?? 'Delivery only'}
                       {formatDistance(s.distanceMeters) ? ` · ${formatDistance(s.distanceMeters)}` : ''}
                     </p>

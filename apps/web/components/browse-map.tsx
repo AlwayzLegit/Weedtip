@@ -13,7 +13,7 @@ import Map, {
   type MapRef,
 } from 'react-map-gl';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'mapbox-gl';
-import { MapPin, Navigation, Store, Truck } from 'lucide-react';
+import { BadgeCheck, MapPin, Navigation, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import type { AdSlotMeta } from './ads/ad-slot-beacon';
 import { formatDistance } from '@/lib/format';
@@ -44,6 +44,8 @@ export interface BrowserShop {
   sponsored?: boolean;
   rating: number;
   reviewCount: number;
+  /** State cannabis license on file — powers the "Licensed" trust cue. */
+  licensed?: boolean;
   lat: number | null;
   lng: number | null;
   distanceMeters: number | null;
@@ -447,7 +449,7 @@ export function BrowseMap({
                 <p className="text-muted text-xs">
                   {selected.city ? `${selected.city}, ${selected.state}` : 'Delivery only'}
                 </p>
-                {selected.rating > 0 && (
+                {selected.rating > 0 ? (
                   <p className="flex items-center gap-1 text-xs">
                     <RatingStars rating={selected.rating} size={12} />
                     <span className="text-muted">
@@ -455,7 +457,11 @@ export function BrowseMap({
                       {selected.reviewCount ? ` (${selected.reviewCount})` : ''}
                     </span>
                   </p>
-                )}
+                ) : selected.licensed ? (
+                  <p className="text-primary flex items-center gap-1 text-xs font-medium">
+                    <BadgeCheck className="h-3.5 w-3.5" /> Licensed
+                  </p>
+                ) : null}
                 <p className="text-muted flex items-center gap-2 text-[11px]">
                   {selected.isPickup && (
                     <span className="inline-flex items-center gap-0.5">

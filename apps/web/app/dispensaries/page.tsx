@@ -127,6 +127,7 @@ export default async function DispensariesPage({
     featured: r.featured,
     rating: r.rating_avg,
     reviewCount: r.rating_count,
+    licensed: r.licensed,
     lat: r.latitude,
     lng: r.longitude,
     distanceMeters: r.distance_meters,

@@ -2642,6 +2642,7 @@ export type Database = {
           is_pickup: boolean
           is_recreational: boolean
           latitude: number
+          licensed: boolean
           logo_url: string
           longitude: number
           name: string
