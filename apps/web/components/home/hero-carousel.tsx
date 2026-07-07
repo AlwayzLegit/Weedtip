@@ -80,6 +80,9 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
             className="h-64 sm:h-80"
             iconClassName="h-16 w-16"
             sizes="(max-width: 1024px) 100vw, 1024px"
+            // The hero is the homepage LCP element — preload the first slide's
+            // photo instead of lazy-loading it.
+            priority={i === 0}
           >
             <div
               className="from-background via-background/40 absolute inset-0 bg-gradient-to-t to-transparent"
