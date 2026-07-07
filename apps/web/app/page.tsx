@@ -10,6 +10,7 @@ import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
 import { JsonLd } from '@/components/seo/json-ld';
+import { ArticleCard } from '@/components/article-card';
 import { StrainCard } from '@/components/strain-card';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/ui/reveal';
@@ -406,18 +407,7 @@ export default async function HomePage() {
           <SectionHeading eyebrow="Cannabis 101" title="New here? Start with the basics" href="/learn" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {ARTICLES.slice(0, 4).map((a) => (
-              <Link
-                key={a.slug}
-                href={`/learn/${a.slug}`}
-                className="card card-interactive flex h-full flex-col p-5"
-              >
-                <p className="eyebrow">{a.topic}</p>
-                <h3 className="mt-1.5 font-semibold leading-snug">{a.title}</h3>
-                <p className="text-muted mt-2 line-clamp-3 text-sm leading-relaxed">
-                  {a.description}
-                </p>
-                <span className="text-muted mt-auto pt-3 text-xs">{a.readMinutes} min read</span>
-              </Link>
+              <ArticleCard key={a.slug} a={a} />
             ))}
           </div>
         </section>
