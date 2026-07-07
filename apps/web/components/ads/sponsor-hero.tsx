@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { Crown, MapPin, Store, Truck } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { LogoImage } from '../logo-image';

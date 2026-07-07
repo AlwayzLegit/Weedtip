@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { Package, Sparkles } from 'lucide-react';
 import { PlacementBeacon } from '@/components/placement-beacon';
 import { pageSeo } from '@/lib/seo';

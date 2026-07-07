@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { citySlug, US_STATES } from '@/lib/seo';
 
 export interface RegionEntry {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { ChevronLeft, ChevronRight, MapPin, Star } from 'lucide-react';
 import { MediaImage } from '@/components/media-image';
 import { Badge } from '@/components/ui/badge';
@@ -111,24 +111,28 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
 
         {n > 1 && (
           <>
-            {/* Arrows overlap the slide title on phones — swipe covers mobile. */}
-            <button
-              type="button"
-              aria-label="Previous"
-              onClick={() => go(i - 1)}
-              className="glass absolute left-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full sm:flex"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next"
-              onClick={() => go(i + 1)}
-              className="glass absolute right-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full sm:flex"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-            <div className="absolute bottom-1 left-1/2 flex -translate-x-1/2">
+            {/* Prev/next as a compact corner cluster — clear of the slide
+                title (bottom-left) and the dots (bottom-center), so it never
+                floats over the content. Swipe covers touch. */}
+            <div className="absolute bottom-4 right-4 z-10 hidden items-center gap-1.5 sm:flex">
+              <button
+                type="button"
+                aria-label="Previous"
+                onClick={() => go(i - 1)}
+                className="glass hover:border-primary/50 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next"
+                onClick={() => go(i + 1)}
+                className="glass hover:border-primary/50 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2">
               {slides.map((sl, idx) => (
                 <button
                   key={sl.placementId || sl.slug}

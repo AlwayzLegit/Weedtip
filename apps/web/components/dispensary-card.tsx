@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { MapPin, Tag, Truck, Store } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { formatDistance } from '@/lib/format';

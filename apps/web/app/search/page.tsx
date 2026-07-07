@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { Award, Leaf, Package, Search, Store } from 'lucide-react';
 import { pageSeo } from '@/lib/seo';
 import {

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loader2, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';

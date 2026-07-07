@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
 import { PRODUCT_CATEGORIES, type OperatingHours } from '@weedtip/shared';
 import { Breadcrumbs } from '@/components/breadcrumbs';

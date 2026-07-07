@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { ArrowRight, MapPin } from 'lucide-react';
 import { US_STATES } from '@/lib/seo';
 import { readMarketCookie } from './market-selector';

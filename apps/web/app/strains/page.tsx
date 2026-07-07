@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { Search } from 'lucide-react';
 import { STRAIN_TYPES, type StrainType } from '@weedtip/shared';
 import { StrainCard } from '@/components/strain-card';

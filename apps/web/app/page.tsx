@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { ArrowRight, MapPin } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { CategoryTiles } from '@/components/home/category-tiles';

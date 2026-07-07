@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'next-view-transitions';
 import { dealBadge } from '@/lib/format';
 import { Badge } from './ui/badge';
 
