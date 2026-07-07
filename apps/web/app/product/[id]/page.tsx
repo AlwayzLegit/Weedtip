@@ -5,6 +5,7 @@ import { Sparkles, Store, Tag } from 'lucide-react';
 import { deleteProductReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ViewTracker } from '@/components/analytics/view-tracker';
+import { RecordRecentlyViewed } from '@/components/recently-viewed';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { ProductGallery } from '@/components/product-gallery';
@@ -197,6 +198,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           price_cents: priceCents,
           in_stock: product.in_stock,
           dispensary_id: dispensary?.id ?? null,
+        }}
+      />
+      <RecordRecentlyViewed
+        item={{
+          kind: 'product',
+          href: `/product/${product.id}`,
+          name: product.name,
+          image: images[0] ?? null,
+          sub: brand?.name ?? product.brand ?? null,
         }}
       />
       <Breadcrumbs items={crumbs} />
