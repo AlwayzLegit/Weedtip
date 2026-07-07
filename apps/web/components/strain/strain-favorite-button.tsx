@@ -5,6 +5,7 @@ import { useState, useTransition } from 'react';
 import { Heart } from 'lucide-react';
 import { toggleStrainFavorite } from '@/app/actions/strains';
 import { Button } from '@/components/ui/button';
+import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
 export function StrainFavoriteButton({
@@ -46,6 +47,11 @@ export function StrainFavoriteButton({
         const next = !saved;
         setSaved(next);
         setCount((c) => c + (next ? 1 : -1));
+        track(next ? 'favorite_added' : 'favorite_removed', {
+          kind: 'strain',
+          strain_id: strainId,
+          slug,
+        });
         start(async () => {
           const res = await toggleStrainFavorite(strainId, slug);
           if (!res.ok || res.saved === undefined) {

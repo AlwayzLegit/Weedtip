@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Sparkles, Store, Tag } from 'lucide-react';
 import { deleteProductReview } from '@/app/actions/reviews';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { ViewTracker } from '@/components/analytics/view-tracker';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { ProductGallery } from '@/components/product-gallery';
@@ -187,6 +188,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <JsonLd data={jsonLd} />
+      <ViewTracker
+        event="product_viewed"
+        properties={{
+          product_id: product.id,
+          name: product.name,
+          brand: brand?.name ?? product.brand ?? null,
+          price_cents: priceCents,
+          in_stock: product.in_stock,
+          dispensary_id: dispensary?.id ?? null,
+        }}
+      />
       <Breadcrumbs items={crumbs} />
       <div className="grid gap-8 sm:grid-cols-2">
         <ProductGallery images={images} alt={product.name} />

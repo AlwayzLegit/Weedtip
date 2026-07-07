@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
 import { Award, Leaf, Package, Search, Store } from 'lucide-react';
+import { ViewTracker } from '@/components/analytics/view-tracker';
 import { pageSeo } from '@/lib/seo';
 import {
   SEARCH_KIND_LABEL,
@@ -56,6 +57,12 @@ export default async function SearchPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
+      {query.length >= 2 && (
+        <ViewTracker
+          event="search_performed"
+          properties={{ query, result_count: results.length, has_results: hasResults }}
+        />
+      )}
       <div className="mb-6">
         <p className="eyebrow mb-1">Search</p>
         <h1 className="text-2xl font-bold sm:text-3xl">
