@@ -14,6 +14,7 @@ export type AnalyticsEvent =
   | 'order_placed'
   | 'favorite_added'
   | 'favorite_removed'
+  | 'deal_alert_subscribed'
   | 'claim_started'
   | 'claim_submitted'
   | 'ad_impression'

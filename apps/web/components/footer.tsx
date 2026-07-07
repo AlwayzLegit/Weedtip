@@ -1,5 +1,7 @@
+import { cookies } from 'next/headers';
 import { Link } from 'next-view-transitions';
 import { getAuth } from '@/lib/auth';
+import { DealAlertSignup } from './deal-alert-signup';
 import { Logo } from './brand/logo';
 
 const DISCOVER = [
@@ -46,9 +48,15 @@ function Column({ title, links }: { title: string; links: { href: string; label:
 
 export async function Footer() {
   const { user } = await getAuth();
+  // Localize the deal-alert copy to the visitor's chosen market (nav selector
+  // writes the wt_state cookie). Falls back to a generic "near you".
+  const marketState = (await cookies()).get('wt_state')?.value ?? null;
   return (
     <footer className="border-border mt-16 border-t">
       <div className="mx-auto max-w-7xl px-4 py-12">
+        <div className="border-border mb-10 border-b pb-10">
+          <DealAlertSignup source="footer" defaultState={marketState} />
+        </div>
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="max-w-xs space-y-2 lg:col-span-2">
             <Logo />
