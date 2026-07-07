@@ -63,12 +63,28 @@ export function ScrollCarousel({
         )}
       </div>
 
+      {/* Edge fades: on hover the first/last card slides under a soft scrim so
+          the paddle never sits on sharp content. Pointer-through. */}
+      {canLeft && (
+        <div
+          aria-hidden
+          className="from-background pointer-events-none absolute inset-y-0 -left-1 z-[5] hidden w-12 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 motion-reduce:transition-none sm:block"
+        />
+      )}
+      {canRight && (
+        <div
+          aria-hidden
+          className="from-background pointer-events-none absolute inset-y-0 -right-1 z-[5] hidden w-12 bg-gradient-to-l to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 motion-reduce:transition-none sm:block"
+        />
+      )}
+
+      {/* Paddles reveal on hover only — at rest nothing overlays the cards. */}
       {canLeft && (
         <button
           type="button"
           aria-label="Scroll left"
           onClick={() => nudge(-1)}
-          className="border-border bg-surface/95 text-foreground shadow-card-hover hover:border-primary/50 absolute -left-3 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border sm:flex"
+          className="border-border bg-surface text-foreground shadow-card-hover hover:border-primary/50 absolute -left-3 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-visible:opacity-100 motion-reduce:transition-none sm:flex"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -78,7 +94,7 @@ export function ScrollCarousel({
           type="button"
           aria-label="Scroll right"
           onClick={() => nudge(1)}
-          className="border-border bg-surface/95 text-foreground shadow-card-hover hover:border-primary/50 absolute -right-3 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border sm:flex"
+          className="border-border bg-surface text-foreground shadow-card-hover hover:border-primary/50 absolute -right-3 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-visible:opacity-100 motion-reduce:transition-none sm:flex"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
