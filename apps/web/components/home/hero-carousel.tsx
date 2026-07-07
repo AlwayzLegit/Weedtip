@@ -137,7 +137,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                   aria-current={idx === i}
                   onClick={() => go(idx)}
                   // Generous hit area around a small visual dot (thumb-friendly).
-                  className="group flex h-8 items-center px-1.5"
+                  className="group flex h-8 items-center px-2.5"
                 >
                   <span
                     className={cn(

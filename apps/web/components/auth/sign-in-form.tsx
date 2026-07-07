@@ -22,7 +22,7 @@ export function SignInForm({ next }: { next?: string }) {
       <div>
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <Link href="/forgot-password" className="text-primary text-xs hover:underline">
+          <Link href="/forgot-password" className="text-primary -m-2 p-2 text-xs hover:underline">
             Forgot?
           </Link>
         </div>

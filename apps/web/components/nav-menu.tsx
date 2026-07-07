@@ -23,15 +23,20 @@ import { GlobalSearch } from './global-search';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 
-const BROWSE = [
+// Primary destinations stay inline on desktop; the rest fold into a Browse
+// dropdown so the header doesn't crowd at laptop widths.
+const PRIMARY = [
   { href: '/dispensaries', label: 'Dispensaries' },
   { href: '/deliveries', label: 'Deliveries' },
-  { href: '/brands', label: 'Brands' },
-  { href: '/products', label: 'Products' },
   { href: '/deals', label: 'Deals' },
+];
+const SECONDARY = [
+  { href: '/products', label: 'Products' },
+  { href: '/brands', label: 'Brands' },
   { href: '/strains', label: 'Strains' },
   { href: '/learn', label: 'Learn' },
 ];
+const BROWSE = [...PRIMARY, ...SECONDARY];
 
 export function NavMenu({
   email,
@@ -50,22 +55,29 @@ export function NavMenu({
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [browseOpen, setBrowseOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
+  const browseRef = useRef<HTMLDivElement>(null);
 
   // Close everything on route change.
   useEffect(() => {
     setDrawerOpen(false);
     setMenuOpen(false);
+    setBrowseOpen(false);
   }, [pathname]);
 
-  // Close the account dropdown on outside click / Escape.
+  // Close the dropdowns on outside click / Escape.
   useEffect(() => {
     function onDown(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (browseRef.current && !browseRef.current.contains(e.target as Node)) setBrowseOpen(false);
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        setBrowseOpen(false);
+      }
     }
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -83,7 +95,7 @@ export function NavMenu({
       : 'muted';
   const initial = (displayName ?? email ?? '?').charAt(0).toUpperCase();
 
-  const browseLinks = BROWSE.map((link) => (
+  const navLink = (link: { href: string; label: string }) => (
     <Link
       key={link.href}
       href={link.href}
@@ -94,7 +106,46 @@ export function NavMenu({
     >
       {link.label}
     </Link>
-  ));
+  );
+
+  const secondaryActive = SECONDARY.some((l) => pathname.startsWith(l.href));
+  const browseDropdown = (
+    <div className="relative" ref={browseRef}>
+      <button
+        type="button"
+        onClick={() => setBrowseOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={browseOpen}
+        className={cn(
+          'hover:text-foreground inline-flex items-center gap-1 text-sm font-medium transition-colors',
+          secondaryActive ? 'text-foreground' : 'text-muted',
+        )}
+      >
+        Browse
+        <ChevronDown className={cn('h-4 w-4 transition-transform', browseOpen && 'rotate-180')} />
+      </button>
+      {browseOpen && (
+        <div
+          role="menu"
+          className="rounded-card border-border bg-surface shadow-card-hover sheen animate-slide-up absolute left-0 top-10 z-50 w-44 border p-2"
+        >
+          {SECONDARY.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              role="menuitem"
+              className={cn(
+                'hover:bg-surface-2 hover:text-foreground block rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                pathname.startsWith(link.href) ? 'text-foreground' : 'text-muted',
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   // Role-aware account items: consoles first (owner/admin), then shopper essentials.
   const accountItems = (
@@ -125,9 +176,11 @@ export function NavMenu({
 
   return (
     <>
-      {/* Desktop */}
-      <nav className="hidden items-center gap-4 lg:flex">
-        {browseLinks}
+      {/* Desktop: three core destinations + Browse dropdown (the full list
+          lives in the mobile drawer and the footer). */}
+      <nav className="hidden items-center gap-5 lg:flex">
+        {PRIMARY.map(navLink)}
+        {browseDropdown}
         <CartButton />
         {email && (
           <Link

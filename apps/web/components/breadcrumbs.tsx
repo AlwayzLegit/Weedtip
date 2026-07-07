@@ -28,7 +28,8 @@ export function Breadcrumbs({ items }: { items: Crumb[] }) {
                   {c.name}
                 </span>
               ) : (
-                <Link href={c.href} className="hover:text-foreground transition-colors">
+                // -my/py pad the tap target to ~36px without moving the text.
+                <Link href={c.href} className="hover:text-foreground -my-2 py-2 transition-colors">
                   {c.name}
                 </Link>
               )}

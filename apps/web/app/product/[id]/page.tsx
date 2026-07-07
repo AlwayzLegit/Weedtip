@@ -281,7 +281,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </ul>
               <Link
                 href={`/dispensary/${dispensary.slug}#deals`}
-                className="text-primary mt-2 inline-block text-xs font-medium hover:underline"
+                className="text-primary -mb-2 mt-2 inline-block pb-2 pt-2 text-xs font-medium hover:underline"
               >
                 All deals at {dispensary.name} →
               </Link>
@@ -357,7 +357,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 city: string | null;
                 state: string;
               } | null;
-              if (!shop) return null;
+              // A malformed join row would render a blank-but-clickable row.
+              if (!shop?.name || !shop.state) return null;
               return (
                 <Link
                   key={sib.id}

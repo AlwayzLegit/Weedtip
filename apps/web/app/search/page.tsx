@@ -67,6 +67,25 @@ export default async function SearchPage({
             brands, and strains.
           </p>
         )}
+        {/* On-page query box: phones have no header search field, so without
+            this, refining a search means reopening the hamburger menu. */}
+        <form action="/search" className="mt-4 flex max-w-xl gap-2">
+          <input
+            type="search"
+            name="q"
+            defaultValue={query}
+            placeholder="Dispensaries, products, brands, strains…"
+            aria-label="Search Weedtip"
+            enterKeyHint="search"
+            className="border-border bg-surface focus:border-primary h-11 min-w-0 flex-1 rounded-lg border px-3.5 text-sm outline-none transition-colors"
+          />
+          <button
+            type="submit"
+            className="bg-primary bg-primary-grad text-primary-foreground inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg px-4 text-sm font-medium"
+          >
+            <Search className="h-4 w-4" /> Search
+          </button>
+        </form>
       </div>
 
       {query.length < 2 ? (
