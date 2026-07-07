@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
 import { Leaf, Sprout } from 'lucide-react';
+import { ViewTracker } from '@/components/analytics/view-tracker';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { StrainCard } from '@/components/strain-card';
@@ -112,6 +113,10 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <ViewTracker
+        event="strain_viewed"
+        properties={{ strain_id: strain.id, slug: strain.slug, name: strain.name, type: strain.type }}
+      />
       <Breadcrumbs
         items={[
           { name: 'Home', href: '/' },

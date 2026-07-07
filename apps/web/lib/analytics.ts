@@ -5,10 +5,15 @@ import posthog from 'posthog-js';
  * PostHog insights and dashboards reference them by string.
  */
 export type AnalyticsEvent =
+  | 'search_performed'
   | 'shop_viewed'
+  | 'product_viewed'
+  | 'strain_viewed'
   | 'add_to_cart'
   | 'checkout_started'
   | 'order_placed'
+  | 'favorite_added'
+  | 'favorite_removed'
   | 'claim_started'
   | 'claim_submitted'
   | 'ad_impression'
