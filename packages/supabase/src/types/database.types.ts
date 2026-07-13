@@ -2461,6 +2461,7 @@ export type Database = {
         Args: { at_ts?: string; hours: Json }
         Returns: boolean
       }
+      is_paid_listing: { Args: { p_dispensary_id: string }; Returns: boolean }
       owns_brand: { Args: { p_brand_id: string }; Returns: boolean }
       owns_dispensary: {
         Args: { target_dispensary_id: string }

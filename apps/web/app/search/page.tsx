@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { Link } from 'next-view-transitions';
 import { Award, Leaf, Package, Search, Store } from 'lucide-react';
 import { ViewTracker } from '@/components/analytics/view-tracker';
@@ -41,6 +42,33 @@ export default async function SearchPage({
 }) {
   const { q } = await searchParams;
   const query = (q ?? '').trim();
+
+  // ZIP-shaped queries mean "dispensaries near this place" — the entity-name
+  // search matches nothing for them. Center the map on our own listings for
+  // that ZIP (works even when the client-side geocoder is unavailable);
+  // ZIPs with no listings fall through to the regular no-results state.
+  const zip = /^(\d{5})(?:-\d{4})?$/.exec(query)?.[1];
+  if (zip) {
+    const supabase = await createClient();
+    const { data: rows } = await supabase
+      .from('dispensaries')
+      .select('latitude,longitude')
+      .eq('zip', zip)
+      .eq('status', 'active')
+      .not('latitude', 'is', null)
+      .limit(50);
+    if (rows && rows.length > 0) {
+      const lat = rows.reduce((sum, r) => sum + Number(r.latitude), 0) / rows.length;
+      const lng = rows.reduce((sum, r) => sum + Number(r.longitude), 0) / rows.length;
+      const params = new URLSearchParams({
+        lat: lat.toFixed(5),
+        lng: lng.toFixed(5),
+        radius_meters: '8000',
+        place: zip,
+      });
+      redirect(`/dispensaries?${params.toString()}`);
+    }
+  }
 
   let results: SearchResult[] = [];
   if (query.length >= 2) {

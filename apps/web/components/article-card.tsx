@@ -21,8 +21,11 @@ export function ArticleCard({ a }: { a: ArticleCardData }) {
       href={`/learn/${a.slug}`}
       className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group flex h-full flex-col overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
+      {/* Every article ships a generated hero at public/learn/<slug>.webp —
+          add one when adding an article. */}
       <MediaImage
-        url={null}
+        url={`/learn/${a.slug}.webp`}
+        alt={a.title}
         artSeed={a.title}
         artIcon={
           <BookOpen

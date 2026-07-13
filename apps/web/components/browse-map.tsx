@@ -73,6 +73,8 @@ export interface MapPinPoint {
   logoUrl?: string | null;
   /** Live-deal tag rendered on the pin, e.g. "20% off". */
   dealLabel?: string | null;
+  /** 1-based list position — numbered pin matching the result card. */
+  rank?: number;
 }
 
 /** How many merchandised pins (logo/deal markers) we'll put in the DOM. */
@@ -112,6 +114,7 @@ const clusterCountLayer: LayerProps = {
 };
 
 // Closed shops fade to slate; featured stay amber; open/unknown are brand green.
+// Ranked pins (in the visible result list) grow to fit their number.
 const unclusteredLayer: LayerProps = {
   id: 'unclustered-point',
   type: 'circle',
@@ -125,10 +128,30 @@ const unclusteredLayer: LayerProps = {
       '#64748b',
       '#34d399',
     ],
-    'circle-radius': ['case', ['get', 'featured'], 7, 6],
+    'circle-radius': [
+      'case',
+      ['has', 'rank'],
+      9,
+      ['case', ['get', 'featured'], 7, 6],
+    ],
     'circle-stroke-width': 1.5,
     'circle-stroke-color': '#0b0b0b',
   },
+};
+
+// Google-Maps-style result numbers on pins that are in the visible list.
+const pinRankLayer: LayerProps = {
+  id: 'pin-ranks',
+  type: 'symbol',
+  filter: ['all', ['!', ['has', 'point_count']], ['has', 'rank']],
+  layout: {
+    'text-field': ['to-string', ['get', 'rank']],
+    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+    'text-size': 10,
+    'text-allow-overlap': true,
+    'text-ignore-placement': true,
+  },
+  paint: { 'text-color': '#04231a' },
 };
 
 // Shop names appear under pins once zoomed in enough to read the streets.
@@ -220,7 +243,13 @@ export function BrowseMap({
         .filter((p) => !markerSlugs.has(p.slug))
         .map((p) => ({
           type: 'Feature' as const,
-          properties: { slug: p.slug, name: p.name, featured: p.featured, open: p.isOpenNow },
+          properties: {
+            slug: p.slug,
+            name: p.name,
+            featured: p.featured,
+            open: p.isOpenNow,
+            ...(p.rank != null ? { rank: p.rank } : {}),
+          },
           geometry: { type: 'Point' as const, coordinates: [p.lng, p.lat] },
         })),
     };
@@ -285,7 +314,9 @@ export function BrowseMap({
 
   const onMouseMove = (e: MapLayerMouseEvent) => {
     setOverInteractive(Boolean(e.features?.length));
-    const pin = e.features?.find((f) => f.layer?.id === 'unclustered-point');
+    const pin = e.features?.find(
+      (f) => f.layer?.id === 'unclustered-point' || f.layer?.id === 'pin-ranks',
+    );
     onHover(pin ? ((pin.properties?.slug as string) ?? null) : null);
   };
 
@@ -307,7 +338,7 @@ export function BrowseMap({
       }}
       mapStyle="mapbox://styles/mapbox/dark-v11"
       style={{ width: '100%', height: '100%' }}
-      interactiveLayerIds={['clusters', 'unclustered-point']}
+      interactiveLayerIds={['clusters', 'unclustered-point', 'pin-ranks']}
       onClick={onClick}
       onMouseMove={onMouseMove}
       onMouseLeave={() => {
@@ -351,6 +382,7 @@ export function BrowseMap({
         <Layer {...clusterLayer} />
         <Layer {...clusterCountLayer} />
         <Layer {...unclusteredLayer} />
+        <Layer {...pinRankLayer} />
         <Layer {...pinLabelLayer} />
       </Source>
 
@@ -384,16 +416,23 @@ export function BrowseMap({
               </span>
             )}
             {p.logoUrl ? (
-              <LogoImage
-                src={p.logoUrl}
-                name={p.name}
-                hideWhenEmpty={false}
-                className={cn(
-                  'bg-surface h-9 w-9 shadow-md ring-2',
-                  hoveredSlug === p.slug ? 'ring-primary' : 'ring-amber-400',
+              <span className="relative">
+                <LogoImage
+                  src={p.logoUrl}
+                  name={p.name}
+                  hideWhenEmpty={false}
+                  className={cn(
+                    'bg-surface h-9 w-9 shadow-md ring-2',
+                    hoveredSlug === p.slug ? 'ring-primary' : 'ring-amber-400',
+                  )}
+                  rounded="rounded-full"
+                />
+                {p.rank != null && (
+                  <span className="absolute -left-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-0.5 text-[9px] font-bold leading-none text-black shadow ring-1 ring-black/40">
+                    {p.rank}
+                  </span>
                 )}
-                rounded="rounded-full"
-              />
+              </span>
             ) : (
               <span
                 aria-hidden

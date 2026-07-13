@@ -12,6 +12,11 @@ export interface ProductCardData {
   brand: string | null;
   priceCents: number;
   imageUrl: string | null;
+  /**
+   * Category slug (e.g. "flower", "edibles") — products without their own
+   * photo fall back to the generated category art under public/art/.
+   */
+  categorySlug?: string | null;
   strainType: StrainType | null;
   thcPercentage: number | null;
   inStock: boolean;
@@ -33,12 +38,29 @@ const STRAIN_LABEL: Record<StrainType, string> = {
   cbd: 'CBD',
 };
 
+/** Category slugs with generated product art under public/art/category-<slug>.webp. */
+const CATEGORY_ART = new Set([
+  'flower',
+  'pre-rolls',
+  'vapes',
+  'edibles',
+  'concentrates',
+  'topicals',
+  'tinctures',
+  'accessories',
+]);
+
 export function ProductCard({ p }: { p: ProductCardData }) {
   const onSale = typeof p.originalPriceCents === 'number' && p.originalPriceCents > p.priceCents;
+  const imageUrl =
+    p.imageUrl ??
+    (p.categorySlug && CATEGORY_ART.has(p.categorySlug)
+      ? `/art/category-${p.categorySlug}.webp`
+      : null);
   const body = (
     <div className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover h-full overflow-hidden border transition-all duration-200 hover:-translate-y-0.5">
       <MediaImage
-        url={p.imageUrl}
+        url={imageUrl}
         alt={p.name}
         artSeed={p.name}
         className="h-32"

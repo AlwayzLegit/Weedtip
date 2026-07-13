@@ -166,6 +166,7 @@ export function MenuBrowser({
                   priceCents: p.priceCents,
                   originalPriceCents: p.originalPriceCents,
                   imageUrl: p.imageUrl,
+                  categorySlug: p.categorySlug,
                   strainType: p.strainType,
                   thcPercentage: p.thcPercentage,
                   inStock: p.inStock,

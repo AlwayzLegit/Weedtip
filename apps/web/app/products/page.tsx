@@ -120,20 +120,24 @@ export default async function ProductsPage({
   const sponsoredIds = new Set(sponsored.map((p) => p.id));
   const organic = rows.filter((r) => !sponsoredIds.has(r.id));
 
-  // Catalog image fallback for organic rows (the search RPC has no embed).
+  // Catalog image + category fallback for organic rows (the search RPC has no
+  // embed) — category slug powers the generated category-art placeholder for
+  // products with no photo at all.
   const catalogImageById = new Map<string, string>();
+  const categorySlugById = new Map<string, string>();
   const organicNoImg = organic
     .filter((r) => !(r.image_urls && r.image_urls.length > 0))
     .map((r) => r.id);
   if (organicNoImg.length > 0) {
     const { data: cat } = await supabase
       .from('products')
-      .select(`id, ${CATALOG_IMAGE_EMBED}`)
+      .select(`id, category:categories(slug), ${CATALOG_IMAGE_EMBED}`)
       .in('id', organicNoImg);
     for (const c of cat ?? []) {
       const cat = c.catalog as { id: string; image_url: string | null } | null;
       const img = cat ? catalogImageSrc(cat.id, cat.image_url) : null;
       if (img) catalogImageById.set(c.id, img);
+      if (c.category?.slug) categorySlugById.set(c.id, c.category.slug);
     }
   }
 
@@ -247,6 +251,7 @@ export default async function ProductsPage({
                 priceCents: saleMap.get(p.id) ?? p.price_cents,
                 originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
                 imageUrl: p.image_urls[0] ?? catalogImageById.get(p.id) ?? null,
+                categorySlug: params.category_slug ?? categorySlugById.get(p.id),
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,
                 inStock: p.in_stock,

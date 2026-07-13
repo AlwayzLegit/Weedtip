@@ -137,6 +137,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
                 priceCents: saleMap.get(p.id) ?? p.price_cents,
                 originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
                 imageUrl: cardImageUrl(p),
+                categorySlug: slug,
                 strainType: p.strain_type,
                 thcPercentage: p.thc_percentage,
                 inStock: p.in_stock,

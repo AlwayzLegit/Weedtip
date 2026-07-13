@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
 import { ArrowRight, BookOpen, ChevronDown, Clock, Leaf, MapPin } from 'lucide-react';
@@ -45,7 +46,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     description: article.description,
     datePublished: article.datePublished,
     dateModified: article.dateModified,
-    image: absoluteUrl(DEFAULT_OG_IMAGE),
+    image: [absoluteUrl(`/learn/${slug}.webp`), absoluteUrl(DEFAULT_OG_IMAGE)],
     mainEntityOfPage: absoluteUrl(`/learn/${slug}`),
     author: { '@type': 'Organization', name: SITE_NAME },
     publisher: {
@@ -107,6 +108,17 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <Clock className="h-3.5 w-3.5" /> {article.readMinutes} min read
           </span>
         </p>
+
+        {/* Generated editorial hero — every article ships one at
+            public/learn/<slug>.webp (add one when adding an article). */}
+        <Image
+          src={`/learn/${slug}.webp`}
+          alt={article.title}
+          width={1536}
+          height={864}
+          priority
+          className="rounded-card border-border mt-6 w-full border object-cover"
+        />
 
         {toc.length > 2 && (
           <nav

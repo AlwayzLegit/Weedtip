@@ -1,8 +1,8 @@
 import { Link } from 'next-view-transitions';
-import { Leaf } from 'lucide-react';
 import type { StrainType } from '@weedtip/shared';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
+import { FadeImage } from './ui/fade-image';
 
 export interface StrainCardData {
   slug: string;
@@ -20,19 +20,15 @@ const TYPE_LABEL: Record<StrainType, string> = {
   cbd: 'CBD',
 };
 
-// Each strain type gets a colour identity so a rail of strains reads as
-// distinct, vivid cards instead of a wall of grey text.
-const TYPE_ART: Record<StrainType, string> = {
+// Each strain type gets a photographic colour identity (generated bud macro
+// under public/art/strain-<type>.webp) so a rail of strains reads as distinct,
+// vivid cards instead of a wall of grey text. The gradient fallback paints the
+// same hue while the photo loads.
+const TYPE_FALLBACK: Record<StrainType, string> = {
   indica: 'from-violet-500/45 via-violet-500/10 to-surface',
   sativa: 'from-amber-500/45 via-amber-500/10 to-surface',
   hybrid: 'from-emerald-500/45 via-emerald-500/10 to-surface',
   cbd: 'from-sky-500/45 via-sky-500/10 to-surface',
-};
-const TYPE_ICON: Record<StrainType, string> = {
-  indica: 'text-violet-300/70',
-  sativa: 'text-amber-300/70',
-  hybrid: 'text-emerald-300/70',
-  cbd: 'text-sky-300/70',
 };
 
 export function StrainCard({ s }: { s: StrainCardData }) {
@@ -42,20 +38,22 @@ export function StrainCard({ s }: { s: StrainCardData }) {
       href={`/strain/${s.slug}`}
       className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group flex h-full flex-col overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
-      {/* Type-tinted gradient header with a watermark leaf + type badge. */}
+      {/* Type-identity photo header (generated bud macro) + type badge. */}
       <div
         className={cn(
-          'relative flex h-24 items-center justify-center bg-gradient-to-br',
-          TYPE_ART[s.type],
+          'relative h-24 overflow-hidden bg-gradient-to-br',
+          TYPE_FALLBACK[s.type],
         )}
       >
-        <Leaf
-          className={cn(
-            'h-9 w-9 transition-transform duration-300 group-hover:scale-110',
-            TYPE_ICON[s.type],
-          )}
-          strokeWidth={1.5}
+        <FadeImage
+          src={`/art/strain-${s.type}.webp`}
+          alt=""
+          fill
+          sizes="(max-width: 768px) 50vw, 300px"
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
+        {/* Legibility scrim under the badges. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
         <Badge tone="primary" className="absolute left-3 top-3">
           {TYPE_LABEL[s.type]}
         </Badge>

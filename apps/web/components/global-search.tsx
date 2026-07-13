@@ -76,6 +76,22 @@ export function GlobalSearch({ className }: { className?: string }) {
     router.push(`/search?q=${encodeURIComponent(q)}`);
   }
 
+  /**
+   * ZIP-shaped queries mean "dispensaries near this place", not an entity-name
+   * search (where a ZIP matches nothing). Resolve to the top place suggestion —
+   * re-geocoding when Enter beats the debounced typeahead — and open the map.
+   */
+  async function goToZip(q: string) {
+    const place = places[0] ?? (await geocodePlaces(q, { limit: 1 }))[0];
+    if (place) {
+      setOpen(false);
+      router.push(dispensariesUrlForPlace(place));
+    } else {
+      // Geocoder unavailable — /search has a server-side ZIP fallback.
+      goToResults();
+    }
+  }
+
   // Keyboard focus runs over one combined list: places first, then entities.
   const itemCount = places.length + results.length;
 
@@ -99,7 +115,9 @@ export function GlobalSearch({ className }: { className?: string }) {
       setActive((a) => Math.max(a - 1, -1));
     } else if (e.key === 'Enter') {
       e.preventDefault();
+      const q = query.trim();
       if (active >= 0 && active < itemCount) activate(active);
+      else if (/^\d{5}(?:-\d{4})?$/.test(q)) void goToZip(q);
       else goToResults();
     } else if (e.key === 'Escape') {
       setOpen(false);

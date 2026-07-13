@@ -25,6 +25,8 @@ export interface DispensaryCardData {
   isRecreational: boolean;
   featured?: boolean;
   sponsored?: boolean;
+  /** 1-based list position — renders a number chip matching the map pin. */
+  rank?: number;
   /** When set, records placement impression/click analytics for this card. */
   placementId?: string;
   /** When set, this card is a paid regional ad slot — fires ad_impression/ad_click. */
@@ -68,17 +70,21 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
       {d.placementId && <PlacementBeacon placementId={d.placementId} />}
       {d.adSlot && <AdSlotBeacon slot={d.adSlot} />}
       <MediaImage url={d.coverImageUrl} alt={d.name} className="h-36" iconClassName="h-12 w-12">
-        {d.sponsored ? (
-          <Badge tone="primary" className="absolute left-3 top-3">
-            Sponsored
-          </Badge>
-        ) : (
-          d.featured && (
-            <Badge tone="primary" className="absolute left-3 top-3">
-              Featured
-            </Badge>
-          )
-        )}
+        <div className="absolute left-3 top-3 flex items-center gap-1.5">
+          {d.rank != null && (
+            <span
+              aria-label={`Result ${d.rank}`}
+              className="bg-background/85 text-foreground flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[11px] font-bold shadow ring-1 ring-white/15 backdrop-blur"
+            >
+              {d.rank}
+            </span>
+          )}
+          {d.sponsored ? (
+            <Badge tone="primary">Sponsored</Badge>
+          ) : (
+            d.featured && <Badge tone="primary">Featured</Badge>
+          )}
+        </div>
         {distance && (
           <Badge className="bg-background/80 absolute right-3 top-3">
             <MapPin className="h-3 w-3" />
