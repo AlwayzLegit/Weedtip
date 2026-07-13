@@ -17,7 +17,7 @@ Supabase + Vercel MCP access (or by hand in the dashboards).
 | Web app | `apps/web` (Next.js 15 App Router) |
 | Migrations | 16 files in `packages/supabase/supabase/migrations/` (0001 → 0016) |
 
-The app is built to **degrade gracefully**: without Mapbox/Stripe keys the map shows
+The app is built to **degrade gracefully**: without Mapbox/Resend keys the map shows
 a placeholder and checkout falls back to pay-at-dispensary. So you can ship first and
 add those keys later.
 
@@ -43,7 +43,7 @@ Weedtip is deployed and smoke-tested green. Live coordinates for future sessions
 > so production lives in Weed Tip.
 
 **Not yet configured (optional, degrade gracefully):** `NEXT_PUBLIC_SITE_URL` (only needed
-for Stripe redirect URLs), Stripe keys + webhook (Phase 3 — needs a cannabis-friendly
+for email links), Resend key (Phase 3 — transactional email; domain verified
 processor for real payments), `NEXT_PUBLIC_MAPBOX_TOKEN`, custom domain.
 
 **Deployment gotchas hit this round (for next time):**
@@ -127,7 +127,7 @@ Signups default to `consumer`/`dispensary_owner`. To get an admin:
 ### 1.7 Collect keys for Vercel
 - `NEXT_PUBLIC_SUPABASE_URL` → project URL (MCP `get_project_url`).
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` → anon/publishable key (MCP `get_publishable_keys`).
-- `SUPABASE_SERVICE_ROLE_KEY` → **service-role secret** (dashboard → Project Settings → API). Server-only; bypasses RLS (used by the Stripe webhook).
+- `SUPABASE_SERVICE_ROLE_KEY` → **service-role secret** (dashboard → Project Settings → API). Server-only; bypasses RLS (used by trusted server actions such as billing activation).
 
 ---
 
@@ -149,11 +149,10 @@ Signups default to `consumer`/`dispensary_owner`. To get an admin:
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | From 1.7 |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | From 1.7 |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | From 1.7 (server-only — do NOT prefix NEXT_PUBLIC) |
-| `NEXT_PUBLIC_SITE_URL` | ✅ | `https://<your-vercel-domain>` (used for Stripe redirect URLs) |
+| `NEXT_PUBLIC_SITE_URL` | ✅ | `https://<your-vercel-domain>` (used for links in email + canonicals) |
 | `NEXT_PUBLIC_MAPBOX_TOKEN` | optional | Mapbox public token (`pk.…`). Omit → map placeholder. |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | optional | Stripe `pk_…`. Omit → pay-at-dispensary only. |
-| `STRIPE_SECRET_KEY` | optional | Stripe `sk_…` (server-only) |
-| `STRIPE_WEBHOOK_SECRET` | optional | Stripe `whsec_…` (set in Phase 3) |
+| `RESEND_API_KEY` | optional | Resend key for transactional email. Omit → sends are logged no-ops. |
+| `SALES_EMAIL` | optional | Billing-request inbox (default `sales@weedtip.com`) |
 
 ### 2.3 Deploy
 - Trigger the deploy; wait for build success.
@@ -162,21 +161,17 @@ Signups default to `consumer`/`dispensary_owner`. To get an admin:
 
 ---
 
-## Phase 3 — Stripe (when you have keys; otherwise skip — checkout still works as pay-at-dispensary)
+## Phase 3 — Email (Resend)
 
-1. Add `STRIPE_SECRET_KEY` + `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to Vercel env (use
-   `sk_live_`/`pk_live_` for real, or `sk_test_`/`pk_test_` to validate first).
-2. Stripe Dashboard → Developers → **Webhooks** → Add endpoint:
-   - URL: `https://<your-vercel-domain>/api/stripe/webhook`
-   - Events: `checkout.session.completed`, `charge.refunded`
-3. Copy the signing secret (`whsec_…`) → Vercel env `STRIPE_WEBHOOK_SECRET` → **redeploy**.
-4. Test: check out with **Pay now**, card `4242 4242 4242 4242` → after payment the
-   webhook flips the order to **paid + confirmed** (visible on the order page).
-   ⚠️ Compliance note: Stripe prohibits cannabis sales on its standard product — for a
-   real launch you need a cannabis-friendly processor; the integration is processor-shaped
-   and can be swapped.
+1. weedtip.com is already a verified sending domain in Resend.
+2. Add `RESEND_API_KEY` to Vercel env → redeploy.
+3. Order confirmations, dispensary notifications, claim decisions, and billing-request
+   alerts start sending automatically. Without the key they're logged no-ops.
 
----
+Payments note: Weedtip NEVER collects payment from shoppers (pickup = pay at store,
+delivery = pay the dispensary's delivery partner). B2B billing (plans/placements/slots)
+is sales-led via /admin/billing until the PaymentCloud gateway integration lands.
+
 
 ## Phase 4 — Smoke test (post-deploy)
 
@@ -186,8 +181,7 @@ Signups default to `consumer`/`dispensary_owner`. To get an admin:
 - Sign up → confirm email → sign in. Promote yourself to admin (1.6).
 - Admin: `/admin` overview, `/admin/dispensaries` moderation controls.
 - Owner: "List your dispensary" → create listing → it's `pending` → approve in admin → it goes public.
-- Cart → checkout: order is created; payment badge reflects pay-at-pickup (or Paid if Stripe live).
-- `/api/stripe/webhook` (POST) returns `503` until Stripe is configured, then `400` without a valid signature — both expected.
+- Cart → checkout: order is created; payment badge reflects pay-at-pickup / pay-driver-at-delivery.
 
 ---
 
@@ -203,11 +197,11 @@ Signups default to `consumer`/`dispensary_owner`. To get an admin:
   placeholder; real photos are uploaded by owners via the dashboard (→ Supabase Storage,
   which is the only host on the `next/image` allowlist, `*.supabase.co`).
 - **Server-authoritative pricing**: orders/totals come from the `create_order` RPC and the
-  Stripe session is built from the DB snapshot — never trust client cart prices.
+  totals are always rebuilt from the DB snapshot — never trust client cart prices.
 - **CSS-uppercased headings** (FLOWER/VAPES/HOURS…) read as lowercase in raw HTML — not a bug.
 - `.env*` is gitignored (except `.env.example`); never commit real keys.
 
 ## Env var reference for local dev
 Copy `.env.example` → `apps/web/.env.local` and fill in. The same variable names are used
-in Vercel. `SUPABASE_SERVICE_ROLE_KEY` and `STRIPE_*` (except the `NEXT_PUBLIC_` ones) are
+in Vercel. `SUPABASE_SERVICE_ROLE_KEY` and `RESEND_API_KEY` are
 server-only.

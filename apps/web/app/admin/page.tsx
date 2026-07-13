@@ -48,7 +48,7 @@ export default async function AdminOverview() {
       .from('orders')
       .select('status,payment_status,total_cents,platform_fee_cents,created_at,dispensary_id,source,device'),
     supabase.from('dispensary_subscriptions').select('status, plan:plans(name, price_cents)'),
-    supabase.from('placements').select('price_cents,stripe_payment_intent_id'),
+    supabase.from('placements').select('price_cents,is_active'),
     supabase.from('dispensaries').select('id', head).eq('status', 'active'),
     supabase.from('plans').select('id,name,price_cents').order('sort_order'),
     supabase.from('dispensaries').select('id', head).eq('status', 'pending'),
@@ -68,8 +68,10 @@ export default async function AdminOverview() {
   const mrr = (subs ?? [])
     .filter((s) => s.status === 'active')
     .reduce((sum, s) => sum + ((s.plan as { price_cents: number } | null)?.price_cents ?? 0), 0);
+  // Activated placements = sold placements (activation happens after billing
+  // is arranged in the sales-led flow).
   const placementSales = (placements ?? [])
-    .filter((p) => p.stripe_payment_intent_id)
+    .filter((p) => p.is_active)
     .reduce((s, p) => s + (p.price_cents ?? 0), 0);
 
   // Head count — the full dispensaries list can't be fetched (9k+ > 1k cap).

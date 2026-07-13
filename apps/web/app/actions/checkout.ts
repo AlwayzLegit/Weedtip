@@ -2,24 +2,21 @@
 
 import { revalidatePath } from 'next/cache';
 import { cookies, headers } from 'next/headers';
-import type Stripe from 'stripe';
 import { z } from 'zod';
-import { deliveryAddressSchema, orderTypeSchema, type OrderItem } from '@weedtip/shared';
+import { deliveryAddressSchema, orderTypeSchema } from '@weedtip/shared';
+import { newOrderForDispensaryEmail, orderConfirmationEmail, sendEmail } from '@/lib/email';
 import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
-import { isStripeConfigured, stripe } from '@/lib/stripe';
 
 /**
  * Checkout entry point shared by web (and, via the same contract, mobile).
  *
- * Always creates a SERVER-AUTHORITATIVE order first (the `create_order` RPC derives
- * prices/totals from the DB). Then:
- *   • pay_now + Stripe configured → create a Stripe Checkout Session and return its
- *     URL for the client to redirect to. The webhook marks the order paid/confirmed.
- *   • otherwise → leave the order as a pay-at-dispensary order and return its id.
+ * Creates a SERVER-AUTHORITATIVE order (the `create_order` RPC derives
+ * prices/totals from the DB). Weedtip never collects payment from shoppers:
+ * pickup orders are paid at the store, delivery orders are paid to the
+ * dispensary's delivery partner. The platform's revenue is B2B only.
  */
 export type StartCheckoutResult =
-  | { ok: true; mode: 'redirect'; url: string }
   | { ok: true; mode: 'order'; orderId: string }
   | { ok: false; error: string };
 
@@ -29,7 +26,6 @@ const inputSchema = z
     order_type: orderTypeSchema,
     notes: z.string().max(1000).optional(),
     promo_code: z.string().max(40).optional(),
-    pay_now: z.boolean().optional(),
     delivery_address: deliveryAddressSchema.optional(),
     /** Remember this address on the profile for next time. */
     save_address: z.boolean().optional(),
@@ -155,8 +151,6 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Please sign in to place an order.' };
 
-  const wantsOnline = !!input.pay_now && isStripeConfigured && stripe !== null;
-
   // Attribution: device from the user-agent, source from the wt_src cookie
   // (set by middleware when a shopper arrives via an embed link).
   const [hdrs, cookieStore] = await Promise.all([headers(), cookies()]);
@@ -192,92 +186,42 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
       .eq('id', user.id);
   }
 
+  await supabase.from('orders').update({ payment_method: 'in_person' }).eq('id', orderId as string);
+
   revalidatePath('/orders');
   revalidatePath('/dashboard/orders');
 
-  // 2a. Pay-at-dispensary (or Stripe not configured): record method, return order.
-  if (!wantsOnline) {
-    await supabase.from('orders').update({ payment_method: 'in_person' }).eq('id', orderId as string);
-    return { ok: true, mode: 'order', orderId: orderId as string };
-  }
-
-  // 2b. Online prepay via Stripe Checkout.
-  const { data: order } = await supabase
-    .from('orders')
-    .select('items, tax_cents, discount_cents')
-    .eq('id', orderId as string)
-    .single();
-
-  if (!order) return { ok: true, mode: 'order', orderId: orderId as string };
-
-  const items = (order.items as OrderItem[]) ?? [];
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-
-  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(
-    (it) => ({
-      quantity: it.quantity,
-      price_data: {
-        currency: 'usd',
-        unit_amount: it.unit_price_cents,
-        product_data: { name: it.name },
-      },
-    }),
-  );
-  if (order.tax_cents > 0) {
-    lineItems.push({
-      quantity: 1,
-      price_data: {
-        currency: 'usd',
-        unit_amount: order.tax_cents,
-        product_data: { name: 'Estimated tax' },
-      },
-    });
-  }
-
-  // Apply any promo discount as a one-off Stripe coupon so the charge matches
-  // the server-authoritative total.
-  let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
-  if (order.discount_cents > 0) {
-    try {
-      const coupon = await stripe!.coupons.create({
-        amount_off: order.discount_cents,
-        currency: 'usd',
-        duration: 'once',
-        name: 'Promo discount',
-      });
-      discounts = [{ coupon: coupon.id }];
-    } catch {
-      // If coupon creation fails, fall back to charging the undiscounted lines.
-      discounts = undefined;
+  // Notify both sides. Failures never block the order — email is best-effort.
+  const [{ data: order }, { data: shop }] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('total_cents, items')
+      .eq('id', orderId as string)
+      .single(),
+    supabase
+      .from('dispensaries')
+      .select('name, email')
+      .eq('id', input.dispensary_id)
+      .single(),
+  ]);
+  if (order && shop) {
+    const emailInput = {
+      orderId: orderId as string,
+      dispensaryName: shop.name,
+      orderType: input.order_type,
+      totalCents: order.total_cents,
+      itemCount: Array.isArray(order.items) ? order.items.length : input.items.length,
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+    };
+    if (user.email) {
+      const m = orderConfirmationEmail(emailInput);
+      await sendEmail({ to: user.email, subject: m.subject, html: m.html });
+    }
+    if (shop.email) {
+      const m = newOrderForDispensaryEmail(emailInput);
+      await sendEmail({ to: shop.email, subject: m.subject, html: m.html });
     }
   }
 
-  try {
-    const session = await stripe!.checkout.sessions.create({
-      mode: 'payment',
-      line_items: lineItems,
-      ...(discounts ? { discounts } : {}),
-      client_reference_id: orderId as string,
-      metadata: { order_id: orderId as string },
-      success_url: `${siteUrl}/orders/${orderId}?paid=1`,
-      cancel_url: `${siteUrl}/cart?canceled=1`,
-      payment_intent_data: { metadata: { order_id: orderId as string } },
-    });
-
-    if (!session.url) return { ok: false, error: 'Could not start payment.' };
-
-    await supabase
-      .from('orders')
-      .update({ payment_method: 'stripe', stripe_session_id: session.id })
-      .eq('id', orderId as string);
-
-    return { ok: true, mode: 'redirect', url: session.url };
-  } catch (e) {
-    // Payment couldn't start — the order still exists as pay-at-dispensary.
-    await supabase.from('orders').update({ payment_method: 'in_person' }).eq('id', orderId as string);
-    return {
-      ok: false,
-      error: e instanceof Error ? `Payment setup failed: ${e.message}` : 'Payment setup failed.',
-    };
-  }
+  return { ok: true, mode: 'order', orderId: orderId as string };
 }

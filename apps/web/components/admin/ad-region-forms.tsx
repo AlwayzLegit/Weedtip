@@ -4,7 +4,6 @@ import { useActionState } from 'react';
 import {
   compSlot,
   setAdBoundary,
-  syncStripeAdPrices,
   upsertAdRegion,
   upsertAdZone,
 } from '@/app/admin/ad-region-actions';
@@ -16,25 +15,6 @@ import { Textarea } from '../ui/textarea';
 
 const SELECT_CLASS =
   'border-border bg-surface-2 text-foreground h-10 w-full rounded-lg border px-3 text-sm';
-
-/** One-click Stripe product/price seeding for the ad price book (idempotent). */
-export function StripeSyncForm({ missing }: { missing: number }) {
-  const [state, action] = useActionState(syncStripeAdPrices, EMPTY_FORM_STATE);
-  return (
-    <form action={action} className="space-y-2">
-      <FormMessage state={state} />
-      <div className="flex flex-wrap items-center gap-3">
-        <SubmitButton size="sm">
-          {missing > 0 ? `Create ${missing} missing Stripe price(s)` : 'Re-check Stripe prices'}
-        </SubmitButton>
-        <p className="text-muted text-xs">
-          Creates a Stripe Product + monthly Price at launch pricing per sellable tier and saves
-          the price ids. Safe to re-run — already-priced rows are skipped.
-        </p>
-      </div>
-    </form>
-  );
-}
 
 export interface RegionFormValues {
   id?: string;
@@ -169,7 +149,7 @@ export function CompSlotForm({
           placeholder="Negotiated $/mo (0 = comp)"
         />
       </div>
-      <SubmitButton size="sm">Place manually (no Stripe)</SubmitButton>
+      <SubmitButton size="sm">Place manually (comp)</SubmitButton>
     </form>
   );
 }

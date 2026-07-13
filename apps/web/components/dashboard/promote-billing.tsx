@@ -3,10 +3,12 @@
 import { useMemo, useState, useTransition } from 'react';
 import { Check } from 'lucide-react';
 import {
-  openBillingPortal,
-  startPlacementCheckout,
-  startSubscriptionCheckout,
+  cancelPlan,
+  requestPlacement,
+  requestPlanChange,
+  type BillingRequestResult,
 } from '@/app/actions/billing';
+import { track } from '@/lib/analytics';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
@@ -24,21 +26,18 @@ type Plan = { id: string; name: string; price_cents: number; features: string[] 
 type Target = { id: string; label: string };
 
 export function PromoteBilling({
-  stripeEnabled,
   plans,
   currentPlanName,
-  subscribed,
-  hasBillingAccount,
+  planPending,
   city,
   state,
   deals,
   products,
 }: {
-  stripeEnabled: boolean;
   plans: Plan[];
   currentPlanName: string;
-  subscribed: boolean;
-  hasBillingAccount: boolean;
+  /** A paid-plan request is awaiting activation by the Weedtip team. */
+  planPending: boolean;
   city: string;
   state: string;
   deals: Target[];
@@ -46,12 +45,14 @@ export function PromoteBilling({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  function go(action: () => Promise<{ ok: true; url: string } | { ok: false; error: string }>) {
+  function go(action: () => Promise<BillingRequestResult>) {
     setError(null);
+    setNotice(null);
     startTransition(async () => {
       const res = await action();
-      if (res.ok) window.location.href = res.url;
+      if (res.ok) setNotice(res.message);
       else setError(res.error);
     });
   }
@@ -63,23 +64,16 @@ export function PromoteBilling({
           {error}
         </p>
       )}
+      {notice && (
+        <p className="rounded-card border-primary/30 bg-primary-muted text-primary border px-4 py-2 text-sm">
+          {notice}
+        </p>
+      )}
 
       {/* Plans */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Plans</h2>
-          {stripeEnabled && hasBillingAccount && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pending}
-              onClick={() => go(() => openBillingPortal())}
-            >
-              Manage billing
-            </Button>
-          )}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <h2 className="text-lg font-semibold">Plans</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
           {plans.map((pl) => {
             const current = currentPlanName === pl.name;
             const isPaid = pl.price_cents > 0;
@@ -93,9 +87,10 @@ export function PromoteBilling({
                 <div className="flex items-baseline justify-between">
                   <h3 className="font-semibold">{pl.name}</h3>
                   {current && <Badge tone="primary">Current</Badge>}
+                  {!current && isPaid && planPending && <Badge tone="muted">Requested</Badge>}
                 </div>
                 <p className="mt-1 text-sm font-medium">
-                  {isPaid ? `${formatPrice(pl.price_cents)}/mo` : 'Free'}
+                  {isPaid ? `${formatPrice(pl.price_cents)}/mo` : 'Free forever'}
                 </p>
                 <ul className="mt-3 flex-1 space-y-1.5">
                   {pl.features.map((f) => (
@@ -105,45 +100,57 @@ export function PromoteBilling({
                     </li>
                   ))}
                 </ul>
-                {stripeEnabled && isPaid && !current && (
+                {!current && (
                   <div className="mt-4">
-                    {subscribed ? (
-                      <p className="text-muted text-xs">Use “Manage billing” to switch plans.</p>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        disabled={pending}
-                        onClick={() => go(() => startSubscriptionCheckout(pl.id))}
-                      >
-                        Subscribe
-                      </Button>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      variant={isPaid ? 'primary' : 'outline'}
+                      disabled={pending || (isPaid && planPending)}
+                      onClick={() => {
+                        if (isPaid) track('plan_change_requested', { plan: pl.name, price_cents: pl.price_cents });
+                        go(() => requestPlanChange(pl.id));
+                      }}
+                    >
+                      {isPaid
+                        ? planPending
+                          ? 'Request sent'
+                          : `Upgrade to ${pl.name}`
+                        : 'Switch to Free'}
+                    </Button>
+                    {isPaid && (
+                      <p className="text-muted mt-1.5 text-center text-[11px]">
+                        No card needed — our team sets up billing with you.
+                      </p>
                     )}
                   </div>
+                )}
+                {current && isPaid && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-4 w-full"
+                    disabled={pending}
+                    onClick={() => go(() => cancelPlan())}
+                  >
+                    Cancel plan
+                  </Button>
                 )}
               </div>
             );
           })}
         </div>
-        {!stripeEnabled && (
-          <p className="text-muted text-xs">
-            Online billing isn’t enabled on this environment. An admin can still assign plans
-            manually.
-          </p>
-        )}
       </section>
 
-      {/* Buy a placement */}
-      {stripeEnabled && (
-        <PlacementPurchase
-          pending={pending}
-          go={go}
-          city={city}
-          state={state}
-          deals={deals}
-          products={products}
-        />
-      )}
+      {/* Reserve a placement */}
+      <PlacementPurchase
+        pending={pending}
+        go={go}
+        city={city}
+        state={state}
+        deals={deals}
+        products={products}
+      />
     </div>
   );
 }
@@ -167,9 +174,7 @@ function PlacementPurchase({
   products,
 }: {
   pending: boolean;
-  go: (
-    action: () => Promise<{ ok: true; url: string } | { ok: false; error: string }>,
-  ) => void;
+  go: (action: () => Promise<BillingRequestResult>) => void;
   city: string;
   state: string;
   deals: Target[];
@@ -191,10 +196,11 @@ function PlacementPurchase({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold">Buy a placement</h2>
+      <h2 className="text-lg font-semibold">Promote your shop</h2>
       <p className="text-muted text-sm">
-        Promote your shop, deals, or products. Price scales with reach and duration; the placement
-        activates as soon as payment clears and expires automatically.
+        Promote your shop, deals, or products. Price scales with reach and duration; reserving is
+        free — our team confirms billing before anything goes live, and the placement expires
+        automatically.
       </p>
       <div className="rounded-card border-border bg-surface space-y-4 border p-5">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -280,23 +286,24 @@ function PlacementPurchase({
           <div>
             <p className="text-lg font-semibold">{formatPrice(price)}</p>
             <p className="text-muted text-xs">
-              one-time · {days} day{days === 1 ? '' : 's'}
+              one-time · {days} day{days === 1 ? '' : 's'} · billed after our team confirms
             </p>
           </div>
           <Button
             disabled={!canBuy}
-            onClick={() =>
+            onClick={() => {
+              track('placement_requested', { type, scope, days, price_cents: price });
               go(() =>
-                startPlacementCheckout({
+                requestPlacement({
                   type,
                   scope,
                   days,
                   target_id: needsTarget ? targetId : undefined,
                 }),
-              )
-            }
+              );
+            }}
           >
-            Buy placement
+            Reserve placement
           </Button>
         </div>
       </div>

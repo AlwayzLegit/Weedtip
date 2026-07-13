@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import { startBrandBidCheckout } from '@/app/actions/billing';
-import { cancelBrandBid, placeBrandBid } from '@/app/actions/brand-bids';
+import { requestBrandBid } from '@/app/actions/billing';
+import { track } from '@/lib/analytics';
+import { cancelBrandBid } from '@/app/actions/brand-bids';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
@@ -21,18 +22,11 @@ type Row = {
   is_winning: boolean;
 };
 
-export function BrandBidRow({
-  brandId,
-  row,
-  stripeEnabled,
-}: {
-  brandId: string;
-  row: Row;
-  stripeEnabled: boolean;
-}) {
+export function BrandBidRow({ brandId, row }: { brandId: string; row: Row }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   // Suggest the bid needed to take a slot (or hold the current one).
   const suggested = Math.max(row.floor_cents, row.your_bid_cents ?? row.min_winning_cents) / 100;
   const [amount, setAmount] = useState(String(suggested));
@@ -42,32 +36,33 @@ export function BrandBidRow({
   // A paid bid whose 2-month term has lapsed no longer competes (server-enforced).
   const termEnded = row.your_bid_cents != null && committedUntil != null && !stillCommitted;
 
-  function submit(fn: () => Promise<{ ok: boolean; error?: string }>) {
-    setError(null);
-    start(async () => {
-      const res = await fn();
-      if (res.ok) router.refresh();
-      else setError(res.error ?? 'Something went wrong.');
-    });
-  }
-
-  // With Stripe on, placing/updating a bid goes through paid checkout; otherwise
-  // it commits directly (free) — same graceful fallback as the rest of billing.
+  // Bids are sales-led: this creates a PENDING bid and the Weedtip team
+  // activates it once billing for the 2-month term is arranged.
   function placeBid() {
     const cents = Math.round((Number(amount) || 0) * 100);
     setError(null);
-    if (!stripeEnabled) {
-      submit(() => placeBrandBid(brandId, row.region_id, cents));
-      return;
-    }
+    setNotice(null);
+    track('brand_bid_requested', { region_id: row.region_id, bid_cents: cents });
     start(async () => {
-      const res = await startBrandBidCheckout({
+      const res = await requestBrandBid({
         brand_id: brandId,
         region_id: row.region_id,
         bid_cents: cents,
       });
-      if (res.ok) window.location.href = res.url;
-      else setError(res.error);
+      if (res.ok) {
+        setNotice(res.message);
+        router.refresh();
+      } else setError(res.error);
+    });
+  }
+
+  function withdraw(bidId: string) {
+    setError(null);
+    setNotice(null);
+    start(async () => {
+      const res = await cancelBrandBid(bidId);
+      if (res.ok) router.refresh();
+      else setError(res.error ?? 'Something went wrong.');
     });
   }
 
@@ -109,14 +104,10 @@ export function BrandBidRow({
           />
         </label>
         <Button disabled={pending} onClick={placeBid}>
-          {row.your_bid_cents != null ? 'Update bid' : stripeEnabled ? 'Bid & pay' : 'Place bid'}
+          {row.your_bid_cents != null ? 'Update bid' : 'Place bid'}
         </Button>
         {row.your_bid_id && (
-          <Button
-            variant="outline"
-            disabled={pending}
-            onClick={() => submit(() => cancelBrandBid(row.your_bid_id!))}
-          >
+          <Button variant="outline" disabled={pending} onClick={() => withdraw(row.your_bid_id!)}>
             Withdraw
           </Button>
         )}
@@ -127,6 +118,7 @@ export function BrandBidRow({
           Committed through {committedUntil!.toLocaleDateString()} (2-month minimum).
         </p>
       )}
+      {notice && <p className="text-primary text-sm">{notice}</p>}
       {error && <p className="text-danger text-sm">{error}</p>}
     </div>
   );

@@ -36,11 +36,9 @@ const EMPTY_ADDRESS: DeliveryAddress = {
 
 export function CartView({
   isAuthenticated,
-  stripeEnabled = false,
   savedAddress = null,
 }: {
   isAuthenticated: boolean;
-  stripeEnabled?: boolean;
   savedAddress?: DeliveryAddress | null;
 }) {
   const { cart, subtotalCents, setQuantity, removeItem, clear } = useCart();
@@ -49,9 +47,6 @@ export function CartView({
   const [address, setAddress] = useState<DeliveryAddress>(savedAddress ?? EMPTY_ADDRESS);
   const [saveAddress, setSaveAddress] = useState(true);
   const [addressError, setAddressError] = useState<string | null>(null);
-  const [payMethod, setPayMethod] = useState<'card' | 'in_person'>(
-    stripeEnabled ? 'card' : 'in_person',
-  );
   const [notes, setNotes] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -174,42 +169,26 @@ export function CartView({
       item_count: cart.items.length,
       subtotal_cents: subtotalCents,
       total_cents: totalCents,
-      pay_online: stripeEnabled && payMethod === 'card',
     });
     const res = await startCheckout({
       dispensary_id: cart.dispensaryId,
       order_type: orderType,
       notes: notes.trim() || undefined,
       promo_code: promo?.code,
-      pay_now: stripeEnabled && payMethod === 'card',
       delivery_address: parsedAddress,
       save_address: orderType === 'delivery' ? saveAddress : undefined,
       items: cart.items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
     });
     if (res.ok) {
-      // The order row exists in both modes (Stripe payment settles it later);
-      // beacon so the capture survives the hard redirect to Stripe.
-      track(
-        'order_placed',
-        {
-          dispensary_id: cart.dispensaryId,
-          dispensary_slug: cart.dispensarySlug,
-          order_type: orderType,
-          item_count: cart.items.length,
-          subtotal_cents: subtotalCents,
-          discount_cents: discountCents,
-          total_cents: totalCents,
-          paid_online: res.mode === 'redirect',
-        },
-        { beacon: res.mode === 'redirect' },
-      );
-    }
-    if (res.ok && res.mode === 'redirect') {
-      clear();
-      window.location.href = res.url; // hand off to Stripe Checkout
-      return;
-    }
-    if (res.ok && res.mode === 'order') {
+      track('order_placed', {
+        dispensary_id: cart.dispensaryId,
+        dispensary_slug: cart.dispensarySlug,
+        order_type: orderType,
+        item_count: cart.items.length,
+        subtotal_cents: subtotalCents,
+        discount_cents: discountCents,
+        total_cents: totalCents,
+      });
       clear();
       router.push(`/orders/${res.orderId}`);
       return;
@@ -428,33 +407,13 @@ export function CartView({
             </div>
           )}
 
-          {stripeEnabled && (
-            <div className="mt-4">
-              <p className="mb-1.5 text-sm font-medium">Payment</p>
-              <div className="grid grid-cols-2 gap-2">
-                {(
-                  [
-                    ['card', 'Pay now'],
-                    ['in_person', 'At dispensary'],
-                  ] as const
-                ).map(([m, label]) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setPayMethod(m)}
-                    className={cn(
-                      'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
-                      payMethod === m
-                        ? 'border-primary bg-primary-muted text-primary'
-                        : 'border-border text-muted hover:text-foreground',
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Weedtip never collects payment from shoppers: pickup is paid at
+              the store, delivery is paid to the dispensary's delivery partner. */}
+          <div className="border-border bg-surface-2 text-muted mt-4 rounded-lg border px-3 py-2 text-xs">
+            {orderType === 'delivery'
+              ? 'You pay the delivery driver when your order arrives — the dispensary’s delivery partner handles payment.'
+              : 'You pay at the store when you pick up your order.'}
+          </div>
 
           <div className="mt-4">
             <p className="mb-1.5 text-sm font-medium">Notes</p>
@@ -493,8 +452,7 @@ export function CartView({
               disabled={pending || orderBlocked}
             >
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {stripeEnabled && payMethod === 'card' ? 'Pay' : 'Place order'} ·{' '}
-              {formatPrice(totalCents)}
+              Place order · {formatPrice(totalCents)}
             </Button>
           ) : (
             <Link href="/sign-in?next=/cart" className="mt-4 block">
@@ -504,9 +462,9 @@ export function CartView({
             </Link>
           )}
           <p className="text-muted mt-2 text-center text-xs">
-            {stripeEnabled && payMethod === 'card'
-              ? 'Secure card payment via Stripe. Orders are subject to 21+ ID verification.'
-              : 'Payment is collected at the dispensary. Orders are subject to 21+ ID verification.'}
+            Weedtip never charges you — payment is collected{' '}
+            {orderType === 'delivery' ? 'by the delivery driver' : 'at the dispensary'}. Orders are
+            subject to 21+ ID verification.
           </p>
         </div>
       </div>

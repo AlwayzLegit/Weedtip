@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
 import { ArrowRight, Crown, MapPin, Sparkles } from 'lucide-react';
+import { ViewTracker } from '@/components/analytics/view-tracker';
 import { Badge } from '@/components/ui/badge';
 import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
@@ -50,6 +51,7 @@ export default async function AdvertisePage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
+      <ViewTracker event="advertise_viewed" />
       <div className="max-w-3xl">
         <Badge tone="primary">
           <Sparkles className="h-3 w-3" /> Launch pricing — up to 70% off
@@ -143,7 +145,7 @@ export default async function AdvertisePage() {
         <ul className="text-muted mt-2 list-disc space-y-1 pl-5">
           <li>Shoppers search neighborhoods; your placement covers the whole region — every zone in it.</li>
           <li>Inventory is fixed per region and enforced at the database. No auctions, no getting outbid.</li>
-          <li>Launch pricing locks in now and is billed monthly via Stripe. Cancel anytime; the slot re-opens instantly.</li>
+          <li>Reserve with one click — no card needed. Our team sets up monthly invoicing within 1 business day; launch pricing locks in. Cancel anytime and the slot re-opens instantly.</li>
           <li>All sponsored placements are clearly labeled.</li>
         </ul>
       </section>

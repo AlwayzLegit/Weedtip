@@ -4,6 +4,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { Suspense, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
@@ -33,9 +34,35 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       <Suspense fallback={null}>
         <PageviewTracker />
       </Suspense>
+      <IdentityTracker />
       {children}
     </PHProvider>
   );
+}
+
+/**
+ * Ties PostHog identity to the Supabase session so journeys stitch across
+ * anonymous → signed-in (user id + role, never PII beyond email). Reset on
+ * sign-out starts a fresh anonymous person.
+ */
+function IdentityTracker() {
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) posthog.identify(user.id, { email: user.email });
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        posthog.identify(session.user.id, { email: session.user.email });
+      } else if (event === 'SIGNED_OUT') {
+        posthog.reset();
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+  return null;
 }
 
 /** Emits a $pageview on App Router client navigations. */
