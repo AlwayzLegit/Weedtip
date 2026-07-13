@@ -83,17 +83,22 @@ export interface OrderEmailInput {
   orderId: string;
   dispensaryName: string;
   orderType: string;
+  /** How the shopper said they'll pay the store (cash/debit) — informational. */
+  paymentMethod?: string;
   totalCents: number;
   itemCount: number;
   siteUrl: string;
 }
 
+const METHOD_LABEL: Record<string, string> = { cash: 'cash', debit: 'debit card', card: 'card' };
+
 /** Shopper confirmation — status only; Weedtip never collects payment. */
 export function orderConfirmationEmail(o: OrderEmailInput): { subject: string; html: string } {
+  const method = METHOD_LABEL[o.paymentMethod ?? ''] ?? 'cash or debit';
   const payLine =
     o.orderType === 'delivery'
-      ? 'You pay the delivery driver when your order arrives.'
-      : 'You pay at the store when you pick up.';
+      ? `You pay the delivery driver (${method}) when your order arrives.`
+      : `You pay at the store (${method}) when you pick up.`;
   return {
     subject: `Order received — ${o.dispensaryName}`,
     html: emailShell(
@@ -107,11 +112,12 @@ export function orderConfirmationEmail(o: OrderEmailInput): { subject: string; h
 
 /** Heads-up to the dispensary that a new order needs confirming. */
 export function newOrderForDispensaryEmail(o: OrderEmailInput): { subject: string; html: string } {
+  const method = METHOD_LABEL[o.paymentMethod ?? ''] ?? 'in person';
   return {
     subject: `New ${o.orderType} order on Weedtip`,
     html: emailShell(
       'You have a new order',
-      `<p style="margin:0 0 8px;">A shopper placed a ${o.orderType} order — ${o.itemCount} item${o.itemCount === 1 ? '' : 's'}, ${money(o.totalCents)} estimated total. Payment is collected by you ${o.orderType === 'delivery' ? 'via your delivery partner' : 'at the counter'}; Weedtip takes 0% commission.</p>
+      `<p style="margin:0 0 8px;">A shopper placed a ${o.orderType} order — ${o.itemCount} item${o.itemCount === 1 ? '' : 's'}, ${money(o.totalCents)} estimated total, paying by <strong>${method}</strong>. Payment is collected by you ${o.orderType === 'delivery' ? 'via your delivery partner' : 'at the counter'}; Weedtip takes 0% commission.</p>
        <p style="margin:16px 0 0;"><a href="${o.siteUrl}/dashboard/orders" style="color:#1a7f4e;">Confirm it in your dashboard</a></p>`,
     ),
   };

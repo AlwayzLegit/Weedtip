@@ -47,6 +47,7 @@ export function CartView({
   const [address, setAddress] = useState<DeliveryAddress>(savedAddress ?? EMPTY_ADDRESS);
   const [saveAddress, setSaveAddress] = useState(true);
   const [addressError, setAddressError] = useState<string | null>(null);
+  const [payMethod, setPayMethod] = useState<'cash' | 'debit'>('cash');
   const [notes, setNotes] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +176,7 @@ export function CartView({
       order_type: orderType,
       notes: notes.trim() || undefined,
       promo_code: promo?.code,
+      payment_method: payMethod,
       delivery_address: parsedAddress,
       save_address: orderType === 'delivery' ? saveAddress : undefined,
       items: cart.items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
@@ -407,12 +409,40 @@ export function CartView({
             </div>
           )}
 
-          {/* Weedtip never collects payment from shoppers: pickup is paid at
-              the store, delivery is paid to the dispensary's delivery partner. */}
-          <div className="border-border bg-surface-2 text-muted mt-4 rounded-lg border px-3 py-2 text-xs">
-            {orderType === 'delivery'
-              ? 'You pay the delivery driver when your order arrives — the dispensary’s delivery partner handles payment.'
-              : 'You pay at the store when you pick up your order.'}
+          {/* Weedtip never collects payment: the shopper just tells the store
+              how they'll pay (industry-standard pay-at-pickup/driver model —
+              several states prohibit online cannabis prepay entirely). */}
+          <div className="mt-4">
+            <p className="mb-1.5 text-sm font-medium">
+              How will you pay {orderType === 'delivery' ? 'your driver' : 'at the store'}?
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ['cash', 'Cash'],
+                  ['debit', 'Debit card'],
+                ] as const
+              ).map(([m, label]) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setPayMethod(m)}
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                    payMethod === m
+                      ? 'border-primary bg-primary-muted text-primary'
+                      : 'border-border text-muted hover:text-foreground',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-muted mt-1.5 text-xs">
+              {orderType === 'delivery'
+                ? 'Paid to the dispensary’s delivery partner on arrival. Accepted methods vary by store.'
+                : 'Paid at the counter when you pick up. Accepted methods vary by store.'}
+            </p>
           </div>
 
           <div className="mt-4">

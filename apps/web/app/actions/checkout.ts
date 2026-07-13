@@ -26,6 +26,12 @@ const inputSchema = z
     order_type: orderTypeSchema,
     notes: z.string().max(1000).optional(),
     promo_code: z.string().max(40).optional(),
+    /**
+     * How the shopper intends to pay THE DISPENSARY (Weedtip never processes
+     * payment). Passed through to the store so they can prep the register /
+     * tell the driver; actual acceptance is between shopper and store.
+     */
+    payment_method: z.enum(['cash', 'debit']).default('cash'),
     delivery_address: deliveryAddressSchema.optional(),
     /** Remember this address on the profile for next time. */
     save_address: z.boolean().optional(),
@@ -186,7 +192,10 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
       .eq('id', user.id);
   }
 
-  await supabase.from('orders').update({ payment_method: 'in_person' }).eq('id', orderId as string);
+  await supabase
+    .from('orders')
+    .update({ payment_method: input.payment_method })
+    .eq('id', orderId as string);
 
   revalidatePath('/orders');
   revalidatePath('/dashboard/orders');
@@ -209,6 +218,7 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
       orderId: orderId as string,
       dispensaryName: shop.name,
       orderType: input.order_type,
+      paymentMethod: input.payment_method,
       totalCents: order.total_cents,
       itemCount: Array.isArray(order.items) ? order.items.length : input.items.length,
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
