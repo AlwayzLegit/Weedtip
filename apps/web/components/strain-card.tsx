@@ -1,5 +1,6 @@
 import { Link } from 'next-view-transitions';
 import type { StrainType } from '@weedtip/shared';
+import { strainArtUrl } from '@/lib/strain-art';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { FadeImage } from './ui/fade-image';
@@ -20,10 +21,10 @@ const TYPE_LABEL: Record<StrainType, string> = {
   cbd: 'CBD',
 };
 
-// Each strain type gets a photographic colour identity (generated bud macro
-// under public/art/strain-<type>.webp) so a rail of strains reads as distinct,
-// vivid cards instead of a wall of grey text. The gradient fallback paints the
-// same hue while the photo loads.
+// Each strain type gets a photographic colour identity (8 generated variants
+// per type under public/art/strains/, picked per-slug by strainArtUrl) so a
+// rail of strains reads as distinct, vivid cards instead of a wall of grey
+// text. The gradient fallback paints the same hue while the photo loads.
 const TYPE_FALLBACK: Record<StrainType, string> = {
   indica: 'from-violet-500/45 via-violet-500/10 to-surface',
   sativa: 'from-amber-500/45 via-amber-500/10 to-surface',
@@ -38,7 +39,7 @@ export function StrainCard({ s }: { s: StrainCardData }) {
       href={`/strain/${s.slug}`}
       className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group flex h-full flex-col overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
-      {/* Type-identity photo header (generated bud macro) + type badge. */}
+      {/* Per-strain photo header (hashed onto the type's variants) + type badge. */}
       <div
         className={cn(
           'relative h-24 overflow-hidden bg-gradient-to-br',
@@ -46,7 +47,7 @@ export function StrainCard({ s }: { s: StrainCardData }) {
         )}
       >
         <FadeImage
-          src={`/art/strain-${s.type}.webp`}
+          src={strainArtUrl(s.slug, s.type)}
           alt=""
           fill
           sizes="(max-width: 768px) 50vw, 300px"

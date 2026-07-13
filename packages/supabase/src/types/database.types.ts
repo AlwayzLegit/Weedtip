@@ -2268,6 +2268,22 @@ export type Database = {
         Args: { p_bid_id: string; p_payment_intent?: string }
         Returns: undefined
       }
+      ad_region_zone_names: {
+        Args: never
+        Returns: {
+          region_id: string
+          zone_names: string[]
+        }[]
+      }
+      ad_slot_availability: {
+        Args: never
+        Returns: {
+          region_id: string
+          exclusive_open: boolean
+          featured_open: number
+          premium_open: number
+        }[]
+      }
       add_pos_staff: {
         Args: { p_dispensary_id: string; p_name: string; p_pin: string }
         Returns: string

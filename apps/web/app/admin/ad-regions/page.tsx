@@ -75,6 +75,7 @@ export default async function AdRegionsAdminPage() {
           <thead className="bg-surface-2 text-muted text-left text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2.5 font-medium">Region</th>
+              <th className="px-4 py-2.5 font-medium">Market</th>
               <th className="px-4 py-2.5 font-medium">Tier</th>
               <th className="px-4 py-2.5 font-medium">Occupancy</th>
               <th className="px-4 py-2.5 font-medium">Searches</th>
@@ -98,6 +99,9 @@ export default async function AdRegionsAdminPage() {
                         Inactive
                       </Badge>
                     )}
+                  </td>
+                  <td className="text-muted px-4 py-3 text-xs">
+                    {r.market ? `${r.market.name}, ${r.market.state}` : '—'}
                   </td>
                   <td className="px-4 py-3">{TIER_LABEL[r.tier] ?? r.tier}</td>
                   <td className="px-4 py-3">

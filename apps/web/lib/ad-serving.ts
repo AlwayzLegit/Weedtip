@@ -1,6 +1,5 @@
 import 'server-only';
 import { unstable_cache } from 'next/cache';
-import { createServiceClient } from '@/lib/supabase/service';
 import { createStaticClient } from '@/lib/supabase/static';
 
 /** Resolved consumer zone + advertiser region for a point. */
@@ -56,31 +55,23 @@ export interface RegionAvailability {
 }
 
 /**
- * Live slot availability for every region. Scarcity is the sales pitch, so
- * the numbers must include pending holds — those aren't publicly readable
- * under RLS, hence the service client. Server-only.
+ * Live slot availability for every region, via the ad_slot_availability RPC
+ * (SECURITY DEFINER so pending holds count as taken without exposing who
+ * holds them). Aggregated in the database — one row per region — because at
+ * nationwide scale the raw ad_slots table exceeds PostgREST's 1,000-row
+ * response cap and a whole-table read would silently truncate.
  */
 export async function getSlotAvailability(): Promise<Map<string, RegionAvailability>> {
-  const service = createServiceClient();
-  const [{ data: slots }, { data: subs }] = await Promise.all([
-    service.from('ad_slots').select('id, region_id, slot_type'),
-    service
-      .from('ad_subscriptions')
-      .select('slot_id')
-      .in('status', ['pending', 'active', 'past_due']),
-  ]);
-  const takenSlotIds = new Set((subs ?? []).map((s) => s.slot_id));
+  const supabase = createStaticClient();
+  const { data } = await supabase.rpc('ad_slot_availability');
 
   const byRegion = new Map<string, RegionAvailability>();
-  for (const slot of slots ?? []) {
-    const entry =
-      byRegion.get(slot.region_id) ??
-      ({ exclusiveOpen: false, featuredOpen: 0, premiumOpen: 0 } as RegionAvailability);
-    const open = !takenSlotIds.has(slot.id);
-    if (slot.slot_type === 'exclusive') entry.exclusiveOpen = entry.exclusiveOpen || open;
-    else if (slot.slot_type === 'featured' && open) entry.featuredOpen += 1;
-    else if (slot.slot_type === 'premium' && open) entry.premiumOpen += 1;
-    byRegion.set(slot.region_id, entry);
+  for (const row of data ?? []) {
+    byRegion.set(row.region_id, {
+      exclusiveOpen: row.exclusive_open,
+      featuredOpen: row.featured_open,
+      premiumOpen: row.premium_open,
+    });
   }
   return byRegion;
 }

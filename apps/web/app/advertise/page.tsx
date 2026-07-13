@@ -27,19 +27,23 @@ export default async function AdvertisePage() {
   const [{ data: markets }, { data: regions }, { data: zones }, { data: products }, availability] =
     await Promise.all([
       supabase.from('ad_markets').select('id, slug, name, state').order('name'),
+      // ~500 regions nationwide — fine under the 1,000-row response cap.
+      // (Paginate here before region count ever approaches 1,000.)
       supabase
         .from('ad_regions')
         .select('id, market_id, slug, name, tier, sort_order')
         .eq('is_active', true)
         .order('sort_order'),
-      supabase.from('ad_zones').select('region_id, name'),
+      // Aggregated per region in the DB — the raw ad_zones table is past the
+      // PostgREST row cap at nationwide scale.
+      supabase.rpc('ad_region_zone_names'),
       supabase.from('ad_products').select('slot_type, tier, launch_price, list_price'),
       getSlotAvailability(),
     ]);
 
   const zonesByRegion = new Map<string, string[]>();
   for (const z of zones ?? []) {
-    zonesByRegion.set(z.region_id, [...(zonesByRegion.get(z.region_id) ?? []), z.name]);
+    zonesByRegion.set(z.region_id, z.zone_names ?? []);
   }
   const price = (slotType: string, tier: string) =>
     (products ?? []).find((p) => p.slot_type === slotType && p.tier === tier);
@@ -87,7 +91,8 @@ export default async function AdvertisePage() {
                       <Badge tone="outline">Tier {TIER_LABEL[region.tier] ?? region.tier}</Badge>
                     </div>
                     <p className="text-muted mt-1 line-clamp-2 text-xs">
-                      {zoneNames.join(' · ')}
+                      {zoneNames.slice(0, 8).join(' · ')}
+                      {zoneNames.length > 8 ? ` · +${zoneNames.length - 8} more` : ''}
                     </p>
                     <ul className="mt-3 space-y-1.5 text-sm">
                       <li className="flex items-center justify-between">
