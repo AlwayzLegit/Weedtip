@@ -116,7 +116,8 @@ export default async function LearnIndexPage({
           className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group mt-8 block overflow-hidden border transition-all sm:grid sm:grid-cols-5"
         >
           <MediaImage
-            url={null}
+            url={`/learn/${featured.slug}.webp`}
+            alt={featured.title}
             artSeed={featured.title}
             artIcon={<BookOpen className="text-foreground/20 h-10 w-10" strokeWidth={1.5} />}
             className="h-40 sm:col-span-2 sm:h-full"
@@ -151,7 +152,8 @@ export default async function LearnIndexPage({
               className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group flex flex-col overflow-hidden border transition-all"
             >
               <MediaImage
-                url={null}
+                url={`/learn/${a.slug}.webp`}
+                alt={a.title}
                 artSeed={a.title}
                 artIcon={<BookOpen className="text-foreground/20 h-8 w-8" strokeWidth={1.5} />}
                 className="h-28"

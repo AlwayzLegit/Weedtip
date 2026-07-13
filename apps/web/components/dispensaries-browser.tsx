@@ -179,6 +179,19 @@ export function DispensariesBrowser({
       })),
   );
 
+  // List position by slug: cards and map pins share Google-Maps-style result
+  // numbers, so the paid-first ordering (featured → rank → distance) is visible.
+  // Viewport pins beyond the paginated list simply carry no number.
+  const rankBySlug = useMemo(() => new Map(shops.map((s, i) => [s.slug, i + 1])), [shops]);
+  const rankedPins = useMemo(
+    () =>
+      pins.map((p) => {
+        const rank = rankBySlug.get(p.slug);
+        return rank ? { ...p, rank } : p;
+      }),
+    [pins, rankBySlug],
+  );
+
   // The bbox the current result set was searched with vs. what the map shows now.
   // Statically rendered callers (ISR city pages) pass hours/timezone instead of
   // a server-computed open flag; compute it live on mount so the badge is fresh.
@@ -657,7 +670,7 @@ export function DispensariesBrowser({
                 loading && 'opacity-60',
               )}
             >
-              {shops.map((s) => (
+              {shops.map((s, i) => (
                 <div
                   key={s.id}
                   ref={(el) => {
@@ -686,6 +699,7 @@ export function DispensariesBrowser({
                       isRecreational: s.isRecreational,
                       featured: s.featured,
                       sponsored: s.sponsored,
+                      rank: i + 1,
                       placementId: s.placementId,
                       adSlot: s.adSlot,
                       distanceMeters: s.distanceMeters,
@@ -730,7 +744,7 @@ export function DispensariesBrowser({
           )}
         >
           <BrowseMap
-            pins={pins}
+            pins={rankedPins}
             initialBounds={initialBounds}
             hoveredSlug={hovered}
             selected={popupShop}

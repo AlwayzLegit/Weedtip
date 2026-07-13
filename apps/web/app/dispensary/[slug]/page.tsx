@@ -191,43 +191,59 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     (salePrices ?? []).map((s) => [s.product_id, s] as const),
   );
 
+  // Paying listings don't cross-promote competitors: the nearby rail below is
+  // a free-listing tradeoff, removed once the shop pays. `featured` is the
+  // public paid signal; is_paid_listing() additionally covers subscriptions
+  // and non-featured placements. RPC errors degrade to "free" (rail shows).
+  let paidListing = d.featured;
+  if (!paidListing) {
+    const { data: paid } = await supabase.rpc('is_paid_listing', { p_dispensary_id: d.id });
+    paidListing = paid === true;
+  }
+
   // Nearby shops rail (Weedmaps pattern): same city first, top state shops as
   // fill — always photo-backed so the rail merchandises well. Also the main
-  // internal-linking surface between the 9k+ listing pages.
+  // internal-linking surface between the 9k+ listing pages. Skipped entirely
+  // for paying listings.
   const NEARBY_FIELDS =
     'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone';
-  let nearbyBase = supabase
-    .from('dispensaries')
-    .select(NEARBY_FIELDS)
-    .eq('status', 'active')
-    .neq('id', d.id)
-    .eq('state', d.state)
-    .not('cover_image_url', 'is', null)
-    .order('featured', { ascending: false })
-    .order('rating_count', { ascending: false })
-    .limit(8);
-  if (d.city) nearbyBase = nearbyBase.eq('city', d.city);
-  let { data: nearby } = await nearbyBase;
-  nearby = nearby ?? [];
-  if (nearby.length < 4) {
-    const seen = new Set([...nearby.map((n) => n.slug), d.slug]);
-    const { data: stateFill } = await supabase
-      .from('dispensaries')
-      .select(NEARBY_FIELDS)
-      .eq('status', 'active')
-      .eq('state', d.state)
-      .not('cover_image_url', 'is', null)
-      .order('featured', { ascending: false })
-      .order('rating_count', { ascending: false })
-      .limit(12);
-    for (const s of stateFill ?? []) {
-      if (nearby.length >= 8) break;
-      if (!seen.has(s.slug)) {
-        nearby.push(s);
-        seen.add(s.slug);
-      }
-    }
-  }
+  const nearby = paidListing
+    ? []
+    : await (async () => {
+        let nearbyBase = supabase
+          .from('dispensaries')
+          .select(NEARBY_FIELDS)
+          .eq('status', 'active')
+          .neq('id', d.id)
+          .eq('state', d.state)
+          .not('cover_image_url', 'is', null)
+          .order('featured', { ascending: false })
+          .order('rating_count', { ascending: false })
+          .limit(8);
+        if (d.city) nearbyBase = nearbyBase.eq('city', d.city);
+        const { data } = await nearbyBase;
+        const shops = data ?? [];
+        if (shops.length < 4) {
+          const seen = new Set([...shops.map((n) => n.slug), d.slug]);
+          const { data: stateFill } = await supabase
+            .from('dispensaries')
+            .select(NEARBY_FIELDS)
+            .eq('status', 'active')
+            .eq('state', d.state)
+            .not('cover_image_url', 'is', null)
+            .order('featured', { ascending: false })
+            .order('rating_count', { ascending: false })
+            .limit(12);
+          for (const s of stateFill ?? []) {
+            if (shops.length >= 8) break;
+            if (!seen.has(s.slug)) {
+              shops.push(s);
+              seen.add(s.slug);
+            }
+          }
+        }
+        return shops;
+      })();
 
   // When the shop has no published menu, merchandise the official brand
   // catalog instead of dead-ending — the page still shows real products.

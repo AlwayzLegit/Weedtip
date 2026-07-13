@@ -3,6 +3,7 @@ import { Link } from 'next-view-transitions';
 import { getAuth } from '@/lib/auth';
 import { DealAlertSignup } from './deal-alert-signup';
 import { Logo } from './brand/logo';
+import { PaymentLogos } from './payment-logos';
 
 const DISCOVER = [
   { href: '/dispensaries', label: 'Dispensaries' },
@@ -25,6 +26,7 @@ const BUSINESS = [
 const LEGAL = [
   { href: '/terms', label: 'Terms of use' },
   { href: '/privacy', label: 'Privacy policy' },
+  { href: '/refunds', label: 'Refunds & cancellations' },
   { href: '/disclaimer', label: 'Disclaimer' },
 ];
 
@@ -64,6 +66,14 @@ export async function Footer() {
               The Google Maps of cannabis. Discover licensed dispensaries near you, browse live
               menus, and order for pickup or delivery.
             </p>
+            {/* Business contact — required on-site for payment processing. */}
+            <address className="text-muted text-sm not-italic">
+              <a href="tel:+17472504446" className="hover:text-foreground">
+                (747) 250-4446
+              </a>
+              <br />
+              North Hollywood, CA 91606
+            </address>
           </div>
           <Column title="Discover" links={DISCOVER} />
           <Column title="For business" links={BUSINESS} />
@@ -94,7 +104,10 @@ export async function Footer() {
           <p>
             For use by adults 21 and older. Cannabis products have not been evaluated by the FDA.
           </p>
-          <p className="mt-1">© {new Date().getFullYear()} Weedtip. All rights reserved.</p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <p>© {new Date().getFullYear()} Weedtip. All rights reserved.</p>
+            <PaymentLogos />
+          </div>
         </div>
       </div>
     </footer>
