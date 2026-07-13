@@ -60,11 +60,12 @@ async function sendBillingEmails(
  * a paid plan creates a pending subscription for the sales team to activate.
  */
 export async function requestPlanChange(planId: string): Promise<BillingRequestResult> {
-  if (!(await rateLimit('billing', { limit: 15, window: '60 s' })).success) {
+  const { dispensary } = await requireOwnerDispensary();
+  // Keyed per dispensary, not per IP: requests are free to create, so the
+  // requester identity is what needs throttling.
+  if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, dispensary.id)).success) {
     return { ok: false, error: 'Too many attempts. Please wait a moment.' };
   }
-
-  const { dispensary } = await requireOwnerDispensary();
   const supabase = await createClient();
 
   const { data: plan } = await supabase
@@ -155,10 +156,6 @@ export type RequestPlacementInput = z.infer<typeof placementSchema>;
  * activates it once billing is arranged.
  */
 export async function requestPlacement(raw: RequestPlacementInput): Promise<BillingRequestResult> {
-  if (!(await rateLimit('billing', { limit: 15, window: '60 s' })).success) {
-    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
-  }
-
   const parsed = placementSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
   const input = parsed.data;
@@ -168,10 +165,28 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
   }
 
   const { dispensary } = await requireOwnerDispensary();
+  if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, dispensary.id)).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Cap open (never-activated) requests so the console and sales inbox can't
+  // be flooded with free-to-create pending placements.
+  const { count: openReqs } = await supabase
+    .from('placements')
+    .select('id', { count: 'exact', head: true })
+    .eq('dispensary_id', dispensary.id)
+    .eq('is_active', false)
+    .is('ends_at', null);
+  if ((openReqs ?? 0) >= 5) {
+    return {
+      ok: false,
+      error: 'You already have 5 placement requests awaiting our team — we’ll be in touch shortly.',
+    };
+  }
 
   const scope_state = input.scope === 'nationwide' ? null : dispensary.state;
   const scope_city = input.scope === 'city' ? dispensary.city : null;
@@ -226,10 +241,6 @@ export type RequestBrandPlacementInput = z.infer<typeof brandPlacementSchema>;
 export async function requestBrandPlacement(
   raw: RequestBrandPlacementInput,
 ): Promise<BillingRequestResult> {
-  if (!(await rateLimit('billing', { limit: 15, window: '60 s' })).success) {
-    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
-  }
-
   const parsed = brandPlacementSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
@@ -241,6 +252,9 @@ export async function requestBrandPlacement(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Please sign in.' };
+  if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, user.id)).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
 
   const { data: brand } = await supabase
     .from('brands')
@@ -249,6 +263,20 @@ export async function requestBrandPlacement(
     .maybeSingle();
   if (!brand || brand.owner_id !== user.id) {
     return { ok: false, error: 'You do not own this brand.' };
+  }
+
+  // Same open-request cap as dispensary placements.
+  const { count: openReqs } = await supabase
+    .from('placements')
+    .select('id', { count: 'exact', head: true })
+    .eq('brand_id', brand.id)
+    .eq('is_active', false)
+    .is('ends_at', null);
+  if ((openReqs ?? 0) >= 5) {
+    return {
+      ok: false,
+      error: 'You already have 5 promotion requests awaiting our team — we’ll be in touch shortly.',
+    };
   }
 
   const scope = input.state ? 'state' : 'nationwide';
@@ -291,10 +319,6 @@ export type RequestBrandBidInput = z.infer<typeof brandBidSchema>;
  * once billing for the 2-month term is arranged.
  */
 export async function requestBrandBid(raw: RequestBrandBidInput): Promise<BillingRequestResult> {
-  if (!(await rateLimit('billing', { limit: 15, window: '60 s' })).success) {
-    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
-  }
-
   const parsed = brandBidSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
@@ -306,6 +330,9 @@ export async function requestBrandBid(raw: RequestBrandBidInput): Promise<Billin
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Please sign in.' };
+  if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, user.id)).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
 
   const { data: brand } = await supabase
     .from('brands')

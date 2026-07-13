@@ -179,11 +179,20 @@ export async function cancelAdSubscription(subscriptionId: string): Promise<void
 export async function activateAdSubscription(subscriptionId: string): Promise<void> {
   await requireAdmin();
   const service = createServiceClient();
-  await service
+  const { data, error } = await service
     .from('ad_subscriptions')
     .update({ status: 'active', starts_at: new Date().toISOString(), ends_at: null })
     .eq('id', subscriptionId)
-    .eq('status', 'pending');
+    .eq('status', 'pending')
+    .select('id');
+  // The 7-day auto-release (or another admin) may have beaten us to the row —
+  // surface it instead of silently pretending the slot went live.
+  if (error || !data?.length) {
+    throw new Error(
+      error?.message ??
+        'Request expired or was already handled — the slot may have been released. Ask the buyer to re-reserve.',
+    );
+  }
   revalidatePath('/admin/ad-regions');
   revalidatePath('/admin/billing');
 }

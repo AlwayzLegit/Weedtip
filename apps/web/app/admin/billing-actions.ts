@@ -19,7 +19,13 @@ function refresh() {
   revalidatePath('/admin');
 }
 
-/** Plan request → active for a 30-day period; Growth includes the POS register. */
+/**
+ * Plan request → active. Sales-led subscriptions are EVERGREEN
+ * (current_period_end = null): the team invoices monthly and cancels on
+ * non-payment via cancelPlan/reject — a hardcoded 30-day period would
+ * silently strip perks from paying customers on day 31, since nothing
+ * renews it until the PaymentCloud gateway manages real periods.
+ */
 export async function activatePlanRequest(dispensaryId: string): Promise<void> {
   await requireAdmin();
   const supabase = await createClient();
@@ -30,17 +36,31 @@ export async function activatePlanRequest(dispensaryId: string): Promise<void> {
     .maybeSingle();
   if (sub?.status !== 'pending') return;
 
-  await supabase
+  const { data: updated, error } = await supabase
     .from('dispensary_subscriptions')
     .update({
       status: 'active',
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      current_period_end: null,
       updated_at: new Date().toISOString(),
     })
-    .eq('dispensary_id', dispensaryId);
+    .eq('dispensary_id', dispensaryId)
+    .eq('status', 'pending')
+    .select('dispensary_id');
+  if (error || !updated?.length) {
+    throw new Error(error?.message ?? 'Request was already handled — refresh and re-check.');
+  }
 
   if ((sub.plan as { slug: string } | null)?.slug === 'growth') {
-    await supabase.rpc('grant_pos_addon', { p_dispensary_id: dispensaryId, p_enabled: true });
+    // Service client: grant_pos_addon's EXECUTE is service_role-only (the
+    // authenticated role gets permission-denied even for admins).
+    const service = createServiceClient();
+    const { error: posErr } = await service.rpc('grant_pos_addon', {
+      p_dispensary_id: dispensaryId,
+      p_enabled: true,
+    });
+    if (posErr) {
+      throw new Error(`Plan activated but POS grant failed: ${posErr.message} — grant it manually.`);
+    }
   }
   refresh();
 }
@@ -53,6 +73,10 @@ export async function rejectPlanRequest(dispensaryId: string): Promise<void> {
     .update({ status: 'canceled', updated_at: new Date().toISOString() })
     .eq('dispensary_id', dispensaryId)
     .eq('status', 'pending');
+  // A pending request may have replaced a formerly-active Growth sub — make
+  // sure no paid entitlement outlives the rejection.
+  const service = createServiceClient();
+  await service.rpc('grant_pos_addon', { p_dispensary_id: dispensaryId, p_enabled: false });
   refresh();
 }
 

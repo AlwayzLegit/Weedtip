@@ -36,10 +36,6 @@ function siteUrl(): string {
  * page routes those to contact.
  */
 export async function POST(req: NextRequest) {
-  if (!(await rateLimit('ads-checkout', { limit: 10, window: '60 s' })).success) {
-    return NextResponse.json({ error: 'Too many attempts. Please wait a moment.' }, { status: 429 });
-  }
-
   const parsed = inputSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
@@ -49,6 +45,12 @@ export async function POST(req: NextRequest) {
   // Caller must own a dispensary (RLS-backed lookup with their session).
   const { user, profile } = await getAuth();
   if (!user) return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
+
+  // Rate-limit per USER, not per IP: without payment up front, held slots are
+  // the thing being spent — don't let one account machine-gun reservations.
+  if (!(await rateLimit('ads-checkout', { limit: 3, window: '60 s' }, user.id)).success) {
+    return NextResponse.json({ error: 'Too many attempts. Please wait a moment.' }, { status: 429 });
+  }
   if (profile?.role !== 'dispensary_owner' && profile?.role !== 'admin') {
     return NextResponse.json(
       { error: 'Create a business account and claim your listing to advertise.' },
@@ -90,6 +92,24 @@ export async function POST(req: NextRequest) {
 
   // Free abandoned holds before looking for an open slot.
   await service.rpc('release_stale_ad_claims');
+
+  // Unpaid holds are free to create, so cap them: without this, one shop
+  // could squat a featured + premium slot in every region nationwide for a
+  // week and lock competitors out of scarce inventory.
+  const { count: openHolds } = await service
+    .from('ad_subscriptions')
+    .select('id', { count: 'exact', head: true })
+    .eq('dispensary_id', dispensary.id)
+    .eq('status', 'pending');
+  if ((openHolds ?? 0) >= 5) {
+    return NextResponse.json(
+      {
+        error:
+          'You already have 5 slot reservations awaiting billing. Complete those with our team first, or wait for them to release.',
+      },
+      { status: 429 },
+    );
+  }
 
   // One live claim per slot per dispensary is also implied by the slot index;
   // don't let a shop double-request the same slot type in the same region.
