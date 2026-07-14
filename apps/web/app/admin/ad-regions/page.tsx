@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, MapPin } from 'lucide-react';
-import { AdRegionForm, StripeSyncForm } from '@/components/admin/ad-region-forms';
+import { AdRegionForm } from '@/components/admin/ad-region-forms';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
@@ -27,20 +27,14 @@ function recommend(occupancy: number, searches: number, medianSearches: number):
 
 export default async function AdRegionsAdminPage() {
   const supabase = await createClient();
-  const [{ data: regions }, { data: metrics }, { data: markets }, { data: adProducts }] =
-    await Promise.all([
-      supabase
-        .from('ad_regions')
-        .select('id,slug,name,tier,is_active,sort_order,market:ad_markets(name,state)')
-        .order('sort_order'),
-      supabase.rpc('region_metrics', { p_days: 30 }),
-      supabase.from('ad_markets').select('id,name').order('name'),
-      supabase.from('ad_products').select('slot_type,stripe_price_id'),
-    ]);
-
-  // Self-serve price book status (exclusive is negotiated — never in Stripe).
-  const sellable = (adProducts ?? []).filter((p) => p.slot_type !== 'exclusive');
-  const missingPrices = sellable.filter((p) => !p.stripe_price_id).length;
+  const [{ data: regions }, { data: metrics }, { data: markets }] = await Promise.all([
+    supabase
+      .from('ad_regions')
+      .select('id,slug,name,tier,is_active,sort_order,market:ad_markets(name,state)')
+      .order('sort_order'),
+    supabase.rpc('region_metrics', { p_days: 30 }),
+    supabase.from('ad_markets').select('id,name').order('name'),
+  ]);
 
   const byRegion = new Map((metrics ?? []).map((m) => [m.region_id, m]));
   const searchCounts = (metrics ?? []).map((m) => m.searches).sort((a, b) => a - b);
@@ -58,23 +52,12 @@ export default async function AdRegionsAdminPage() {
         </p>
       </div>
 
-      <section className="card space-y-2 p-5">
-        <h2 className="text-sm font-semibold">
-          Stripe billing{' '}
-          {sellable.length > 0 && (
-            <span className={missingPrices > 0 ? 'text-warning' : 'text-primary'}>
-              — {sellable.length - missingPrices}/{sellable.length} price book entries connected
-            </span>
-          )}
-        </h2>
-        <StripeSyncForm missing={missingPrices} />
-      </section>
-
       <div className="rounded-card border-border bg-surface shadow-card overflow-x-auto border">
         <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-surface-2 text-muted text-left text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2.5 font-medium">Region</th>
+              <th className="px-4 py-2.5 font-medium">Market</th>
               <th className="px-4 py-2.5 font-medium">Tier</th>
               <th className="px-4 py-2.5 font-medium">Occupancy</th>
               <th className="px-4 py-2.5 font-medium">Searches</th>
@@ -98,6 +81,9 @@ export default async function AdRegionsAdminPage() {
                         Inactive
                       </Badge>
                     )}
+                  </td>
+                  <td className="text-muted px-4 py-3 text-xs">
+                    {r.market ? `${r.market.name}, ${r.market.state}` : '—'}
                   </td>
                   <td className="px-4 py-3">{TIER_LABEL[r.tier] ?? r.tier}</td>
                   <td className="px-4 py-3">

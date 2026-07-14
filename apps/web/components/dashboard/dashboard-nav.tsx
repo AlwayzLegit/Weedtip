@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Leaf,
   MapPin,
+  CreditCard,
   Megaphone,
   Package,
   Plug,
@@ -49,6 +50,7 @@ const OWNER_NAV: NavItem[] = [
 const ADMIN_NAV: NavItem[] = [
   { href: '/admin', label: 'Overview', icon: Shield },
   { href: '/admin/dispensaries', label: 'Dispensaries', icon: Store },
+  { href: '/admin/billing', label: 'Billing', icon: CreditCard },
   { href: '/admin/promotions', label: 'Promotions', icon: Megaphone },
   { href: '/admin/claims', label: 'Claims', icon: BadgeCheck },
   { href: '/admin/categories', label: 'Categories', icon: Package },

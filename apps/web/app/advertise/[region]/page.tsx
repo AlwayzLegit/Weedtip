@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, BadgeCheck, Crown, Mail, MapPin, Star } from 'lucide-react';
+import { ViewTracker } from '@/components/analytics/view-tracker';
 import { Badge } from '@/components/ui/badge';
 import { SlotCheckoutButton } from '@/components/ads/slot-checkout-button';
 import { getSlotAvailability } from '@/lib/ad-serving';
@@ -64,7 +65,6 @@ export default async function AdvertiseRegionPage({
   const product = (slotType: string) => products.find((p) => p.slot_type === slotType);
   const featured = product('featured');
   const premium = product('premium');
-  const standard = product('standard');
 
   const contactHref = `mailto:ads@weedtip.com?subject=${encodeURIComponent(
     `Exclusive sponsorship — ${region.name}`,
@@ -72,6 +72,7 @@ export default async function AdvertiseRegionPage({
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
+      <ViewTracker event="advertise_region_viewed" properties={{ region_slug: region.slug, tier: region.tier }} />
       <Link
         href="/advertise"
         className="text-muted hover:text-foreground inline-flex items-center gap-1 text-sm"
@@ -198,9 +199,9 @@ export default async function AdvertiseRegionPage({
       <section className="border-border bg-surface-2 rounded-card mt-8 border p-5 text-sm">
         <h2 className="font-semibold">Standard listing</h2>
         <p className="text-muted mt-1">
-          Every licensed dispensary gets an organic listing. Claim yours free, then upgrade to
-          {standard ? ` a managed listing (${formatPrice(standard.launch_price)}/mo) or` : ''} a
-          paid placement any time from your dashboard.
+          Every licensed dispensary gets a full listing free, forever — menu, orders, deals, and
+          reviews with 0% commission. Claim yours, then add a paid placement any time from your
+          dashboard.
         </p>
         <Link href="/dispensaries" className="text-primary mt-2 inline-block hover:underline">
           Find your listing →
@@ -208,7 +209,8 @@ export default async function AdvertiseRegionPage({
       </section>
 
       <p className="text-muted mt-6 text-xs">
-        Billed monthly via Stripe. Cancel anytime — your slot re-opens for the next buyer. All
+        Reserve with one click — no card needed; our team sets up monthly invoicing within 1
+        business day. Cancel anytime — your slot re-opens for the next buyer. All
         sponsored placements are clearly labeled. Advertising services are provided to licensed
         retailers only.
       </p>

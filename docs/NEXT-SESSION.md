@@ -1,3 +1,5 @@
+> **Historical note (July 2026):** Stripe has since been removed entirely — Weedtip never charges shoppers (pay at store / pay the delivery partner) and B2B billing is sales-led via /admin/billing pending the PaymentCloud gateway. Stripe references below are obsolete.
+
 # Weedtip — Next Session Kickoff (Deployment)
 
 > Paste-ready briefing for the session where the agent has **direct Supabase + Vercel

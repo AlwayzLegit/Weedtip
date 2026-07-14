@@ -5,7 +5,7 @@ import type { Database } from '@weedtip/supabase/types';
 /**
  * Service-role Supabase client that BYPASSES RLS. Server-only — never expose the
  * service-role key to the browser. Use exclusively for trusted, unauthenticated
- * server contexts such as the Stripe webhook, where there is no user session but
+ * trusted server contexts (admin actions, billing activation), where there is no user session but
  * we must still write to protected rows (e.g. mark an order paid).
  */
 export function createServiceClient() {

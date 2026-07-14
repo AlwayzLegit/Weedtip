@@ -3,7 +3,6 @@ import type { DeliveryAddress } from '@weedtip/shared';
 import { CartView } from '@/components/cart/cart-view';
 import { getAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { isStripeConfigured } from '@/lib/stripe';
 
 export const metadata: Metadata = { title: 'Cart' };
 
@@ -25,11 +24,7 @@ export default async function CartPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">Your cart</h1>
-      <CartView
-        isAuthenticated={!!user}
-        stripeEnabled={isStripeConfigured}
-        savedAddress={savedAddress}
-      />
+      <CartView isAuthenticated={!!user} savedAddress={savedAddress} />
     </main>
   );
 }

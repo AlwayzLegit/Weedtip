@@ -23,18 +23,6 @@ const present = (key: string): boolean => {
 };
 
 export function integrationStatuses(): IntegrationStatus[] {
-  const stripeSecret = present('STRIPE_SECRET_KEY');
-  const stripePublishable = present('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY');
-  const stripeWebhook = present('STRIPE_WEBHOOK_SECRET');
-
-  let stripeWarning: string | undefined;
-  if (stripeSecret && !stripeWebhook) {
-    stripeWarning =
-      'Secret key is set but STRIPE_WEBHOOK_SECRET is missing — checkouts will start but never confirm, so orders, placements, and bids won’t activate.';
-  } else if (stripeSecret && !stripePublishable) {
-    stripeWarning = 'Secret key is set but the publishable key is missing.';
-  }
-
   return [
     {
       name: 'Supabase',
@@ -54,17 +42,16 @@ export function integrationStatuses(): IntegrationStatus[] {
       name: 'Site URL',
       required: true,
       configured: present('NEXT_PUBLIC_SITE_URL'),
-      gates: 'Absolute URLs for Stripe redirects, the sitemap, and SEO canonicals.',
+      gates: 'Absolute URLs in emails, the sitemap, and SEO canonicals.',
       vars: ['NEXT_PUBLIC_SITE_URL'],
     },
     {
-      name: 'Stripe — payments',
+      name: 'Resend — email',
       required: false,
-      configured: stripeSecret && stripePublishable && stripeWebhook,
+      configured: present('RESEND_API_KEY'),
       gates:
-        'Online payments: product orders, subscriptions, placements, and both featured auctions. Falls back to free / pay-at-shop when off.',
-      vars: ['STRIPE_SECRET_KEY', 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', 'STRIPE_WEBHOOK_SECRET'],
-      warning: stripeWarning,
+        'Transactional email: order confirmations, dispensary notifications, claim decisions, and billing-request alerts to sales. Logged no-ops when off.',
+      vars: ['RESEND_API_KEY', 'EMAIL_FROM', 'SALES_EMAIL'],
     },
     {
       name: 'Mapbox — maps',

@@ -8,6 +8,7 @@ import {
   STRAIN_TYPES,
   type DispensaryStatus,
 } from '@weedtip/shared';
+import { claimDecisionEmail, sendEmail } from '@/lib/email';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import { bool, formError, fromZodError, numOpt, str, type FormState } from '@/lib/forms';
@@ -244,6 +245,20 @@ export async function setPlacementActive(
   dispensaryId: string | null,
 ): Promise<void> {
   const supabase = await createClient();
+  // A pending sales-led request has no dates yet — resuming it here would
+  // create a perpetual (no-end-date) live placement that was never billed.
+  // Activation must go through /admin/billing (activatePlacementRequest),
+  // which stamps starts_at/ends_at from the requested duration.
+  if (isActive) {
+    const { data: p } = await supabase
+      .from('placements')
+      .select('status')
+      .eq('id', id)
+      .maybeSingle();
+    if (p?.status === 'pending') {
+      throw new Error('This is a pending billing request — activate it from Billing so it gets a term.');
+    }
+  }
   await supabase.from('placements').update({ is_active: isActive }).eq('id', id);
   // Only dispensary placements drive the featured flag; brand promos don't.
   if (dispensaryId) await supabase.rpc('sync_featured_flags', { p_dispensary_id: dispensaryId });
@@ -279,16 +294,33 @@ export async function setDispensaryPlan(_prev: FormState, fd: FormData): Promise
 
 // ─── Ownership claims ────────────────────────────────────────────────────────
 
+/** Email the claimant about the decision — best-effort, never blocks the action. */
+async function notifyClaimDecision(requestId: string, approved: boolean): Promise<void> {
+  const supabase = await createClient();
+  const { data: req } = await supabase
+    .from('ownership_requests')
+    .select('business_email, dispensary:dispensaries(name)')
+    .eq('id', requestId)
+    .maybeSingle();
+  const shopName = (req?.dispensary as { name: string } | null)?.name;
+  if (!req?.business_email || !shopName) return;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  const m = claimDecisionEmail(shopName, approved, siteUrl);
+  await sendEmail({ to: req.business_email, subject: m.subject, html: m.html });
+}
+
 export async function approveOwnershipRequest(id: string): Promise<void> {
   const supabase = await createClient();
   // SECURITY DEFINER RPC: verifies admin, sets dispensaries.owner_id, auto-rejects rivals.
   await supabase.rpc('approve_ownership_request', { p_request_id: id });
+  await notifyClaimDecision(id, true);
   revalidatePath('/admin/claims');
   revalidatePath('/admin');
 }
 
 export async function rejectOwnershipRequest(id: string): Promise<void> {
   const supabase = await createClient();
+  await notifyClaimDecision(id, false);
   await supabase.rpc('reject_ownership_request', { p_request_id: id });
   revalidatePath('/admin/claims');
 }

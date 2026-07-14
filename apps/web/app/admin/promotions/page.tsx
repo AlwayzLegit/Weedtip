@@ -32,9 +32,12 @@ export default async function AdminPromotions() {
   const [{ data: plans }, { data: placements }, { data: subs }, { data: stats }] =
     await Promise.all([
       supabase.from('plans').select('*').order('sort_order'),
+      // Pending sales-led requests live on /admin/billing (they have no term
+      // yet); this console manages live/paused placements only.
       supabase
         .from('placements')
         .select('*, dispensary:dispensaries(name)')
+        .neq('status', 'pending')
         .order('created_at', { ascending: false }),
       supabase
         .from('dispensary_subscriptions')

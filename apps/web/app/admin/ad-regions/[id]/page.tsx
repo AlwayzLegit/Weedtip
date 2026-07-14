@@ -2,7 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Crown } from 'lucide-react';
-import { cancelAdSubscription, deleteAdZone } from '@/app/admin/ad-region-actions';
+import {
+  activateAdSubscription,
+  cancelAdSubscription,
+  deleteAdZone,
+} from '@/app/admin/ad-region-actions';
 import {
   AdBoundaryForm,
   AdRegionForm,
@@ -41,7 +45,7 @@ export default async function AdRegionAdminDetail({
     supabase.from('ad_slots').select('id,slot_type,position').eq('region_id', id),
     supabase
       .from('ad_subscriptions')
-      .select('id,slot_id,status,price_paid,starts_at,stripe_subscription_id,dispensary:dispensaries(name,slug)')
+      .select('id,slot_id,status,price_paid,starts_at,dispensary:dispensaries(name,slug)')
       .in('status', ['pending', 'active', 'past_due']),
   ]);
 
@@ -127,10 +131,7 @@ export default async function AdRegionAdminDetail({
                     </td>
                     <td className="px-4 py-2.5">
                       {sub ? (
-                        <Badge tone={sub.status === 'active' ? 'primary' : 'muted'}>
-                          {sub.status}
-                          {sub.stripe_subscription_id ? ' · Stripe' : ' · manual'}
-                        </Badge>
+                        <Badge tone={sub.status === 'active' ? 'primary' : 'muted'}>{sub.status}</Badge>
                       ) : (
                         '—'
                       )}
@@ -138,15 +139,20 @@ export default async function AdRegionAdminDetail({
                     <td className="px-4 py-2.5">{sub ? formatPrice(sub.price_paid) : '—'}</td>
                     <td className="px-4 py-2.5 text-right">
                       {sub && (
-                        <DeleteButton
-                          action={cancelAdSubscription.bind(null, sub.id)}
-                          label="Cancel"
-                          confirmText={
-                            sub.stripe_subscription_id
-                              ? 'Cancel this placement? IMPORTANT: it has a Stripe subscription — also cancel it in the Stripe dashboard or billing will continue.'
-                              : 'Cancel this placement? The slot re-opens for sale immediately.'
-                          }
-                        />
+                        <span className="inline-flex items-center gap-2">
+                          {sub.status === 'pending' && (
+                            <form action={activateAdSubscription.bind(null, sub.id)}>
+                              <button className="text-primary text-xs font-medium hover:underline">
+                                Activate
+                              </button>
+                            </form>
+                          )}
+                          <DeleteButton
+                            action={cancelAdSubscription.bind(null, sub.id)}
+                            label="Cancel"
+                            confirmText="Cancel this placement? The slot re-opens for sale immediately. If billing was already set up, remember to stop the invoice."
+                          />
+                        </span>
                       )}
                     </td>
                   </tr>

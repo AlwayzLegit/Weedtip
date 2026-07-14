@@ -12,7 +12,6 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "clean": "rimraf .next .turbo *.tsbuildinfo",
-    "seed:stripe-ads": "node scripts/seed-stripe-ad-products.mjs",
     "scrape:brand-images": "node scripts/scrape-brand-product-images.mjs"
   },
   "dependencies": {
@@ -33,7 +32,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-map-gl": "^7.1.8",
-    "stripe": "^22.2.0",
+    "resend": "^6.17.2",
     "tailwind-merge": "^2.6.0",
     "zod": "^3.24.1"
   },

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AlertTriangle, Calculator, DollarSign, Receipt } from 'lucide-react';
-import { PosAddonButton } from '@/components/dashboard/pos-addon-button';
 import { RegisterTerminal } from '@/components/dashboard/register-terminal';
 import { ShiftBar } from '@/components/dashboard/shift-bar';
 import { formatPrice } from '@/lib/format';
@@ -37,15 +36,17 @@ export default async function RegisterPage({
         )}
         <div className="card flex flex-col items-center gap-3 p-12 text-center">
           <Calculator className="text-primary h-8 w-8" />
-          <p className="text-lg font-semibold">POS is a paid add-on</p>
+          <p className="text-lg font-semibold">POS comes with the Growth plan</p>
           <p className="text-muted max-w-md text-sm">
             Ring up in-store sales right from your dashboard — sales post to your orders and
             analytics with no platform commission, and draw down inventory. The register isn&apos;t
-            enabled for {dispensary.name} yet.
+            enabled for {dispensary.name} yet: it&apos;s included with Growth ($99/mo).
           </p>
-          <PosAddonButton />
-          <Link href="/dashboard/promote" className="text-primary text-sm hover:underline">
-            See all plans &amp; add-ons →
+          <Link
+            href="/dashboard/promote"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center rounded-lg px-6 text-sm font-medium transition-colors"
+          >
+            Upgrade to Growth →
           </Link>
         </div>
       </div>

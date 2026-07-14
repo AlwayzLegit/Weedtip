@@ -180,6 +180,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       : {}),
   };
 
+  // A Product node is only valid with at least one of offers / aggregateRating
+  // / review (Google + SEMrush both reject a bare Product). Imageless,
+  // unreviewed products would emit an invalid node — skip the markup for them
+  // rather than ship structured-data errors.
+  const productSchemaValid =
+    'offers' in jsonLd || 'aggregateRating' in jsonLd || 'review' in jsonLd;
+
   const crumbs = [
     { name: 'Home', href: '/' },
     { name: 'Products', href: '/products' },
@@ -188,7 +195,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <JsonLd data={jsonLd} />
+      {productSchemaValid && <JsonLd data={jsonLd} />}
       <ViewTracker
         event="product_viewed"
         properties={{

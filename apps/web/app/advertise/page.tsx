@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
 import { ArrowRight, Crown, MapPin, Sparkles } from 'lucide-react';
+import { ViewTracker } from '@/components/analytics/view-tracker';
 import { Badge } from '@/components/ui/badge';
 import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
@@ -27,25 +28,30 @@ export default async function AdvertisePage() {
   const [{ data: markets }, { data: regions }, { data: zones }, { data: products }, availability] =
     await Promise.all([
       supabase.from('ad_markets').select('id, slug, name, state').order('name'),
+      // ~500 regions nationwide — fine under the 1,000-row response cap.
+      // (Paginate here before region count ever approaches 1,000.)
       supabase
         .from('ad_regions')
         .select('id, market_id, slug, name, tier, sort_order')
         .eq('is_active', true)
         .order('sort_order'),
-      supabase.from('ad_zones').select('region_id, name'),
+      // Aggregated per region in the DB — the raw ad_zones table is past the
+      // PostgREST row cap at nationwide scale.
+      supabase.rpc('ad_region_zone_names'),
       supabase.from('ad_products').select('slot_type, tier, launch_price, list_price'),
       getSlotAvailability(),
     ]);
 
   const zonesByRegion = new Map<string, string[]>();
   for (const z of zones ?? []) {
-    zonesByRegion.set(z.region_id, [...(zonesByRegion.get(z.region_id) ?? []), z.name]);
+    zonesByRegion.set(z.region_id, z.zone_names ?? []);
   }
   const price = (slotType: string, tier: string) =>
     (products ?? []).find((p) => p.slot_type === slotType && p.tier === tier);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
+      <ViewTracker event="advertise_viewed" />
       <div className="max-w-3xl">
         <Badge tone="primary">
           <Sparkles className="h-3 w-3" /> Launch pricing — up to 70% off
@@ -87,7 +93,8 @@ export default async function AdvertisePage() {
                       <Badge tone="outline">Tier {TIER_LABEL[region.tier] ?? region.tier}</Badge>
                     </div>
                     <p className="text-muted mt-1 line-clamp-2 text-xs">
-                      {zoneNames.join(' · ')}
+                      {zoneNames.slice(0, 8).join(' · ')}
+                      {zoneNames.length > 8 ? ` · +${zoneNames.length - 8} more` : ''}
                     </p>
                     <ul className="mt-3 space-y-1.5 text-sm">
                       <li className="flex items-center justify-between">
@@ -138,7 +145,7 @@ export default async function AdvertisePage() {
         <ul className="text-muted mt-2 list-disc space-y-1 pl-5">
           <li>Shoppers search neighborhoods; your placement covers the whole region — every zone in it.</li>
           <li>Inventory is fixed per region and enforced at the database. No auctions, no getting outbid.</li>
-          <li>Launch pricing locks in now and is billed monthly via Stripe. Cancel anytime; the slot re-opens instantly.</li>
+          <li>Reserve with one click — no card needed. Our team sets up monthly invoicing within 1 business day; launch pricing locks in. Cancel anytime and the slot re-opens instantly.</li>
           <li>All sponsored placements are clearly labeled.</li>
         </ul>
       </section>

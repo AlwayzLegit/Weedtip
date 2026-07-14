@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getAuth } from '@/lib/auth';
+import { billingRequestAckEmail, billingRequestEmail, SALES_INBOX, sendEmail } from '@/lib/email';
 import { rateLimit } from '@/lib/rate-limit';
-import { isStripeConfigured, stripe } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 
@@ -26,23 +26,16 @@ function siteUrl(): string {
 }
 
 /**
- * Self-serve ad slot checkout. Claims the first open slot of the requested
+ * Self-serve ad slot reservation. Claims the first open slot of the requested
  * type in the region (scarcity is enforced by the DB partial unique index —
- * concurrent buyers race and exactly one wins each slot), then hands off to a
- * Stripe subscription Checkout. The webhook flips the claim to `active` on
- * payment; abandoned claims release after 30 minutes.
+ * concurrent buyers race and exactly one wins each slot). Billing is
+ * sales-led: the claim sits `pending` for up to 7 days while the team sets up
+ * invoicing and activates it from /admin/billing. No card is collected in-app.
  *
- * Exclusive sponsorships are banded/negotiated, not self-serve — the sales
+ * Exclusive sponsorships are banded/negotiated, never self-serve — the sales
  * page routes those to contact.
  */
 export async function POST(req: NextRequest) {
-  if (!(await rateLimit('ads-checkout', { limit: 10, window: '60 s' })).success) {
-    return NextResponse.json({ error: 'Too many attempts. Please wait a moment.' }, { status: 429 });
-  }
-  if (!isStripeConfigured || !stripe) {
-    return NextResponse.json({ error: 'Online billing is not enabled yet.' }, { status: 503 });
-  }
-
   const parsed = inputSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
@@ -52,6 +45,12 @@ export async function POST(req: NextRequest) {
   // Caller must own a dispensary (RLS-backed lookup with their session).
   const { user, profile } = await getAuth();
   if (!user) return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
+
+  // Rate-limit per USER, not per IP: without payment up front, held slots are
+  // the thing being spent — don't let one account machine-gun reservations.
+  if (!(await rateLimit('ads-checkout', { limit: 3, window: '60 s' }, user.id)).success) {
+    return NextResponse.json({ error: 'Too many attempts. Please wait a moment.' }, { status: 429 });
+  }
   if (profile?.role !== 'dispensary_owner' && profile?.role !== 'admin') {
     return NextResponse.json(
       { error: 'Create a business account and claim your listing to advertise.' },
@@ -83,7 +82,7 @@ export async function POST(req: NextRequest) {
 
   const { data: product } = await service
     .from('ad_products')
-    .select('id, launch_price, stripe_price_id')
+    .select('id, launch_price')
     .eq('slot_type', slot_type)
     .eq('tier', region.tier)
     .maybeSingle();
@@ -94,8 +93,26 @@ export async function POST(req: NextRequest) {
   // Free abandoned holds before looking for an open slot.
   await service.rpc('release_stale_ad_claims');
 
+  // Unpaid holds are free to create, so cap them: without this, one shop
+  // could squat a featured + premium slot in every region nationwide for a
+  // week and lock competitors out of scarce inventory.
+  const { count: openHolds } = await service
+    .from('ad_subscriptions')
+    .select('id', { count: 'exact', head: true })
+    .eq('dispensary_id', dispensary.id)
+    .eq('status', 'pending');
+  if ((openHolds ?? 0) >= 5) {
+    return NextResponse.json(
+      {
+        error:
+          'You already have 5 slot reservations awaiting billing. Complete those with our team first, or wait for them to release.',
+      },
+      { status: 429 },
+    );
+  }
+
   // One live claim per slot per dispensary is also implied by the slot index;
-  // don't let a shop double-buy the same slot type in the same region.
+  // don't let a shop double-request the same slot type in the same region.
   const { data: existing } = await service
     .from('ad_subscriptions')
     .select('id, slot:ad_slots!inner(region_id, slot_type)')
@@ -106,7 +123,7 @@ export async function POST(req: NextRequest) {
     .limit(1);
   if (existing && existing.length > 0) {
     return NextResponse.json(
-      { error: 'You already hold (or are checking out) this slot type in this region.' },
+      { error: 'You already hold (or have requested) this slot type in this region.' },
       { status: 409 },
     );
   }
@@ -144,46 +161,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  try {
-    const meta = {
-      kind: 'ad_slot',
-      ad_subscription_id: subscriptionId,
-      dispensary_id: dispensary.id,
-      region_slug: region.slug,
-      slot_type,
-    };
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      line_items: [
-        product.stripe_price_id
-          ? { quantity: 1, price: product.stripe_price_id }
-          : {
-              quantity: 1,
-              price_data: {
-                currency: 'usd',
-                unit_amount: product.launch_price,
-                recurring: { interval: 'month' },
-                product_data: {
-                  name: `${slot_type === 'featured' ? 'Featured' : 'Premium Listing'} — ${region.name} (Tier ${TIER_LABEL[region.tier] ?? region.tier})`,
-                },
-              },
-            },
-      ],
-      client_reference_id: subscriptionId,
-      metadata: meta,
-      subscription_data: { metadata: meta },
-      success_url: `${siteUrl()}/advertise/${region.slug}?billing=success`,
-      cancel_url: `${siteUrl()}/advertise/${region.slug}?billing=cancelled`,
-    });
-    if (!session.url) throw new Error('Stripe did not return a checkout URL.');
-    return NextResponse.json({ ok: true, url: session.url });
-  } catch (e) {
-    // Payment couldn't start — release the hold immediately.
-    await service
-      .from('ad_subscriptions')
-      .update({ status: 'canceled', ends_at: new Date().toISOString() })
-      .eq('id', subscriptionId);
-    const message = e instanceof Error ? e.message : 'Checkout failed.';
-    return NextResponse.json({ error: message }, { status: 500 });
+  // Slot is held — hand the request to sales for invoicing + activation.
+  const kind = `${slot_type === 'featured' ? 'Featured' : 'Premium'} slot — ${region.name} (Tier ${TIER_LABEL[region.tier] ?? region.tier})`;
+  const toSales = billingRequestEmail({
+    kind,
+    requester: dispensary.name,
+    details: {
+      Dispensary: dispensary.name,
+      Region: region.name,
+      Slot: slot_type,
+      'Price / month': `$${(product.launch_price / 100).toFixed(2)}`,
+    },
+    siteUrl: siteUrl(),
+  });
+  await sendEmail({ to: SALES_INBOX, subject: toSales.subject, html: toSales.html });
+  if (user.email) {
+    const ack = billingRequestAckEmail(kind);
+    await sendEmail({ to: user.email, subject: ack.subject, html: ack.html });
   }
+
+  return NextResponse.json({
+    ok: true,
+    requested: true,
+    message:
+      'Slot reserved! Our team will contact you within 1 business day to set up billing — the slot is held for you for 7 days.',
+  });
 }

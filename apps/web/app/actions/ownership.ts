@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getAuth } from '@/lib/auth';
+import { claimSubmittedEmail, SALES_INBOX, sendEmail } from '@/lib/email';
 import { formError, formSuccess, fromZodError, str, type FormState } from '@/lib/forms';
 import { createClient } from '@/lib/supabase/server';
 
@@ -52,7 +53,7 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
   // too; checking here surfaces a clear message instead of a policy error.)
   const { data: target } = await supabase
     .from('dispensaries')
-    .select('license_number')
+    .select('name, license_number')
     .eq('id', parsed.data.dispensary_id)
     .maybeSingle();
   if (!target?.license_number) {
@@ -91,6 +92,17 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
         ? 'This listing can no longer be claimed.'
         : error.message,
     );
+  }
+
+  // Best-effort notifications: claimant ack + heads-up to the team inbox.
+  {
+    const ack = claimSubmittedEmail(target.name);
+    await sendEmail({ to: parsed.data.business_email, subject: ack.subject, html: ack.html });
+    await sendEmail({
+      to: SALES_INBOX,
+      subject: `[Claims] New ownership claim — ${target.name}`,
+      html: `<p>${parsed.data.business_email} claimed <strong>${target.name}</strong> (license match: ${licenseMatch ? 'YES' : 'no'}). Review in /admin/claims.</p>`,
+    });
   }
 
   revalidatePath(`/dispensary/${parsed.data.slug}`);

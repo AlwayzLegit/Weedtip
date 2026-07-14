@@ -3,15 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { BrandPromote } from '@/components/dashboard/brand-promote';
 import { getBrandOwnerContext } from '@/lib/brand-owner';
 import { formatPrice } from '@/lib/format';
-import { isStripeConfigured } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Promote · Studio' };
-
-const BILLING_BANNER: Record<string, string> = {
-  placement: 'Payment received — your brand promotion goes live momentarily.',
-  cancel: 'Checkout canceled. No charge was made.',
-};
 
 function isLive(p: { is_active: boolean; starts_at: string; ends_at: string | null }): boolean {
   const now = Date.now();
@@ -22,14 +16,8 @@ function isLive(p: { is_active: boolean; starts_at: string; ends_at: string | nu
   );
 }
 
-export default async function StudioPromote({
-  searchParams,
-}: {
-  searchParams: Promise<{ billing?: string }>;
-}) {
+export default async function StudioPromote() {
   const { brands } = await getBrandOwnerContext();
-  const { billing } = await searchParams;
-  const banner = billing ? BILLING_BANNER[billing] : undefined;
 
   const ids = brands.map((b) => b.id);
   const supabase = await createClient();
@@ -58,12 +46,6 @@ export default async function StudioPromote({
         </p>
       </div>
 
-      {banner && (
-        <p className="border-primary/40 bg-primary-muted text-primary rounded-card border px-4 py-2 text-sm">
-          {banner}
-        </p>
-      )}
-
       {brands.map((b) => {
         const live = (byBrand.get(b.id) ?? []).filter(isLive);
         return (
@@ -81,7 +63,7 @@ export default async function StudioPromote({
                 ))}
               </div>
             )}
-            <BrandPromote brandId={b.id} stripeEnabled={isStripeConfigured} />
+            <BrandPromote brandId={b.id} />
           </section>
         );
       })}

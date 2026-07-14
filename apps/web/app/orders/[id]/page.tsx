@@ -67,7 +67,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <Badge tone="muted">Refunded</Badge>
             ) : (
               <Badge tone="muted">
-                {order.payment_method === 'stripe' ? 'Payment pending' : 'Pay at pickup'}
+                {order.payment_method === 'debit' ? 'Debit' : order.payment_method === 'cash' ? 'Cash' : 'Pay'}
+                {order.order_type === 'delivery' ? ' — pay driver at delivery' : ' — pay at pickup'}
               </Badge>
             )}
           </div>

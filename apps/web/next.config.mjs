@@ -1,18 +1,18 @@
 import { withSentryConfig } from '@sentry/nextjs';
 
 // Content Security Policy. Scoped to the origins the app actually talks to:
-// Supabase (REST/Realtime/Storage), Mapbox (tiles/GL worker), Stripe (Checkout),
-// and PostHog (analytics). Sentry events are tunneled same-origin via /monitoring.
+// Supabase (REST/Realtime/Storage), Mapbox (tiles/GL worker), and PostHog
+// (analytics). Sentry events are tunneled same-origin via /monitoring.
 // 'unsafe-inline' is retained for scripts/styles because Next's runtime injects inline
 // bootstrap/styles; tightening to nonces is a follow-up once verified against the live app.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://js.stripe.com https://api.mapbox.com https://us-assets.i.posthog.com",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://api.mapbox.com https://us-assets.i.posthog.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co https://*.mapbox.com https://api.mapbox.com https://www.google.com https://*.gstatic.com https://*.googleusercontent.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.mapbox.com https://us.i.posthog.com https://us-assets.i.posthog.com",
-  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+  "frame-src 'self'",
   "worker-src 'self' blob:",
   "child-src 'self' blob:",
   "object-src 'none'",

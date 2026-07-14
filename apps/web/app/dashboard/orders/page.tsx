@@ -34,7 +34,13 @@ function OrderCard({ o }: { o: Order }) {
     <div className="rounded-card border-border bg-surface border p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold">{formatPrice(o.total_cents)}</span>
-        <span className="text-muted text-xs capitalize">{o.order_type}</span>
+        <span className="text-muted text-xs capitalize">
+          {o.order_type}
+          {/* Shopper's declared pay method — collected by the store, not Weedtip. */}
+          {o.payment_method === 'cash' || o.payment_method === 'debit'
+            ? ` · ${o.payment_method}`
+            : ''}
+        </span>
       </div>
       <p className="text-muted mt-0.5 text-xs">
         {new Date(o.created_at).toLocaleString([], {

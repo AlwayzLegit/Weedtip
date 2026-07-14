@@ -89,7 +89,6 @@ export type Database = {
           launch_price: number
           list_price: number
           slot_type: Database["public"]["Enums"]["ad_slot_type"]
-          stripe_price_id: string | null
           tier: Database["public"]["Enums"]["region_tier"]
         }
         Insert: {
@@ -97,7 +96,6 @@ export type Database = {
           launch_price: number
           list_price: number
           slot_type: Database["public"]["Enums"]["ad_slot_type"]
-          stripe_price_id?: string | null
           tier: Database["public"]["Enums"]["region_tier"]
         }
         Update: {
@@ -105,7 +103,6 @@ export type Database = {
           launch_price?: number
           list_price?: number
           slot_type?: Database["public"]["Enums"]["ad_slot_type"]
-          stripe_price_id?: string | null
           tier?: Database["public"]["Enums"]["region_tier"]
         }
         Relationships: []
@@ -199,7 +196,6 @@ export type Database = {
           slot_id: string
           starts_at: string | null
           status: Database["public"]["Enums"]["ad_sub_status"]
-          stripe_subscription_id: string | null
         }
         Insert: {
           created_at?: string
@@ -210,7 +206,6 @@ export type Database = {
           slot_id: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["ad_sub_status"]
-          stripe_subscription_id?: string | null
         }
         Update: {
           created_at?: string
@@ -221,7 +216,6 @@ export type Database = {
           slot_id?: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["ad_sub_status"]
-          stripe_subscription_id?: string | null
         }
         Relationships: [
           {
@@ -289,8 +283,6 @@ export type Database = {
           paid_at: string | null
           region_id: string
           status: string
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string | null
           updated_at: string
         }
         Insert: {
@@ -303,8 +295,6 @@ export type Database = {
           paid_at?: string | null
           region_id: string
           status?: string
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -317,8 +307,6 @@ export type Database = {
           paid_at?: string | null
           region_id?: string
           status?: string
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1047,8 +1035,6 @@ export type Database = {
           id: string
           plan_id: string | null
           status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1058,8 +1044,6 @@ export type Database = {
           id?: string
           plan_id?: string | null
           status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1069,8 +1053,6 @@ export type Database = {
           id?: string
           plan_id?: string | null
           status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1326,8 +1308,6 @@ export type Database = {
           sold_by_staff: string | null
           source: string
           status: Database["public"]["Enums"]["order_status"]
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string | null
           subtotal_cents: number
           tax_cents: number
           total_cents: number
@@ -1353,8 +1333,6 @@ export type Database = {
           sold_by_staff?: string | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
           subtotal_cents?: number
           tax_cents?: number
           total_cents?: number
@@ -1380,8 +1358,6 @@ export type Database = {
           sold_by_staff?: string | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
           subtotal_cents?: number
           tax_cents?: number
           total_cents?: number
@@ -1529,8 +1505,7 @@ export type Database = {
           scope_city: string | null
           scope_state: string | null
           starts_at: string
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string | null
+          status: string
           target_id: string | null
           type: Database["public"]["Enums"]["placement_type"]
         }
@@ -1547,8 +1522,7 @@ export type Database = {
           scope_city?: string | null
           scope_state?: string | null
           starts_at?: string
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
+          status?: string
           target_id?: string | null
           type: Database["public"]["Enums"]["placement_type"]
         }
@@ -1565,8 +1539,7 @@ export type Database = {
           scope_city?: string | null
           scope_state?: string | null
           starts_at?: string
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
+          status?: string
           target_id?: string | null
           type?: Database["public"]["Enums"]["placement_type"]
         }
@@ -2181,8 +2154,6 @@ export type Database = {
           scope_city: string | null
           scope_state: string | null
           starts_at: string | null
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string | null
           target_id: string | null
           type: Database["public"]["Enums"]["placement_type"] | null
         }
@@ -2199,8 +2170,6 @@ export type Database = {
           scope_city?: string | null
           scope_state?: string | null
           starts_at?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
           target_id?: string | null
           type?: Database["public"]["Enums"]["placement_type"] | null
         }
@@ -2217,8 +2186,6 @@ export type Database = {
           scope_city?: string | null
           scope_state?: string | null
           starts_at?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
           target_id?: string | null
           type?: Database["public"]["Enums"]["placement_type"] | null
         }
@@ -2265,8 +2232,24 @@ export type Database = {
     }
     Functions: {
       activate_brand_bid: {
-        Args: { p_bid_id: string; p_payment_intent?: string }
+        Args: { p_bid_id: string }
         Returns: undefined
+      }
+      ad_region_zone_names: {
+        Args: never
+        Returns: {
+          region_id: string
+          zone_names: string[]
+        }[]
+      }
+      ad_slot_availability: {
+        Args: never
+        Returns: {
+          region_id: string
+          exclusive_open: boolean
+          featured_open: number
+          premium_open: number
+        }[]
       }
       add_pos_staff: {
         Args: { p_dispensary_id: string; p_name: string; p_pin: string }

@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { startBrandPlacementCheckout } from '@/app/actions/billing';
+import { requestBrandPlacement } from '@/app/actions/billing';
+import { track } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
 import {
@@ -10,32 +11,18 @@ import {
   PLACEMENT_MIN_DAYS,
 } from '@/lib/placement-pricing';
 
-/** Buy a nationwide brand promotion. Brands aren't geo-scoped, so reach is fixed. */
-export function BrandPromote({
-  brandId,
-  stripeEnabled,
-}: {
-  brandId: string;
-  stripeEnabled: boolean;
-}) {
+/** Reserve a brand promotion. Brands aren't geo-scoped, so reach is fixed. */
+export function BrandPromote({ brandId }: { brandId: string }) {
   const [days, setDays] = useState(30);
   const [stateCode, setStateCode] = useState('');
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const targeted = stateCode.trim().length === 2;
   const price = useMemo(
     () => placementPriceCents('promoted_brand', targeted ? 'state' : 'nationwide', days),
     [days, targeted],
   );
-
-  if (!stripeEnabled) {
-    return (
-      <p className="text-muted text-sm">
-        Online billing isn’t enabled on this environment yet — an admin can place a brand promotion
-        manually.
-      </p>
-    );
-  }
 
   return (
     <div className="space-y-3">
@@ -44,9 +31,15 @@ export function BrandPromote({
           {error}
         </p>
       )}
+      {notice && (
+        <p className="border-primary/30 bg-primary-muted text-primary rounded-md border px-3 py-2 text-sm">
+          {notice}
+        </p>
+      )}
       <p className="text-muted text-sm">
         Feature your brand on the Brands directory — nationwide or targeted to one state.
-        Activates as soon as payment clears and expires automatically.
+        Reserving is free; our team confirms billing before it goes live, and it expires
+        automatically.
       </p>
       <div className="flex flex-wrap items-end gap-4">
         <label className="space-y-1.5 text-sm">
@@ -88,13 +81,15 @@ export function BrandPromote({
           disabled={pending}
           onClick={() => {
             setError(null);
+            setNotice(null);
+            track('brand_promo_requested', { days, state: targeted ? stateCode.toUpperCase() : 'nationwide', price_cents: price });
             start(async () => {
-              const res = await startBrandPlacementCheckout({
+              const res = await requestBrandPlacement({
                 brand_id: brandId,
                 days,
                 state: targeted ? stateCode.toUpperCase() : undefined,
               });
-              if (res.ok) window.location.href = res.url;
+              if (res.ok) setNotice(res.message);
               else setError(res.error);
             });
           }}
