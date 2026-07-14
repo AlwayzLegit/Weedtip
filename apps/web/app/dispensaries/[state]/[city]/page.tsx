@@ -404,7 +404,10 @@ export default async function CityDispensariesPage({
               isMedical: s.is_medical,
               isRecreational: s.is_recreational,
               featured: s.featured || !!promo || slotType === 'featured',
-              sponsored: slotType === 'premium',
+              // FTC disclosure: any PAID unit (featured/premium slot or a
+              // promo placement) is labeled "Sponsored". Only editorial
+              // s.featured (unpaid) keeps the plain "Featured" badge.
+              sponsored: !!promo || slotType === 'featured' || slotType === 'premium',
               placementId: promo?.placementId || undefined,
               adSlot:
                 slotType && geo

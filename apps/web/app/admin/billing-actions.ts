@@ -31,7 +31,7 @@ export async function activatePlanRequest(dispensaryId: string): Promise<void> {
   const supabase = await createClient();
   const { data: sub } = await supabase
     .from('dispensary_subscriptions')
-    .select('status, plan:plans(slug)')
+    .select('status, plan:plans(price_cents)')
     .eq('dispensary_id', dispensaryId)
     .maybeSingle();
   if (sub?.status !== 'pending') return;
@@ -50,7 +50,9 @@ export async function activatePlanRequest(dispensaryId: string): Promise<void> {
     throw new Error(error?.message ?? 'Request was already handled — refresh and re-check.');
   }
 
-  if ((sub.plan as { slug: string } | null)?.slug === 'growth') {
+  // POS is bundled with the paid plan — gate on PRICE, not a plan slug, so this
+  // works across the prod (`plus`) and post-reset (`growth`) price books.
+  if (((sub.plan as { price_cents: number } | null)?.price_cents ?? 0) > 0) {
     // Service client: grant_pos_addon's EXECUTE is service_role-only (the
     // authenticated role gets permission-denied even for admins).
     const service = createServiceClient();
@@ -89,18 +91,28 @@ export async function activatePlacementRequest(placementId: string): Promise<voi
   const supabase = await createClient();
   const { data: placement } = await supabase
     .from('placements')
-    .select('id, notes, type, dispensary_id, is_active')
+    .select('id, notes, type, dispensary_id, status')
     .eq('id', placementId)
     .maybeSingle();
-  if (!placement || placement.is_active) return;
+  if (!placement || placement.status !== 'pending') return;
 
+  // Days are server-authored into notes at request time ("… · N days", N
+  // clamped 1–90 by the request schema), so the parse is trusted input.
   const days = Number(/(\d+)\s*day/.exec(placement.notes ?? '')?.[1] ?? '30') || 30;
   const start = new Date();
   const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
-  await supabase
+  const { data: updated } = await supabase
     .from('placements')
-    .update({ is_active: true, starts_at: start.toISOString(), ends_at: end.toISOString() })
-    .eq('id', placementId);
+    .update({
+      status: 'active',
+      is_active: true,
+      starts_at: start.toISOString(),
+      ends_at: end.toISOString(),
+    })
+    .eq('id', placementId)
+    .eq('status', 'pending')
+    .select('id');
+  if (!updated?.length) throw new Error('Request was already handled — refresh and re-check.');
   if (placement.type === 'featured' && placement.dispensary_id) {
     await supabase.rpc('sync_featured_flags', { p_dispensary_id: placement.dispensary_id });
   }

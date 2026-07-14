@@ -245,6 +245,20 @@ export async function setPlacementActive(
   dispensaryId: string | null,
 ): Promise<void> {
   const supabase = await createClient();
+  // A pending sales-led request has no dates yet — resuming it here would
+  // create a perpetual (no-end-date) live placement that was never billed.
+  // Activation must go through /admin/billing (activatePlacementRequest),
+  // which stamps starts_at/ends_at from the requested duration.
+  if (isActive) {
+    const { data: p } = await supabase
+      .from('placements')
+      .select('status')
+      .eq('id', id)
+      .maybeSingle();
+    if (p?.status === 'pending') {
+      throw new Error('This is a pending billing request — activate it from Billing so it gets a term.');
+    }
+  }
   await supabase.from('placements').update({ is_active: isActive }).eq('id', id);
   // Only dispensary placements drive the featured flag; brand promos don't.
   if (dispensaryId) await supabase.rpc('sync_featured_flags', { p_dispensary_id: dispensaryId });

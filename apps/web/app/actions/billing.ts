@@ -79,6 +79,16 @@ export async function requestPlanChange(planId: string): Promise<BillingRequestR
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Current subscription state — used to avoid demoting a paying customer.
+  const { data: current } = await supabase
+    .from('dispensary_subscriptions')
+    .select('status, plan:plans(price_cents)')
+    .eq('dispensary_id', dispensary.id)
+    .maybeSingle();
+  const onActivePaid =
+    current?.status === 'active' &&
+    ((current.plan as { price_cents: number } | null)?.price_cents ?? 0) > 0;
+
   const service = createServiceClient();
 
   // Downgrade to Free: immediate — clear the paid plan and its entitlements.
@@ -97,6 +107,23 @@ export async function requestPlanChange(planId: string): Promise<BillingRequestR
     await service.rpc('grant_pos_addon', { p_dispensary_id: dispensary.id, p_enabled: false });
     revalidatePath('/dashboard/promote');
     return { ok: true, message: 'You are on the Free plan.' };
+  }
+
+  // Requesting a paid plan while ALREADY on an active paid plan: never flip the
+  // live row to 'pending' — that would strip the perks they're paying for. Log
+  // the change request for sales and leave the active subscription in force.
+  if (onActivePaid) {
+    await sendBillingEmails(`Plan change to ${plan.name}`, dispensary.name, user?.email ?? null, {
+      Dispensary: dispensary.name,
+      'New plan': plan.name,
+      'Price / month': `$${(plan.price_cents / 100).toFixed(2)}`,
+      Note: 'Already on an active paid plan — do not downgrade until the change is confirmed.',
+    });
+    revalidatePath('/dashboard/promote');
+    return {
+      ok: true,
+      message: 'Change requested — your current plan stays active until our team confirms it.',
+    };
   }
 
   const { error } = await service.from('dispensary_subscriptions').upsert(
@@ -179,8 +206,7 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
     .from('placements')
     .select('id', { count: 'exact', head: true })
     .eq('dispensary_id', dispensary.id)
-    .eq('is_active', false)
-    .is('ends_at', null);
+    .eq('status', 'pending');
   if ((openReqs ?? 0) >= 5) {
     return {
       ok: false,
@@ -202,6 +228,7 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
     scope_state,
     scope_city,
     is_active: false,
+    status: 'pending',
     price_cents: priceCents,
     notes: `Self-serve request · ${input.days} day${input.days === 1 ? '' : 's'}`,
   });
@@ -270,8 +297,7 @@ export async function requestBrandPlacement(
     .from('placements')
     .select('id', { count: 'exact', head: true })
     .eq('brand_id', brand.id)
-    .eq('is_active', false)
-    .is('ends_at', null);
+    .eq('status', 'pending');
   if ((openReqs ?? 0) >= 5) {
     return {
       ok: false,
@@ -289,6 +315,7 @@ export async function requestBrandPlacement(
     type: 'promoted_brand',
     scope_state: input.state ?? null,
     is_active: false,
+    status: 'pending',
     price_cents: priceCents,
     notes: `Self-serve brand promo request · ${where} · ${input.days} day${input.days === 1 ? '' : 's'}`,
   });

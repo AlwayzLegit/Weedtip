@@ -1505,6 +1505,7 @@ export type Database = {
           scope_city: string | null
           scope_state: string | null
           starts_at: string
+          status: string
           target_id: string | null
           type: Database["public"]["Enums"]["placement_type"]
         }
@@ -1521,6 +1522,7 @@ export type Database = {
           scope_city?: string | null
           scope_state?: string | null
           starts_at?: string
+          status?: string
           target_id?: string | null
           type: Database["public"]["Enums"]["placement_type"]
         }
@@ -1537,6 +1539,7 @@ export type Database = {
           scope_city?: string | null
           scope_state?: string | null
           starts_at?: string
+          status?: string
           target_id?: string | null
           type?: Database["public"]["Enums"]["placement_type"]
         }

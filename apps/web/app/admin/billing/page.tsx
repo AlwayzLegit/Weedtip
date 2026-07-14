@@ -37,8 +37,7 @@ export default async function AdminBillingPage() {
       supabase
         .from('placements')
         .select('id, type, notes, price_cents, created_at, scope_state, scope_city, dispensary:dispensaries(name, slug), brand:brands(name)')
-        .eq('is_active', false)
-        .is('ends_at', null)
+        .eq('status', 'pending')
         .order('created_at', { ascending: false }),
       supabase
         .from('ad_subscriptions')
