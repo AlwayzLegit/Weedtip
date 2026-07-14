@@ -9,14 +9,13 @@ import { ScrollCarousel } from '@/components/home/scroll-carousel';
 import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
-import { JsonLd } from '@/components/seo/json-ld';
 import { ArticleCard } from '@/components/article-card';
 import { StrainCard } from '@/components/strain-card';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/ui/reveal';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { ARTICLES } from '@/lib/learn';
-import { citySlug, organizationJsonLd, US_STATES, websiteJsonLd } from '@/lib/seo';
+import { citySlug, US_STATES } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
 
 // Public, anon-only page — serve cached HTML and refresh every 5 min (ISR).
@@ -247,8 +246,7 @@ export default async function HomePage() {
 
   return (
     <main>
-      <JsonLd data={organizationJsonLd()} />
-      <JsonLd data={websiteJsonLd()} />
+      {/* Organization + WebSite JSON-LD now render sitewide from the root layout. */}
 
       {/* Promo hero carousel FIRST (Weedmaps order) — this is the money-making
           merchandising surface dispensaries and brands buy into. */}

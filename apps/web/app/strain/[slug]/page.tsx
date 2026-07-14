@@ -10,7 +10,9 @@ import { StrainCard } from '@/components/strain-card';
 import { StrainFavoriteButton } from '@/components/strain/strain-favorite-button';
 import { Badge } from '@/components/ui/badge';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
-import { pageSeo } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/json-ld';
+import { pageSeo, strainJsonLd } from '@/lib/seo';
+import { strainArtUrl } from '@/lib/strain-art';
 import { createStaticClient } from '@/lib/supabase/static';
 
 // Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
@@ -114,6 +116,17 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <JsonLd
+        data={strainJsonLd({
+          slug: strain.slug,
+          name: strain.name,
+          type: TYPE_LABEL[strain.type] ?? strain.type,
+          description: strain.description,
+          thcLow: strain.thc_low,
+          thcHigh: strain.thc_high,
+          image: strainArtUrl(strain.slug, strain.type),
+        })}
+      />
       <ViewTracker
         event="strain_viewed"
         properties={{ strain_id: strain.id, slug: strain.slug, name: strain.name, type: strain.type }}

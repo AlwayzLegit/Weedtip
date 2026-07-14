@@ -1,17 +1,18 @@
-import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
 import { ArrowRight, Crown, MapPin, Sparkles } from 'lucide-react';
 import { ViewTracker } from '@/components/analytics/view-tracker';
 import { Badge } from '@/components/ui/badge';
 import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
+import { pageSeo } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
 
-export const metadata: Metadata = {
+export const metadata = pageSeo({
   title: 'Advertise on Weedtip',
   description:
     'Own your neighborhood. Fixed, scarce ad inventory per region: one exclusive sponsor, three featured positions, ten premium listings.',
-};
+  path: '/advertise',
+});
 
 // Availability drives urgency — keep it fresh.
 export const revalidate = 60;
