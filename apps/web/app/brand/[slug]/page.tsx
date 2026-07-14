@@ -177,7 +177,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
             <a
               href={brand.website}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="nofollow noopener noreferrer"
               className="text-primary mt-2 inline-block text-sm hover:underline"
             >
               Visit website →

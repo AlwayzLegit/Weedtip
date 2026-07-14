@@ -346,7 +346,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       : {}),
     ...(d.logo_url ? { logo: d.logo_url } : {}),
     ...(d.phone ? { telephone: d.phone } : {}),
-    ...(d.website ? { sameAs: [d.website] } : {}),
+    // Only paying listings get an outbound website association — we don't
+    // hand free listings entity endorsement or exposure via our pages.
+    ...(paidListing && d.website ? { sameAs: [d.website] } : {}),
     currenciesAccepted: 'USD',
     ...(deliveryMethods.length ? { availableDeliveryMethod: deliveryMethods } : {}),
     address: {
@@ -541,11 +543,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 <Mail className="h-4 w-4" /> Email
               </a>
             )}
-            {d.website && (
+            {/* Website link is a PAID-plan perk and always rel="nofollow
+                sponsored": a directory shouldn't pass link equity to (or give a
+                free backlink to) unpaid listings. */}
+            {paidListing && d.website && (
               <a
                 href={d.website}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="nofollow sponsored noopener noreferrer"
                 className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
               >
                 <Globe className="h-4 w-4" /> Website
@@ -1065,13 +1070,13 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                     <Mail className="text-muted h-4 w-4" /> {d.email}
                   </li>
                 )}
-                {d.website && (
+                {paidListing && d.website && (
                   <li className="flex items-center gap-2">
                     <Globe className="text-muted h-4 w-4" />
                     <a
                       href={d.website}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel="nofollow sponsored noopener noreferrer"
                       className="text-primary hover:underline"
                     >
                       Website
