@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import { Search, Tag } from 'lucide-react';
 import type { StrainType } from '@weedtip/shared';
-import { AddToCart } from '@/components/cart/add-to-cart';
 import { ProductCard } from '@/components/product-card';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +16,9 @@ export interface MenuBrowserItem {
   imageUrl: string | null;
   strainType: StrainType | null;
   thcPercentage: number | null;
+  cbdPercentage: number | null;
   inStock: boolean;
+  stockQty: number | null;
   categorySlug: string;
   categoryName: string;
   categorySort: number;
@@ -158,28 +159,25 @@ export function MenuBrowser({
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {visible.map((p) => (
-            <div key={p.id} className="space-y-2">
-              <ProductCard
-                p={{
-                  name: p.name,
-                  brand: p.brand,
-                  priceCents: p.priceCents,
-                  originalPriceCents: p.originalPriceCents,
-                  imageUrl: p.imageUrl,
-                  categorySlug: p.categorySlug,
-                  strainType: p.strainType,
-                  thcPercentage: p.thcPercentage,
-                  inStock: p.inStock,
-                  productId: p.id,
-                }}
-              />
-              {p.inStock && (
-                <AddToCart
-                  dispensary={{ id: dispensary.id, slug: dispensary.slug, name: dispensary.name }}
-                  product={{ productId: p.id, name: p.name, priceCents: p.priceCents }}
-                />
-              )}
-            </div>
+            <ProductCard
+              key={p.id}
+              p={{
+                name: p.name,
+                brand: p.brand,
+                priceCents: p.priceCents,
+                originalPriceCents: p.originalPriceCents,
+                imageUrl: p.imageUrl,
+                categorySlug: p.categorySlug,
+                strainType: p.strainType,
+                thcPercentage: p.thcPercentage,
+                cbdPercentage: p.cbdPercentage,
+                inStock: p.inStock,
+                stockQty: p.stockQty,
+                productId: p.id,
+                // Floating "+" adds straight to this shop's bag.
+                quickAddDispensary: dispensary,
+              }}
+            />
           ))}
         </div>
       )}

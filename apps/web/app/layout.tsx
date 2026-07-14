@@ -3,6 +3,7 @@ import { Manrope } from 'next/font/google';
 import { ViewTransitions } from 'next-view-transitions';
 import { AgeGate } from '@/components/age-gate';
 import { PostHogProvider } from '@/components/analytics/posthog-provider';
+import { CartDrawer } from '@/components/cart/cart-drawer';
 import { CartProvider } from '@/components/cart/cart-provider';
 import { CommandPalette } from '@/components/command-palette';
 import { Footer } from '@/components/footer';
@@ -95,6 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
             <Footer />
             <CommandPalette />
+            <CartDrawer />
           </CartProvider>
           <AgeGate />
         </PostHogProvider>

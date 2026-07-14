@@ -2,10 +2,15 @@ import { Link } from 'next-view-transitions';
 import type { StrainType } from '@weedtip/shared';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import type { DispensaryRef } from './cart/cart-provider';
 import { MediaImage } from './media-image';
 import { PlacementBeacon } from './placement-beacon';
+import { ProductQuickAdd } from './product-quick-add';
 import { RatingStars } from './rating-stars';
 import { Badge } from './ui/badge';
+
+/** Below this many units in stock we nudge shoppers with a "Low stock" flag. */
+const LOW_STOCK_THRESHOLD = 5;
 
 export interface ProductCardData {
   name: string;
@@ -19,7 +24,10 @@ export interface ProductCardData {
   categorySlug?: string | null;
   strainType: StrainType | null;
   thcPercentage: number | null;
+  cbdPercentage?: number | null;
   inStock: boolean;
+  /** Remaining units; drives the "Low stock" flag when known and small. */
+  stockQty?: number | null;
   rating?: number | null;
   reviewCount?: number;
   productId?: string;
@@ -29,6 +37,8 @@ export interface ProductCardData {
   originalPriceCents?: number | null;
   /** When set, records placement impression/click analytics for this card. */
   placementId?: string;
+  /** When set (and in stock), renders a floating "+" quick-add to the bag. */
+  quickAddDispensary?: DispensaryRef;
 }
 
 const STRAIN_LABEL: Record<StrainType, string> = {
@@ -52,6 +62,11 @@ const CATEGORY_ART = new Set([
 
 export function ProductCard({ p }: { p: ProductCardData }) {
   const onSale = typeof p.originalPriceCents === 'number' && p.originalPriceCents > p.priceCents;
+  const discountPct = onSale
+    ? Math.round(((p.originalPriceCents! - p.priceCents) / p.originalPriceCents!) * 100)
+    : 0;
+  const lowStock =
+    p.inStock && typeof p.stockQty === 'number' && p.stockQty > 0 && p.stockQty <= LOW_STOCK_THRESHOLD;
   const imageUrl =
     p.imageUrl ??
     (p.categorySlug && CATEGORY_ART.has(p.categorySlug)
@@ -72,7 +87,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
           </Badge>
         ) : onSale ? (
           <Badge tone="primary" className="absolute left-2 top-2">
-            Sale
+            {discountPct > 0 ? `−${discountPct}%` : 'Sale'}
           </Badge>
         ) : (
           !p.inStock && (
@@ -99,8 +114,14 @@ export function ProductCard({ p }: { p: ProductCardData }) {
               </span>
             )}
           </span>
-          {typeof p.thcPercentage === 'number' && (
-            <span className="text-muted text-xs">{p.thcPercentage}% THC</span>
+          {(typeof p.thcPercentage === 'number' || typeof p.cbdPercentage === 'number') && (
+            <span className="text-muted text-xs">
+              {typeof p.thcPercentage === 'number' && `${p.thcPercentage}% THC`}
+              {typeof p.thcPercentage === 'number' &&
+                typeof p.cbdPercentage === 'number' &&
+                ' · '}
+              {typeof p.cbdPercentage === 'number' && `${p.cbdPercentage}% CBD`}
+            </span>
           )}
         </div>
         {typeof p.rating === 'number' && p.rating > 0 && (
@@ -108,6 +129,9 @@ export function ProductCard({ p }: { p: ProductCardData }) {
             <RatingStars rating={p.rating} size={12} />
             {p.reviewCount ? <span className="text-muted text-xs">({p.reviewCount})</span> : null}
           </div>
+        )}
+        {lowStock && (
+          <p className="text-warning pt-0.5 text-xs font-medium">Low stock — order soon</p>
         )}
       </div>
     </div>
@@ -119,12 +143,25 @@ export function ProductCard({ p }: { p: ProductCardData }) {
       ? `/dispensary/${p.dispensarySlug}`
       : null;
 
-  return href ? (
-    <Link href={href} className={cn('block')}>
-      {p.placementId && <PlacementBeacon placementId={p.placementId} />}
-      {body}
-    </Link>
-  ) : (
-    body
+  // A floating quick-add sits OUTSIDE the Link so tapping it adds to the bag
+  // instead of navigating; only meaningful when we know the shop + it's stocked.
+  const quickAdd =
+    p.quickAddDispensary && p.inStock && p.productId ? (
+      <ProductQuickAdd
+        dispensary={p.quickAddDispensary}
+        product={{ productId: p.productId, name: p.name, priceCents: p.priceCents }}
+      />
+    ) : null;
+
+  if (!href) return body;
+
+  return (
+    <div className="relative h-full">
+      <Link href={href} className={cn('block h-full')}>
+        {p.placementId && <PlacementBeacon placementId={p.placementId} />}
+        {body}
+      </Link>
+      {quickAdd}
+    </div>
   );
 }
