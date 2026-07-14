@@ -111,6 +111,74 @@ export function itemListJsonLd(paths: string[]): Json | null {
   };
 }
 
+/**
+ * Strain entity schema. There's no schema.org type for a cannabis cultivar, so
+ * we model it as a Product with a Brand of the strain type (Indica/Sativa/etc)
+ * and THC potency as an additionalProperty — the shape Google accepts for
+ * non-retail product knowledge. aggregateRating is added only when real.
+ */
+export function strainJsonLd(s: {
+  slug: string;
+  name: string;
+  type: string;
+  description?: string | null;
+  thcLow?: number | null;
+  thcHigh?: number | null;
+  image?: string | null;
+  ratingValue?: number | null;
+  ratingCount?: number | null;
+}): Json {
+  const props: Json[] = [{ '@type': 'PropertyValue', name: 'Type', value: s.type }];
+  if (s.thcLow != null || s.thcHigh != null) {
+    const thc =
+      s.thcLow != null && s.thcHigh != null
+        ? `${s.thcLow}–${s.thcHigh}%`
+        : `${s.thcLow ?? s.thcHigh}%`;
+    props.push({ '@type': 'PropertyValue', name: 'THC', value: thc });
+  }
+  const node: Json = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': absoluteUrl(`/strain/${s.slug}`),
+    url: absoluteUrl(`/strain/${s.slug}`),
+    name: s.name,
+    category: 'Cannabis strain',
+    brand: { '@type': 'Brand', name: s.type },
+    additionalProperty: props,
+  };
+  if (s.description) node.description = s.description;
+  if (s.image) node.image = absoluteUrl(s.image);
+  if (s.ratingValue != null && s.ratingCount != null && s.ratingCount > 0) {
+    node.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: Number(s.ratingValue.toFixed(1)),
+      reviewCount: s.ratingCount,
+    };
+  }
+  return node;
+}
+
+/** Brand entity schema (schema.org Brand) for a brand detail page. */
+export function brandJsonLd(b: {
+  slug: string;
+  name: string;
+  description?: string | null;
+  logoUrl?: string | null;
+  website?: string | null;
+}): Json {
+  const node: Json = {
+    '@context': 'https://schema.org',
+    '@type': 'Brand',
+    '@id': absoluteUrl(`/brand/${b.slug}`),
+    url: absoluteUrl(`/brand/${b.slug}`),
+    name: b.name,
+  };
+  if (b.description) node.description = b.description;
+  if (b.logoUrl) node.logo = b.logoUrl;
+  if (b.website) node.sameAs = [b.website];
+  return node;
+}
+
 const DAY_OF_WEEK: Record<string, string> = {
   mon: 'Monday',
   tue: 'Tuesday',

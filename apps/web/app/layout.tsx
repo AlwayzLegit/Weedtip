@@ -7,6 +7,8 @@ import { CartProvider } from '@/components/cart/cart-provider';
 import { CommandPalette } from '@/components/command-palette';
 import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
+import { JsonLd } from '@/components/seo/json-ld';
+import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -76,6 +78,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ViewTransitions>
       <html lang="en" className={`${manrope.variable} dark`}>
       <body className="bg-background text-foreground flex min-h-screen flex-col font-sans antialiased">
+        {/* Sitewide brand + sitelinks-searchbox signals on every page. */}
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
         <a
           href="#main-content"
           className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:px-4 focus:py-2"

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import {
   BadgeCheck,
   Check,
@@ -78,7 +78,17 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     .select('*')
     .eq('slug', slug)
     .maybeSingle();
-  if (!d) notFound();
+  if (!d) {
+    // A retired duplicate slug (from the dedup pass) 301s to its survivor so
+    // indexed/linked old URLs keep their equity instead of 404ing.
+    const { data: redir } = await supabase
+      .from('dispensary_redirects')
+      .select('new_slug')
+      .eq('old_slug', slug)
+      .maybeSingle();
+    if (redir?.new_slug) permanentRedirect(`/dispensary/${redir.new_slug}`);
+    notFound();
+  }
 
   const nowIso = new Date().toISOString();
   const today = nowIso.slice(0, 10);
@@ -319,9 +329,17 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     : undefined;
   const openingHours = openingHoursSpec(hours as Record<string, { open?: string; close?: string }> | null);
 
+  // Delivery methods offered, in schema.org's controlled vocabulary.
+  const deliveryMethods = [
+    ...(d.is_pickup ? ['http://purl.org/goodrelations/v1#PickUp'] : []),
+    ...(d.is_delivery ? ['http://purl.org/goodrelations/v1#DeliveryModeOwnFleet'] : []),
+  ];
+
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
-    '@type': 'Store',
+    // Additive types: a Store that is also a LocalBusiness reads for the local
+    // pack; there's no dedicated dispensary type in schema.org.
+    '@type': ['Store', 'LocalBusiness'],
     '@id': `${SITE_URL}/dispensary/${d.slug}`,
     name: d.name,
     url: `${SITE_URL}/dispensary/${d.slug}`,
@@ -333,8 +351,11 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             : `${SITE_URL}${d.cover_image_url}`,
         }
       : {}),
+    ...(d.logo_url ? { logo: d.logo_url } : {}),
     ...(d.phone ? { telephone: d.phone } : {}),
     ...(d.website ? { sameAs: [d.website] } : {}),
+    currenciesAccepted: 'USD',
+    ...(deliveryMethods.length ? { availableDeliveryMethod: deliveryMethods } : {}),
     address: {
       '@type': 'PostalAddress',
       ...(d.address ? { streetAddress: d.address } : {}),
@@ -348,13 +369,19 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       : {}),
     ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
     ...(priceRange ? { priceRange } : {}),
-    ...(reviews && reviews.length > 0
+    // Prefer the denormalized rating columns (a shop can have a numeric rating
+    // with no loaded text reviews); attach individual Review nodes when present.
+    ...(d.rating_count > 0
       ? {
           aggregateRating: {
             '@type': 'AggregateRating',
-            ratingValue: Number(avgRating.toFixed(1)),
-            reviewCount: reviews.length,
+            ratingValue: Number(d.rating_avg.toFixed(1)),
+            reviewCount: d.rating_count,
           },
+        }
+      : {}),
+    ...(reviews && reviews.length > 0
+      ? {
           review: reviews.slice(0, 10).map((r) => ({
             '@type': 'Review',
             reviewRating: {

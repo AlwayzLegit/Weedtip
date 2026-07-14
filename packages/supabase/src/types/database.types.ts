@@ -1027,6 +1027,24 @@ export type Database = {
           },
         ]
       }
+      dispensary_redirects: {
+        Row: {
+          created_at: string
+          new_slug: string
+          old_slug: string
+        }
+        Insert: {
+          created_at?: string
+          new_slug: string
+          old_slug: string
+        }
+        Update: {
+          created_at?: string
+          new_slug?: string
+          old_slug?: string
+        }
+        Relationships: []
+      }
       dispensary_subscriptions: {
         Row: {
           created_at: string

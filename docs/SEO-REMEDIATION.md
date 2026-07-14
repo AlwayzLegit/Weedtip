@@ -32,7 +32,25 @@ across ~17k pages.
   Google + SEMrush reject; those now render no markup instead of broken markup.
   Clears the 5 structured-data errors and stops new ones.
 
-### Tier 1 — biggest win, needs your go-ahead (prod data)
+### ✅ Done — dedup, sitemap, and technical SEO (this session)
+- **A — Deduplicated dispensary rows** (migration `20260714100000`, applied):
+  location-aware key removed 302 same-location duplicates (9,422 → 9,119
+  active), 0 claimed touched; retired slugs 301-redirect to survivors via the
+  new `dispensary_redirects` table; demo Green Leaf NYC removed. Clears the
+  duplicate-title/content/meta error cluster on the next crawl.
+- **Sitemap sharded** (`app/sitemap.ts` via `generateSitemaps()`): 4 shards
+  (pages 2,813 · catalog 442 · dispensaries 9,119 · products) each far under
+  the 50k cap and future-proof; `robots.txt` lists every shard explicitly.
+- **Sitewide Organization + WebSite/SearchAction** moved to the root layout.
+- **`/advertise`** now sets canonical + OG/Twitter (was the one page missing it).
+- **Entity schema added:** strain pages (Product + THC `additionalProperty` +
+  type Brand), brand pages (Brand), and the dispensary schema upgraded to
+  `["Store","LocalBusiness"]` with logo, `currenciesAccepted`,
+  `availableDeliveryMethod`, and aggregateRating driven by the rating columns
+  (not just loaded text reviews). Invalid imageless Product schema already
+  fixed earlier.
+
+### Tier 1 (superseded) — original dedup note
 - **A — Deduplicate dispensary rows.** 411 duplicate groups, **609 removable
   rows, 0 of them claimed** (verified against prod). This is what creates
   ~1,868 of the errors. Plan:

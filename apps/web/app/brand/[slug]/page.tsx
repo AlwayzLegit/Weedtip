@@ -8,7 +8,8 @@ import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
-import { pageSeo } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/json-ld';
+import { brandJsonLd, pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
 export async function generateMetadata({
@@ -139,6 +140,15 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <JsonLd
+        data={brandJsonLd({
+          slug: brand.slug,
+          name: brand.name,
+          description: brand.description,
+          logoUrl: brand.logo_url,
+          website: brand.website,
+        })}
+      />
       <Breadcrumbs
         items={[
           { name: 'Home', href: '/' },
