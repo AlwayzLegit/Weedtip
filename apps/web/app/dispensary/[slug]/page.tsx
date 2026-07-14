@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
-import { notFound, permanentRedirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import {
   BadgeCheck,
   Check,
@@ -78,17 +78,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     .select('*')
     .eq('slug', slug)
     .maybeSingle();
-  if (!d) {
-    // A retired duplicate slug (from the dedup pass) 301s to its survivor so
-    // indexed/linked old URLs keep their equity instead of 404ing.
-    const { data: redir } = await supabase
-      .from('dispensary_redirects')
-      .select('new_slug')
-      .eq('old_slug', slug)
-      .maybeSingle();
-    if (redir?.new_slug) permanentRedirect(`/dispensary/${redir.new_slug}`);
-    notFound();
-  }
+  // Retired duplicate slugs are 301'd to their survivor in middleware (a
+  // page-level redirect here lands after metadata commits and no-ops), so a
+  // slug that reaches the page and isn't found is a genuine 404.
+  if (!d) notFound();
 
   const nowIso = new Date().toISOString();
   const today = nowIso.slice(0, 10);

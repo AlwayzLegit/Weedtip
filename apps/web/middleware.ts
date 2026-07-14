@@ -1,5 +1,36 @@
-import { type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
+
+/**
+ * Retired duplicate dispensary slugs (from the dedup pass) 301 to their
+ * survivor. Handled in middleware — not the page — because a page-level
+ * redirect() lands after generateMetadata has committed the response, so it
+ * silently no-ops. An indexed PK lookup on the small dispensary_redirects
+ * table is cheap and only runs for /dispensary/<slug> single-segment paths.
+ */
+async function dispensaryRedirect(request: NextRequest): Promise<NextResponse | null> {
+  const m = /^\/dispensary\/([^/]+)$/.exec(request.nextUrl.pathname);
+  if (!m) return null;
+  const slug = decodeURIComponent(m[1]!);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/dispensary_redirects?old_slug=eq.${encodeURIComponent(slug)}&select=new_slug`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+    );
+    if (!res.ok) return null;
+    const rows = (await res.json()) as { new_slug: string }[];
+    const to = rows[0]?.new_slug;
+    if (!to || to === slug) return null;
+    const dest = request.nextUrl.clone();
+    dest.pathname = `/dispensary/${to}`;
+    return NextResponse.redirect(dest, 301);
+  } catch {
+    return null;
+  }
+}
 
 const US_STATE_CODES = new Set([
   'AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY',
@@ -8,6 +39,9 @@ const US_STATE_CODES = new Set([
 ]);
 
 export async function middleware(request: NextRequest) {
+  const redirect = await dispensaryRedirect(request);
+  if (redirect) return redirect;
+
   const response = await updateSession(request);
   // Seed the market cookie from Vercel's IP geolocation on first visit, so the
   // market selector and "your state" nudges default to where the shopper is.
