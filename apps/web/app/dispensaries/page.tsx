@@ -57,6 +57,7 @@ export default async function DispensariesPage({
 
   const filters: BrowseFilters = {
     openNow: truthy(sp.open_now),
+    deals: truthy(sp.has_deals),
     pickup: truthy(sp.is_pickup),
     delivery: truthy(sp.is_delivery),
     medical: truthy(sp.is_medical),
@@ -99,6 +100,7 @@ export default async function DispensariesPage({
     is_medical: filters.medical || undefined,
     is_recreational: filters.recreational || undefined,
     open_now: filters.openNow || undefined,
+    has_deals: filters.deals || undefined,
     category_slug: filters.categorySlug,
     amenities: amenities.length ? amenities : undefined,
     origin_lat: origin?.lat,

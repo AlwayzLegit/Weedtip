@@ -2500,6 +2500,7 @@ export type Database = {
           filter_amenities?: string[]
           filter_category_slug?: string
           filter_delivery?: boolean
+          filter_has_deals?: boolean
           filter_medical?: boolean
           filter_open_now?: boolean
           filter_pickup?: boolean
@@ -2617,6 +2618,7 @@ export type Database = {
           filter_amenities?: string[]
           filter_category_slug?: string
           filter_delivery?: boolean
+          filter_has_deals?: boolean
           filter_medical?: boolean
           filter_open_now?: boolean
           filter_pickup?: boolean

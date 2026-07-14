@@ -356,6 +356,7 @@ export const dispensaryBoundsSearchSchema = z.object({
   is_medical: z.boolean().optional(),
   is_recreational: z.boolean().optional(),
   open_now: z.boolean().optional(),
+  has_deals: z.boolean().optional(),
   category_slug: slugSchema.optional(),
   amenities: z.array(amenitySchema).max(AMENITIES.length).optional(),
   origin_lat: latitudeSchema.optional(),

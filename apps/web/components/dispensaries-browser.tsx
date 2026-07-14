@@ -25,6 +25,7 @@ export type BrowseFilters = {
   openNow: boolean;
   pickup: boolean;
   delivery: boolean;
+  deals: boolean;
   medical: boolean;
   recreational: boolean;
   amenities: Amenity[];
@@ -38,6 +39,7 @@ export const EMPTY_FILTERS: BrowseFilters = {
   openNow: false,
   pickup: false,
   delivery: false,
+  deals: false,
   medical: false,
   recreational: false,
   amenities: [],
@@ -47,6 +49,7 @@ export const EMPTY_FILTERS: BrowseFilters = {
 
 const PILLS = [
   { key: 'openNow', label: 'Open now' },
+  { key: 'deals', label: 'Deals' },
   { key: 'pickup', label: 'Pickup' },
   { key: 'delivery', label: 'Delivery' },
   { key: 'medical', label: 'Medical' },
@@ -267,6 +270,7 @@ export function DispensariesBrowser({
         is_medical: nextFilters.medical || undefined,
         is_recreational: nextFilters.recreational || undefined,
         open_now: nextFilters.openNow || undefined,
+        has_deals: nextFilters.deals || undefined,
         category_slug: nextFilters.categorySlug,
         amenities: nextFilters.amenities.length ? nextFilters.amenities : undefined,
       });
@@ -314,6 +318,7 @@ export function DispensariesBrowser({
         is_medical: nextFilters.medical || undefined,
         is_recreational: nextFilters.recreational || undefined,
         open_now: nextFilters.openNow || undefined,
+        has_deals: nextFilters.deals || undefined,
         category_slug: nextFilters.categorySlug,
         amenities: nextFilters.amenities.length ? nextFilters.amenities : undefined,
         origin_lat: o?.lat,
@@ -376,6 +381,7 @@ export function DispensariesBrowser({
       const setBool = (key: string, on: boolean) =>
         on ? params.set(key, 'true') : params.delete(key);
       setBool('open_now', f.openNow);
+      setBool('has_deals', f.deals);
       setBool('is_pickup', f.pickup);
       setBool('is_delivery', f.delivery);
       setBool('is_medical', f.medical);

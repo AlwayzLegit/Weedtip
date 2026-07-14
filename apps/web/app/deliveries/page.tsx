@@ -73,6 +73,7 @@ export default async function DeliveriesPage({
 
   const filters: BrowseFilters = {
     openNow: truthy(sp.open_now),
+    deals: truthy(sp.has_deals),
     pickup: truthy(sp.is_pickup),
     // The page's whole point — on unless a shared URL explicitly turned it off.
     delivery: sp.is_delivery === undefined ? true : truthy(sp.is_delivery),
