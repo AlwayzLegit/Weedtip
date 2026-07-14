@@ -41,6 +41,10 @@ interface CartContextValue {
   setQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clear: () => void;
+  /** Slide-out "added to bag" drawer. Opens automatically on addItem. */
+  drawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -48,6 +52,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Hydrate from localStorage once on mount.
   useEffect(() => {
@@ -67,7 +72,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     else localStorage.removeItem(STORAGE_KEY);
   }, [cart, hydrated]);
 
+  const openDrawer = useCallback(() => setDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+
   const addItem = useCallback<CartContextValue['addItem']>((dispensary, item, qty = 1) => {
+    setDrawerOpen(true); // surface the "added to bag" drawer
     setCart((prev) => {
       // Different dispensary → start a fresh cart.
       if (!prev || prev.dispensaryId !== dispensary.id) {
@@ -115,8 +124,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value = useMemo<CartContextValue>(() => {
     const count = cart?.items.reduce((n, i) => n + i.quantity, 0) ?? 0;
     const subtotalCents = cart?.items.reduce((s, i) => s + i.priceCents * i.quantity, 0) ?? 0;
-    return { cart, count, subtotalCents, addItem, setQuantity, removeItem, clear };
-  }, [cart, addItem, setQuantity, removeItem, clear]);
+    return {
+      cart,
+      count,
+      subtotalCents,
+      addItem,
+      setQuantity,
+      removeItem,
+      clear,
+      drawerOpen,
+      openDrawer,
+      closeDrawer,
+    };
+  }, [cart, addItem, setQuantity, removeItem, clear, drawerOpen, openDrawer, closeDrawer]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

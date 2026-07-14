@@ -15,6 +15,7 @@ import {
   Truck,
 } from 'lucide-react';
 import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
+import { AMENITY_ICON } from '@/lib/amenity-icons';
 import { ShopViewTracker } from '@/components/analytics/shop-view-tracker';
 import { RecordRecentlyViewed } from '@/components/recently-viewed';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -22,14 +23,17 @@ import { ClaimListing } from '@/components/claim-listing';
 import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
 import { DispensaryCard } from '@/components/dispensary-card';
 import { MenuBrowser, type MenuBrowserItem } from '@/components/dispensary/menu-browser';
+import { ReviewHistogram } from '@/components/dispensary/review-histogram';
 import { ReviewList } from '@/components/dispensary/review-list';
 import { MiniMap } from '@/components/dispensary/mini-map';
+import { PhotoGallery } from '@/components/dispensary/photo-gallery';
 import { LogoImage } from '@/components/logo-image';
 import { FavoriteButton } from '@/components/favorite-button';
 import { ScrollCarousel } from '@/components/home/scroll-carousel';
 import { MediaImage } from '@/components/media-image';
 import { RatingStars } from '@/components/rating-stars';
 import { ReviewForm } from '@/components/review-form';
+import { ShareButton } from '@/components/share-button';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, dealBadge, formatTime } from '@/lib/format';
@@ -287,7 +291,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       imageUrl: cardImageUrl(p),
       strainType: p.strain_type,
       thcPercentage: p.thc_percentage,
+      cbdPercentage: p.cbd_percentage,
       inStock: p.in_stock,
+      stockQty: p.stock_qty,
       categorySlug: cat?.slug ?? 'other',
       categoryName: cat?.name ?? 'Other',
       categorySort: cat?.sort_order ?? 999,
@@ -562,6 +568,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             >
               <PenLine className="h-4 w-4" /> Add review
             </a>
+            <ShareButton
+              title={`${d.name} · Weedtip`}
+              className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+            />
             {user && !isOwner && (
               <FavoriteButton dispensaryId={d.id} slug={d.slug} isFavorite={isFavorite} />
             )}
@@ -725,15 +735,18 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                           {group.label}
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {items.map((a) => (
-                            <span
-                              key={a}
-                              className="border-border bg-surface text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm"
-                            >
-                              <Check className="text-primary h-3.5 w-3.5" />
-                              {AMENITY_LABELS[a]}
-                            </span>
-                          ))}
+                          {items.map((a) => {
+                            const Icon = AMENITY_ICON[a] ?? Check;
+                            return (
+                              <span
+                                key={a}
+                                className="border-border bg-surface text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm"
+                              >
+                                <Icon className="text-primary h-3.5 w-3.5" />
+                                {AMENITY_LABELS[a]}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -833,23 +846,8 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               )}
             </section>
 
-            {/* Storefront photos (Google-enriched gallery) */}
-            {galleryUrls.length > 0 && (
-              <section id="photos" className="scroll-mt-32">
-                <h2 className="mb-3 text-lg font-semibold">Photos</h2>
-                <ScrollCarousel itemClassName="w-72" ariaLabel="Storefront photos">
-                  {galleryUrls.map((url, i) => (
-                    <img
-                      key={url}
-                      src={url}
-                      alt={`${d.name} photo ${i + 1}`}
-                      loading="lazy"
-                      className="border-border bg-surface-2 h-44 w-72 rounded-xl border object-cover"
-                    />
-                  ))}
-                </ScrollCarousel>
-              </section>
-            )}
+            {/* Storefront photos (Google-enriched gallery) with lightbox */}
+            {galleryUrls.length > 0 && <PhotoGallery photos={galleryUrls} name={d.name} />}
 
             {/* Updates from the shop */}
             {updates && updates.length > 0 && (
@@ -876,6 +874,16 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             {/* Reviews */}
             <section id="reviews" className="scroll-mt-32">
               <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
+              {reviews && reviews.length > 0 && (
+                <ReviewHistogram
+                  counts={reviews.reduce<Record<number, number>>((acc, r) => {
+                    acc[r.rating] = (acc[r.rating] ?? 0) + 1;
+                    return acc;
+                  }, {})}
+                  total={reviews.length}
+                  average={avgRating}
+                />
+              )}
               {d.rating_count > 0 &&
                 (d.rating_quality > 0 || d.rating_service > 0 || d.rating_atmosphere > 0) && (
                   <div className="rounded-card border-border bg-surface mb-4 grid grid-cols-3 gap-2 border p-4 text-center">
