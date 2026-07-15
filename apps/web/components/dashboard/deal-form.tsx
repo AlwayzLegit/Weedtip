@@ -251,20 +251,64 @@ export function DealForm({
             />
           </>
         ) : (
-          <Field
-            label="Promo code"
-            htmlFor="code"
-            error={fe.code}
-            hint="Optional. Customers enter this at checkout to apply the discount (e.g. SAVE20)."
-          >
-            <Input
-              id="code"
-              name="code"
-              defaultValue={d?.code ?? ''}
-              placeholder="SAVE20"
-              className="uppercase"
-            />
-          </Field>
+          <>
+            <Field
+              label="Promo code"
+              htmlFor="code"
+              error={fe.code}
+              hint="Optional. Customers enter this at checkout to apply the discount (e.g. SAVE20)."
+            >
+              <Input
+                id="code"
+                name="code"
+                defaultValue={d?.code ?? ''}
+                placeholder="SAVE20"
+                className="uppercase"
+              />
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Audience" htmlFor="audience" hint="Who can redeem this code.">
+                <Select id="audience" name="audience" defaultValue={d?.audience ?? 'all'}>
+                  <option value="all">All customers</option>
+                  <option value="first_time">First-time customers</option>
+                  <option value="return">Returning customers</option>
+                </Select>
+              </Field>
+              <Field
+                label="Max total uses"
+                htmlFor="total_limit"
+                error={fe.total_limit}
+                hint="Blank = unlimited."
+              >
+                <Input
+                  id="total_limit"
+                  name="total_limit"
+                  type="number"
+                  min="1"
+                  step="1"
+                  defaultValue={d?.total_limit ?? ''}
+                  placeholder="∞"
+                />
+              </Field>
+              <Field
+                label="Max uses / customer"
+                htmlFor="per_customer_limit"
+                error={fe.per_customer_limit}
+                hint="Blank = unlimited."
+              >
+                <Input
+                  id="per_customer_limit"
+                  name="per_customer_limit"
+                  type="number"
+                  min="1"
+                  step="1"
+                  defaultValue={d?.per_customer_limit ?? ''}
+                  placeholder="∞"
+                />
+              </Field>
+            </div>
+          </>
         )}
         </section>
       )}

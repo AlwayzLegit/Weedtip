@@ -265,6 +265,14 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
         : 'fixed';
   const legacyValue = kind === 'price_target' || kind === 'bogo' ? 0 : rawValue;
 
+  // Redemption caps + audience only apply to code deals (not auto-apply sales),
+  // so they're cleared to their defaults whenever the deal is auto-applied.
+  const audience = autoApply
+    ? 'all'
+    : (['all', 'first_time', 'return'].includes(str(fd, 'audience') ?? '')
+        ? (str(fd, 'audience') as 'all' | 'first_time' | 'return')
+        : 'all');
+
   const input = {
     title: str(fd, 'title') ?? '',
     description: str(fd, 'description') ?? null,
@@ -275,6 +283,9 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
     start_date: toIso(str(fd, 'start_date')) ?? '',
     end_date: toIso(str(fd, 'end_date')) ?? '',
     is_active: bool(fd, 'is_active'),
+    audience,
+    per_customer_limit: autoApply ? null : (numOpt(fd, 'per_customer_limit') ?? null),
+    total_limit: autoApply ? null : (numOpt(fd, 'total_limit') ?? null),
   };
 
   const parsed = dealWriteSchema.safeParse(input);
