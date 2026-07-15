@@ -249,6 +249,7 @@ export const dealWriteSchema = z
   .object({
     title: z.string().min(1).max(160),
     description: z.string().max(2000).nullable().optional(),
+    image_url: z.string().url().nullable().optional(),
     code: promoCodeSchema.nullable().optional(),
     discount_type: discountTypeSchema,
     discount_value: z.number().nonnegative(),

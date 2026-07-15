@@ -102,7 +102,14 @@ export default async function DashboardDeals() {
                 key={deal.id}
                 className="rounded-card border-border bg-surface shadow-card hover:border-border-strong flex items-center justify-between border p-4 transition-colors"
               >
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-3">
+                  {deal.image_url && (
+                    <div
+                      className="border-border bg-surface-2 hidden aspect-video w-20 shrink-0 overflow-hidden rounded-md border bg-cover bg-center sm:block"
+                      style={{ backgroundImage: `url(${deal.image_url})` }}
+                    />
+                  )}
+                  <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium">{deal.title}</p>
                     <Badge tone={live ? 'primary' : 'muted'}>{live ? 'Live' : 'Inactive'}</Badge>
@@ -122,6 +129,7 @@ export default async function DashboardDeals() {
                     <span className="text-muted text-xs">
                       {reds} redemption{reds === 1 ? '' : 's'}
                     </span>
+                  </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
