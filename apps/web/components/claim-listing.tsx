@@ -5,6 +5,7 @@ import { useActionState, useEffect, useState } from 'react';
 import { requestOwnership, withdrawOwnership } from '@/app/actions/ownership';
 import { track } from '@/lib/analytics';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
+import { ClaimDocumentUpload } from './claim-document-upload';
 import { SubmitButton } from './auth/submit-button';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -131,6 +132,14 @@ export function ClaimListing({
             placeholder="Anything else that helps verify you own this dispensary (optional)"
             maxLength={2000}
           />
+          <div>
+            <p className="mb-1.5 text-sm font-medium">Proof of ownership (recommended)</p>
+            <p className="text-muted mb-2 text-xs">
+              Upload your state license or a business document to verify faster. Stored privately
+              and only visible to our review team.
+            </p>
+            <ClaimDocumentUpload name="document_path" />
+          </div>
           {state.status === 'error' && state.message && (
             <p className="border-danger/40 bg-danger/10 text-danger rounded-lg border px-3 py-2 text-sm">
               {state.message}

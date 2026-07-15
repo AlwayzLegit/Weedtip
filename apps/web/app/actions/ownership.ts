@@ -15,11 +15,28 @@ const claimSchema = z.object({
   business_phone: z.string().max(30).nullable(),
   message: z.string().max(2000).nullable(),
   license_number: z.string().max(120).nullable(),
+  document_path: z.string().max(400).nullable(),
 });
 
 /** Loose license comparison: case/spacing/punctuation insensitive. */
 function normalizeLicense(v: string | null | undefined): string {
   return (v ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/**
+ * Registrable domain of an email or URL, lowercased, without a leading `www.`.
+ * Used to check whether a claimant's business email lives on the dispensary's
+ * own web domain — a strong, hard-to-fake proof-of-control signal.
+ */
+function domainOf(value: string | null | undefined): string {
+  if (!value) return '';
+  let host = value.trim().toLowerCase();
+  const at = host.lastIndexOf('@');
+  if (at !== -1) host = host.slice(at + 1);
+  host = host.replace(/^https?:\/\//, '').replace(/^www\./, '');
+  // Strip any path, query, fragment, or port — keep just the host.
+  host = host.replace(/[/?#:].*$/, '');
+  return host;
 }
 
 /**
@@ -43,6 +60,7 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
     business_phone: str(fd, 'business_phone') ?? null,
     message: str(fd, 'message') ?? null,
     license_number: str(fd, 'license_number') ?? null,
+    document_path: str(fd, 'document_path') ?? null,
   });
   if (!parsed.success) return fromZodError(parsed.error);
 
@@ -53,7 +71,7 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
   // too; checking here surfaces a clear message instead of a policy error.)
   const { data: target } = await supabase
     .from('dispensaries')
-    .select('name, license_number')
+    .select('name, license_number, website, email, dcc_email')
     .eq('id', parsed.data.dispensary_id)
     .maybeSingle();
   if (!target?.license_number) {
@@ -75,6 +93,22 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
     !!parsed.data.license_number &&
     normalizeLicense(parsed.data.license_number) === normalizeLicense(target.license_number);
 
+  // Second control signal: is the claimant's business email on the dispensary's
+  // own domain (its website, public email, or the state-registered contact)?
+  // Someone with a real @theshop.com address almost certainly works there.
+  const claimDomain = domainOf(parsed.data.business_email);
+  const shopDomains = new Set(
+    [domainOf(target.website), domainOf(target.email), domainOf(target.dcc_email)].filter(Boolean),
+  );
+  const emailDomainMatch = claimDomain.length > 0 && shopDomains.has(claimDomain);
+
+  // Only trust a document path that lands in this user's own upload folder — the
+  // bucket's RLS enforces this too, but never persist a path we can't attribute.
+  const documentPath =
+    parsed.data.document_path && parsed.data.document_path.startsWith(`${user.id}/`)
+      ? parsed.data.document_path
+      : null;
+
   const { error } = await supabase.from('ownership_requests').insert({
     dispensary_id: parsed.data.dispensary_id,
     user_id: user.id,
@@ -84,6 +118,8 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
     message: parsed.data.message,
     license_number: parsed.data.license_number,
     license_match: licenseMatch,
+    email_domain_match: emailDomainMatch,
+    document_path: documentPath,
   });
 
   if (error) {
@@ -98,10 +134,23 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
   {
     const ack = claimSubmittedEmail(target.name);
     await sendEmail({ to: parsed.data.business_email, subject: ack.subject, html: ack.html });
+    const strength =
+      licenseMatch || emailDomainMatch || documentPath
+        ? licenseMatch && emailDomainMatch
+          ? 'STRONG'
+          : 'moderate'
+        : 'WEAK — no automatic signals';
     await sendEmail({
       to: SALES_INBOX,
       subject: `[Claims] New ownership claim — ${target.name}`,
-      html: `<p>${parsed.data.business_email} claimed <strong>${target.name}</strong> (license match: ${licenseMatch ? 'YES' : 'no'}). Review in /admin/claims.</p>`,
+      html: `<p>${parsed.data.business_email} claimed <strong>${target.name}</strong>.</p>
+<ul>
+<li>License match: ${licenseMatch ? 'YES' : 'no'}</li>
+<li>Email-domain match: ${emailDomainMatch ? 'YES' : 'no'}</li>
+<li>Document uploaded: ${documentPath ? 'yes' : 'no'}</li>
+<li>Verification strength: <strong>${strength}</strong></li>
+</ul>
+<p>Review in /admin/claims.</p>`,
     });
   }
 
