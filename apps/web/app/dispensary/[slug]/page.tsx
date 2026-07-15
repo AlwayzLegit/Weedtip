@@ -40,6 +40,7 @@ import { DAY_ORDER, dayLabel, dealBadge, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
 import { generatedAbout } from '@/lib/shop-copy';
+import { videoEmbed } from '@/lib/video';
 import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
@@ -722,6 +723,23 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               <h2 className="mb-2 text-lg font-semibold">About</h2>
               <p className="text-muted">{d.description ?? generatedAbout(d, hours)}</p>
             </section>
+
+            {videoEmbed(d.video_url) && (
+              <section>
+                <h2 className="mb-3 text-lg font-semibold">Video</h2>
+                <div className="border-border relative aspect-video w-full overflow-hidden rounded-lg border">
+                  <iframe
+                    src={videoEmbed(d.video_url)!.embedUrl}
+                    title={`${d.name} video`}
+                    className="absolute inset-0 h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                </div>
+              </section>
+            )}
 
             {d.amenities && d.amenities.length > 0 && (
               <section>

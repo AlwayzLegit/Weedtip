@@ -211,6 +211,7 @@ export const dispensaryWriteSchema = z.object({
   amenities: z.array(amenitySchema).max(AMENITIES.length).default([]),
   require_id: z.boolean().default(false),
   post_order_message: z.string().max(250).nullable().optional(),
+  video_url: z.string().url().max(300).nullable().optional(),
   location: coordinatesSchema.nullable().optional(),
 });
 export type DispensaryWriteInput = z.infer<typeof dispensaryWriteSchema>;

@@ -17,6 +17,7 @@ import { notifyAdmins } from '@/lib/notify';
 import { MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
+import { videoEmbed } from '@/lib/video';
 import {
   bool,
   formError,
@@ -111,11 +112,21 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
     amenities: fd.getAll('amenities').filter((v): v is string => typeof v === 'string'),
     require_id: bool(fd, 'require_id'),
     post_order_message: str(fd, 'post_order_message') ?? null,
+    video_url: str(fd, 'video_url') ?? null,
     location: lat !== undefined && lng !== undefined ? { lat, lng } : null,
   };
 
   const parsed = dispensaryWriteSchema.safeParse(input);
   if (!parsed.success) return fromZodError(parsed.error);
+
+  // Only YouTube/Vimeo links can be embedded — reject anything else clearly.
+  if (parsed.data.video_url && !videoEmbed(parsed.data.video_url)) {
+    return {
+      status: 'error',
+      message: 'Enter a valid YouTube or Vimeo link, or leave the video blank.',
+      fieldErrors: { video_url: 'Use a YouTube or Vimeo link.' },
+    };
+  }
 
   const { location, ...rest } = parsed.data;
   // Set the geography only when we have real coordinates, so saving a listing

@@ -833,6 +833,7 @@ export type Database = {
           accepting_orders: boolean
           post_order_message: string | null
           require_id: boolean
+          video_url: string | null
           address: string | null
           amenities: string[]
           announcement: string | null
@@ -885,6 +886,7 @@ export type Database = {
           accepting_orders?: boolean
           post_order_message?: string | null
           require_id?: boolean
+          video_url?: string | null
           address?: string | null
           amenities?: string[]
           announcement?: string | null
@@ -937,6 +939,7 @@ export type Database = {
           accepting_orders?: boolean
           post_order_message?: string | null
           require_id?: boolean
+          video_url?: string | null
           address?: string | null
           amenities?: string[]
           announcement?: string | null
