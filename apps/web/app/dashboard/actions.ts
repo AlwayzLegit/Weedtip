@@ -78,6 +78,17 @@ function isUniqueViolation(error: { code?: string } | null): boolean {
 
 // ─── Dispensary (listing) ────────────────────────────────────────────────────
 
+/** Parse the special-hours hidden JSON field into an array (schema validates the shape). */
+function parseSpecialHours(raw: string | undefined): unknown[] {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<FormState> {
   const auth = await authedClient();
   if (!auth) return formError('You must be signed in.');
@@ -116,6 +127,7 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
     gallery_urls: fd
       .getAll('gallery_urls')
       .filter((v): v is string => typeof v === 'string' && v.length > 0),
+    special_hours: parseSpecialHours(str(fd, 'special_hours')),
     location: lat !== undefined && lng !== undefined ? { lat, lng } : null,
   };
 

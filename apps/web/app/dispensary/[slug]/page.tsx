@@ -14,7 +14,7 @@ import {
   Store,
   Truck,
 } from 'lucide-react';
-import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
+import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours, type SpecialHour } from '@weedtip/shared';
 import { AMENITY_ICON } from '@/lib/amenity-icons';
 import { ShopViewTracker } from '@/components/analytics/shop-view-tracker';
 import { RecordRecentlyViewed } from '@/components/recently-viewed';
@@ -317,7 +317,24 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     const [h = '0', m = '0'] = t.split(':');
     return Number(h) * 60 + Number(m);
   };
-  const todayHours = hours?.[todayKey] ?? null;
+  // Special / holiday hours override the weekly hours on a matching date.
+  const pad2 = (n: number) => String(n).padStart(2, '0');
+  const todayStr = `${localNow.getFullYear()}-${pad2(localNow.getMonth() + 1)}-${pad2(localNow.getDate())}`;
+  const specialHours = (d.special_hours as SpecialHour[] | null) ?? [];
+  const todayOverride = specialHours.find((s) => s.date === todayStr) ?? null;
+  const upcomingSpecial = specialHours
+    .filter((s) => s.date >= todayStr)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 5);
+
+  const baseTodayHours = hours?.[todayKey] ?? null;
+  const todayHours = todayOverride
+    ? todayOverride.closed
+      ? null
+      : todayOverride.open && todayOverride.close
+        ? { open: todayOverride.open, close: todayOverride.close }
+        : baseTodayHours
+    : baseTodayHours;
   const isOpenNow =
     !!todayHours &&
     nowMinutes >= toMinutes(todayHours.open) &&
@@ -1098,6 +1115,27 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 </ul>
               ) : (
                 <p className="text-muted text-sm">Hours not listed.</p>
+              )}
+              {upcomingSpecial.length > 0 && (
+                <div className="border-border mt-3 border-t pt-3">
+                  <p className="text-muted mb-1.5 text-xs font-semibold uppercase tracking-wide">
+                    Special hours
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {upcomingSpecial.map((s) => (
+                      <li key={s.date} className="flex justify-between gap-2">
+                        <span className="text-muted">
+                          {new Date(`${s.date}T00:00:00`).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                          {s.note ? ` · ${s.note}` : ''}
+                        </span>
+                        <span>{s.closed ? 'Closed' : `${formatTime(s.open!)} – ${formatTime(s.close!)}`}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
 
