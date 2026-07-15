@@ -1,90 +1,121 @@
-> **Historical note (July 2026):** Stripe has since been removed entirely — Weedtip never charges shoppers (pay at store / pay the delivery partner) and B2B billing is sales-led via /admin/billing pending the PaymentCloud gateway. Stripe references below are obsolete.
+# Next session hand-off — Deals Engine (P2 ①) + Weedmaps-parity roadmap
 
-# Weedtip — Next Session Kickoff (Deployment)
+**Repo:** `AlwayzLegit/Weedtip` · **Web:** `apps/web` (Next.js 15 App Router, Turborepo/pnpm) ·
+**Prod Supabase:** `ggpnghpcclngqkyelkes` · **Live:** https://www.weedtip.com · **git user:** AlwayzLegit
 
-> Paste-ready briefing for the session where the agent has **direct Supabase + Vercel
-> MCP access** and will take Weedtip live. Pair this with the step-by-step
-> **`docs/DEPLOYMENT.md`** runbook (this file is the "who/what/why"; that file is the "how").
+`main` is fully deployed (HEAD `641bd66`). Production DB is clean of test data.
+
+> Historical note: an earlier version of this file was a one-time deployment kickoff (Stripe era).
+> Weedtip has since removed Stripe entirely — shoppers never pay through Weedtip, billing is
+> sales-led B2B. That deployment is long done; this file is now the deals-engine hand-off.
+
+---
+
+## Where things stand (shipped this session — do NOT rebuild)
+
+DB-driven brand settings (`platform_settings` + `/admin/settings`) · branded Supabase auth emails
+(Send Email Hook — **needs the dashboard toggle, see docs/MANUAL-TASKS.md**) · plan-gating with
+upgrade walls · **per-dispensary tax engine** · fulfillment v1 (order board, pause-orders toggle,
+order detail + printable receipt) · in-app + email **notifications** (+ bell dropdown) ·
+**GHL-style sub-account entitlements** (`/admin/dispensaries/[id]` Plan & features → per-feature
+Force On/Off) · **team RBAC** (owner invites manager/staff; access delegated by extending
+`owns_dispensary()`) · **analytics depth** (date range, WoW/MoM deltas, brand/category, CSV
+reports) · QR SVG+themes · review filters.
+
+Full detail is in the memory file `weedtip-project-state.md` (slices 1–11 + the E2E test gotchas).
+
+**Persistent test accounts on prod** (password `E2eTest!2026`): `alwayzlegit+e2eowner@gmail.com`
+(dispensary_owner), `+e2eshopper@gmail.com`, `+e2ebrand@gmail.com`. Delete when done:
+`delete from auth.users where email like 'alwayzlegit+e2e%@gmail.com';`
 
 ---
 
-## Your mission this session
-Provision production infra and **deploy Weedtip end-to-end**: cloud Supabase →
-migrations + storage buckets + seed → Vercel deploy of `apps/web` → (optional) Stripe
-webhook → smoke test a live URL. Execute `docs/DEPLOYMENT.md` phase by phase.
+## THIS SESSION'S JOB: ① Deals Engine + distinct Promo-Codes module
 
-## What Weedtip is
-A cannabis dispensary discovery + ordering marketplace (Weedmaps-style). Stack:
-Next.js 15 App Router (web), Supabase (Postgres + PostGIS, Auth, RLS, Storage), Turborepo
-+ pnpm monorepo, Flutter mobile (not part of this deploy). Three sides: **consumer**
-storefront, **owner** dashboard, **admin** moderation. Age-gated, RLS from day one,
-server-authoritative order pricing, Stripe Checkout with a pay-at-dispensary fallback.
+Weedtip already has a working deals system — `deals` table with kinds
+(percentage / fixed_amount / price_target / spend_threshold / bogo), auto-apply + code-based,
+targeting (menu/category/products), redemption tracking in `deal_redemptions`, and the discount
+RPCs `compute_promo_discount` / `compute_auto_order_discount` / `compute_bogo_discount` consumed by
+`create_order`. Owner UI: `app/dashboard/deals/*` (`upsertDeal`/`deleteDeal` in
+`app/dashboard/actions.ts`), gated behind the `deals` feature (Growth). Promo codes today are just a
+field on a deal.
 
-## Current state (all done & QA'd)
-- **Code is on GitHub: `github.com/AlwayzLegit/Weedtip`, branch `main`, HEAD `52aee29`.**
-  `gh` is authed as `AlwayzLegit`. Nothing to push first — deploy from `main`.
-- Fully built & tested locally: storefront, owner CRUD, admin moderation/approval,
-  Stripe checkout (fallback verified; live path needs keys), reproducible seed catalog
-  (8 dispensaries / 40 products / 6 deals), 16 migrations (0001–0016).
-- A local Supabase Docker stack is running (Studio :55525, API :55521, DB :55522) — that's
-  **local only**; production is a fresh cloud project.
-- Detailed project history + gotchas live in this session's auto-memory:
-  `~/.claude/projects/C--Users-jetni-Desktop-Weed-Tip/memory/weedtip-project-state.md`.
-  Read it for full context.
+**The gaps to close (from the pasted Weedmaps P0–P4 spec):**
 
-## Locked decisions (don't re-ask)
-| | |
-|---|---|
-| Supabase org | **Jetnine** — `yudbeimndtbvtgzotemm` |
-| Supabase region | **US East** — `us-east-1` |
-| Vercel team | **alwayzlegit's projects** — `team_di6oiEhCIT17lNXsonHt3mSc` |
-| Seed demo data in prod | **Yes** |
-| Deploy target | `apps/web` (Root Directory in Vercel) |
+1. **Redemption caps + audience (highest value).** Add to `deals`: `max_uses_per_customer int`,
+   `max_total_uses int`, `audience text check in ('all','first_time','return')`. Enforce in the
+   discount path: `compute_promo_discount` (and `create_order`'s redemption insert) must reject a
+   code once the per-customer or total cap is hit, and honor audience (first-time = the buyer has 0
+   prior non-cancelled orders at this shop; return = ≥1). Reuse `deal_redemptions` for the counts.
+   *(Careful: `create_order` has been re-declared 3× this session — copy the current body from the
+   latest migration and change only the discount/redemption block.)*
 
-Both **Supabase MCP** (Jetnine org) and **Vercel MCP** (alwayzlegit's projects) were
-confirmed connected in the prior session.
+2. **Dedicated Promo-Codes management view** — `/dashboard/promo-codes`: a `<DataTable>` of
+   code-based deals (Code / Deal name / Dates / Redemptions vs cap / Status), separate from the
+   Deals overview. Add a "Promo codes" owner-nav item (Growth-gated via `getOwnerFeature('deals')`).
 
-## Confirm with me (the user) early — these need my input/choices
-1. **Supabase project name** (suggest `weedtip-prod`) and **DB password** — generate a
-   strong one and show it to me to save (needed for CLI `db push`).
-2. **Auth email strategy**: cloud email confirmation is ON by default and needs working
-   SMTP to send. Either (a) I provide SMTP creds, or (b) temporarily disable email
-   confirmation for launch, or (c) use Supabase's default sender. Pick before sign-up testing.
-3. **First admin email** — which email to sign up + promote to `admin` (via SQL).
-4. **Custom domain?** — or just use the `*.vercel.app` URL for now.
-5. **Stripe / Mapbox keys** — have them now, or ship with graceful fallback and add later?
-   (No keys → map placeholder + pay-at-dispensary; both fully functional.)
+3. **Deal scheduling view** — a "Deals Schedule" tab showing upcoming / active / expired deals on a
+   simple timeline (pure UI over existing `start_date`/`end_date`, no RPC change). Optional
+   recurring (e.g. weekly) needs a schedule model + day-of-week check in the discount RPCs — defer
+   unless time allows.
 
-## Order of operations (see DEPLOYMENT.md for exact commands)
-1. **Supabase**: create project → apply 16 migrations (CLI `supabase db push` is easiest)
-   → **create 3 storage buckets** `avatars` / `dispensary-media` / `product-images`
-   (⚠️ migrations only create their policies, not the buckets) → run `seed.sql` →
-   set Auth Site URL + redirect URLs → collect URL/anon/service-role keys.
-2. **Vercel**: import the repo, **Root Directory = `apps/web`**, framework Next.js,
-   defaults otherwise; set env vars (table in DEPLOYMENT.md) → deploy → set
-   `NEXT_PUBLIC_SITE_URL` to the deployed domain → redeploy.
-3. **First admin**: sign up on the live site → `update public.profiles set role='admin' …`.
-4. **Stripe** (optional): add keys → create webhook `…/api/stripe/webhook`
-   (events `checkout.session.completed`, `charge.refunded`) → set `STRIPE_WEBHOOK_SECRET` → redeploy.
-5. **Smoke test**: home, /dispensaries (8), a detail menu, /products (40), admin overview,
-   owner list→pending→approve→public, cart→checkout. Webhook POST returns 503 until Stripe configured.
+4. **Deal image picker** — `<ImagePicker>`: upload (PNG/JPG ≤7MB, ~16:9, ownership-confirm checkbox)
+   OR select an existing gallery image, writing to `deals.image_url`. Mirror
+   `components/dashboard/image-upload.tsx` (public bucket → public URL into a hidden field).
 
-## Don't "fix" these (intended behavior)
-- `enforce_dispensary_admin_fields` fires on **UPDATE only** (admins set status/featured).
-  Seed sets them on INSERT, so seeding works.
-- `search_vector` is a **generated column** (auto-fills) — no post-seed reindex needed.
-- **Storage buckets aren't created by migrations** — create them (step 1).
-- **Seed images are null on purpose** → branded leaf placeholder; owners upload real
-  photos via the dashboard (Supabase Storage; `*.supabase.co` is the only next/image host).
-- Local test users (`admin/owner/shopper@weedtip.test`) are **local only** — prod starts
-  with no users; create the admin per step 3.
-- Stripe forbids cannabis on its standard product — fine for demo/test; a real launch
-  needs a cannabis-friendly processor (integration is swappable).
+**Suggested order:** (2) + (4) are self-contained UI (low risk, ship first). (1) touches the
+discount RPCs — do it carefully with a fresh migration + `execute_sql` verification like the tax
+engine did. (3) last.
 
-## Definition of done
-A live Vercel URL where: the storefront browses the seeded catalog, a user can sign up /
-sign in, an owner can list a dispensary and an admin can approve it live, and checkout
-creates an order (paid via Stripe if keys are set, else pay-at-dispensary).
+**Acceptance:** a promo code with a total cap stops applying after the cap; a first-time-only code
+rejects a returning customer; the Promo-Codes view lists codes with live redemption counts; drafts
+discard without persisting; everything stays behind the Growth gate + dark-theme tokens.
 
 ---
-**Start by reading `docs/DEPLOYMENT.md`, then confirm the 5 items above with me and begin Phase 1.**
+
+## After ① — the rest of the Weedmaps-parity roadmap (each its own session)
+
+② **Listing-editor parity** — photo gallery manager (multi-upload + drag-reorder + delete; today
+only logo/cover Replace), video-by-URL, history/audit log, rich-text description, special/holiday
+hours, reviews AI-summary, pickup-profile toggles (accept-outside-hours already exists as
+`accepting_orders`; add require-ID, mixed adult+medical cart, post-order message ≤250). Extends
+`app/dashboard/listing` + `dispensaries` columns.
+③ **Marketing-Spend report** (month filter) — extends `app/dashboard/analytics`.
+④ **Multi-location** — org container + `<LocationSwitcher>`; scope every filter/report/team
+assignment by location. Big.
+⑤ **Expand RBAC to the 4-role matrix** — Admin / Campaign-Manager / Manager / Associate(menu-only)
++ org scoping. Extends `dispensary_members.role` + `lib/owner.ts`.
+⑥ **Advertising** — Creative Library / Scheduler / Insights / Performance, mapped onto Weedtip's
+**Promote** (reserve-then-confirm, NO auto-charge/stored-card).
+⑦ **Delivery logistics** — out_for_delivery status, driver assignment, zones, live Mapbox map,
+ready-ETA, auto-print. (Deferred from fulfillment v1.)
+
+---
+
+## Invariants (never violate)
+
+- **Freemium:** Free = 0% commission forever; Growth = $99/mo. No Weedmaps-style required ad spend.
+- **Dark theme + current IA** — additive modules using existing tokens, never a restyle.
+- **Reserve-then-confirm billing** (human confirms; no stored card in-flow). Billing is sales-led;
+  self-serve "buys" create PENDING records + email sales@weedtip.com; `/admin/billing` activates.
+- **Shoppers NEVER pay through Weedtip** (pickup = at store, delivery = driver; 100% B2B revenue).
+- **Invite-only** team onboarding; **hyphenated slugs** (underscores 404); every data view needs
+  skeleton / empty / error states + a "Showing X–Y of N" pager.
+- The spec's shared primitives (`<DataTable>`, `<StatusPill>`, `<FilterBar>`, `<Modal>`,
+  `<SegmentedToggle>`, `<CharCountedField>`, `<Stepper>`, `<ImagePicker>`, `<EmptyState>`,
+  `<LocationSwitcher>`) — build once, reuse. Extract from existing ad-hoc tables/badges as you go.
+
+## Working conventions
+
+- Supabase migrations: apply to prod via the MCP `apply_migration` (user pre-authorized additive
+  migrations); keep the repo migration file identical. Update `packages/supabase/src/types/
+  database.types.ts` by hand (Row/Insert/Update + any new RPC in the Functions map).
+- Ship in verified slices: `pnpm --filter web exec tsc --noEmit` + `eslint` + `pnpm --filter web
+  build`, then commit on a `claude/<slice>` branch, merge `--no-ff` to main, push (Vercel
+  auto-deploys). The primary working dir is `Desktop/Weed Tip` but the LIVE repo is
+  `Desktop/Weedtip-fresh` — always `cd` there.
+- Testing as users: the preview pane is ~961px (below the `lg` 1024 breakpoint) and headless clicks
+  often don't fire React onClick / Next server-action submits — verify write-flows via the RPCs /
+  `execute_sql` with `set_config('request.jwt.claims', …)` instead (see memory for the pattern).
+
+Outstanding manual task for the user: enable the auth-email Send Email Hook (docs/MANUAL-TASKS.md).
