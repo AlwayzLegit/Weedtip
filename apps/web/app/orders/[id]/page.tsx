@@ -28,7 +28,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const supabase = await createClient();
   const { data: order } = await supabase
     .from('orders')
-    .select('*, dispensary:dispensaries(name,slug,address,city,state)')
+    .select('*, dispensary:dispensaries(name,slug,address,city,state,post_order_message)')
     .eq('id', id)
     .maybeSingle();
 
@@ -40,6 +40,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     address: string;
     city: string;
     state: string;
+    post_order_message: string | null;
   } | null;
   const items = (order.items as OrderItem[]) ?? [];
   const canCancel =
@@ -82,6 +83,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </Link>{' '}
             · {dispensary.address}, {dispensary.city}, {dispensary.state}
           </p>
+        )}
+
+        {dispensary?.post_order_message && (
+          <div className="border-primary/30 bg-primary-muted mt-4 rounded-lg border p-3 text-sm">
+            <p className="text-primary font-medium">A note from {dispensary.name}</p>
+            <p className="text-foreground/90 mt-1 whitespace-pre-line">{dispensary.post_order_message}</p>
+          </div>
         )}
 
         {order.order_type === 'delivery' && order.delivery_address ? (
