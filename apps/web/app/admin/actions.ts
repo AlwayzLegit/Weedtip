@@ -9,6 +9,7 @@ import {
   type DispensaryStatus,
 } from '@weedtip/shared';
 import { brandClaimDecisionEmail, claimDecisionEmail, sendEmail } from '@/lib/email';
+import { notifyUser } from '@/lib/notify';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { slugify } from '@/lib/utils';
@@ -28,10 +29,26 @@ export async function setDispensaryStatus(id: string, status: string): Promise<v
   if (!DISPENSARY_STATUSES.includes(status as DispensaryStatus)) return;
   const supabase = await createClient();
   // RLS + the enforce_dispensary_admin_fields trigger permit this only for admins.
-  await supabase
+  const { data: shop } = await supabase
     .from('dispensaries')
     .update({ status: status as DispensaryStatus })
-    .eq('id', id);
+    .eq('id', id)
+    .select('name, slug, owner_id')
+    .maybeSingle();
+
+  // Let a claimed shop's owner know when their listing goes live or is suspended.
+  if (shop?.owner_id && (status === 'active' || status === 'suspended')) {
+    await notifyUser(shop.owner_id, {
+      type: 'listing_status',
+      title:
+        status === 'active' ? `${shop.name} is now live` : `${shop.name} was suspended`,
+      body:
+        status === 'active'
+          ? 'Your listing was approved and is now visible on Weedtip.'
+          : 'Your listing was suspended. Contact support if you have questions.',
+      href: status === 'active' ? `/dispensary/${shop.slug}` : '/dashboard',
+    });
+  }
   revalidatePath('/admin/dispensaries');
   revalidatePath('/admin');
 }
@@ -295,19 +312,32 @@ export async function setDispensaryPlan(_prev: FormState, fd: FormData): Promise
 
 // ─── Ownership claims ────────────────────────────────────────────────────────
 
-/** Email the claimant about the decision — best-effort, never blocks the action. */
+/** Email + in-app notify the claimant about the decision — best-effort. */
 async function notifyClaimDecision(requestId: string, approved: boolean): Promise<void> {
   const supabase = await createClient();
   const { data: req } = await supabase
     .from('ownership_requests')
-    .select('business_email, dispensary:dispensaries(name)')
+    .select('business_email, user_id, dispensary:dispensaries(name, slug)')
     .eq('id', requestId)
     .maybeSingle();
-  const shopName = (req?.dispensary as { name: string } | null)?.name;
-  if (!req?.business_email || !shopName) return;
+  const shop = req?.dispensary as { name: string; slug: string } | null;
+  if (!shop) return;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-  const m = claimDecisionEmail(shopName, approved, siteUrl);
-  await sendEmail({ to: req.business_email, subject: m.subject, html: m.html });
+  if (req?.business_email) {
+    const m = claimDecisionEmail(shop.name, approved, siteUrl);
+    await sendEmail({ to: req.business_email, subject: m.subject, html: m.html });
+  }
+  if (req?.user_id) {
+    await notifyUser(req.user_id, {
+      type: 'claim_decision',
+      title: approved ? `You now manage ${shop.name}` : `Claim update — ${shop.name}`,
+      body: approved
+        ? 'Your ownership claim was approved. Open your dashboard to manage the listing.'
+        : 'Your ownership claim was not approved. Reply to our email if you think this is a mistake.',
+      href: approved ? '/dashboard' : `/dispensary/${shop.slug}`,
+      data: { request_id: requestId, dispensary_slug: shop.slug },
+    });
+  }
 }
 
 export async function approveOwnershipRequest(id: string): Promise<void> {
@@ -326,19 +356,32 @@ export async function rejectOwnershipRequest(id: string): Promise<void> {
   revalidatePath('/admin/claims');
 }
 
-/** Email the brand claimant the approve/reject decision (parity with listings). */
+/** Email + in-app notify the brand claimant the decision (parity with listings). */
 async function notifyBrandClaimDecision(claimId: string, approved: boolean): Promise<void> {
   const supabase = await createClient();
   const { data: claim } = await supabase
     .from('brand_claims')
-    .select('business_email, brand:brands(name)')
+    .select('business_email, user_id, brand:brands(name, slug)')
     .eq('id', claimId)
     .maybeSingle();
-  const brandName = (claim?.brand as { name: string } | null)?.name;
-  if (!claim?.business_email || !brandName) return;
+  const brand = claim?.brand as { name: string; slug: string } | null;
+  if (!brand) return;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-  const m = brandClaimDecisionEmail(brandName, approved, siteUrl);
-  await sendEmail({ to: claim.business_email, subject: m.subject, html: m.html });
+  if (claim?.business_email) {
+    const m = brandClaimDecisionEmail(brand.name, approved, siteUrl);
+    await sendEmail({ to: claim.business_email, subject: m.subject, html: m.html });
+  }
+  if (claim?.user_id) {
+    await notifyUser(claim.user_id, {
+      type: 'brand_claim_decision',
+      title: approved ? `You now manage ${brand.name}` : `Brand claim update — ${brand.name}`,
+      body: approved
+        ? 'Your brand claim was approved. Set up your brand in Studio.'
+        : 'Your brand claim was not approved.',
+      href: approved ? '/studio' : `/brand/${brand.slug}`,
+      data: { claim_id: claimId, brand_slug: brand.slug },
+    });
+  }
 }
 
 export async function approveBrandClaim(id: string): Promise<void> {
@@ -384,6 +427,12 @@ export async function approveBrand(id: string): Promise<void> {
     } catch (e) {
       console.warn('[admin] brand-approve owner email failed:', e);
     }
+    await notifyUser(brand.owner_id, {
+      type: 'brand_approved',
+      title: `${brand.name} is live`,
+      body: 'Your brand was approved and is now public. Set it up in Brand Studio.',
+      href: '/studio',
+    });
   }
 
   revalidatePath('/admin/brands');
@@ -394,7 +443,21 @@ export async function approveBrand(id: string): Promise<void> {
 /** Reject a self-created (pending) brand. */
 export async function rejectBrand(id: string): Promise<void> {
   const supabase = await createClient();
-  await supabase.from('brands').update({ status: 'rejected' }).eq('id', id).eq('status', 'pending');
+  const { data: brand } = await supabase
+    .from('brands')
+    .update({ status: 'rejected' })
+    .eq('id', id)
+    .eq('status', 'pending')
+    .select('name, owner_id')
+    .maybeSingle();
+  if (brand?.owner_id) {
+    await notifyUser(brand.owner_id, {
+      type: 'brand_rejected',
+      title: `Update on ${brand.name}`,
+      body: 'Your brand submission was not approved. Reply to our team if you have questions.',
+      href: '/for-brands',
+    });
+  }
   revalidatePath('/admin/brands');
 }
 

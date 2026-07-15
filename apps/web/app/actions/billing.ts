@@ -8,6 +8,7 @@ import {
   SALES_INBOX,
   sendEmail,
 } from '@/lib/email';
+import { notifyAdmins } from '@/lib/notify';
 import { requireOwnerDispensary } from '@/lib/owner';
 import {
   placementPriceCents,
@@ -51,6 +52,13 @@ async function sendBillingEmails(
     const ack = billingRequestAckEmail(kind);
     await sendEmail({ to: requesterEmail, subject: ack.subject, html: ack.html });
   }
+  // In-app heads-up to admins for every sales-led billing request.
+  await notifyAdmins({
+    type: 'billing_request',
+    title: `Billing request — ${kind}`,
+    body: `${requester} requested ${kind}.`,
+    href: '/admin/billing',
+  });
 }
 
 // ─── Plans ────────────────────────────────────────────────────────────────────

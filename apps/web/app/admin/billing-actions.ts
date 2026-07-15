@@ -2,8 +2,26 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/admin';
+import { notifyUser } from '@/lib/notify';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+
+/** Notify a dispensary's owner about a billing decision. */
+async function notifyDispensaryOwner(
+  dispensaryId: string,
+  title: string,
+  body: string,
+): Promise<void> {
+  const supabase = await createClient();
+  const { data: shop } = await supabase
+    .from('dispensaries')
+    .select('owner_id')
+    .eq('id', dispensaryId)
+    .maybeSingle();
+  if (shop?.owner_id) {
+    await notifyUser(shop.owner_id, { type: 'billing_update', title, body, href: '/dashboard/promote' });
+  }
+}
 
 /**
  * Billing console actions: activate or reject the PENDING records the
@@ -64,6 +82,11 @@ export async function activatePlanRequest(dispensaryId: string): Promise<void> {
       throw new Error(`Plan activated but POS grant failed: ${posErr.message} — grant it manually.`);
     }
   }
+  await notifyDispensaryOwner(
+    dispensaryId,
+    'Your Growth plan is active',
+    'Your plan was activated — marketing tools, POS, and advanced analytics are unlocked.',
+  );
   refresh();
 }
 
@@ -115,6 +138,13 @@ export async function activatePlacementRequest(placementId: string): Promise<voi
   if (!updated?.length) throw new Error('Request was already handled — refresh and re-check.');
   if (placement.type === 'featured' && placement.dispensary_id) {
     await supabase.rpc('sync_featured_flags', { p_dispensary_id: placement.dispensary_id });
+  }
+  if (placement.dispensary_id) {
+    await notifyDispensaryOwner(
+      placement.dispensary_id,
+      'Your promotion is live',
+      `Your ${placement.type} placement is now running.`,
+    );
   }
   refresh();
 }

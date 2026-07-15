@@ -54,7 +54,19 @@ export default async function NotificationsPage() {
       ) : (
         <div className="space-y-3">
           {list.map((n) => {
-            const data = (n.data ?? {}) as { order_id?: string; brand_slug?: string };
+            const data = (n.data ?? {}) as {
+              href?: string;
+              order_id?: string;
+              brand_slug?: string;
+            };
+            // Prefer an explicit deep link; fall back to the legacy id shapes.
+            const href =
+              data.href ??
+              (data.order_id
+                ? `/orders/${data.order_id}`
+                : data.brand_slug
+                  ? `/brand/${data.brand_slug}`
+                  : null);
             return (
               <div
                 key={n.id}
@@ -70,20 +82,12 @@ export default async function NotificationsPage() {
                     <p className="text-muted mt-1 text-xs">
                       {new Date(n.created_at).toLocaleString()}
                     </p>
-                    {data.order_id && (
+                    {href && (
                       <Link
-                        href={`/orders/${data.order_id}`}
+                        href={href}
                         className="text-primary mt-2 inline-block text-sm hover:underline"
                       >
-                        View order
-                      </Link>
-                    )}
-                    {data.brand_slug && (
-                      <Link
-                        href={`/brand/${data.brand_slug}`}
-                        className="text-primary mt-2 inline-block text-sm hover:underline"
-                      >
-                        View brand
+                        View →
                       </Link>
                     )}
                   </div>

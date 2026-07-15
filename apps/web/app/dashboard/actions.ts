@@ -12,6 +12,7 @@ import {
 } from '@weedtip/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@weedtip/supabase/types';
+import { notifyAdmins } from '@/lib/notify';
 import { canPublishMarketing, MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
@@ -131,6 +132,16 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
     return isUniqueViolation(error)
       ? formError('That URL slug is already taken — choose another.')
       : formError(error.message);
+  }
+
+  // A brand-new listing lands pending — flag it for admin review.
+  if (!existingId) {
+    await notifyAdmins({
+      type: 'listing_pending',
+      title: 'New listing awaiting approval',
+      body: `${payload.name} was submitted and needs review.`,
+      href: '/admin/dispensaries?status=pending',
+    });
   }
 
   revalidatePath('/dashboard');
