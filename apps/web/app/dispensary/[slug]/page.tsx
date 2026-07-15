@@ -39,6 +39,7 @@ import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, dealBadge, formatTime } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
+import { renderMarkdown, stripMarkdown } from '@/lib/markdown';
 import { generatedAbout } from '@/lib/shop-copy';
 import { videoEmbed } from '@/lib/video';
 import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
@@ -62,7 +63,7 @@ export async function generateMetadata({
   const place = data.city ? `${data.city}, ${data.state}` : `${data.state} (delivery)`;
   const title = `${data.name} — ${place}`;
   const description =
-    data.description?.slice(0, 160) ??
+    (data.description ? stripMarkdown(data.description).slice(0, 160) : undefined) ??
     `${data.name}${data.city ? ` in ${data.city}, ${data.state}` : ` — delivery in ${data.state}`}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
   const canonical = `/dispensary/${slug}`;
   return {
@@ -360,7 +361,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     '@id': `${SITE_URL}/dispensary/${d.slug}`,
     name: d.name,
     url: `${SITE_URL}/dispensary/${d.slug}`,
-    ...(d.description ? { description: d.description } : {}),
+    ...(d.description ? { description: stripMarkdown(d.description) } : {}),
     ...(d.cover_image_url
       ? {
           image: d.cover_image_url.startsWith('http')
@@ -738,7 +739,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           <div className="min-w-0 space-y-8 lg:col-span-2">
             <section>
               <h2 className="mb-2 text-lg font-semibold">About</h2>
-              <p className="text-muted">{d.description ?? generatedAbout(d, hours)}</p>
+              <div className="text-muted text-sm leading-relaxed">
+                {d.description ? renderMarkdown(d.description) : <p>{generatedAbout(d, hours)}</p>}
+              </div>
             </section>
 
             {d.gallery_urls && d.gallery_urls.length > 0 && (
