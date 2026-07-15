@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import { TaxManager } from '@/components/dashboard/tax-manager';
 import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
 import { requireOwnerDispensary } from '@/lib/owner';
-import { getOwnerPlan } from '@/lib/plan';
+import { getOwnerFeature } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Taxes' };
 
 export default async function DashboardTaxes() {
   const { dispensary } = await requireOwnerDispensary();
-  const { isPaid } = await getOwnerPlan();
+  const isPaid = await getOwnerFeature('taxes');
 
   return (
     <div className="max-w-3xl space-y-4">

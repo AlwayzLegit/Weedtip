@@ -3,7 +3,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AdminDispensaryForm } from '@/components/admin/admin-dispensary-form';
 import { AdminDangerZone } from '@/components/admin/admin-danger-zone';
+import { AdminFeaturePanel } from '@/components/admin/admin-feature-panel';
 import { Badge } from '@/components/ui/badge';
+import { getFeatureStates } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Edit dispensary · Admin' };
@@ -46,6 +48,18 @@ export default async function AdminDispensaryEditPage({
   for (const row of [...(byLicense.data ?? []), ...(byName.data ?? [])]) dupMap.set(row.id, row);
   const duplicates = [...dupMap.values()];
 
+  // Sub-account: resolved feature states + current plan for the console.
+  const [featureStates, { data: sub }] = await Promise.all([
+    getFeatureStates(d.id),
+    supabase
+      .from('dispensary_subscriptions')
+      .select('status, plan:plans(name, price_cents)')
+      .eq('dispensary_id', d.id)
+      .maybeSingle(),
+  ]);
+  const plan = sub?.plan as { name: string; price_cents: number } | null;
+  const planName = plan && sub?.status === 'active' && plan.price_cents > 0 ? plan.name : 'Free';
+
   return (
     <div className="space-y-8">
       <div>
@@ -64,6 +78,14 @@ export default async function AdminDispensaryEditPage({
           {` · ${orderCount ?? 0} orders`}
         </p>
       </div>
+
+      <AdminFeaturePanel
+        dispensaryId={d.id}
+        features={featureStates}
+        planName={planName}
+        planStatus={sub?.status ?? null}
+        posAddon={d.pos_addon}
+      />
 
       <AdminDispensaryForm dispensary={d} />
 

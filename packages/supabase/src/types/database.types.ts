@@ -986,6 +986,35 @@ export type Database = {
           },
         ]
       }
+      dispensary_feature_overrides: {
+        Row: {
+          dispensary_id: string
+          enabled: boolean
+          feature_key: string
+          updated_at: string
+        }
+        Insert: {
+          dispensary_id: string
+          enabled: boolean
+          feature_key: string
+          updated_at?: string
+        }
+        Update: {
+          dispensary_id?: string
+          enabled?: boolean
+          feature_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispensary_feature_overrides_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispensary_taxes: {
         Row: {
           apply_all_categories: boolean

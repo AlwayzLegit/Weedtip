@@ -5,7 +5,8 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { type FormState, bool, formError, fromZodError, numOpt, str } from '@/lib/forms';
 import { requireOwnerDispensary } from '@/lib/owner';
-import { canPublishMarketing, MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
+import { canUseFeature } from '@/lib/features';
+import { MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 
 const MAX_PROMOS = 10;
@@ -22,7 +23,7 @@ const schema = z.object({
 
 export async function upsertPromo(_prev: FormState, fd: FormData): Promise<FormState> {
   const { dispensary } = await requireOwnerDispensary();
-  if (!(await canPublishMarketing(dispensary.id))) return formError(MARKETING_UPGRADE_MESSAGE);
+  if (!(await canUseFeature(dispensary.id, 'promos'))) return formError(MARKETING_UPGRADE_MESSAGE);
   const parsed = schema.safeParse({
     title: str(fd, 'title') ?? '',
     description: str(fd, 'description') ?? null,

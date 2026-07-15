@@ -12,8 +12,9 @@ import {
 } from '@weedtip/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@weedtip/supabase/types';
+import { canUseFeature } from '@/lib/features';
 import { notifyAdmins } from '@/lib/notify';
-import { canPublishMarketing, MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
+import { MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import {
@@ -238,8 +239,8 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
   const dispensaryId = await ownerDispensaryId(supabase, userId);
   if (!dispensaryId) return formError('Create your dispensary listing first.');
 
-  // Marketing gate: deals require an active Growth plan (admins bypass).
-  if (!(await canPublishMarketing(dispensaryId))) {
+  // Feature gate: deals need the Growth plan or an admin override (admins bypass).
+  if (!(await canUseFeature(dispensaryId, 'deals'))) {
     return formError(MARKETING_UPGRADE_MESSAGE);
   }
 
