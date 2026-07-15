@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   ORDER_STATUSES,
@@ -15,6 +16,7 @@ import type { Database } from '@weedtip/supabase/types';
 import { isAiEnabled, summarizeReviews } from '@/lib/ai';
 import { canUseFeature } from '@/lib/features';
 import { notifyAdmins } from '@/lib/notify';
+import { ACTIVE_DISPENSARY_COOKIE } from '@/lib/owner';
 import { MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
@@ -42,16 +44,59 @@ async function authedClient(): Promise<{ supabase: Client; userId: string } | nu
   return { supabase, userId: user.id };
 }
 
-/** The acting owner's primary dispensary id, or null. */
+/**
+ * The dispensary the owner is actively managing — the cookie-selected one among
+ * those they own, else their first. Owners can hold more than one listing, so
+ * writes must target the active selection, not just "the first owned".
+ */
 async function ownerDispensaryId(supabase: Client, userId: string): Promise<string | null> {
   const { data } = await supabase
     .from('dispensaries')
     .select('id')
     .eq('owner_id', userId)
-    .order('created_at')
-    .limit(1)
+    .order('created_at');
+  const owned = data ?? [];
+  if (owned.length === 0) return null;
+  const cookieId = (await cookies()).get(ACTIVE_DISPENSARY_COOKIE)?.value;
+  return owned.find((d) => d.id === cookieId)?.id ?? owned[0]!.id;
+}
+
+/**
+ * Switch which owned/managed dispensary the dashboard operates on (multi-listing
+ * owners). Validates the user actually manages it, then stores the choice in a
+ * cookie that getOwnerContext / ownerDispensaryId read.
+ */
+export async function selectDispensary(dispensaryId: string): Promise<void> {
+  const auth = await authedClient();
+  if (!auth) return;
+  const { supabase, userId } = auth;
+
+  const { data: owned } = await supabase
+    .from('dispensaries')
+    .select('id')
+    .eq('id', dispensaryId)
+    .eq('owner_id', userId)
     .maybeSingle();
-  return data?.id ?? null;
+  let allowed = !!owned;
+  if (!allowed) {
+    const { data: member } = await supabase
+      .from('dispensary_members')
+      .select('dispensary_id')
+      .eq('dispensary_id', dispensaryId)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+    allowed = !!member;
+  }
+  if (!allowed) return;
+
+  (await cookies()).set(ACTIVE_DISPENSARY_COOKIE, dispensaryId, {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  revalidatePath('/dashboard', 'layout');
 }
 
 /** "SRID=4326;POINT(lng lat)" — EWKT accepted by the geography column. */
