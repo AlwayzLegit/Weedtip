@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { type OrderItem, type OrderStatus } from '@weedtip/shared';
 import type { Tables } from '@weedtip/supabase/types';
+import { AcceptingOrdersToggle } from '@/components/dashboard/accepting-orders-toggle';
 import { OrderStatusControl } from '@/components/dashboard/order-status-control';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -75,8 +77,14 @@ function OrderCard({ o }: { o: Order }) {
           })()}
         </p>
       ) : null}
-      <div className="mt-3">
+      <div className="mt-3 flex items-center justify-between gap-2">
         <OrderStatusControl orderId={o.id} status={o.status} />
+        <Link
+          href={`/dashboard/orders/${o.id}`}
+          className="text-primary shrink-0 text-xs font-medium hover:underline"
+        >
+          Details →
+        </Link>
       </div>
     </div>
   );
@@ -101,16 +109,25 @@ export default async function DashboardOrders() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Orders</h1>
-        {all.length > 0 && (
-          <a href="/dashboard/orders/export" download>
-            <Button size="sm" variant="outline">
-              <Download className="h-4 w-4" /> Export CSV
-            </Button>
-          </a>
-        )}
+        <div className="flex items-center gap-3">
+          <AcceptingOrdersToggle accepting={dispensary.accepting_orders} />
+          {all.length > 0 && (
+            <a href="/dashboard/orders/export" download>
+              <Button size="sm" variant="outline">
+                <Download className="h-4 w-4" /> Export CSV
+              </Button>
+            </a>
+          )}
+        </div>
       </div>
+
+      {!dispensary.accepting_orders && (
+        <div className="rounded-card border-amber-500/40 bg-amber-500/10 border p-3 text-sm text-amber-700 dark:text-amber-400">
+          Online ordering is paused — shoppers can’t place new orders until you resume.
+        </div>
+      )}
 
       {all.length === 0 ? (
         <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
