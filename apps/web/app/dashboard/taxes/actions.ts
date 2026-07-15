@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { formError, formSuccess, fromZodError, str, type FormState } from '@/lib/forms';
+import { canUseFeature } from '@/lib/features';
 import { requireOwnerDispensary } from '@/lib/owner';
-import { canPublishMarketing } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 
 const schema = z.object({
@@ -22,7 +22,7 @@ const schema = z.object({
 /** Create or update a tax row for the owner's dispensary. Growth-gated. */
 export async function upsertTax(_prev: FormState, fd: FormData): Promise<FormState> {
   const { dispensary } = await requireOwnerDispensary();
-  if (!(await canPublishMarketing(dispensary.id))) {
+  if (!(await canUseFeature(dispensary.id, 'taxes'))) {
     return formError('Tax configuration is part of the Growth plan. Upgrade to set up taxes.');
   }
 

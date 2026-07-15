@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { type FormState, formError, formSuccess, str } from '@/lib/forms';
-import { canPublishMarketing, MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
+import { canUseFeature } from '@/lib/features';
+import { MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 
 /** Owner posts an update; the RPC fans it out to followers as notifications. */
@@ -12,7 +13,7 @@ export async function postDispensaryUpdate(_prev: FormState, fd: FormData): Prom
   if (!dispensaryId) return formError('Missing dispensary.');
   if (!title) return formError('An update needs a title.');
   // Follower broadcasts are a Growth marketing feature.
-  if (!(await canPublishMarketing(dispensaryId))) return formError(MARKETING_UPGRADE_MESSAGE);
+  if (!(await canUseFeature(dispensaryId, 'updates'))) return formError(MARKETING_UPGRADE_MESSAGE);
 
   const supabase = await createClient();
   const { error } = await supabase.rpc('post_dispensary_update', {

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
 import { requireOwnerDispensary } from '@/lib/owner';
-import { getOwnerPlan } from '@/lib/plan';
+import { getOwnerFeature } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Deals' };
@@ -50,7 +50,7 @@ function mechanism(d: Tables<'deals'>): { label: string; tone: 'primary' | 'mute
 
 export default async function DashboardDeals() {
   const { dispensary } = await requireOwnerDispensary();
-  const { isPaid } = await getOwnerPlan();
+  const isPaid = await getOwnerFeature('deals');
   const supabase = await createClient();
   const [{ data: deals }, { data: redemptions }] = await Promise.all([
     supabase.from('deals').select('*').eq('dispensary_id', dispensary.id).order('end_date', {

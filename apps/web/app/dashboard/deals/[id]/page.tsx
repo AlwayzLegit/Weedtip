@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { DealForm } from '@/components/dashboard/deal-form';
 import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
 import { requireOwnerDispensary } from '@/lib/owner';
-import { getOwnerPlan } from '@/lib/plan';
+import { getOwnerFeature } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Edit deal' };
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: 'Edit deal' };
 export default async function EditDealPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { dispensary } = await requireOwnerDispensary();
-  const { isPaid } = await getOwnerPlan();
+  const isPaid = await getOwnerFeature('deals');
   const supabase = await createClient();
 
   const [{ data: deal }, { data: categories }, { data: products }] = await Promise.all([

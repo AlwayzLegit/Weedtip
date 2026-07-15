@@ -6,7 +6,7 @@ import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { requireOwnerDispensary } from '@/lib/owner';
-import { getOwnerPlan } from '@/lib/plan';
+import { getOwnerFeature } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'In-store promos' };
@@ -18,7 +18,7 @@ function isLive(p: { is_active: boolean; start_date: string | null; end_date: st
 
 export default async function DashboardPromos() {
   const { dispensary } = await requireOwnerDispensary();
-  const { isPaid } = await getOwnerPlan();
+  const isPaid = await getOwnerFeature('promos');
   const supabase = await createClient();
   const { data: promos } = await supabase
     .from('dispensary_promos')
