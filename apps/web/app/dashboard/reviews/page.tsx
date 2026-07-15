@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
 import { RatingStars } from '@/components/rating-stars';
 import { DisputeForm } from '@/components/dashboard/dispute-form';
@@ -9,10 +10,15 @@ import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Reviews' };
 
-export default async function DashboardReviews() {
+export default async function DashboardReviews({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string; rating?: string }>;
+}) {
   const { dispensary } = await requireOwnerDispensary();
+  const sp = await searchParams;
   const supabase = await createClient();
-  const { data: reviews } = await supabase
+  const { data: allReviews } = await supabase
     .from('reviews')
     .select(
       'id,rating,quality,service,atmosphere,verified,body,created_at,author_name,owner_reply,owner_reply_at,dispute_reason,disputed_at',
@@ -20,9 +26,37 @@ export default async function DashboardReviews() {
     .eq('dispensary_id', dispensary.id)
     .order('created_at', { ascending: false });
 
-  const total = reviews?.length ?? 0;
-  const avg = total ? (reviews ?? []).reduce((s, r) => s + r.rating, 0) / total : 0;
-  const replied = (reviews ?? []).filter((r) => r.owner_reply).length;
+  const everything = allReviews ?? [];
+  const total = everything.length;
+  const avg = total ? everything.reduce((s, r) => s + r.rating, 0) / total : 0;
+  const replied = everything.filter((r) => r.owner_reply).length;
+  const needsResponse = total - replied;
+
+  // Filters (needs-response / replied + by star rating).
+  const filter = sp.filter === 'needs_response' || sp.filter === 'replied' ? sp.filter : 'all';
+  const ratingFilter = ['1', '2', '3', '4', '5'].includes(sp.rating ?? '') ? Number(sp.rating) : null;
+  const reviews = everything.filter((r) => {
+    if (filter === 'needs_response' && r.owner_reply) return false;
+    if (filter === 'replied' && !r.owner_reply) return false;
+    if (ratingFilter !== null && Math.round(r.rating) !== ratingFilter) return false;
+    return true;
+  });
+
+  const qs = (next: { filter?: string; rating?: string }) => {
+    const params = new URLSearchParams();
+    const f = next.filter ?? filter;
+    const rt = next.rating ?? (ratingFilter?.toString() ?? '');
+    if (f && f !== 'all') params.set('filter', f);
+    if (rt) params.set('rating', rt);
+    const s = params.toString();
+    return s ? `/dashboard/reviews?${s}` : '/dashboard/reviews';
+  };
+
+  const FILTERS = [
+    { key: 'all', label: `All (${total})` },
+    { key: 'needs_response', label: `Needs response (${needsResponse})` },
+    { key: 'replied', label: `Replied (${replied})` },
+  ];
 
   return (
     <div className="space-y-4">
@@ -43,9 +77,46 @@ export default async function DashboardReviews() {
         your listing.
       </p>
 
-      {!reviews || reviews.length === 0 ? (
+      {total > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="border-border bg-surface flex overflow-hidden rounded-lg border text-sm">
+            {FILTERS.map((f) => (
+              <Link
+                key={f.key}
+                href={qs({ filter: f.key })}
+                className={`px-3 py-1.5 font-medium ${filter === f.key ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+              >
+                {f.label}
+              </Link>
+            ))}
+          </div>
+          <div className="border-border bg-surface flex overflow-hidden rounded-lg border text-sm">
+            <Link
+              href={qs({ rating: '' })}
+              className={`px-3 py-1.5 font-medium ${ratingFilter === null ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+            >
+              All ★
+            </Link>
+            {[5, 4, 3, 2, 1].map((n) => (
+              <Link
+                key={n}
+                href={qs({ rating: String(n) })}
+                className={`px-3 py-1.5 font-medium ${ratingFilter === n ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+              >
+                {n}★
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {total === 0 ? (
         <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
           No reviews yet.
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
+          No reviews match this filter.
         </div>
       ) : (
         <div className="space-y-4">
