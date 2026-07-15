@@ -12,6 +12,7 @@ import {
 } from '@weedtip/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@weedtip/supabase/types';
+import { isAiEnabled, summarizeReviews } from '@/lib/ai';
 import { canUseFeature } from '@/lib/features';
 import { notifyAdmins } from '@/lib/notify';
 import { MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
@@ -364,6 +365,51 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
 
   revalidatePath('/dashboard/deals');
   redirect('/dashboard/deals');
+}
+
+/**
+ * Generate + cache an AI summary of this shop's reviews (owner-triggered, not
+ * per page view). No-ops when ANTHROPIC_API_KEY is unset (isAiEnabled=false).
+ */
+export async function generateReviewsSummary(_prev: FormState, _fd: FormData): Promise<FormState> {
+  if (!isAiEnabled) return formError('AI summaries are not enabled on this site.');
+  const auth = await authedClient();
+  if (!auth) return formError('You must be signed in.');
+  const { supabase, userId } = auth;
+
+  const dispensaryId = await ownerDispensaryId(supabase, userId);
+  if (!dispensaryId) return formError('Create your dispensary listing first.');
+
+  const { data: reviews } = await supabase
+    .from('reviews')
+    .select('rating, body')
+    .eq('dispensary_id', dispensaryId)
+    .not('body', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(40);
+
+  const usable = (reviews ?? []).filter(
+    (r): r is { rating: number; body: string } => !!r.body && r.body.trim().length > 0,
+  );
+  if (usable.length < 3) {
+    return formError('You need at least 3 written reviews to generate a summary.');
+  }
+
+  const summary = await summarizeReviews(usable);
+  if (!summary) return formError('Could not generate a summary right now. Please try again.');
+
+  const { error } = await supabase
+    .from('dispensaries')
+    .update({
+      reviews_summary: summary,
+      reviews_summary_at: new Date().toISOString(),
+      reviews_summary_count: usable.length,
+    })
+    .eq('id', dispensaryId);
+  if (error) return formError(error.message);
+
+  revalidatePath('/dashboard/reviews');
+  return formSuccess('Review summary updated.');
 }
 
 export async function deleteDeal(id: string): Promise<void> {

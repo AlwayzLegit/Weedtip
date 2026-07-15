@@ -11,6 +11,7 @@ import {
   Navigation,
   PenLine,
   Phone,
+  Sparkles,
   Store,
   Truck,
 } from 'lucide-react';
@@ -932,6 +933,17 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             {/* Reviews */}
             <section id="reviews" className="scroll-mt-32">
               <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
+              {d.reviews_summary && (
+                <div className="border-primary/25 bg-primary-muted/50 mb-4 rounded-lg border p-4">
+                  <p className="text-primary flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
+                    <Sparkles className="h-3.5 w-3.5" /> AI summary
+                  </p>
+                  <p className="text-foreground/90 mt-1.5 text-sm">{d.reviews_summary}</p>
+                  <p className="text-muted mt-1 text-xs">
+                    Generated from {d.reviews_summary_count ?? 0} customer reviews.
+                  </p>
+                </div>
+              )}
               {reviews && reviews.length > 0 && (
                 <ReviewHistogram
                   counts={reviews.reduce<Record<number, number>>((acc, r) => {
