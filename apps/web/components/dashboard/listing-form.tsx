@@ -40,12 +40,17 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
         </Field>
       </section>
 
-      <Field label="Description" htmlFor="description" error={fe.description}>
+      <Field
+        label="Description"
+        htmlFor="description"
+        error={fe.description}
+        hint="Formatting supported: **bold**, *italic*, - bullet lists, and [links](https://…)."
+      >
         <Textarea
           id="description"
           name="description"
           defaultValue={d?.description ?? ''}
-          rows={3}
+          rows={5}
         />
       </Field>
 
