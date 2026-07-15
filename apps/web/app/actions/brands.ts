@@ -9,6 +9,7 @@ import {
   sendEmail,
 } from '@/lib/email';
 import { type FormState, formError, formSuccess, fromZodError, str } from '@/lib/forms';
+import { notifyAdmins } from '@/lib/notify';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 
@@ -128,6 +129,12 @@ export async function createBrand(_prev: FormState, fd: FormData): Promise<FormS
   // Heads-up to the team so the brand can be reviewed and activated.
   const m = brandCreatedEmail(parsed.data.name, user.email ?? 'A user', siteUrl());
   await sendEmail({ to: SALES_INBOX, subject: m.subject, html: m.html });
+  await notifyAdmins({
+    type: 'brand_pending',
+    title: 'New brand awaiting review',
+    body: `${parsed.data.name} was submitted and needs approval.`,
+    href: '/admin/brands',
+  });
 
   revalidatePath('/studio');
   revalidatePath('/brands');
