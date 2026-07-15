@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/legal/legal-page';
+import { getPlatformSettings } from '@/lib/settings';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/privacy' },
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const s = await getPlatformSettings();
   return (
     <LegalPage title="Privacy Policy" updated="June 2, 2026">
       <p>
@@ -77,7 +79,7 @@ export default function PrivacyPage() {
       <h2>Contact</h2>
       <p>
         Privacy questions or requests? Contact us at{' '}
-        <a href="mailto:privacy@weedtip.com">privacy@weedtip.com</a>.
+        <a href={`mailto:${s.privacyEmail}`}>{s.privacyEmail}</a>.
       </p>
     </LegalPage>
   );

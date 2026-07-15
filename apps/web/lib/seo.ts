@@ -48,16 +48,45 @@ export function faqJsonLd(items: { question: string; answer: string }[]): Json {
   };
 }
 
-/** Organization schema for the brand (home page). */
-export function organizationJsonLd(): Json {
-  return {
+/** Contact facts for Organization structured data (from platform_settings). */
+export type OrgContact = {
+  brandName?: string;
+  phoneE164?: string | null;
+  addressLocality?: string | null;
+  addressRegion?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  supportEmail?: string | null;
+};
+
+/** Organization schema for the brand (home page). Optional contact enriches it. */
+export function organizationJsonLd(contact?: OrgContact): Json {
+  const org: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: SITE_NAME,
+    name: contact?.brandName ?? SITE_NAME,
     url: SITE_URL,
     logo: absoluteUrl('/icon.svg'),
     description: SITE_DESCRIPTION,
   };
+  if (contact?.phoneE164 || contact?.supportEmail) {
+    org.contactPoint = {
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      ...(contact.phoneE164 ? { telephone: contact.phoneE164 } : {}),
+      ...(contact.supportEmail ? { email: contact.supportEmail } : {}),
+    };
+  }
+  if (contact?.addressLocality || contact?.postalCode) {
+    org.address = {
+      '@type': 'PostalAddress',
+      ...(contact.addressLocality ? { addressLocality: contact.addressLocality } : {}),
+      ...(contact.addressRegion ? { addressRegion: contact.addressRegion } : {}),
+      ...(contact.postalCode ? { postalCode: contact.postalCode } : {}),
+      addressCountry: contact.country ?? 'US',
+    };
+  }
+  return org;
 }
 
 /** WebSite schema with a Sitelinks Search Box pointed at dispensary search. */

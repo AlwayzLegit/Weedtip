@@ -10,6 +10,7 @@ import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
 import { JsonLd } from '@/components/seo/json-ld';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
+import { getPlatformSettings } from '@/lib/settings';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -74,13 +75,24 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getPlatformSettings();
   return (
     <ViewTransitions>
       <html lang="en" className={`${manrope.variable} dark`}>
       <body className="bg-background text-foreground flex min-h-screen flex-col font-sans antialiased">
         {/* Sitewide brand + sitelinks-searchbox signals on every page. */}
-        <JsonLd data={organizationJsonLd()} />
+        <JsonLd
+          data={organizationJsonLd({
+            brandName: settings.brandName,
+            phoneE164: settings.phoneE164,
+            addressLocality: settings.addressLocality,
+            addressRegion: settings.addressRegion,
+            postalCode: settings.postalCode,
+            country: settings.country,
+            supportEmail: settings.supportEmail,
+          })}
+        />
         <JsonLd data={websiteJsonLd()} />
         <a
           href="#main-content"

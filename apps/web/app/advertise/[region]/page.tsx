@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { SlotCheckoutButton } from '@/components/ads/slot-checkout-button';
 import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
+import { getPlatformSettings } from '@/lib/settings';
 import { createStaticClient } from '@/lib/supabase/static';
 
 export const revalidate = 60;
@@ -66,7 +67,8 @@ export default async function AdvertiseRegionPage({
   const featured = product('featured');
   const premium = product('premium');
 
-  const contactHref = `mailto:ads@weedtip.com?subject=${encodeURIComponent(
+  const { adsEmail } = await getPlatformSettings();
+  const contactHref = `mailto:${adsEmail}?subject=${encodeURIComponent(
     `Exclusive sponsorship — ${region.name}`,
   )}`;
 

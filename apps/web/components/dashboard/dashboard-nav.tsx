@@ -17,6 +17,7 @@ import {
   Package,
   Plug,
   QrCode,
+  Settings,
   Shield,
   ShoppingBag,
   Star,
@@ -63,6 +64,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/integrations', label: 'Integrations', icon: Plug },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 /** Sidebar nav with active-route highlighting, shared by owner + admin shells. */

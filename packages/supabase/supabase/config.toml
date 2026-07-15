@@ -67,6 +67,16 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
 
+# Branded auth emails. When enabled, Supabase delegates every auth email
+# (confirm signup, magic link, password reset, invite, email change, reauth) to
+# our endpoint, which renders them on-brand via lib/email.ts + Resend. Turn on
+# locally after setting SEND_EMAIL_HOOK_SECRET and starting the web dev server;
+# in prod, configure the same URL + secret under Authentication → Hooks.
+[auth.hook.send_email]
+enabled = false
+uri = "http://host.docker.internal:3000/api/auth/send-email"
+secret = "env(SEND_EMAIL_HOOK_SECRET)"
+
 [edge_runtime]
 enabled = true
 inspector_port = 8084

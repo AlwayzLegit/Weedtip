@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/legal/legal-page';
+import { getPlatformSettings } from '@/lib/settings';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/terms' },
 };
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const s = await getPlatformSettings();
   return (
     <LegalPage title="Terms of Service" updated="June 2, 2026">
       <p>
@@ -88,7 +90,7 @@ export default function TermsPage() {
       <h2>9. Contact</h2>
       <p>
         Questions about these Terms? Contact us at{' '}
-        <a href="mailto:support@weedtip.com">support@weedtip.com</a>.
+        <a href={`mailto:${s.supportEmail}`}>{s.supportEmail}</a>.
       </p>
     </LegalPage>
   );

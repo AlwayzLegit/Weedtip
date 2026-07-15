@@ -1,5 +1,6 @@
 import 'server-only';
 import { Resend } from 'resend';
+import { contactFooterLine, getPlatformSettings, PLATFORM_FALLBACK } from './settings';
 
 /**
  * Transactional email via Resend (weedtip.com is a verified sending domain).
@@ -10,6 +11,11 @@ import { Resend } from 'resend';
  * Weedtip never charges shoppers, so there are no receipts — shopper email is
  * order status only. Money mail (plan/placement/slot requests) goes to the
  * sales inbox: billing is sales-led until the PaymentCloud gateway lands.
+ *
+ * Branding is DB-driven: templates emit %%BRAND_*%% tokens which sendEmail
+ * resolves from platform_settings just before dispatch (the "From", brand name,
+ * accent color, and contact footer). Change them once in /admin/settings and
+ * every email — transactional AND Supabase auth — updates.
  */
 
 const apiKey = process.env.RESEND_API_KEY;
@@ -18,30 +24,44 @@ export const isEmailConfigured = !!apiKey;
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
-const FROM = process.env.EMAIL_FROM ?? 'Weedtip <notifications@weedtip.com>';
+/** Where billing/sales requests land. Env overrides the DB default for routing. */
+export const SALES_INBOX = process.env.SALES_EMAIL ?? PLATFORM_FALLBACK.salesEmail;
 
-/** Where billing/sales requests land. */
-export const SALES_INBOX = process.env.SALES_EMAIL ?? 'sales@weedtip.com';
+/** Resolve %%BRAND_*%% tokens in a rendered string from live platform settings. */
+export async function applyBrandTokens(input: string): Promise<string> {
+  const s = await getPlatformSettings();
+  return input
+    .replaceAll('%%BRAND_NAME%%', s.brandName)
+    .replaceAll('%%BRAND_COLOR%%', s.brandColor)
+    .replaceAll('%%BRAND_FOOTER%%', contactFooterLine(s));
+}
 
 export interface SendEmailInput {
   to: string | string[];
   subject: string;
   html: string;
   replyTo?: string;
+  /** Override the From identity (auth hook passes it explicitly); defaults to settings. */
+  from?: string;
 }
 
 /** Fire one email. Returns false (never throws) when unconfigured or failed. */
-export async function sendEmail({ to, subject, html, replyTo }: SendEmailInput): Promise<boolean> {
+export async function sendEmail({ to, subject, html, replyTo, from }: SendEmailInput): Promise<boolean> {
   if (!resend) {
     console.warn(`[email] RESEND_API_KEY not set — skipped "${subject}" → ${String(to)}`);
     return false;
   }
+  const settings = await getPlatformSettings();
+  const [resolvedSubject, resolvedHtml] = await Promise.all([
+    applyBrandTokens(subject),
+    applyBrandTokens(html),
+  ]);
   try {
     const { error } = await resend.emails.send({
-      from: FROM,
+      from: from ?? process.env.EMAIL_FROM ?? settings.emailFrom,
       to: Array.isArray(to) ? to : [to],
-      subject,
-      html,
+      subject: resolvedSubject,
+      html: resolvedHtml,
       ...(replyTo ? { replyTo } : {}),
     });
     if (error) {
@@ -55,20 +75,20 @@ export async function sendEmail({ to, subject, html, replyTo }: SendEmailInput):
   }
 }
 
-/** Shared shell so every email reads as Weedtip without a template engine. */
+/** Shared shell so every email reads on-brand without a template engine. */
 export function emailShell(title: string, bodyHtml: string): string {
   return `<!doctype html>
 <html>
   <body style="margin:0;padding:0;background:#f4f6f4;font-family:Arial,Helvetica,sans-serif;color:#1c2420;">
     <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
-      <p style="font-size:20px;font-weight:bold;color:#1a7f4e;margin:0 0 16px;">Weedtip</p>
+      <p style="font-size:20px;font-weight:bold;color:%%BRAND_COLOR%%;margin:0 0 16px;">%%BRAND_NAME%%</p>
       <div style="background:#ffffff;border:1px solid #e2e8e2;border-radius:12px;padding:24px;">
         <h1 style="font-size:18px;margin:0 0 12px;">${title}</h1>
         ${bodyHtml}
       </div>
       <p style="font-size:11px;color:#6b7a6f;margin:16px 0 0;">
-        Weedtip · North Hollywood, CA 91606 · (747) 250-4446<br/>
-        You're receiving this because of activity on your Weedtip account.
+        %%BRAND_FOOTER%%<br/>
+        You're receiving this because of activity on your %%BRAND_NAME%% account.
       </p>
     </div>
   </body>
@@ -105,7 +125,7 @@ export function orderConfirmationEmail(o: OrderEmailInput): { subject: string; h
       'Your order is in',
       `<p style="margin:0 0 8px;">${o.dispensaryName} received your ${o.orderType} order of ${o.itemCount} item${o.itemCount === 1 ? '' : 's'} (${money(o.totalCents)} estimated total).</p>
        <p style="margin:0 0 8px;">${payLine} Bring a valid 21+ ID.</p>
-       <p style="margin:16px 0 0;"><a href="${o.siteUrl}/orders/${o.orderId}" style="color:#1a7f4e;">Track your order</a></p>`,
+       <p style="margin:16px 0 0;"><a href="${o.siteUrl}/orders/${o.orderId}" style="color:%%BRAND_COLOR%%;">Track your order</a></p>`,
     ),
   };
 }
@@ -118,7 +138,7 @@ export function newOrderForDispensaryEmail(o: OrderEmailInput): { subject: strin
     html: emailShell(
       'You have a new order',
       `<p style="margin:0 0 8px;">A shopper placed a ${o.orderType} order — ${o.itemCount} item${o.itemCount === 1 ? '' : 's'}, ${money(o.totalCents)} estimated total, paying by <strong>${method}</strong>. Payment is collected by you ${o.orderType === 'delivery' ? 'via your delivery partner' : 'at the counter'}; Weedtip takes 0% commission.</p>
-       <p style="margin:16px 0 0;"><a href="${o.siteUrl}/dashboard/orders" style="color:#1a7f4e;">Confirm it in your dashboard</a></p>`,
+       <p style="margin:16px 0 0;"><a href="${o.siteUrl}/dashboard/orders" style="color:%%BRAND_COLOR%%;">Confirm it in your dashboard</a></p>`,
     ),
   };
 }
@@ -146,7 +166,7 @@ export function billingRequestEmail(r: BillingRequestInput): { subject: string; 
       `New ${r.kind} request`,
       `<p style="margin:0 0 8px;">${r.requester} requested: <strong>${r.kind}</strong>.</p>
        <table style="font-size:14px;border-collapse:collapse;">${rows}</table>
-       <p style="margin:16px 0 0;"><a href="${r.siteUrl}/admin/billing" style="color:#1a7f4e;">Review in the billing console</a></p>`,
+       <p style="margin:16px 0 0;"><a href="${r.siteUrl}/admin/billing" style="color:%%BRAND_COLOR%%;">Review in the billing console</a></p>`,
     ),
   };
 }
@@ -161,6 +181,109 @@ export function billingRequestAckEmail(kind: string): { subject: string; html: s
        <p style="margin:0;">Questions? Just reply to this email.</p>`,
     ),
   };
+}
+
+// ─── Supabase auth emails (via the Send Email Hook) ───────────────────────────
+
+/** A big branded CTA button linking to the auth confirmation/verification URL. */
+function ctaButton(url: string, label: string): string {
+  return `<p style="margin:20px 0;">
+    <a href="${url}" style="display:inline-block;background:%%BRAND_COLOR%%;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:8px;">${label}</a>
+  </p>`;
+}
+
+/** A monospace OTP code block for manual entry / reauthentication. */
+function otpBlock(otp: string): string {
+  return `<p style="margin:16px 0 4px;color:#6b7a6f;font-size:13px;">Or use this code:</p>
+    <p style="margin:0;font-family:monospace;font-size:26px;letter-spacing:4px;font-weight:bold;">${otp}</p>`;
+}
+
+export type AuthEmailKind =
+  | 'signup'
+  | 'magiclink'
+  | 'recovery'
+  | 'invite'
+  | 'email_change'
+  | 'reauthentication';
+
+/**
+ * Branded rendering for the emails Supabase Auth would otherwise send unbranded
+ * (confirm signup, magic link, password reset, invite, email change, reauth).
+ * Driven by the Send Email Hook — see app/api/auth/send-email/route.ts.
+ */
+export function authEmail(
+  kind: AuthEmailKind,
+  opts: { url?: string; otp?: string },
+): { subject: string; html: string } {
+  const url = opts.url ?? '#';
+  const otp = opts.otp;
+  const withOtp = otp ? otpBlock(otp) : '';
+
+  switch (kind) {
+    case 'signup':
+      return {
+        subject: 'Confirm your email · %%BRAND_NAME%%',
+        html: emailShell(
+          'Confirm your email',
+          `<p style="margin:0 0 8px;">Welcome to %%BRAND_NAME%%! Confirm your email address to activate your account.</p>
+           ${ctaButton(url, 'Confirm email')}
+           ${withOtp}
+           <p style="margin:16px 0 0;color:#6b7a6f;font-size:12px;">If you didn't create an account, you can safely ignore this email.</p>`,
+        ),
+      };
+    case 'magiclink':
+      return {
+        subject: 'Your %%BRAND_NAME%% sign-in link',
+        html: emailShell(
+          'Sign in to %%BRAND_NAME%%',
+          `<p style="margin:0 0 8px;">Click below to sign in. This link expires shortly and can be used once.</p>
+           ${ctaButton(url, 'Sign in')}
+           ${withOtp}
+           <p style="margin:16px 0 0;color:#6b7a6f;font-size:12px;">If you didn't request this, you can ignore it.</p>`,
+        ),
+      };
+    case 'recovery':
+      return {
+        subject: 'Reset your %%BRAND_NAME%% password',
+        html: emailShell(
+          'Reset your password',
+          `<p style="margin:0 0 8px;">We received a request to reset your password. Click below to choose a new one.</p>
+           ${ctaButton(url, 'Reset password')}
+           ${withOtp}
+           <p style="margin:16px 0 0;color:#6b7a6f;font-size:12px;">If you didn't request this, your password is unchanged — you can ignore this email.</p>`,
+        ),
+      };
+    case 'invite':
+      return {
+        subject: "You're invited to %%BRAND_NAME%%",
+        html: emailShell(
+          "You've been invited",
+          `<p style="margin:0 0 8px;">You've been invited to join %%BRAND_NAME%%. Accept the invite to set up your account.</p>
+           ${ctaButton(url, 'Accept invite')}
+           ${withOtp}`,
+        ),
+      };
+    case 'email_change':
+      return {
+        subject: 'Confirm your new email · %%BRAND_NAME%%',
+        html: emailShell(
+          'Confirm your new email',
+          `<p style="margin:0 0 8px;">Confirm this address to finish changing the email on your %%BRAND_NAME%% account.</p>
+           ${ctaButton(url, 'Confirm email change')}
+           ${withOtp}`,
+        ),
+      };
+    case 'reauthentication':
+      return {
+        subject: 'Your %%BRAND_NAME%% verification code',
+        html: emailShell(
+          'Verify it’s you',
+          `<p style="margin:0 0 8px;">Enter this code to confirm your identity.</p>
+           <p style="margin:8px 0;font-family:monospace;font-size:30px;letter-spacing:6px;font-weight:bold;">${otp ?? ''}</p>
+           <p style="margin:16px 0 0;color:#6b7a6f;font-size:12px;">If you didn't request this, you can ignore it.</p>`,
+        ),
+      };
+  }
 }
 
 // ─── Welcome (sent once, on first email confirmation) ─────────────────────────
@@ -181,7 +304,7 @@ export function welcomeShopperEmail(
          <li style="margin:0 0 4px;">Track live deals and price drops</li>
          <li>You always pay the shop or driver directly — Weedtip never charges you</li>
        </ul>
-       <p style="margin:16px 0 0;"><a href="${siteUrl}/dispensaries" style="color:#1a7f4e;">Find dispensaries near you</a></p>`,
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/dispensaries" style="color:%%BRAND_COLOR%%;">Find dispensaries near you</a></p>`,
     ),
   };
 }
@@ -203,7 +326,7 @@ export function welcomeBusinessEmail(
          <li>Add your menu, hours, and deals to start getting orders</li>
        </ol>
        <p style="margin:0 0 8px;">Free forever, 0% commission on orders.</p>
-       <p style="margin:16px 0 0;"><a href="${siteUrl}/claim" style="color:#1a7f4e;">Claim or create your listing</a></p>`,
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/claim" style="color:%%BRAND_COLOR%%;">Claim or create your listing</a></p>`,
     ),
   };
 }
@@ -224,7 +347,7 @@ export function welcomeBrandEmail(
          <li style="margin:0 0 4px;">Add your logo, story, and product catalog</li>
          <li>See where you're carried and reach new shoppers</li>
        </ol>
-       <p style="margin:16px 0 0;"><a href="${siteUrl}/for-brands" style="color:#1a7f4e;">Get started with your brand</a></p>`,
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/for-brands" style="color:%%BRAND_COLOR%%;">Get started with your brand</a></p>`,
     ),
   };
 }
@@ -252,7 +375,7 @@ export function brandClaimDecisionEmail(
         html: emailShell(
           'Brand claim approved 🎉',
           `<p style="margin:0 0 8px;">Your claim for <strong>${brandName}</strong> was approved. You can now manage your brand profile, media, and product catalog in Brand Studio.</p>
-           <p style="margin:16px 0 0;"><a href="${siteUrl}/studio" style="color:#1a7f4e;">Open Brand Studio</a></p>`,
+           <p style="margin:16px 0 0;"><a href="${siteUrl}/studio" style="color:%%BRAND_COLOR%%;">Open Brand Studio</a></p>`,
         ),
       }
     : {
@@ -275,7 +398,7 @@ export function brandCreatedEmail(
     html: emailShell(
       'New brand awaiting review',
       `<p style="margin:0 0 8px;">${requester} created <strong>${brandName}</strong>. It's pending until an admin approves it.</p>
-       <p style="margin:16px 0 0;"><a href="${siteUrl}/admin/brands" style="color:#1a7f4e;">Review in admin</a></p>`,
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/admin/brands" style="color:%%BRAND_COLOR%%;">Review in admin</a></p>`,
     ),
   };
 }
@@ -303,7 +426,7 @@ export function claimDecisionEmail(
         html: emailShell(
           'Claim approved 🎉',
           `<p style="margin:0 0 8px;">Your claim for <strong>${dispensaryName}</strong> was approved. You can now manage your menu, photos, hours, deals, and orders.</p>
-           <p style="margin:16px 0 0;"><a href="${siteUrl}/dashboard" style="color:#1a7f4e;">Open your dashboard</a></p>`,
+           <p style="margin:16px 0 0;"><a href="${siteUrl}/dashboard" style="color:%%BRAND_COLOR%%;">Open your dashboard</a></p>`,
         ),
       }
     : {
