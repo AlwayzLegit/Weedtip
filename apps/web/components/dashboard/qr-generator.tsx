@@ -1,10 +1,19 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { QRCodeCanvas } from 'qrcode.react';
+import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type Dest = { key: string; label: string; path: string };
+type Theme = { key: string; label: string; fg: string; bg: string };
+
+const THEMES: Theme[] = [
+  { key: 'green', label: 'Weedtip green', fg: '#0b3d2e', bg: '#ffffff' },
+  { key: 'black', label: 'Black', fg: '#111111', bg: '#ffffff' },
+  { key: 'inverted', label: 'Inverted', fg: '#ffffff', bg: '#0b3d2e' },
+  { key: 'mono', label: 'Black & white', fg: '#000000', bg: '#ffffff' },
+];
 
 export function QrGenerator({
   baseUrl,
@@ -24,8 +33,18 @@ export function QrGenerator({
 
   const [destKey, setDestKey] = useState('storefront');
   const [custom, setCustom] = useState('');
-  const [color, setColor] = useState('#0b3d2e');
+  const [themeKey, setThemeKey] = useState('green');
+  const [fg, setFg] = useState('#0b3d2e');
+  const theme = THEMES.find((t) => t.key === themeKey) ?? THEMES[0]!;
+  const bg = theme.bg;
   const wrapRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<HTMLDivElement>(null);
+
+  function pickTheme(key: string) {
+    const t = THEMES.find((x) => x.key === key) ?? THEMES[0]!;
+    setThemeKey(key);
+    setFg(t.fg);
+  }
 
   const value = useMemo(() => {
     if (destKey === 'custom') return custom.trim() || baseUrl;
@@ -40,6 +59,18 @@ export function QrGenerator({
     a.href = canvas.toDataURL('image/png');
     a.download = `${slug}-qr.png`;
     a.click();
+  }
+
+  function downloadSvg() {
+    const svg = svgRef.current?.querySelector('svg');
+    if (!svg) return;
+    const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${slug}-qr.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function printQr() {
@@ -88,12 +119,33 @@ export function QrGenerator({
           </label>
         )}
 
+        <div className="space-y-1.5 text-sm">
+          <span className="font-medium">Theme</span>
+          <div className="flex flex-wrap gap-2">
+            {THEMES.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => pickTheme(t.key)}
+                className={cn(
+                  'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                  themeKey === t.key
+                    ? 'border-primary bg-primary-muted text-primary'
+                    : 'border-border text-muted hover:text-foreground',
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <label className="flex items-center gap-3 text-sm">
-          <span className="font-medium">Color</span>
+          <span className="font-medium">Custom color</span>
           <input
             type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
+            value={fg}
+            onChange={(e) => setFg(e.target.value)}
             className="border-border h-9 w-14 rounded border"
             aria-label="QR color"
           />
@@ -103,6 +155,9 @@ export function QrGenerator({
 
         <div className="flex flex-wrap gap-2">
           <Button onClick={downloadPng}>Download PNG</Button>
+          <Button variant="outline" onClick={downloadSvg}>
+            Download SVG
+          </Button>
           <Button variant="outline" onClick={printQr}>
             Print
           </Button>
@@ -110,8 +165,16 @@ export function QrGenerator({
       </div>
 
       <div className="flex items-start justify-center">
-        <div ref={wrapRef} className="rounded-card border-border bg-white border p-4">
-          <QRCodeCanvas value={value} size={240} fgColor={color} bgColor="#ffffff" level="M" includeMargin />
+        <div
+          ref={wrapRef}
+          className="rounded-card border-border border p-4"
+          style={{ background: bg }}
+        >
+          <QRCodeCanvas value={value} size={240} fgColor={fg} bgColor={bg} level="M" includeMargin />
+        </div>
+        {/* Hidden SVG mirror, serialized on SVG download. */}
+        <div ref={svgRef} className="hidden">
+          <QRCodeSVG value={value} size={240} fgColor={fg} bgColor={bg} level="M" includeMargin />
         </div>
       </div>
     </div>
