@@ -983,6 +983,59 @@ export type Database = {
           },
         ]
       }
+      dispensary_taxes: {
+        Row: {
+          apply_all_categories: boolean
+          category_ids: string[]
+          created_at: string
+          dispensary_id: string
+          enabled: boolean
+          id: string
+          name: string
+          rate_bps: number
+          sort_order: number
+          tax_type: string
+          updated_at: string
+          use_type: string
+        }
+        Insert: {
+          apply_all_categories?: boolean
+          category_ids?: string[]
+          created_at?: string
+          dispensary_id: string
+          enabled?: boolean
+          id?: string
+          name: string
+          rate_bps: number
+          sort_order?: number
+          tax_type?: string
+          updated_at?: string
+          use_type?: string
+        }
+        Update: {
+          apply_all_categories?: boolean
+          category_ids?: string[]
+          created_at?: string
+          dispensary_id?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          rate_bps?: number
+          sort_order?: number
+          tax_type?: string
+          updated_at?: string
+          use_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispensary_taxes_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispensary_promos: {
         Row: {
           created_at: string
@@ -2514,6 +2567,14 @@ export type Database = {
       dispute_review: {
         Args: { p_reason: string; p_review_id: string }
         Returns: undefined
+      }
+      dispensary_effective_tax_bps: {
+        Args: { p_dispensary_id: string }
+        Returns: number
+      }
+      effective_tax_rate: {
+        Args: { p_dispensary_id: string }
+        Returns: number
       }
       effective_unit_price: {
         Args: { p_product_id: string }
