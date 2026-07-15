@@ -1,16 +1,11 @@
 import { Link } from 'next-view-transitions';
 import { getAuth } from '@/lib/auth';
 import { ownsAnyBrand } from '@/lib/brand-owner';
+import { notificationHref } from '@/lib/notification-href';
 import { createClient } from '@/lib/supabase/server';
 import { Logo } from './brand/logo';
 import { GlobalSearch } from './global-search';
 import { NavMenu } from './nav-menu';
-
-/** Deep link for a notification: explicit href, else legacy id shapes. */
-function hrefFromData(data: unknown): string | null {
-  const d = (data ?? {}) as { href?: string; order_id?: string; brand_slug?: string };
-  return d.href ?? (d.order_id ? `/orders/${d.order_id}` : d.brand_slug ? `/brand/${d.brand_slug}` : null);
-}
 
 export async function Navbar() {
   const { user, profile } = await getAuth();
@@ -31,7 +26,7 @@ export async function Navbar() {
       supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('read', false),
       supabase
         .from('notifications')
-        .select('id,title,body,created_at,read,data')
+        .select('id,type,title,body,created_at,read,data')
         .order('created_at', { ascending: false })
         .limit(8),
     ]);
@@ -42,7 +37,7 @@ export async function Navbar() {
       body: n.body,
       created_at: n.created_at,
       read: n.read,
-      href: hrefFromData(n.data),
+      href: notificationHref(n.type, n.data),
     }));
     isBrandOwner = await ownsAnyBrand(user.id);
   }

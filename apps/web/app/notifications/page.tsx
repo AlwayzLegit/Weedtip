@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getAuth } from '@/lib/auth';
+import { notificationHref } from '@/lib/notification-href';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Notifications' };
@@ -54,19 +55,7 @@ export default async function NotificationsPage() {
       ) : (
         <div className="space-y-3">
           {list.map((n) => {
-            const data = (n.data ?? {}) as {
-              href?: string;
-              order_id?: string;
-              brand_slug?: string;
-            };
-            // Prefer an explicit deep link; fall back to the legacy id shapes.
-            const href =
-              data.href ??
-              (data.order_id
-                ? `/orders/${data.order_id}`
-                : data.brand_slug
-                  ? `/brand/${data.brand_slug}`
-                  : null);
+            const href = notificationHref(n.type, n.data);
             return (
               <div
                 key={n.id}
