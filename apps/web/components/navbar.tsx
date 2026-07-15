@@ -6,18 +6,44 @@ import { Logo } from './brand/logo';
 import { GlobalSearch } from './global-search';
 import { NavMenu } from './nav-menu';
 
+/** Deep link for a notification: explicit href, else legacy id shapes. */
+function hrefFromData(data: unknown): string | null {
+  const d = (data ?? {}) as { href?: string; order_id?: string; brand_slug?: string };
+  return d.href ?? (d.order_id ? `/orders/${d.order_id}` : d.brand_slug ? `/brand/${d.brand_slug}` : null);
+}
+
 export async function Navbar() {
   const { user, profile } = await getAuth();
 
   let unreadCount = 0;
   let isBrandOwner = false;
+  let notifications: {
+    id: string;
+    title: string;
+    body: string | null;
+    created_at: string;
+    read: boolean;
+    href: string | null;
+  }[] = [];
   if (user) {
     const supabase = await createClient();
-    const { count } = await supabase
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('read', false);
+    const [{ count }, { data: recent }] = await Promise.all([
+      supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('read', false),
+      supabase
+        .from('notifications')
+        .select('id,title,body,created_at,read,data')
+        .order('created_at', { ascending: false })
+        .limit(8),
+    ]);
     unreadCount = count ?? 0;
+    notifications = (recent ?? []).map((n) => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      created_at: n.created_at,
+      read: n.read,
+      href: hrefFromData(n.data),
+    }));
     isBrandOwner = await ownsAnyBrand(user.id);
   }
 
@@ -37,6 +63,7 @@ export async function Navbar() {
           isAdmin={profile?.role === 'admin'}
           isBrandOwner={isBrandOwner}
           unreadCount={unreadCount}
+          notifications={notifications}
         />
       </div>
     </header>
