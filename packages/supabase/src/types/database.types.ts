@@ -831,6 +831,7 @@ export type Database = {
       dispensaries: {
         Row: {
           accepting_orders: boolean
+          gallery_urls: string[]
           post_order_message: string | null
           require_id: boolean
           video_url: string | null
@@ -884,6 +885,7 @@ export type Database = {
         }
         Insert: {
           accepting_orders?: boolean
+          gallery_urls?: string[]
           post_order_message?: string | null
           require_id?: boolean
           video_url?: string | null
@@ -937,6 +939,7 @@ export type Database = {
         }
         Update: {
           accepting_orders?: boolean
+          gallery_urls?: string[]
           post_order_message?: string | null
           require_id?: boolean
           video_url?: string | null

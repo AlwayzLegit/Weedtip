@@ -212,6 +212,7 @@ export const dispensaryWriteSchema = z.object({
   require_id: z.boolean().default(false),
   post_order_message: z.string().max(250).nullable().optional(),
   video_url: z.string().url().max(300).nullable().optional(),
+  gallery_urls: z.array(z.string().url()).max(12).default([]),
   location: coordinatesSchema.nullable().optional(),
 });
 export type DispensaryWriteInput = z.infer<typeof dispensaryWriteSchema>;

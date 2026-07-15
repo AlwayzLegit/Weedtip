@@ -113,6 +113,9 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
     require_id: bool(fd, 'require_id'),
     post_order_message: str(fd, 'post_order_message') ?? null,
     video_url: str(fd, 'video_url') ?? null,
+    gallery_urls: fd
+      .getAll('gallery_urls')
+      .filter((v): v is string => typeof v === 'string' && v.length > 0),
     location: lat !== undefined && lng !== undefined ? { lat, lng } : null,
   };
 
