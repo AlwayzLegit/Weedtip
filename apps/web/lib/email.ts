@@ -183,6 +183,24 @@ export function billingRequestAckEmail(kind: string): { subject: string; html: s
   };
 }
 
+// ─── Team invites ─────────────────────────────────────────────────────────────
+
+export function teamInviteEmail(
+  dispensaryName: string,
+  role: string,
+  siteUrl: string,
+): { subject: string; html: string } {
+  return {
+    subject: `You're invited to ${dispensaryName} on %%BRAND_NAME%%`,
+    html: emailShell(
+      'Team invitation',
+      `<p style="margin:0 0 8px;">You've been invited to join <strong>${dispensaryName}</strong> on %%BRAND_NAME%% as a <strong>${role}</strong>.</p>
+       <p style="margin:0 0 8px;">Sign in with this email address and accept the invite to get access.</p>
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/invites" style="color:%%BRAND_COLOR%%;">Accept your invite</a></p>`,
+    ),
+  };
+}
+
 // ─── Supabase auth emails (via the Send Email Hook) ───────────────────────────
 
 /** A big branded CTA button linking to the auth confirmation/verification URL. */

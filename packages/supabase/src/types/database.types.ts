@@ -1068,6 +1068,50 @@ export type Database = {
           },
         ]
       }
+      dispensary_members: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          dispensary_id: string
+          email: string
+          id: string
+          invited_by: string | null
+          role: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          dispensary_id: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          dispensary_id?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispensary_members_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispensary_promos: {
         Row: {
           created_at: string
@@ -2599,6 +2643,10 @@ export type Database = {
       dispute_review: {
         Args: { p_reason: string; p_review_id: string }
         Returns: undefined
+      }
+      accept_dispensary_invite: {
+        Args: { p_member_id: string }
+        Returns: boolean
       }
       dispensary_effective_tax_bps: {
         Args: { p_dispensary_id: string }

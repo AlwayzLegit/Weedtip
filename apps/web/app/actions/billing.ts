@@ -9,7 +9,7 @@ import {
   sendEmail,
 } from '@/lib/email';
 import { notifyAdmins } from '@/lib/notify';
-import { requireOwnerDispensary } from '@/lib/owner';
+import { requireDispensaryOwner } from '@/lib/owner';
 import {
   placementPriceCents,
   PLACEMENT_MAX_DAYS,
@@ -68,7 +68,7 @@ async function sendBillingEmails(
  * a paid plan creates a pending subscription for the sales team to activate.
  */
 export async function requestPlanChange(planId: string): Promise<BillingRequestResult> {
-  const { dispensary } = await requireOwnerDispensary();
+  const { dispensary } = await requireDispensaryOwner();
   // Keyed per dispensary, not per IP: requests are free to create, so the
   // requester identity is what needs throttling.
   if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, dispensary.id)).success) {
@@ -157,7 +157,7 @@ export async function requestPlanChange(planId: string): Promise<BillingRequestR
 
 /** Cancel the paid plan — immediate, no money involved until the gateway era. */
 export async function cancelPlan(): Promise<BillingRequestResult> {
-  const { dispensary } = await requireOwnerDispensary();
+  const { dispensary } = await requireDispensaryOwner();
   const service = createServiceClient();
   const { error } = await service
     .from('dispensary_subscriptions')
@@ -199,7 +199,7 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
     return { ok: false, error: 'Select which item to promote.' };
   }
 
-  const { dispensary } = await requireOwnerDispensary();
+  const { dispensary } = await requireDispensaryOwner();
   if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, dispensary.id)).success) {
     return { ok: false, error: 'Too many attempts. Please wait a moment.' };
   }
