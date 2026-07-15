@@ -68,9 +68,18 @@ const ADMIN_NAV: NavItem[] = [
 ];
 
 /** Sidebar nav with active-route highlighting, shared by owner + admin shells. */
-export function DashboardNav({ variant }: { variant: 'owner' | 'admin' }) {
+export function DashboardNav({
+  variant,
+  showBrandStudio = true,
+}: {
+  variant: 'owner' | 'admin';
+  /** Hide the Brand Studio item for owners who don't manage a brand (avoids a dead-end redirect). */
+  showBrandStudio?: boolean;
+}) {
   const pathname = usePathname();
-  const items = variant === 'owner' ? OWNER_NAV : ADMIN_NAV;
+  const base = variant === 'owner' ? OWNER_NAV : ADMIN_NAV;
+  const items =
+    variant === 'owner' && !showBrandStudio ? base.filter((i) => i.href !== '/studio') : base;
   const root = variant === 'owner' ? '/dashboard' : '/admin';
 
   return (

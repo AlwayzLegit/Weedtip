@@ -12,6 +12,7 @@ import {
 } from '@weedtip/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@weedtip/supabase/types';
+import { canPublishMarketing, MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import {
@@ -225,6 +226,11 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
 
   const dispensaryId = await ownerDispensaryId(supabase, userId);
   if (!dispensaryId) return formError('Create your dispensary listing first.');
+
+  // Marketing gate: deals require an active Growth plan (admins bypass).
+  if (!(await canPublishMarketing(dispensaryId))) {
+    return formError(MARKETING_UPGRADE_MESSAGE);
+  }
 
   const id = str(fd, 'id');
 

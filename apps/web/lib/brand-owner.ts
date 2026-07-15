@@ -26,7 +26,9 @@ export const getBrandOwnerContext = cache(
       .eq('owner_id', user.id)
       .order('name');
 
-    if (!brands || brands.length === 0) redirect('/brands');
+    // No brand yet → the owner-facing acquisition page (claim or create), not
+    // the public directory, so this never dead-ends.
+    if (!brands || brands.length === 0) redirect('/for-brands');
     return { userId: user.id, brands };
   },
 );

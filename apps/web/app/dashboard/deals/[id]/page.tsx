@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DealForm } from '@/components/dashboard/deal-form';
+import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { getOwnerPlan } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Edit deal' };
@@ -9,6 +11,7 @@ export const metadata: Metadata = { title: 'Edit deal' };
 export default async function EditDealPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { dispensary } = await requireOwnerDispensary();
+  const { isPaid } = await getOwnerPlan();
   const supabase = await createClient();
 
   const [{ data: deal }, { data: categories }, { data: products }] = await Promise.all([
@@ -27,7 +30,14 @@ export default async function EditDealPage({ params }: { params: Promise<{ id: s
   return (
     <div className="max-w-xl space-y-6">
       <h1 className="text-2xl font-bold">Edit deal</h1>
-      <DealForm deal={deal} categories={categories ?? []} products={products ?? []} />
+      {isPaid ? (
+        <DealForm deal={deal} categories={categories ?? []} products={products ?? []} />
+      ) : (
+        <UpgradeWall
+          feature="Deals"
+          description="Editing and publishing deals is part of Growth. Upgrade to manage this deal — your listing stays free at 0% commission."
+        />
+      )}
     </div>
   );
 }

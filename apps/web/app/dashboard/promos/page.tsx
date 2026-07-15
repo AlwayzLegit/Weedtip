@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { deletePromo } from '@/app/actions/promos';
 import { DeleteButton } from '@/components/dashboard/delete-button';
+import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { getOwnerPlan } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'In-store promos' };
@@ -16,6 +18,7 @@ function isLive(p: { is_active: boolean; start_date: string | null; end_date: st
 
 export default async function DashboardPromos() {
   const { dispensary } = await requireOwnerDispensary();
+  const { isPaid } = await getOwnerPlan();
   const supabase = await createClient();
   const { data: promos } = await supabase
     .from('dispensary_promos')
@@ -41,6 +44,10 @@ export default async function DashboardPromos() {
           </Link>
         )}
       </div>
+
+      {!isPaid && (
+        <UpgradeBanner message="In-store promos are a Growth feature. Upgrade to publish them on your storefront." />
+      )}
 
       {!promos || promos.length === 0 ? (
         <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">

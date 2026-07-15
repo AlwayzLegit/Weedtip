@@ -4,10 +4,12 @@ import { Pencil, Plus } from 'lucide-react';
 import type { Tables } from '@weedtip/supabase/types';
 import { deleteDeal } from '@/app/dashboard/actions';
 import { DeleteButton } from '@/components/dashboard/delete-button';
+import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { getOwnerPlan } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Deals' };
@@ -48,6 +50,7 @@ function mechanism(d: Tables<'deals'>): { label: string; tone: 'primary' | 'mute
 
 export default async function DashboardDeals() {
   const { dispensary } = await requireOwnerDispensary();
+  const { isPaid } = await getOwnerPlan();
   const supabase = await createClient();
   const [{ data: deals }, { data: redemptions }] = await Promise.all([
     supabase.from('deals').select('*').eq('dispensary_id', dispensary.id).order('end_date', {
@@ -76,6 +79,10 @@ export default async function DashboardDeals() {
           </Button>
         </Link>
       </div>
+
+      {!isPaid && (
+        <UpgradeBanner message="Deals are a Growth feature. You can view existing deals, but publishing new ones needs an upgrade." />
+      )}
 
       {!deals || deals.length === 0 ? (
         <div className="card text-muted p-10 text-center">

@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import { Users } from 'lucide-react';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { UpdateForm } from '@/components/dashboard/update-form';
+import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { getOwnerPlan } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 import { deleteDispensaryUpdate } from '@/app/actions/updates';
 
@@ -11,6 +13,7 @@ export const metadata: Metadata = { title: 'Updates' };
 
 export default async function DashboardUpdates() {
   const { dispensary } = await requireOwnerDispensary();
+  const { isPaid } = await getOwnerPlan();
   const supabase = await createClient();
 
   const [{ data: updates }, { data: followerCount }] = await Promise.all([
@@ -42,9 +45,16 @@ export default async function DashboardUpdates() {
         </div>
       </div>
 
-      <div className="card p-5">
-        <UpdateForm dispensaryId={dispensary.id} />
-      </div>
+      {isPaid ? (
+        <div className="card p-5">
+          <UpdateForm dispensaryId={dispensary.id} />
+        </div>
+      ) : (
+        <UpgradeWall
+          feature="Follower updates"
+          description="Broadcast news, drops, and events to everyone who follows your shop. Upgrade to Growth to post updates — your listing stays free at 0% commission."
+        />
+      )}
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Live ({live.length})</h2>
