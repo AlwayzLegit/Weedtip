@@ -362,6 +362,7 @@ export type Database = {
       brand_claims: {
         Row: {
           brand_id: string
+          business_email: string | null
           created_at: string
           id: string
           message: string | null
@@ -370,6 +371,7 @@ export type Database = {
         }
         Insert: {
           brand_id: string
+          business_email?: string | null
           created_at?: string
           id?: string
           message?: string | null
@@ -378,6 +380,7 @@ export type Database = {
         }
         Update: {
           brand_id?: string
+          business_email?: string | null
           created_at?: string
           id?: string
           message?: string | null
@@ -538,6 +541,7 @@ export type Database = {
           name: string
           owner_id: string | null
           slug: string
+          status: string
           updated_at: string
           website: string | null
         }
@@ -549,6 +553,7 @@ export type Database = {
           name: string
           owner_id?: string | null
           slug: string
+          status?: string
           updated_at?: string
           website?: string | null
         }
@@ -560,6 +565,7 @@ export type Database = {
           name?: string
           owner_id?: string | null
           slug?: string
+          status?: string
           updated_at?: string
           website?: string | null
         }
@@ -1917,8 +1923,10 @@ export type Database = {
           delivery_address: Json | null
           display_name: string | null
           id: string
+          preferred_categories: string[]
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
+          welcomed_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1927,8 +1935,10 @@ export type Database = {
           delivery_address?: Json | null
           display_name?: string | null
           id: string
+          preferred_categories?: string[]
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+          welcomed_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1937,8 +1947,10 @@ export type Database = {
           delivery_address?: Json | null
           display_name?: string | null
           id?: string
+          preferred_categories?: string[]
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+          welcomed_at?: string | null
         }
         Relationships: []
       }

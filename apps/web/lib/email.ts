@@ -163,6 +163,123 @@ export function billingRequestAckEmail(kind: string): { subject: string; html: s
   };
 }
 
+// ─── Welcome (sent once, on first email confirmation) ─────────────────────────
+
+/** Shopper welcome — orients a new consumer around finding shops + saving deals. */
+export function welcomeShopperEmail(
+  name: string | null,
+  siteUrl: string,
+): { subject: string; html: string } {
+  const hi = name ? `Hi ${name},` : 'Welcome,';
+  return {
+    subject: 'Welcome to Weedtip 🌿',
+    html: emailShell(
+      'Welcome to Weedtip',
+      `<p style="margin:0 0 8px;">${hi} you're all set. Weedtip helps you find nearby dispensaries, compare menus, and grab the best deals — pickup or delivery.</p>
+       <ul style="margin:0 0 8px;padding-left:18px;">
+         <li style="margin:0 0 4px;">Browse shops near you and save your favorites</li>
+         <li style="margin:0 0 4px;">Track live deals and price drops</li>
+         <li>You always pay the shop or driver directly — Weedtip never charges you</li>
+       </ul>
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/dispensaries" style="color:#1a7f4e;">Find dispensaries near you</a></p>`,
+    ),
+  };
+}
+
+/** Business welcome — points a new dispensary-owner account to claim/create. */
+export function welcomeBusinessEmail(
+  name: string | null,
+  siteUrl: string,
+): { subject: string; html: string } {
+  const hi = name ? `Hi ${name},` : 'Welcome,';
+  return {
+    subject: 'Welcome to Weedtip for business',
+    html: emailShell(
+      'Get your dispensary on Weedtip',
+      `<p style="margin:0 0 8px;">${hi} thanks for creating a business account. Here's how to go live:</p>
+       <ol style="margin:0 0 8px;padding-left:18px;">
+         <li style="margin:0 0 4px;">Find your shop in our directory and claim it — we verify against the state license on file</li>
+         <li style="margin:0 0 4px;">Not listed yet? Create your listing from scratch</li>
+         <li>Add your menu, hours, and deals to start getting orders</li>
+       </ol>
+       <p style="margin:0 0 8px;">Free forever, 0% commission on orders.</p>
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/claim" style="color:#1a7f4e;">Claim or create your listing</a></p>`,
+    ),
+  };
+}
+
+/** Brand welcome — points a brand-intent account to claim/create a brand. */
+export function welcomeBrandEmail(
+  name: string | null,
+  siteUrl: string,
+): { subject: string; html: string } {
+  const hi = name ? `Hi ${name},` : 'Welcome,';
+  return {
+    subject: 'Welcome to Weedtip for brands',
+    html: emailShell(
+      'Put your brand in front of shoppers',
+      `<p style="margin:0 0 8px;">${hi} thanks for joining. A Weedtip brand page enriches every dispensary menu that carries your products.</p>
+       <ol style="margin:0 0 8px;padding-left:18px;">
+         <li style="margin:0 0 4px;">Find and claim your brand — or create it if it's new to Weedtip</li>
+         <li style="margin:0 0 4px;">Add your logo, story, and product catalog</li>
+         <li>See where you're carried and reach new shoppers</li>
+       </ol>
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/for-brands" style="color:#1a7f4e;">Get started with your brand</a></p>`,
+    ),
+  };
+}
+
+// ─── Brand claims ─────────────────────────────────────────────────────────────
+
+export function brandClaimSubmittedEmail(brandName: string): { subject: string; html: string } {
+  return {
+    subject: `Claim received — ${brandName}`,
+    html: emailShell(
+      'Your brand claim is under review',
+      `<p style="margin:0 0 8px;">We received your request to claim <strong>${brandName}</strong> on Weedtip. Our team reviews brand claims and typically responds within 1–2 business days.</p>`,
+    ),
+  };
+}
+
+export function brandClaimDecisionEmail(
+  brandName: string,
+  approved: boolean,
+  siteUrl: string,
+): { subject: string; html: string } {
+  return approved
+    ? {
+        subject: `You now manage ${brandName} on Weedtip`,
+        html: emailShell(
+          'Brand claim approved 🎉',
+          `<p style="margin:0 0 8px;">Your claim for <strong>${brandName}</strong> was approved. You can now manage your brand profile, media, and product catalog in Brand Studio.</p>
+           <p style="margin:16px 0 0;"><a href="${siteUrl}/studio" style="color:#1a7f4e;">Open Brand Studio</a></p>`,
+        ),
+      }
+    : {
+        subject: `Update on your brand claim for ${brandName}`,
+        html: emailShell(
+          'Brand claim not approved',
+          `<p style="margin:0 0 8px;">We couldn't verify your claim for <strong>${brandName}</strong>. If you believe this is a mistake, reply with details about your role at the brand and we'll take another look.</p>`,
+        ),
+      };
+}
+
+/** Notify sales that a brand was created and needs review to go live. */
+export function brandCreatedEmail(
+  brandName: string,
+  requester: string,
+  siteUrl: string,
+): { subject: string; html: string } {
+  return {
+    subject: `[Brands] New brand submitted — ${brandName}`,
+    html: emailShell(
+      'New brand awaiting review',
+      `<p style="margin:0 0 8px;">${requester} created <strong>${brandName}</strong>. It's pending until an admin approves it.</p>
+       <p style="margin:16px 0 0;"><a href="${siteUrl}/admin/brands" style="color:#1a7f4e;">Review in admin</a></p>`,
+    ),
+  };
+}
+
 // ─── Listing claims ───────────────────────────────────────────────────────────
 
 export function claimSubmittedEmail(dispensaryName: string): { subject: string; html: string } {
