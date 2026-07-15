@@ -20,6 +20,7 @@ import { signOut } from '@/app/actions/auth';
 import { cn } from '@/lib/utils';
 import { CartButton } from './cart/cart-button';
 import { GlobalSearch } from './global-search';
+import { NotificationsBell, type NotificationItem } from './notifications-bell';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 
@@ -45,6 +46,7 @@ export function NavMenu({
   isAdmin,
   isBrandOwner = false,
   unreadCount = 0,
+  notifications = [],
 }: {
   email: string | null;
   displayName: string | null;
@@ -52,6 +54,7 @@ export function NavMenu({
   isAdmin: boolean;
   isBrandOwner?: boolean;
   unreadCount?: number;
+  notifications?: NotificationItem[];
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -177,20 +180,7 @@ export function NavMenu({
         {PRIMARY.map(navLink)}
         {browseDropdown}
         <CartButton />
-        {email && (
-          <Link
-            href="/notifications"
-            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-            className="text-foreground hover:bg-surface-2 relative inline-flex h-10 w-10 items-center justify-center rounded-lg"
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <span className="bg-primary text-primary-foreground absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </Link>
-        )}
+        {email && <NotificationsBell notifications={notifications} unreadCount={unreadCount} />}
         {email ? (
           <div className="relative" ref={menuRef}>
             <button
