@@ -6,6 +6,7 @@ import { upsertDeal } from '@/app/dashboard/actions';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
 import { FormMessage } from '../auth/form-message';
 import { SubmitButton } from '../auth/submit-button';
+import { ImagePicker } from './image-picker';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { Textarea } from '../ui/textarea';
@@ -89,6 +90,8 @@ export function DealForm({
       <Field label="Description" htmlFor="description" error={fe.description}>
         <Textarea id="description" name="description" defaultValue={d?.description ?? ''} rows={2} />
       </Field>
+
+      <ImagePicker name="image_url" label="Deal image (optional)" defaultUrl={d?.image_url} />
 
       <section className="grid gap-4 sm:grid-cols-2">
         <Field label="Discount" htmlFor="kind" error={fe.kind}>

@@ -268,6 +268,7 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
   const input = {
     title: str(fd, 'title') ?? '',
     description: str(fd, 'description') ?? null,
+    image_url: str(fd, 'image_url') ?? null,
     code: autoApply ? null : (str(fd, 'code') ?? null),
     discount_type: legacyType,
     discount_value: legacyValue,
