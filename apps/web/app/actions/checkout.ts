@@ -157,6 +157,16 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Please sign in to place an order.' };
 
+  // A shop can pause incoming online orders without hiding its listing.
+  const { data: acceptRow } = await supabase
+    .from('dispensaries')
+    .select('accepting_orders')
+    .eq('id', input.dispensary_id)
+    .maybeSingle();
+  if (acceptRow && acceptRow.accepting_orders === false) {
+    return { ok: false, error: 'This dispensary is not accepting online orders right now.' };
+  }
+
   // Attribution: device from the user-agent, source from the wt_src cookie
   // (set by middleware when a shopper arrives via an embed link).
   const [hdrs, cookieStore] = await Promise.all([headers(), cookies()]);

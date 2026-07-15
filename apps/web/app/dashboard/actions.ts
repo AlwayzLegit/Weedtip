@@ -341,6 +341,21 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
   revalidatePath('/dashboard/orders');
 }
 
+/** Pause or resume incoming online orders for the owner's dispensary. */
+export async function setAcceptingOrders(accepting: boolean): Promise<void> {
+  const auth = await authedClient();
+  if (!auth) return;
+  const { supabase, userId } = auth;
+  const dispensaryId = await ownerDispensaryId(supabase, userId);
+  if (!dispensaryId) return;
+  await supabase
+    .from('dispensaries')
+    .update({ accepting_orders: accepting })
+    .eq('id', dispensaryId)
+    .eq('owner_id', userId);
+  revalidatePath('/dashboard/orders');
+}
+
 // ─── Bulk menu import (CSV) ──────────────────────────────────────────────────
 
 /** Minimal CSV line parser: handles quoted fields and escaped quotes. */

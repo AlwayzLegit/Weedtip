@@ -827,6 +827,7 @@ export type Database = {
       }
       dispensaries: {
         Row: {
+          accepting_orders: boolean
           address: string | null
           amenities: string[]
           announcement: string | null
@@ -876,6 +877,7 @@ export type Database = {
           zip: string | null
         }
         Insert: {
+          accepting_orders?: boolean
           address?: string | null
           amenities?: string[]
           announcement?: string | null
@@ -925,6 +927,7 @@ export type Database = {
           zip?: string | null
         }
         Update: {
+          accepting_orders?: boolean
           address?: string | null
           amenities?: string[]
           announcement?: string | null
