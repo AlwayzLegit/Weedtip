@@ -11,6 +11,7 @@ import { SubmitButton } from '../auth/submit-button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Checkbox, Field } from './field';
+import { GalleryManager } from './gallery-manager';
 import { ImageUpload } from './image-upload';
 
 export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'> | null }) {
@@ -158,6 +159,8 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
           placeholder="https://youtube.com/watch?v=…"
         />
       </Field>
+
+      <GalleryManager defaultUrls={d?.gallery_urls ?? []} />
 
       <fieldset className="rounded-card border-border border p-4">
         <legend className="px-1 text-sm font-medium">Offerings</legend>

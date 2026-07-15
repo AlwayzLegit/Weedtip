@@ -724,6 +724,25 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               <p className="text-muted">{d.description ?? generatedAbout(d, hours)}</p>
             </section>
 
+            {d.gallery_urls && d.gallery_urls.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-lg font-semibold">Photos</h2>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {d.gallery_urls.map((g, i) => (
+                    <a
+                      key={g}
+                      href={g}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="border-border bg-surface-2 block aspect-[4/3] overflow-hidden rounded-lg border bg-cover bg-center"
+                      style={{ backgroundImage: `url(${g})` }}
+                      aria-label={`${d.name} photo ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {videoEmbed(d.video_url) && (
               <section>
                 <h2 className="mb-3 text-lg font-semibold">Video</h2>
