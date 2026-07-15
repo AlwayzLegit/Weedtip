@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Pencil, Plus } from 'lucide-react';
 import type { Tables } from '@weedtip/supabase/types';
 import { deleteDeal } from '@/app/dashboard/actions';
+import { DealsTabs } from '@/components/dashboard/deals-tabs';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
@@ -79,6 +80,8 @@ export default async function DashboardDeals() {
           </Button>
         </Link>
       </div>
+
+      <DealsTabs active="list" />
 
       {!isPaid && (
         <UpgradeBanner message="Deals are a Growth feature. You can view existing deals, but publishing new ones needs an upgrade." />
