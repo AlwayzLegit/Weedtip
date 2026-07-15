@@ -256,6 +256,11 @@ export const dealWriteSchema = z
     start_date: z.string().datetime(),
     end_date: z.string().datetime(),
     is_active: z.boolean().default(true),
+    /** Who may redeem a code deal. */
+    audience: z.enum(['all', 'first_time', 'return']).default('all'),
+    /** Redemption caps (reuse the deals table's per_customer_limit / total_limit). */
+    per_customer_limit: z.number().int().positive().max(1_000_000).nullable().optional(),
+    total_limit: z.number().int().positive().max(10_000_000).nullable().optional(),
   })
   .refine((d) => new Date(d.end_date) > new Date(d.start_date), {
     message: 'end_date must be after start_date',

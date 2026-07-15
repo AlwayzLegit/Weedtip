@@ -34,6 +34,12 @@ function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
 }
 
+const AUDIENCE_LABEL: Record<string, string> = {
+  all: 'Anyone',
+  first_time: 'First-time',
+  return: 'Returning',
+};
+
 export default async function PromoCodesPage({
   searchParams,
 }: {
@@ -86,6 +92,11 @@ export default async function PromoCodesPage({
       className: 'max-w-[16rem] truncate',
     },
     { key: 'discount', header: 'Discount', cell: (d) => <span className="text-muted">{discountLabel(d)}</span> },
+    {
+      key: 'audience',
+      header: 'Audience',
+      cell: (d) => <span className="text-muted">{AUDIENCE_LABEL[d.audience] ?? 'Anyone'}</span>,
+    },
     {
       key: 'dates',
       header: 'Dates',

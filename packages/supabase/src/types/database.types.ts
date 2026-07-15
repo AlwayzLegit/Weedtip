@@ -667,6 +667,7 @@ export type Database = {
       }
       deals: {
         Row: {
+          audience: string
           auto_apply: boolean
           buy_quantity: number | null
           code: string | null
@@ -706,6 +707,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audience?: string
           auto_apply?: boolean
           buy_quantity?: number | null
           code?: string | null
@@ -745,6 +747,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audience?: string
           auto_apply?: boolean
           buy_quantity?: number | null
           code?: string | null
