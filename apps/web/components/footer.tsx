@@ -17,7 +17,8 @@ const DISCOVER = [
 ];
 
 const BUSINESS = [
-  { href: '/sign-up', label: 'List your shop' },
+  { href: '/claim', label: 'List your shop' },
+  { href: '/for-brands', label: 'For brands' },
   { href: '/advertise', label: 'Advertise' },
   { href: '/dashboard', label: 'Owner dashboard' },
   { href: '/studio', label: 'Brand Studio' },

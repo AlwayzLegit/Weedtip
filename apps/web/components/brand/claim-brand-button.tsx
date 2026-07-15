@@ -1,36 +1,56 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useActionState, useState } from 'react';
 import { requestBrandClaim } from '@/app/actions/brands';
-import { Button } from '@/components/ui/button';
+import { EMPTY_FORM_STATE } from '@/lib/forms';
+import { SubmitButton } from '../auth/submit-button';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 
 /** Lets a signed-in owner request ownership of an unclaimed brand. */
 export function ClaimBrandButton({ brandId }: { brandId: string }) {
-  const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [state, action] = useActionState(requestBrandClaim, EMPTY_FORM_STATE);
+  const [open, setOpen] = useState(false);
 
-  if (done) {
-    return <p className="text-primary text-sm">Claim submitted — an admin will review it shortly.</p>;
+  if (state.status === 'success') {
+    return (
+      <p className="text-primary text-sm">Claim submitted — an admin will review it shortly.</p>
+    );
+  }
+
+  if (!open) {
+    return (
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        Claim this brand
+      </Button>
+    );
   }
 
   return (
-    <div>
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={pending}
-        onClick={() =>
-          start(async () => {
-            const res = await requestBrandClaim(brandId);
-            if (res.ok) setDone(true);
-            else setError(res.error ?? 'Could not submit claim.');
-          })
-        }
-      >
-        Claim this brand
-      </Button>
-      {error && <p className="text-danger mt-1 text-xs">{error}</p>}
-    </div>
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="brand_id" value={brandId} />
+      <Input
+        name="business_email"
+        type="email"
+        placeholder="Business email"
+        required
+        maxLength={254}
+      />
+      <Textarea
+        name="message"
+        placeholder="Your role at this brand and anything that helps verify you (optional)"
+        maxLength={2000}
+      />
+      {state.status === 'error' && state.message && (
+        <p className="text-danger text-xs">{state.message}</p>
+      )}
+      <div className="flex gap-2">
+        <SubmitButton size="sm">Submit claim</SubmitButton>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   );
 }

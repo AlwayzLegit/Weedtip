@@ -8,8 +8,9 @@ import {
   STRAIN_TYPES,
   type DispensaryStatus,
 } from '@weedtip/shared';
-import { claimDecisionEmail, sendEmail } from '@/lib/email';
+import { brandClaimDecisionEmail, claimDecisionEmail, sendEmail } from '@/lib/email';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { slugify } from '@/lib/utils';
 import { bool, formError, fromZodError, numOpt, str, type FormState } from '@/lib/forms';
 import { z } from 'zod';
@@ -325,18 +326,76 @@ export async function rejectOwnershipRequest(id: string): Promise<void> {
   revalidatePath('/admin/claims');
 }
 
+/** Email the brand claimant the approve/reject decision (parity with listings). */
+async function notifyBrandClaimDecision(claimId: string, approved: boolean): Promise<void> {
+  const supabase = await createClient();
+  const { data: claim } = await supabase
+    .from('brand_claims')
+    .select('business_email, brand:brands(name)')
+    .eq('id', claimId)
+    .maybeSingle();
+  const brandName = (claim?.brand as { name: string } | null)?.name;
+  if (!claim?.business_email || !brandName) return;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  const m = brandClaimDecisionEmail(brandName, approved, siteUrl);
+  await sendEmail({ to: claim.business_email, subject: m.subject, html: m.html });
+}
+
 export async function approveBrandClaim(id: string): Promise<void> {
   const supabase = await createClient();
   // SECURITY DEFINER RPC: verifies admin, sets brands.owner_id, auto-rejects rivals.
   await supabase.rpc('approve_brand_claim', { p_claim_id: id });
+  await notifyBrandClaimDecision(id, true);
   revalidatePath('/admin/claims');
   revalidatePath('/brands');
 }
 
 export async function rejectBrandClaim(id: string): Promise<void> {
   const supabase = await createClient();
+  await notifyBrandClaimDecision(id, false);
   await supabase.rpc('reject_brand_claim', { p_claim_id: id });
   revalidatePath('/admin/claims');
+}
+
+// ─── Self-serve brand review ───────────────────────────────────────────────────
+
+/** Approve a self-created (pending) brand → active, and email the owner. */
+export async function approveBrand(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { data: brand } = await supabase
+    .from('brands')
+    .update({ status: 'active' })
+    .eq('id', id)
+    .eq('status', 'pending')
+    .select('name, owner_id')
+    .maybeSingle();
+
+  // Notify the owner their brand is live (owner email lives in auth, not profiles).
+  if (brand?.owner_id) {
+    try {
+      const svc = createServiceClient();
+      const { data } = await svc.auth.admin.getUserById(brand.owner_id);
+      const email = data.user?.email;
+      if (email) {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+        const m = brandClaimDecisionEmail(brand.name, true, siteUrl);
+        await sendEmail({ to: email, subject: m.subject, html: m.html });
+      }
+    } catch (e) {
+      console.warn('[admin] brand-approve owner email failed:', e);
+    }
+  }
+
+  revalidatePath('/admin/brands');
+  revalidatePath('/brands');
+  revalidatePath('/studio');
+}
+
+/** Reject a self-created (pending) brand. */
+export async function rejectBrand(id: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from('brands').update({ status: 'rejected' }).eq('id', id).eq('status', 'pending');
+  revalidatePath('/admin/brands');
 }
 
 // ─── Categories ──────────────────────────────────────────────────────────────

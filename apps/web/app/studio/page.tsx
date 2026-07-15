@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Store } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Store } from 'lucide-react';
 import { BrandManageForm } from '@/components/dashboard/brand-manage-form';
+import { brandSetupProgress, brandSetupSteps } from '@/lib/brand-onboarding';
 import { getBrandOwnerContext } from '@/lib/brand-owner';
 import { createClient } from '@/lib/supabase/server';
 
@@ -12,11 +13,21 @@ export default async function StudioProfile() {
   const ids = brands.map((b) => b.id);
 
   const supabase = await createClient();
-  const { data: prods } = await supabase
-    .from('products')
-    .select('id,brand_id, dispensary:dispensaries!inner(slug,name,status)')
-    .in('brand_id', ids)
-    .eq('dispensary.status', 'active');
+  const [{ data: prods }, { data: catalog }] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id,brand_id, dispensary:dispensaries!inner(slug,name,status)')
+      .in('brand_id', ids)
+      .eq('dispensary.status', 'active'),
+    // Owner's own catalog products (drives the "add your first product" step).
+    supabase.from('brand_products').select('id,brand_id').in('brand_id', ids),
+  ]);
+
+  // brand_id → number of catalog products the owner has added.
+  const catalogCount = new Map<string, number>();
+  for (const p of catalog ?? []) {
+    if (p.brand_id) catalogCount.set(p.brand_id, (catalogCount.get(p.brand_id) ?? 0) + 1);
+  }
 
   // brand_id → { products, shops }
   const carried = new Map<string, { products: number; shops: Map<string, string> }>();
@@ -40,14 +51,42 @@ export default async function StudioProfile() {
 
       {brands.map((b) => {
         const c = carried.get(b.id);
+        const steps = brandSetupSteps(b, { products: catalogCount.get(b.id) ?? 0 });
+        const { done, total } = brandSetupProgress(steps);
         return (
           <section key={b.id} className="card space-y-5 p-6">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">{b.name}</h2>
-              <Link href={`/brand/${b.slug}`} className="text-primary text-sm hover:underline">
-                View public page →
-              </Link>
+              {b.status === 'active' ? (
+                <Link href={`/brand/${b.slug}`} className="text-primary text-sm hover:underline">
+                  View public page →
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                  <Clock className="h-3.5 w-3.5" /> Pending review
+                </span>
+              )}
             </div>
+
+            {done < total && (
+              <div className="rounded-card border-border bg-surface-2 border p-4">
+                <p className="text-sm font-semibold">
+                  Finish setting up your brand ({done}/{total})
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {steps.map((s) => (
+                    <li key={s.key} className="flex items-center gap-2 text-sm">
+                      {s.done ? (
+                        <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
+                      ) : (
+                        <Circle className="text-muted h-4 w-4 shrink-0" />
+                      )}
+                      <span className={s.done ? 'text-muted line-through' : ''}>{s.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <BrandManageForm brand={b} />
 

@@ -81,6 +81,21 @@ export default function ClaimPage() {
         </Link>
       </div>
 
+      <div className="rounded-card border-border bg-surface-2 mt-8 flex flex-wrap items-center justify-between gap-3 border p-5">
+        <div>
+          <p className="font-semibold">Shop not in our directory?</p>
+          <p className="text-muted mt-1 text-sm">
+            Newly licensed or missing? Add your dispensary from scratch — it goes live after a quick
+            review.
+          </p>
+        </div>
+        <Link href="/dashboard/listing">
+          <Button variant="outline">
+            <Store className="h-4 w-4" /> Create your listing
+          </Button>
+        </Link>
+      </div>
+
       <p className="text-muted mt-8 text-sm">
         Want more reach once you&apos;re verified?{' '}
         <Link href="/advertise" className="text-primary hover:underline">

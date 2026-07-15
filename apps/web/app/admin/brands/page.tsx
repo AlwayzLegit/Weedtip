@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Pencil, Plus, Search } from 'lucide-react';
-import { deleteBrand } from '@/app/admin/actions';
+import { approveBrand, deleteBrand, rejectBrand } from '@/app/admin/actions';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,12 +18,58 @@ export default async function AdminBrands({
   const search = (q ?? '').trim();
 
   const supabase = await createClient();
-  let query = supabase.from('brands').select('id,name,slug').order('name');
+  let query = supabase.from('brands').select('id,name,slug,status').order('name');
   if (search) query = query.ilike('name', `%${search}%`);
-  const { data: brands } = await query;
+  const [{ data: brands }, { data: pending }] = await Promise.all([
+    query,
+    supabase
+      .from('brands')
+      .select('id,name,slug,website,created_at')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true }),
+  ]);
 
   return (
     <div className="space-y-4">
+      {pending && pending.length > 0 && (
+        <div className="rounded-card border-amber-500/40 bg-amber-500/5 space-y-3 border p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            Pending review
+            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-400">
+              {pending.length}
+            </span>
+          </h3>
+          <div className="space-y-2">
+            {pending.map((b) => (
+              <div
+                key={b.id}
+                className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-3"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium">{b.name}</p>
+                  <p className="text-muted text-xs">
+                    {b.website ? `${b.website} · ` : ''}
+                    submitted {new Date(b.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <form action={approveBrand.bind(null, b.id)}>
+                    <Button type="submit" size="sm">
+                      Approve
+                    </Button>
+                  </form>
+                  <form action={rejectBrand.bind(null, b.id)}>
+                    <Button type="submit" size="sm" variant="outline">
+                      Reject
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow mb-1">Catalog</p>
@@ -66,7 +112,12 @@ export default async function AdminBrands({
             ) : (
               (brands ?? []).map((b) => (
                 <tr key={b.id} className="bg-surface hover:bg-surface-2/50 transition-colors">
-                  <td className="px-4 py-3 font-medium">{b.name}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {b.name}
+                    {b.status !== 'active' && (
+                      <span className="text-muted ml-2 text-xs font-normal">({b.status})</span>
+                    )}
+                  </td>
                   <td className="text-muted px-4 py-3">{b.slug}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">

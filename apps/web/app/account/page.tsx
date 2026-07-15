@@ -11,8 +11,24 @@ export default async function AccountPage() {
   // Layout guarantees auth; profile is created by the signup trigger.
   if (!user || !profile) return null;
 
+  const showPersonalizeNudge =
+    profile.role === 'consumer' && (profile.preferred_categories?.length ?? 0) === 0;
+
   return (
     <div className="space-y-10">
+      {showPersonalizeNudge && (
+        <Link
+          href="/welcome"
+          className="rounded-card border-primary/30 bg-primary-muted text-primary flex items-center justify-between gap-3 border p-4 text-sm hover:brightness-[1.02]"
+        >
+          <span>
+            <span className="font-medium">Personalize your feed</span> — set your location and
+            favorite categories to see the shops and deals that fit you.
+          </span>
+          <span className="shrink-0 font-medium">Finish setup →</span>
+        </Link>
+      )}
+
       <ProfileForm profile={profile} email={user.email ?? ''} />
 
       <section className="rounded-card border-border max-w-md border p-4">

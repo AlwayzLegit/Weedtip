@@ -9,36 +9,44 @@ import { Label } from '../ui/label';
 import { FormMessage } from './form-message';
 import { SubmitButton } from './submit-button';
 
+type Persona = 'consumer' | 'dispensary_owner' | 'brand';
+
 export function SignUpForm({
   defaultRole = 'consumer',
   next,
 }: {
-  defaultRole?: 'consumer' | 'dispensary_owner';
+  defaultRole?: Persona;
   next?: string;
 }) {
   const [state, action] = useActionState<AuthState, FormData>(signUp, {});
-  const [role, setRole] = useState<'consumer' | 'dispensary_owner'>(defaultRole);
+  const [persona, setPersona] = useState<Persona>(defaultRole);
+
+  // Brand owners have no role of their own (ownership is via brands.owner_id), so
+  // they register as consumers and carry their intent into the brand flow via next.
+  const role = persona === 'brand' ? 'consumer' : persona;
+  const nextValue = persona === 'brand' ? '/for-brands' : next;
 
   return (
     <form action={action} className="space-y-4">
       <FormMessage state={state} />
 
       <input type="hidden" name="role" value={role} />
-      {next && <input type="hidden" name="next" value={next} />}
-      <div className="grid grid-cols-2 gap-2">
+      {nextValue && <input type="hidden" name="next" value={nextValue} />}
+      <div className="grid grid-cols-3 gap-2">
         {(
           [
-            { value: 'consumer', label: 'I’m shopping' },
+            { value: 'consumer', label: 'Shopping' },
             { value: 'dispensary_owner', label: 'I own a shop' },
+            { value: 'brand', label: 'I’m a brand' },
           ] as const
         ).map((opt) => (
           <button
             key={opt.value}
             type="button"
-            onClick={() => setRole(opt.value)}
+            onClick={() => setPersona(opt.value)}
             className={cn(
-              'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
-              role === opt.value
+              'rounded-lg border px-2 py-2 text-center text-sm font-medium transition-colors',
+              persona === opt.value
                 ? 'border-primary bg-primary-muted text-primary'
                 : 'border-border text-muted hover:text-foreground',
             )}
