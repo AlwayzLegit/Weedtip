@@ -213,6 +213,34 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
         </div>
       </fieldset>
 
+      <fieldset className="rounded-card border-border border p-4">
+        <legend className="px-1 text-sm font-medium">Pickup profile</legend>
+        <p className="text-muted mb-3 text-xs">
+          Set expectations for pickup orders — shown on your listing and after a shopper checks out.
+        </p>
+        <div className="space-y-4">
+          <Checkbox
+            name="require_id"
+            label="Require a valid ID at pickup"
+            defaultChecked={d?.require_id ?? false}
+          />
+          <Field
+            label="Post-order message"
+            htmlFor="post_order_message"
+            error={fe.post_order_message}
+            hint="Shown to the shopper on their order confirmation (e.g. parking, entrance, wait time). Max 250 characters."
+          >
+            <Textarea
+              id="post_order_message"
+              name="post_order_message"
+              defaultValue={d?.post_order_message ?? ''}
+              rows={2}
+              maxLength={250}
+            />
+          </Field>
+        </div>
+      </fieldset>
+
       <div className="flex items-center gap-3">
         <SubmitButton size="lg">{d ? 'Save changes' : 'Create listing'}</SubmitButton>
         {d && <span className="text-muted text-sm">Status is managed by Weedtip admins.</span>}

@@ -514,6 +514,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               )}
               {d.is_medical && <Badge tone="outline">Medical</Badge>}
               {d.is_recreational && <Badge tone="outline">Recreational</Badge>}
+              {d.require_id && <Badge tone="outline">Valid ID required</Badge>}
             </div>
           </div>
 

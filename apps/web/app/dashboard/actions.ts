@@ -109,6 +109,8 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
     hours: parseHours(fd),
     announcement: str(fd, 'announcement') ?? null,
     amenities: fd.getAll('amenities').filter((v): v is string => typeof v === 'string'),
+    require_id: bool(fd, 'require_id'),
+    post_order_message: str(fd, 'post_order_message') ?? null,
     location: lat !== undefined && lng !== undefined ? { lat, lng } : null,
   };
 
