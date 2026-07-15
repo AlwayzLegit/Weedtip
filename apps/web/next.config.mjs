@@ -12,7 +12,7 @@ const csp = [
   "img-src 'self' data: blob: https://*.supabase.co https://*.mapbox.com https://api.mapbox.com https://www.google.com https://*.gstatic.com https://*.googleusercontent.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.mapbox.com https://us.i.posthog.com https://us-assets.i.posthog.com",
-  "frame-src 'self'",
+  "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
   "worker-src 'self' blob:",
   "child-src 'self' blob:",
   "object-src 'none'",

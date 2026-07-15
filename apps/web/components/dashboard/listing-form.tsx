@@ -145,6 +145,20 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
         </Field>
       </section>
 
+      <Field
+        label="Video"
+        htmlFor="video_url"
+        error={fe.video_url}
+        hint="Paste a YouTube or Vimeo link to feature a tour or intro on your listing. Leave blank to hide."
+      >
+        <Input
+          id="video_url"
+          name="video_url"
+          defaultValue={d?.video_url ?? ''}
+          placeholder="https://youtube.com/watch?v=…"
+        />
+      </Field>
+
       <fieldset className="rounded-card border-border border p-4">
         <legend className="px-1 text-sm font-medium">Offerings</legend>
         <div className="mt-2 flex flex-wrap gap-4">
