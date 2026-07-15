@@ -24,12 +24,13 @@ import {
   Star,
   Store,
   Tag,
+  UserCog,
   Users,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type NavItem = { href: string; label: string; icon: LucideIcon };
+type NavItem = { href: string; label: string; icon: LucideIcon; ownerOnly?: boolean };
 
 const OWNER_NAV: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -38,16 +39,17 @@ const OWNER_NAV: NavItem[] = [
   { href: '/dashboard/deals', label: 'Deals', icon: Tag },
   { href: '/dashboard/promos', label: 'In-store', icon: BadgeCheck },
   { href: '/dashboard/register', label: 'Register', icon: Calculator },
-  { href: '/dashboard/taxes', label: 'Taxes', icon: Percent },
+  { href: '/dashboard/taxes', label: 'Taxes', icon: Percent, ownerOnly: true },
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/dashboard/reviews', label: 'Reviews', icon: Star },
   { href: '/dashboard/updates', label: 'Updates', icon: Users },
+  { href: '/dashboard/team', label: 'Team', icon: UserCog, ownerOnly: true },
   { href: '/studio', label: 'Brand Studio', icon: Award },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/qr', label: 'QR codes', icon: QrCode },
   { href: '/dashboard/google', label: 'Google', icon: Globe },
-  { href: '/dashboard/promote', label: 'Promote', icon: Megaphone },
-  { href: '/advertise', label: 'Advertise', icon: Gavel },
+  { href: '/dashboard/promote', label: 'Promote', icon: Megaphone, ownerOnly: true },
+  { href: '/advertise', label: 'Advertise', icon: Gavel, ownerOnly: true },
 ];
 
 const ADMIN_NAV: NavItem[] = [
@@ -73,15 +75,23 @@ const ADMIN_NAV: NavItem[] = [
 export function DashboardNav({
   variant,
   showBrandStudio = true,
+  isOwner = true,
 }: {
   variant: 'owner' | 'admin';
   /** Hide the Brand Studio item for owners who don't manage a brand (avoids a dead-end redirect). */
   showBrandStudio?: boolean;
+  /** Team members (managers/staff) don't see owner-only items (billing, team, taxes). */
+  isOwner?: boolean;
 }) {
   const pathname = usePathname();
   const base = variant === 'owner' ? OWNER_NAV : ADMIN_NAV;
   const items =
-    variant === 'owner' && !showBrandStudio ? base.filter((i) => i.href !== '/studio') : base;
+    variant === 'owner'
+      ? base.filter(
+          (i) =>
+            (showBrandStudio || i.href !== '/studio') && (isOwner || !i.ownerOnly),
+        )
+      : base;
   const root = variant === 'owner' ? '/dashboard' : '/admin';
 
   return (

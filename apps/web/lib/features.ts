@@ -12,7 +12,7 @@ import { createClient } from './supabase/server';
  * `planGated: true` → requires the Growth plan by default; `false` → on for
  * everyone by default (still overridable off by an admin).
  */
-export type FeatureKey = 'deals' | 'promos' | 'updates' | 'taxes' | 'analytics';
+export type FeatureKey = 'deals' | 'promos' | 'updates' | 'taxes' | 'analytics' | 'team';
 
 export const FEATURES: {
   key: FeatureKey;
@@ -25,6 +25,7 @@ export const FEATURES: {
   { key: 'updates', label: 'Follower updates', description: 'Broadcast news to followers.', planGated: true },
   { key: 'taxes', label: 'Tax configuration', description: 'Custom taxes on orders + POS.', planGated: true },
   { key: 'analytics', label: 'Advanced analytics', description: 'Product/brand/category breakdowns.', planGated: true },
+  { key: 'team', label: 'Team members', description: 'Invite managers + staff to help run the shop.', planGated: true },
 ];
 
 const FEATURE_MAP = new Map(FEATURES.map((f) => [f.key, f]));
