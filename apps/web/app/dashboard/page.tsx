@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
+import { SetupChecklist } from '@/components/dashboard/setup-checklist';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
+import { setupSteps } from '@/lib/onboarding';
 import { getOwnerContext } from '@/lib/owner';
 import { createClient } from '@/lib/supabase/server';
 
@@ -70,6 +72,11 @@ export default async function DashboardOverview() {
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : '—';
 
+  const steps = setupSteps(dispensary, {
+    products: productCount ?? 0,
+    deals: dealCount ?? 0,
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -89,6 +96,9 @@ export default async function DashboardOverview() {
           </Button>
         </Link>
       </div>
+
+      {/* Guided first-run activation — the fastest path to a live, sellable page. */}
+      <SetupChecklist steps={steps} />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Revenue" value={formatPrice(revenue)} accent />
