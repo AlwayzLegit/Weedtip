@@ -1741,6 +1741,69 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          id: number
+          brand_name: string
+          legal_name: string | null
+          tagline: string | null
+          support_email: string
+          sales_email: string
+          ads_email: string
+          privacy_email: string
+          email_from: string
+          phone_display: string | null
+          phone_e164: string | null
+          address_line: string | null
+          address_locality: string | null
+          address_region: string | null
+          postal_code: string | null
+          country: string
+          brand_color: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          brand_name?: string
+          legal_name?: string | null
+          tagline?: string | null
+          support_email?: string
+          sales_email?: string
+          ads_email?: string
+          privacy_email?: string
+          email_from?: string
+          phone_display?: string | null
+          phone_e164?: string | null
+          address_line?: string | null
+          address_locality?: string | null
+          address_region?: string | null
+          postal_code?: string | null
+          country?: string
+          brand_color?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          brand_name?: string
+          legal_name?: string | null
+          tagline?: string | null
+          support_email?: string
+          sales_email?: string
+          ads_email?: string
+          privacy_email?: string
+          email_from?: string
+          phone_display?: string | null
+          phone_e164?: string | null
+          address_line?: string | null
+          address_locality?: string | null
+          address_region?: string | null
+          postal_code?: string | null
+          country?: string
+          brand_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_reviews: {
         Row: {
           author_name: string | null

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/legal/legal-page';
+import { getPlatformSettings } from '@/lib/settings';
 
 export const metadata: Metadata = {
   title: 'Refund & Cancellation Policy',
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/refunds' },
 };
 
-export default function RefundsPage() {
+export default async function RefundsPage() {
+  const s = await getPlatformSettings();
   return (
     <LegalPage title="Refund &amp; Cancellation Policy" updated="July 13, 2026">
       <h2>Overview</h2>
@@ -79,9 +81,15 @@ export default function RefundsPage() {
 
       <h2>How to reach us</h2>
       <p>
-        Questions or refund requests: email <a href="mailto:support@weedtip.com">support@weedtip.com</a>,
-        call <a href="tel:+17472504446">(747) 250-4446</a>, or write to Weedtip, North Hollywood, CA
-        91606. Include your order number so we can help quickly.
+        Questions or refund requests: email{' '}
+        <a href={`mailto:${s.supportEmail}`}>{s.supportEmail}</a>
+        {s.phoneE164 && s.phoneDisplay && (
+          <>
+            , call <a href={`tel:${s.phoneE164}`}>{s.phoneDisplay}</a>
+          </>
+        )}
+        {s.addressLine ? `, or write to ${s.brandName}, ${s.addressLine}` : ''}. Include your order
+        number so we can help quickly.
       </p>
     </LegalPage>
   );

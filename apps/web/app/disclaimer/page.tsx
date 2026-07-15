@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/legal/legal-page';
+import { getPlatformSettings } from '@/lib/settings';
 
 export const metadata: Metadata = {
   title: 'Disclaimer',
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/disclaimer' },
 };
 
-export default function DisclaimerPage() {
+export default async function DisclaimerPage() {
+  const s = await getPlatformSettings();
   return (
     <LegalPage title="Disclaimer" updated="June 2, 2026">
       <h2>Age &amp; legal use</h2>
@@ -52,7 +54,7 @@ export default function DisclaimerPage() {
 
       <h2>Contact</h2>
       <p>
-        Questions? Contact us at <a href="mailto:support@weedtip.com">support@weedtip.com</a>.
+        Questions? Contact us at <a href={`mailto:${s.supportEmail}`}>{s.supportEmail}</a>.
       </p>
     </LegalPage>
   );

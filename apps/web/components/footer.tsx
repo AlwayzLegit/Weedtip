@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { Link } from 'next-view-transitions';
 import { getAuth } from '@/lib/auth';
+import { getPlatformSettings } from '@/lib/settings';
 import { DealAlertSignup } from './deal-alert-signup';
 import { Logo } from './brand/logo';
 import { PaymentLogos } from './payment-logos';
@@ -50,7 +51,7 @@ function Column({ title, links }: { title: string; links: { href: string; label:
 }
 
 export async function Footer() {
-  const { user } = await getAuth();
+  const [{ user }, settings] = await Promise.all([getAuth(), getPlatformSettings()]);
   // Localize the deal-alert copy to the visitor's chosen market (nav selector
   // writes the wt_state cookie). Falls back to a generic "near you".
   const marketState = (await cookies()).get('wt_state')?.value ?? null;
@@ -69,11 +70,15 @@ export async function Footer() {
             </p>
             {/* Business contact — required on-site for payment processing. */}
             <address className="text-muted text-sm not-italic">
-              <a href="tel:+17472504446" className="hover:text-foreground">
-                (747) 250-4446
-              </a>
-              <br />
-              North Hollywood, CA 91606
+              {settings.phoneE164 && settings.phoneDisplay && (
+                <>
+                  <a href={`tel:${settings.phoneE164}`} className="hover:text-foreground">
+                    {settings.phoneDisplay}
+                  </a>
+                  <br />
+                </>
+              )}
+              {settings.addressLine}
             </address>
           </div>
           <Column title="Discover" links={DISCOVER} />
