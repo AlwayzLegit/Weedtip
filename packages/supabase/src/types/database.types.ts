@@ -834,6 +834,9 @@ export type Database = {
           gallery_urls: string[]
           post_order_message: string | null
           require_id: boolean
+          reviews_summary: string | null
+          reviews_summary_at: string | null
+          reviews_summary_count: number | null
           special_hours: Json
           video_url: string | null
           address: string | null
@@ -889,6 +892,9 @@ export type Database = {
           gallery_urls?: string[]
           post_order_message?: string | null
           require_id?: boolean
+          reviews_summary?: string | null
+          reviews_summary_at?: string | null
+          reviews_summary_count?: number | null
           special_hours?: Json
           video_url?: string | null
           address?: string | null
@@ -944,6 +950,9 @@ export type Database = {
           gallery_urls?: string[]
           post_order_message?: string | null
           require_id?: boolean
+          reviews_summary?: string | null
+          reviews_summary_at?: string | null
+          reviews_summary_count?: number | null
           special_hours?: Json
           video_url?: string | null
           address?: string | null

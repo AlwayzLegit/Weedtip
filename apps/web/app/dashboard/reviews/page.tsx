@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, Sparkles } from 'lucide-react';
 import { RatingStars } from '@/components/rating-stars';
 import { DisputeForm } from '@/components/dashboard/dispute-form';
 import { ReplyForm } from '@/components/dashboard/reply-form';
+import { SummaryGenerator } from '@/components/dashboard/summary-generator';
 import { Badge } from '@/components/ui/badge';
+import { isAiEnabled } from '@/lib/ai';
 import { requireOwnerDispensary } from '@/lib/owner';
 import { createClient } from '@/lib/supabase/server';
 
@@ -76,6 +78,37 @@ export default async function DashboardReviews({
         Respond publicly to reviews of {dispensary.name}. Your response appears beneath the review on
         your listing.
       </p>
+
+      {isAiEnabled && (
+        <div className="rounded-card border-border bg-surface border p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+                <Sparkles className="text-primary h-4 w-4" /> AI review summary
+              </h2>
+              {dispensary.reviews_summary ? (
+                <>
+                  <p className="text-muted mt-1 text-sm">{dispensary.reviews_summary}</p>
+                  <p className="text-muted mt-1 text-xs">
+                    Based on {dispensary.reviews_summary_count ?? 0} reviews
+                    {dispensary.reviews_summary_at
+                      ? ` · updated ${new Date(dispensary.reviews_summary_at).toLocaleDateString()}`
+                      : ''}
+                    . Shown on your public listing.
+                  </p>
+                </>
+              ) : (
+                <p className="text-muted mt-1 text-sm">
+                  {total >= 3
+                    ? 'Generate a short summary of your reviews to feature on your listing.'
+                    : 'Once you have at least 3 written reviews, you can generate a summary here.'}
+                </p>
+              )}
+            </div>
+            {total >= 3 && <SummaryGenerator hasSummary={!!dispensary.reviews_summary} />}
+          </div>
+        </div>
+      )}
 
       {total > 0 && (
         <div className="flex flex-wrap items-center gap-2">
