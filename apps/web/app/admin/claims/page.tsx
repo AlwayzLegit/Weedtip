@@ -12,7 +12,7 @@ export default async function AdminClaims() {
     supabase
       .from('ownership_requests')
       .select(
-        'id, status, message, license_number, license_match, claimant_role, business_email, business_phone, created_at, dispensary:dispensaries(name,slug,city,state), requester:profiles(display_name)',
+        'id, status, message, license_number, license_match, email_domain_match, document_path, claimant_role, business_email, business_phone, created_at, dispensary:dispensaries(name,slug,city,state), requester:profiles(display_name)',
       )
       .eq('status', 'pending')
       .order('created_at', { ascending: true }),
@@ -22,6 +22,20 @@ export default async function AdminClaims() {
       .eq('status', 'pending')
       .order('created_at', { ascending: true }),
   ]);
+
+  // Sign each uploaded document so admins can open it (bucket is private; the
+  // "read own or admin" RLS policy lets this admin session generate the link).
+  const docUrls = new Map<string, string>();
+  await Promise.all(
+    (requests ?? [])
+      .filter((r) => r.document_path)
+      .map(async (r) => {
+        const { data } = await supabase.storage
+          .from('claim-documents')
+          .createSignedUrl(r.document_path as string, 60 * 10);
+        if (data?.signedUrl) docUrls.set(r.id, data.signedUrl);
+      }),
+  );
 
   return (
     <div className="space-y-4">
@@ -81,21 +95,81 @@ export default async function AdminClaims() {
                     {r.business_email ? ` · ${r.business_email}` : ''}
                     {r.business_phone ? ` · ${r.business_phone}` : ''}
                   </p>
-                  {r.license_number && (
-                    <p className="mt-2 text-sm">
-                      <span className="text-muted">License #</span> {r.license_number}{' '}
-                      {r.license_match ? (
-                        <span className="text-primary text-xs font-semibold">
-                          ✓ matches state record
+                  {(() => {
+                    const hasDoc = !!r.document_path;
+                    const signals =
+                      (r.license_match ? 1 : 0) + (r.email_domain_match ? 1 : 0) + (hasDoc ? 1 : 0);
+                    const strong = r.license_match && r.email_domain_match;
+                    const strength = signals === 0 ? 'weak' : strong ? 'strong' : 'moderate';
+                    const strengthClass = {
+                      strong: 'border-primary/30 bg-primary-muted text-primary',
+                      moderate:
+                        'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
+                      weak: 'border-danger/40 bg-danger/10 text-danger',
+                    }[strength];
+                    return (
+                      <div className="mt-2 space-y-1.5">
+                        <span
+                          className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${strengthClass}`}
+                        >
+                          {strength} verification
                         </span>
-                      ) : (
-                        <span className="text-muted text-xs">— does not match record on file</span>
-                      )}
-                    </p>
-                  )}
-                  {r.message && <p className="text-muted mt-1 text-sm">“{r.message}”</p>}
+                        <ul className="text-xs">
+                          <li>
+                            <span className={r.license_match ? 'text-primary' : 'text-muted'}>
+                              {r.license_match ? '✓' : '○'}
+                            </span>{' '}
+                            License{' '}
+                            {r.license_number ? (
+                              <span className="font-mono">{r.license_number}</span>
+                            ) : (
+                              'not provided'
+                            )}
+                            {r.license_number &&
+                              (r.license_match
+                                ? ' — matches state record'
+                                : ' — no match on file')}
+                          </li>
+                          <li>
+                            <span className={r.email_domain_match ? 'text-primary' : 'text-muted'}>
+                              {r.email_domain_match ? '✓' : '○'}
+                            </span>{' '}
+                            Business email{' '}
+                            {r.email_domain_match
+                              ? 'on the listing’s own domain'
+                              : 'not on the listing’s domain'}
+                          </li>
+                          <li>
+                            <span className={hasDoc ? 'text-primary' : 'text-muted'}>
+                              {hasDoc ? '✓' : '○'}
+                            </span>{' '}
+                            {hasDoc ? (
+                              docUrls.get(r.id) ? (
+                                <a
+                                  href={docUrls.get(r.id)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary font-medium hover:underline"
+                                >
+                                  View uploaded document
+                                </a>
+                              ) : (
+                                'Document uploaded (link unavailable)'
+                              )
+                            ) : (
+                              'No document uploaded'
+                            )}
+                          </li>
+                        </ul>
+                      </div>
+                    );
+                  })()}
+                  {r.message && <p className="text-muted mt-2 text-sm">“{r.message}”</p>}
                 </div>
-                <ClaimButtons id={r.id} />
+                <ClaimButtons
+                  id={r.id}
+                  weak={!r.license_match && !r.email_domain_match && !r.document_path}
+                />
               </div>
             );
           })}

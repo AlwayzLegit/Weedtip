@@ -1417,6 +1417,8 @@ export type Database = {
         Row: {
           created_at: string
           dispensary_id: string
+          document_path: string | null
+          email_domain_match: boolean
           id: string
           business_email: string | null
           business_phone: string | null
@@ -1431,6 +1433,8 @@ export type Database = {
         Insert: {
           created_at?: string
           dispensary_id: string
+          document_path?: string | null
+          email_domain_match?: boolean
           id?: string
           business_email?: string | null
           business_phone?: string | null
