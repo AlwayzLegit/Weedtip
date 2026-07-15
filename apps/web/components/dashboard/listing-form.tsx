@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours } from '@weedtip/shared';
+import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours, type SpecialHour } from '@weedtip/shared';
 import type { Tables } from '@weedtip/supabase/types';
 import { upsertDispensary } from '@/app/dashboard/actions';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
@@ -13,6 +13,7 @@ import { Textarea } from '../ui/textarea';
 import { Checkbox, Field } from './field';
 import { GalleryManager } from './gallery-manager';
 import { ImageUpload } from './image-upload';
+import { SpecialHoursEditor } from './special-hours-editor';
 
 export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'> | null }) {
   const [state, action] = useActionState(upsertDispensary, EMPTY_FORM_STATE);
@@ -229,6 +230,8 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
           ))}
         </div>
       </fieldset>
+
+      <SpecialHoursEditor defaultValue={(d?.special_hours as SpecialHour[] | null) ?? []} />
 
       <fieldset className="rounded-card border-border border p-4">
         <legend className="px-1 text-sm font-medium">Pickup profile</legend>

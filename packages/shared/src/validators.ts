@@ -52,6 +52,26 @@ export const operatingHoursSchema = z.object({
 });
 export type OperatingHours = z.infer<typeof operatingHoursSchema>;
 
+/**
+ * A date-specific hours override (holiday / special hours). Either the shop is
+ * closed that day, or it has custom open/close times. `note` is an optional
+ * short label (e.g. "Christmas Eve").
+ */
+export const specialHourSchema = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD'),
+    closed: z.boolean().default(false),
+    open: timeSchema.optional(),
+    close: timeSchema.optional(),
+    note: z.string().max(60).optional(),
+  })
+  .refine((s) => s.closed || (!!s.open && !!s.close), {
+    message: 'Set open and close times, or mark the day closed',
+    path: ['open'],
+  });
+export const specialHoursSchema = z.array(specialHourSchema).max(60);
+export type SpecialHour = z.infer<typeof specialHourSchema>;
+
 // ─── Profile ─────────────────────────────────────────────────────────────────
 export const profileUpdateSchema = z.object({
   display_name: z.string().min(1).max(80).nullable().optional(),
@@ -213,6 +233,7 @@ export const dispensaryWriteSchema = z.object({
   post_order_message: z.string().max(250).nullable().optional(),
   video_url: z.string().url().max(300).nullable().optional(),
   gallery_urls: z.array(z.string().url()).max(12).default([]),
+  special_hours: specialHoursSchema.default([]),
   location: coordinatesSchema.nullable().optional(),
 });
 export type DispensaryWriteInput = z.infer<typeof dispensaryWriteSchema>;

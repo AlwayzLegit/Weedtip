@@ -834,6 +834,7 @@ export type Database = {
           gallery_urls: string[]
           post_order_message: string | null
           require_id: boolean
+          special_hours: Json
           video_url: string | null
           address: string | null
           amenities: string[]
@@ -888,6 +889,7 @@ export type Database = {
           gallery_urls?: string[]
           post_order_message?: string | null
           require_id?: boolean
+          special_hours?: Json
           video_url?: string | null
           address?: string | null
           amenities?: string[]
@@ -942,6 +944,7 @@ export type Database = {
           gallery_urls?: string[]
           post_order_message?: string | null
           require_id?: boolean
+          special_hours?: Json
           video_url?: string | null
           address?: string | null
           amenities?: string[]
