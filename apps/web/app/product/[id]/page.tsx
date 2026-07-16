@@ -15,6 +15,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { dealBadge, formatPrice } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
+import { getDispensaryTier, tierAtLeast } from '@/lib/plan';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
@@ -111,6 +112,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   ]);
 
   const dispensary = product.dispensary as { id: string; slug: string; name: string } | null;
+  // Online ordering is a Basic-tier feature — free shops list their menu but
+  // don't take orders through Weedtip.
+  const ordersEnabled = dispensary
+    ? tierAtLeast(await getDispensaryTier(dispensary.id), 'basic')
+    : false;
   const strain = product.strain as {
     slug: string;
     name: string;
@@ -279,7 +285,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </Link>
           )}
 
-          {product.in_stock && dispensary && (
+          {product.in_stock && dispensary && ordersEnabled && (
             <div className="mt-5 max-w-sm">
               <AddToCart
                 showQuantity
@@ -291,6 +297,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 }}
               />
             </div>
+          )}
+
+          {/* Shops that don't take orders online still show the product + price;
+              we just point the shopper at the store instead of a dead cart. */}
+          {product.in_stock && dispensary && !ordersEnabled && (
+            <p className="text-muted mt-5 max-w-sm text-sm">
+              This shop doesn’t take orders through Weedtip yet — contact them directly to buy.
+            </p>
           )}
 
           {shopDeals && shopDeals.length > 0 && dispensary && (

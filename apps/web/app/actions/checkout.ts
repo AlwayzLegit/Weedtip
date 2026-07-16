@@ -5,6 +5,7 @@ import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
 import { deliveryAddressSchema, orderTypeSchema } from '@weedtip/shared';
 import { newOrderForDispensaryEmail, orderConfirmationEmail, sendEmail } from '@/lib/email';
+import { canUseFeature } from '@/lib/features';
 import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 
@@ -165,6 +166,12 @@ export async function startCheckout(rawInput: StartCheckoutInput): Promise<Start
     .maybeSingle();
   if (acceptRow && acceptRow.accepting_orders === false) {
     return { ok: false, error: 'This dispensary is not accepting online orders right now.' };
+  }
+
+  // Online ordering is a Basic-tier feature. create_order enforces this too (the
+  // mobile app calls the RPC directly); this is the friendly, earlier failure.
+  if (!(await canUseFeature(input.dispensary_id, 'orders'))) {
+    return { ok: false, error: 'This dispensary is not set up to take online orders on Weedtip.' };
   }
 
   // Attribution: device from the user-agent, source from the wt_src cookie
