@@ -520,6 +520,18 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
 
             {/* Rating summary + live status, up top */}
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+              {/* Trust signal up front (Weedmaps/Yelp pattern): an owner-claimed
+                  listing is "Verified"; otherwise a state license on file reads
+                  as "Licensed". */}
+              {d.owner_id ? (
+                <Badge tone="primary">
+                  <BadgeCheck className="h-3.5 w-3.5" /> Verified
+                </Badge>
+              ) : d.license_number ? (
+                <Badge tone="outline">
+                  <BadgeCheck className="h-3.5 w-3.5" /> Licensed
+                </Badge>
+              ) : null}
               {avgRating > 0 && (
                 <a href="#reviews" className="flex items-center gap-1.5 hover:underline">
                   <RatingStars rating={avgRating} />
@@ -557,9 +569,39 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             </div>
           </div>
 
-          {/* Action row: Directions · Call · Website · Add review */}
+          {/* Action row: primary CTA first, then Directions · Call · Website · … */}
           <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
-            {(d.latitude != null || d.address) && (
+            {/* Primary CTA (Weedmaps "Order online"): shops with a menu get a
+                prominent order button that jumps to the menu; shops without one
+                promote Directions to primary so there's always a single clear
+                first action. */}
+            {menuItems.length > 0 ? (
+              <a
+                href="#menu"
+                className="bg-primary bg-primary-grad text-primary-foreground shadow-glow-sm inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold transition hover:opacity-95"
+              >
+                <Store className="h-4 w-4" />{' '}
+                {d.accepting_orders ? 'Order online' : 'View menu'}
+              </a>
+            ) : (
+              (d.latitude != null || d.address) && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                    d.latitude != null && d.longitude != null
+                      ? `${d.latitude},${d.longitude}`
+                      : [d.address, d.city, d.state, d.zip].filter(Boolean).join(', '),
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-primary bg-primary-grad text-primary-foreground shadow-glow-sm inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold transition hover:opacity-95"
+                >
+                  <Navigation className="h-4 w-4" /> Get directions
+                </a>
+              )
+            )}
+            {/* Secondary Directions (only when the primary CTA is the menu, to
+                avoid duplicating the directions action). */}
+            {menuItems.length > 0 && (d.latitude != null || d.address) && (
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
                   d.latitude != null && d.longitude != null
