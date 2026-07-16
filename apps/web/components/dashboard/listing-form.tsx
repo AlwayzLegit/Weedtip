@@ -14,8 +14,16 @@ import { Checkbox, Field } from './field';
 import { GalleryManager } from './gallery-manager';
 import { ImageUpload } from './image-upload';
 import { SpecialHoursEditor } from './special-hours-editor';
+import { UpgradeBanner } from './upgrade-wall';
 
-export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'> | null }) {
+export function ListingForm({
+  dispensary,
+  canComplete = true,
+}: {
+  dispensary: Tables<'dispensaries'> | null;
+  /** "Complete profile" is a Basic-tier feature; free listings keep the basics. */
+  canComplete?: boolean;
+}) {
   const [state, action] = useActionState(upsertDispensary, EMPTY_FORM_STATE);
   const fe = state.fieldErrors ?? {};
   const d = dispensary;
@@ -25,6 +33,13 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
   return (
     <form action={action} className="space-y-6">
       <FormMessage state={{ error: state.status === 'error' ? state.message : undefined }} />
+
+      {!canComplete && (
+        <UpgradeBanner
+          tier="basic"
+          message="Your free listing covers the basics — name, logo, cover photo, phone, hours, and address. Upgrade to Basic to add a description, website, photo gallery, amenities, video, and special hours."
+        />
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2">
         <Field label="Name" htmlFor="name" error={fe.name}>
@@ -40,34 +55,38 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
         </Field>
       </section>
 
-      <Field
-        label="Description"
-        htmlFor="description"
-        error={fe.description}
-        hint="Formatting supported: **bold**, *italic*, - bullet lists, and [links](https://…)."
-      >
-        <Textarea
-          id="description"
-          name="description"
-          defaultValue={d?.description ?? ''}
-          rows={5}
-        />
-      </Field>
+      {canComplete && (
+        <>
+          <Field
+            label="Description"
+            htmlFor="description"
+            error={fe.description}
+            hint="Formatting supported: **bold**, *italic*, - bullet lists, and [links](https://…)."
+          >
+            <Textarea
+              id="description"
+              name="description"
+              defaultValue={d?.description ?? ''}
+              rows={5}
+            />
+          </Field>
 
-      <Field
-        label="Announcement"
-        htmlFor="announcement"
-        error={fe.announcement}
-        hint="A short banner pinned to the top of your listing (deals, holiday hours, etc.). Leave blank to hide."
-      >
-        <Textarea
-          id="announcement"
-          name="announcement"
-          defaultValue={d?.announcement ?? ''}
-          rows={2}
-          maxLength={500}
-        />
-      </Field>
+          <Field
+            label="Announcement"
+            htmlFor="announcement"
+            error={fe.announcement}
+            hint="A short banner pinned to the top of your listing (deals, holiday hours, etc.). Leave blank to hide."
+          >
+            <Textarea
+              id="announcement"
+              name="announcement"
+              defaultValue={d?.announcement ?? ''}
+              rows={2}
+              maxLength={500}
+            />
+          </Field>
+        </>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2">
         <Field
@@ -124,17 +143,26 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
         <Field label="Phone" htmlFor="phone" error={fe.phone}>
           <Input id="phone" name="phone" defaultValue={d?.phone ?? ''} />
         </Field>
-        <Field label="Email" htmlFor="email" error={fe.email}>
-          <Input id="email" name="email" type="email" defaultValue={d?.email ?? ''} />
-        </Field>
-        <Field label="Website" htmlFor="website" error={fe.website}>
-          <Input
-            id="website"
-            name="website"
-            defaultValue={d?.website ?? ''}
-            placeholder="https://"
-          />
-        </Field>
+        {canComplete && (
+          <>
+            <Field label="Email" htmlFor="email" error={fe.email}>
+              <Input id="email" name="email" type="email" defaultValue={d?.email ?? ''} />
+            </Field>
+            <Field
+              label="Website"
+              htmlFor="website"
+              error={fe.website}
+              hint="Shown on your public listing."
+            >
+              <Input
+                id="website"
+                name="website"
+                defaultValue={d?.website ?? ''}
+                placeholder="https://"
+              />
+            </Field>
+          </>
+        )}
         <ImageUpload
           bucket="dispensary-media"
           name="logo_url"
@@ -152,21 +180,25 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
         </Field>
       </section>
 
-      <Field
-        label="Video"
-        htmlFor="video_url"
-        error={fe.video_url}
-        hint="Paste a YouTube or Vimeo link to feature a tour or intro on your listing. Leave blank to hide."
-      >
-        <Input
-          id="video_url"
-          name="video_url"
-          defaultValue={d?.video_url ?? ''}
-          placeholder="https://youtube.com/watch?v=…"
-        />
-      </Field>
+      {canComplete && (
+        <>
+          <Field
+            label="Video"
+            htmlFor="video_url"
+            error={fe.video_url}
+            hint="Paste a YouTube or Vimeo link to feature a tour or intro on your listing. Leave blank to hide."
+          >
+            <Input
+              id="video_url"
+              name="video_url"
+              defaultValue={d?.video_url ?? ''}
+              placeholder="https://youtube.com/watch?v=…"
+            />
+          </Field>
 
-      <GalleryManager defaultUrls={d?.gallery_urls ?? []} />
+          <GalleryManager defaultUrls={d?.gallery_urls ?? []} />
+        </>
+      )}
 
       <fieldset className="rounded-card border-border border p-4">
         <legend className="px-1 text-sm font-medium">Offerings</legend>
@@ -182,6 +214,7 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
         </div>
       </fieldset>
 
+      {canComplete && (
       <fieldset className="rounded-card border-border border p-4">
         <legend className="px-1 text-sm font-medium">Features &amp; amenities</legend>
         <p className="text-muted mb-3 text-xs">
@@ -209,6 +242,7 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
           ))}
         </div>
       </fieldset>
+      )}
 
       <fieldset className="rounded-card border-border border p-4">
         <legend className="px-1 text-sm font-medium">Hours</legend>
@@ -236,6 +270,8 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
         </div>
       </fieldset>
 
+      {canComplete && (
+      <>
       <SpecialHoursEditor defaultValue={(d?.special_hours as SpecialHour[] | null) ?? []} />
 
       <fieldset className="rounded-card border-border border p-4">
@@ -265,6 +301,8 @@ export function ListingForm({ dispensary }: { dispensary: Tables<'dispensaries'>
           </Field>
         </div>
       </fieldset>
+      </>
+      )}
 
       <div className="flex items-center gap-3">
         <SubmitButton size="lg">{d ? 'Save changes' : 'Create listing'}</SubmitButton>

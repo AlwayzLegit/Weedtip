@@ -14,6 +14,7 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@weedtip/supabase/types';
 import { isAiEnabled, summarizeReviews } from '@/lib/ai';
+import { getAuth } from '@/lib/auth';
 import { canUseFeature } from '@/lib/features';
 import { notifyAdmins } from '@/lib/notify';
 import { ACTIVE_DISPENSARY_COOKIE } from '@/lib/owner';
@@ -190,15 +191,40 @@ export async function upsertDispensary(_prev: FormState, fd: FormData): Promise<
   }
 
   const { location, ...rest } = parsed.data;
+
+  // "Complete profile" is a Basic-tier feature. Free listings keep the basics —
+  // name, logo, cover, phone, hours, address, offerings, license.
+  const existingId = await ownerDispensaryId(supabase, userId);
+  const { profile } = await getAuth();
+  const canComplete =
+    profile?.role === 'admin' ||
+    (existingId ? await canUseFeature(existingId, 'complete_profile') : false);
+
+  // Pull the gated fields out so a free save NEVER writes them. The free form
+  // doesn't render these inputs, so including them would null out whatever the
+  // shop already had (e.g. after a downgrade) — preserve instead of wipe.
+  const {
+    description: _description,
+    announcement: _announcement,
+    email: _email,
+    website: _website,
+    amenities: _amenities,
+    gallery_urls: _gallery_urls,
+    video_url: _video_url,
+    special_hours: _special_hours,
+    require_id: _require_id,
+    post_order_message: _post_order_message,
+    ...basics
+  } = rest;
+
   // Set the geography only when we have real coordinates, so saving a listing
   // that never had a geocode doesn't wipe (or fail on) its location.
   const payload = {
-    ...rest,
+    ...(canComplete ? rest : basics),
     hours: rest.hours ?? null,
     ...(location ? { location: pointEwkt(location.lng, location.lat) } : {}),
   };
 
-  const existingId = await ownerDispensaryId(supabase, userId);
   const { error } = existingId
     ? await supabase.from('dispensaries').update(payload).eq('id', existingId)
     : await supabase.from('dispensaries').insert({ ...payload, owner_id: userId });
