@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { List, Loader2, Map as MapIcon, RotateCw, SlidersHorizontal } from 'lucide-react';
 import {
   AMENITY_GROUPS,
@@ -14,12 +15,20 @@ import { dealBadge, formatDistance, isOpenNow } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import type { BBox } from '@/lib/us-state-bounds';
-import { BrowseMap, type BrowseMapApi, type BrowserShop, type MapPinPoint } from './browse-map';
+import type { BrowseMapApi, BrowserShop, MapPinPoint } from './browse-map';
 import { DispensaryResultRow } from './dispensary-result-row';
 import { GeoSearch, type GeoPlace } from './geo-search';
 import { MediaImage } from './media-image';
 
 export type { BrowserShop };
+
+// Code-split the Mapbox GL bundle (~200KB) out of the initial chunk: it's
+// client-only and heavy, so load it on the client after first paint. The list
+// panel is usable immediately; the map area shows a neutral placeholder.
+const BrowseMap = dynamic(() => import('./browse-map').then((m) => m.BrowseMap), {
+  ssr: false,
+  loading: () => <div className="bg-surface-2 h-full w-full animate-pulse" aria-hidden />,
+});
 
 export type BrowseFilters = {
   openNow: boolean;
@@ -399,6 +408,31 @@ export function DispensariesBrowser({
     [syncUrl],
   );
 
+  // Reflect the map viewport (center + rough radius) into the URL so a shared
+  // or refreshed link reopens at the same place/zoom, like Google Maps. The
+  // page reads lat/lng/radius_meters to seed the opening bounds, so we write
+  // those and drop the now-stale place/state labels once the user has panned.
+  const syncViewportToUrl = useCallback(
+    (bounds: BBox) => {
+      if (!syncUrl || typeof window === 'undefined') return;
+      const [minLng, minLat, maxLng, maxLat] = bounds;
+      const centerLat = (minLat + maxLat) / 2;
+      const centerLng = (minLng + maxLng) / 2;
+      // Half the vertical span in metres approximates the visible radius;
+      // clamp to the range the page accepts.
+      const radius = Math.min(Math.max(((maxLat - minLat) / 2) * 111_320, 2_000), 160_000);
+      const params = new URLSearchParams(window.location.search);
+      params.set('lat', centerLat.toFixed(5));
+      params.set('lng', centerLng.toFixed(5));
+      params.set('radius_meters', String(Math.round(radius)));
+      params.delete('place');
+      params.delete('state');
+      const qs = params.toString();
+      window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+    },
+    [syncUrl],
+  );
+
   const applyFilters = useCallback(
     (patch: Partial<BrowseFilters>) => {
       const next = { ...filters, ...patch };
@@ -419,6 +453,7 @@ export function DispensariesBrowser({
   const handleMoveEnd = useCallback(
     (bounds: BBox) => {
       viewBounds.current = bounds;
+      syncViewportToUrl(bounds);
       if (autoSearchNextMove.current) {
         autoSearchNextMove.current = false;
         void runSearch(bounds, filters, {});
@@ -434,7 +469,7 @@ export function DispensariesBrowser({
       }
       setAreaChanged(boundsChanged(searchedBounds.current, bounds));
     },
-    [filters, runSearch, autoSearch],
+    [filters, runSearch, autoSearch, syncViewportToUrl],
   );
 
   const handleGeolocate = useCallback((coords: { lat: number; lng: number }) => {
