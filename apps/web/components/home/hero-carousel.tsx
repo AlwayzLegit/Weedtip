@@ -36,14 +36,22 @@ function track(id: string, type: 'impression' | 'click') {
 export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   const [i, setI] = useState(0);
   const [touchX, setTouchX] = useState<number | null>(null);
+  const [paused, setPaused] = useState(false);
   const n = slides.length;
   const go = useCallback((idx: number) => setI(((idx % n) + n) % n), [n]);
 
+  // Auto-advance, but honor WCAG 2.2.2 (Pause, Stop, Hide): skip the timer
+  // entirely when the OS asks to reduce motion, and pause on hover/focus so a
+  // user reading a slide isn't yanked to the next one.
   useEffect(() => {
-    if (n <= 1) return;
+    if (n <= 1 || paused) return;
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
     const t = setInterval(() => setI((p) => (p + 1) % n), 5500);
     return () => clearInterval(t);
-  }, [n]);
+  }, [n, paused]);
 
   useEffect(() => {
     const s = slides[i];
@@ -58,6 +66,12 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
     <section aria-label="Featured partners" aria-roledescription="carousel">
       <div
         className="rounded-2xl border-border bg-surface shadow-card relative overflow-hidden border"
+        // Pause auto-advance while the user is reading (hover) or tabbing
+        // through the slide's controls (focus) — WCAG 2.2.2.
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocusCapture={() => setPaused(true)}
+        onBlurCapture={() => setPaused(false)}
         // Mobile hides the arrow buttons, so swiping is the manual nav there.
         onTouchStart={(e) => setTouchX(e.touches[0]?.clientX ?? null)}
         onTouchEnd={(e) => {
@@ -92,7 +106,9 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
               {s.placementId ? 'Sponsored' : 'Featured'}
             </Badge>
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-4xl">{s.name}</h2>
+              {/* Not a heading: this sits above the page's h1, so keep it a
+                  styled span to preserve document heading order. */}
+              <span className="block text-2xl font-bold tracking-tight sm:text-4xl">{s.name}</span>
               <p className="text-muted mt-1.5 flex items-center gap-3 text-sm">
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="h-4 w-4" /> {s.city}, {s.state}
