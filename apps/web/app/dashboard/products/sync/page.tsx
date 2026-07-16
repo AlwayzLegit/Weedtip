@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { MenuSyncForm } from '@/components/dashboard/menu-sync-form';
+import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
+import { getOwnerFeature } from '@/lib/features';
 import { requireOwnerDispensary } from '@/lib/owner';
 import { createClient } from '@/lib/supabase/server';
 
@@ -9,6 +11,26 @@ export const metadata: Metadata = { title: 'Menu sync' };
 
 export default async function MenuSyncPage() {
   const { dispensary } = await requireOwnerDispensary();
+
+  if (!(await getOwnerFeature('bulk_import'))) {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <Link
+          href="/dashboard/products"
+          className="text-muted hover:text-foreground inline-flex items-center gap-1 text-sm"
+        >
+          <ArrowLeft className="h-4 w-4" /> Products
+        </Link>
+        <h1 className="text-2xl font-bold">Menu sync</h1>
+        <UpgradeWall
+          feature="Store & POS sync"
+          tier="basic"
+          description="Upgrade to Basic to keep your menu in step with your existing store or POS automatically. Adding products by hand is always free."
+        />
+      </div>
+    );
+  }
+
   const supabase = await createClient();
   const { data: source } = await supabase
     .from('menu_sources')

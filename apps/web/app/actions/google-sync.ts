@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import type { OperatingHours } from '@weedtip/shared';
+import { canUseFeature } from '@/lib/features';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { BASIC_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 
 type GooglePeriodPoint = { day: number; hour: number; minute: number };
@@ -47,6 +49,11 @@ export type GoogleSyncResult = { ok: true; updated: string[] } | { ok: false; er
  */
 export async function syncFromGoogle(): Promise<GoogleSyncResult> {
   const { dispensary } = await requireOwnerDispensary();
+
+  // Basic-tier feature (admins + grandfathered listings pass).
+  if (!(await canUseFeature(dispensary.id, 'google_sync'))) {
+    return { ok: false, error: BASIC_UPGRADE_MESSAGE };
+  }
 
   const key = process.env.GOOGLE_PLACES_API_KEY;
   if (!key) {

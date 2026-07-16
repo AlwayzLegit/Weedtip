@@ -2,12 +2,33 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CheckCircle2, ExternalLink, Globe, RefreshCw } from 'lucide-react';
 import { GoogleSyncButton } from '@/components/dashboard/google-sync-button';
+import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
+import { getOwnerFeature } from '@/lib/features';
 import { requireOwnerDispensary } from '@/lib/owner';
 
 export const metadata: Metadata = { title: 'Google sync' };
 
 export default async function GoogleSyncPage() {
   const { dispensary } = await requireOwnerDispensary();
+  const entitled = await getOwnerFeature('google_sync');
+  if (!entitled) {
+    return (
+      <div className="max-w-2xl space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Google sync</h1>
+          <p className="text-muted mt-1 text-sm">
+            Pull {dispensary.name}&apos;s hours, phone, and website straight from your Google
+            Business Profile.
+          </p>
+        </div>
+        <UpgradeWall
+          feature="Google Business sync"
+          tier="basic"
+          description="Upgrade to Basic to import your hours, phone, and website from Google — and keep them in sync. Your listing stays free at 0% commission."
+        />
+      </div>
+    );
+  }
   const linked = !!dispensary.google_place_id;
   const lastSync = dispensary.last_google_sync
     ? new Date(dispensary.last_google_sync).toLocaleString()
