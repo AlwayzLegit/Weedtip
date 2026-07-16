@@ -160,6 +160,8 @@ export default async function AdminOwnership({
                           {b.name}
                         </Link>
                         {b.status && <StatusPill tone={statusTone(b.status)}>{b.status}</StatusPill>}
+                        <Badge tone={TIER_TONE[b.tier]}>{TIER_LABEL[b.tier]}</Badge>
+                        {b.grandfathered && <Badge tone="outline">Grandfathered</Badge>}
                         <span className="text-muted text-xs">/{b.slug}</span>
                       </p>
                       <div className="flex flex-wrap items-center gap-1">

@@ -3,8 +3,10 @@ import { Users } from 'lucide-react';
 import { deleteBrandUpdate } from '@/app/actions/brand-updates';
 import { BrandUpdateForm } from '@/components/dashboard/brand-update-form';
 import { DeleteButton } from '@/components/dashboard/delete-button';
+import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
 import { getBrandOwnerContext } from '@/lib/brand-owner';
+import { canUseBrandFeature } from '@/lib/brand-plan';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Updates · Studio' };
@@ -12,6 +14,23 @@ export const metadata: Metadata = { title: 'Updates · Studio' };
 export default async function StudioUpdates() {
   const { brands } = await getBrandOwnerContext();
   const ids = brands.map((b) => b.id);
+
+  const entitled = (
+    await Promise.all(brands.map((b) => canUseBrandFeature(b.id, 'brand_updates')))
+  ).some(Boolean);
+  if (!entitled) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Updates</h1>
+        <UpgradeWall
+          feature="Brand updates"
+          tier="basic"
+          href="/for-brands"
+          description="Upgrade to Basic to broadcast news to your followers. Your brand page stays live for free."
+        />
+      </div>
+    );
+  }
 
   const supabase = await createClient();
   const { data: updates } = await supabase

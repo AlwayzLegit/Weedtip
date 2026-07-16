@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { BRAND_UPGRADE_MESSAGE, canUseBrandFeature } from '@/lib/brand-plan';
 import { type FormState, formError, formSuccess, str } from '@/lib/forms';
 import { createClient } from '@/lib/supabase/server';
 
@@ -10,6 +11,10 @@ export async function postBrandUpdate(_prev: FormState, fd: FormData): Promise<F
   const title = str(fd, 'title');
   if (!brandId) return formError('Missing brand.');
   if (!title) return formError('An update needs a title.');
+
+  // Basic-tier feature (admins + grandfathered brands pass). RLS still enforces
+  // that the caller actually owns this brand.
+  if (!(await canUseBrandFeature(brandId, 'brand_updates'))) return formError(BRAND_UPGRADE_MESSAGE);
 
   const supabase = await createClient();
   const { error } = await supabase.rpc('post_brand_update', {

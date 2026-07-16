@@ -18,10 +18,13 @@ export function UpgradeWall({
   feature,
   description,
   tier = 'growth',
+  href = '/dashboard/promote',
 }: {
   feature: string;
   description?: string;
   tier?: UpgradeTier;
+  /** Where "Upgrade" goes — brands don't use the dispensary billing page. */
+  href?: string;
 }) {
   const plan = TIER_NAME[tier];
   return (
@@ -36,7 +39,7 @@ export function UpgradeWall({
         {description ??
           `Upgrade to ${plan} to unlock it. Your free listing stays live at 0% commission — paid plans just add tools on top.`}
       </p>
-      <Link href="/dashboard/promote" className="mt-5 inline-block">
+      <Link href={href} className="mt-5 inline-block">
         <Button size="lg">
           <Sparkles className="h-4 w-4" /> Upgrade to {plan}
         </Button>

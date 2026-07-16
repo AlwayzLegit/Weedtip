@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { MousePointerClick, Eye, Package, Store } from 'lucide-react';
+import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
 import { getBrandOwnerContext } from '@/lib/brand-owner';
+import { canUseBrandFeature } from '@/lib/brand-plan';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Analytics · Studio' };
@@ -8,6 +10,24 @@ export const metadata: Metadata = { title: 'Analytics · Studio' };
 export default async function StudioAnalytics() {
   const { brands } = await getBrandOwnerContext();
   const ids = brands.map((b) => b.id);
+
+  // Aggregated across the user's brands — entitled if any one of them is.
+  const entitled = (
+    await Promise.all(brands.map((b) => canUseBrandFeature(b.id, 'brand_analytics')))
+  ).some(Boolean);
+  if (!entitled) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Analytics</h1>
+        <UpgradeWall
+          feature="Brand analytics"
+          tier="basic"
+          href="/for-brands"
+          description="Upgrade to Basic to see your brand's views, followers, and where your products are stocked. Your brand page stays live for free."
+        />
+      </div>
+    );
+  }
 
   const supabase = await createClient();
   const [{ data: placements }, { data: prods }] = await Promise.all([
