@@ -532,10 +532,56 @@ export type Database = {
           },
         ]
       }
+      brand_subscriptions: {
+        Row: {
+          brand_id: string
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_subscriptions_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: true
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           created_at: string
           description: string | null
+          grandfathered: boolean
           id: string
           logo_url: string | null
           name: string
@@ -548,6 +594,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          grandfathered?: boolean
           id?: string
           logo_url?: string | null
           name: string
@@ -560,6 +607,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          grandfathered?: boolean
           id?: string
           logo_url?: string | null
           name?: string
@@ -2683,6 +2731,10 @@ export type Database = {
       }
       dispensary_effective_tax_bps: {
         Args: { p_dispensary_id: string }
+        Returns: number
+      }
+      brand_tier: {
+        Args: { p_brand_id: string }
         Returns: number
       }
       dispensary_tier: {

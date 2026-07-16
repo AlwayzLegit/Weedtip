@@ -31,6 +31,8 @@ export type OwnedBrand = {
   name: string;
   slug: string;
   status: string | null;
+  grandfathered: boolean;
+  tier: PlanTier;
 };
 
 export type OwnerRow = {
@@ -62,7 +64,7 @@ export async function getOwnershipRoster(): Promise<OwnershipRoster> {
         .order('name'),
       supabase
         .from('brands')
-        .select('id,name,slug,status,owner_id')
+        .select('id,name,slug,status,owner_id,grandfathered')
         .not('owner_id', 'is', null)
         .order('name'),
       supabase.from('dispensaries').select('id', { count: 'exact', head: true }).is('owner_id', null),
@@ -87,6 +89,23 @@ export async function getOwnershipRoster(): Promise<OwnershipRoster> {
         s.status === 'active' &&
         (!s.current_period_end || new Date(s.current_period_end) >= new Date());
       if (plan && live) subMap.set(s.dispensary_id, { tier: plan.tier, name: plan.name });
+    }
+  }
+
+  // Same shape for brands — mirrors brand_tier(), batched.
+  const brandSubMap = new Map<string, number>();
+  const brandIds = brandRows.map((b) => b.id);
+  if (brandIds.length > 0) {
+    const { data: bsubs } = await supabase
+      .from('brand_subscriptions')
+      .select('brand_id,status,current_period_end,plan:plans(tier)')
+      .in('brand_id', brandIds);
+    for (const s of bsubs ?? []) {
+      const plan = s.plan as { tier: number } | null;
+      const live =
+        s.status === 'active' &&
+        (!s.current_period_end || new Date(s.current_period_end) >= new Date());
+      if (plan && live) brandSubMap.set(s.brand_id, plan.tier);
     }
   }
 
@@ -148,7 +167,17 @@ export async function getOwnershipRoster(): Promise<OwnershipRoster> {
           }),
         brands: brandRows
           .filter((b) => b.owner_id === id)
-          .map((b) => ({ id: b.id, name: b.name, slug: b.slug, status: b.status })),
+          .map((b) => {
+            const rank = Math.max(brandSubMap.get(b.id) ?? 0, b.grandfathered ? 1 : 0);
+            return {
+              id: b.id,
+              name: b.name,
+              slug: b.slug,
+              status: b.status,
+              grandfathered: b.grandfathered,
+              tier: tierFromRank(rank),
+            };
+          }),
       };
     })
     .sort(
