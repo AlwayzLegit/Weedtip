@@ -443,6 +443,32 @@ export function DispensariesBrowser({
     [filters, runSearch, syncFiltersToUrl],
   );
 
+  // "Nearest" needs a reference point. When none is known yet, ask the browser
+  // for one on selection (the Google/Weedmaps pattern) instead of hiding the
+  // option; a denied prompt still applies the sort, which then falls back to
+  // the default order server-side.
+  const handleSortChange = useCallback(
+    (value: DispensarySort) => {
+      if (value === 'distance' && !origin && typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const o = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setOrigin(o);
+            const next = { ...filters, sort: value };
+            setFilters(next);
+            syncFiltersToUrl(next);
+            void runSearch(viewBounds.current, next, { origin: o });
+          },
+          () => applyFilters({ sort: value }),
+          { enableHighAccuracy: false, timeout: 8000 },
+        );
+        return;
+      }
+      applyFilters({ sort: value });
+    },
+    [origin, filters, runSearch, syncFiltersToUrl, applyFilters],
+  );
+
   // The map fits initialBounds to its own aspect ratio, so the viewport it
   // actually shows is wider than what we searched — treat that as the baseline.
   const handleLoadBounds = useCallback((bounds: BBox) => {
@@ -593,13 +619,14 @@ export function DispensariesBrowser({
           </button>
           <select
             value={filters.sort}
-            onChange={(e) => applyFilters({ sort: e.target.value as DispensarySort })}
+            onChange={(e) => handleSortChange(e.target.value as DispensarySort)}
             className="border-border bg-surface h-9 shrink-0 rounded-full border px-3 text-sm"
             aria-label="Sort by"
           >
             <option value="default">Sort: Recommended</option>
             <option value="rating">Top rated</option>
-            {origin && <option value="distance">Nearest</option>}
+            <option value="reviewed">Most reviewed</option>
+            <option value="distance">Nearest</option>
             <option value="name">Name (A–Z)</option>
           </select>
         </div>
