@@ -21,7 +21,6 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
   const [suggestions, setSuggestions] = useState<GeoPlace[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -54,40 +53,56 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
     router.push(dispensariesUrlForPlace(place));
   }
 
+  function goToSearch() {
+    setOpen(false);
+    const params = new URLSearchParams();
+    if (query.trim()) params.set('query', query.trim());
+    router.push(`/dispensaries?${params.toString()}`);
+  }
+
   function useMyLocation() {
     if (!navigator.geolocation) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocating(false);
+        // Re-scope to the user's location immediately, like Weedmaps — don't
+        // wait for a second click on Search.
+        setOpen(false);
+        const params = new URLSearchParams({
+          lat: String(pos.coords.latitude),
+          lng: String(pos.coords.longitude),
+        });
+        if (query.trim()) params.set('query', query.trim());
+        router.push(`/dispensaries?${params.toString()}`);
       },
       () => setLocating(false),
       { enableHighAccuracy: false, timeout: 8000 },
     );
   }
 
-  // Top suggestion is highlighted by default so Enter commits to it visibly.
-  const showList = open && suggestions.length > 0;
-  const highlighted = active < 0 ? 0 : active;
+  // Keyboard nav runs over the geocoded places plus a trailing "search by name"
+  // row, so a dispensary-name query stays reachable even when Mapbox returns a
+  // stray place. The top place is highlighted by default (location-first, like
+  // Google Maps), so Enter commits to it visibly.
+  const showList = open && query.trim().length >= 2 && (suggestions.length > 0 || locating);
+  const nameRowIndex = suggestions.length;
+  const itemCount = suggestions.length + 1;
+  const highlighted = active < 0 ? 0 : Math.min(active, itemCount - 1);
   const activeId = showList ? `sb-opt-${highlighted}` : undefined;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    // Enter = highlighted suggestion > top suggestion > name/near-me search.
-    const chosen = showList ? suggestions[highlighted] : undefined;
-    if (chosen && query.trim()) {
-      goToPlace(chosen);
-      return;
+    // Enter takes the highlighted row: a geocoded place → map jump; the name
+    // row (or no suggestions at all) → dispensary name / near-me search.
+    if (showList && highlighted < nameRowIndex) {
+      const chosen = suggestions[highlighted];
+      if (chosen && query.trim()) {
+        goToPlace(chosen);
+        return;
+      }
     }
-    setOpen(false);
-    const params = new URLSearchParams();
-    if (query.trim()) params.set('query', query.trim());
-    if (coords) {
-      params.set('lat', String(coords.lat));
-      params.set('lng', String(coords.lng));
-    }
-    router.push(`/dispensaries?${params.toString()}`);
+    goToSearch();
   }
 
   return (
@@ -101,7 +116,7 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') {
               e.preventDefault();
-              setActive((a) => Math.min((a < 0 ? 0 : a) + 1, suggestions.length - 1));
+              setActive((a) => Math.min((a < 0 ? 0 : a) + 1, itemCount - 1));
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
               setActive((a) => Math.max((a < 0 ? 0 : a) - 1, 0));
@@ -114,7 +129,7 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
           aria-label="Search by place or dispensary name"
           role="combobox"
           aria-expanded={showList}
-          aria-controls="homepage-search-listbox"
+          aria-controls={showList ? 'homepage-search-listbox' : undefined}
           aria-autocomplete="list"
           aria-activedescendant={activeId}
         />
@@ -144,12 +159,28 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
                 <span className="truncate">{s.name}</span>
               </button>
             ))}
+            <button
+              type="button"
+              role="option"
+              id={`sb-opt-${nameRowIndex}`}
+              aria-selected={highlighted === nameRowIndex}
+              tabIndex={-1}
+              onClick={goToSearch}
+              onMouseEnter={() => setActive(nameRowIndex)}
+              className={cn(
+                'text-muted hover:text-foreground flex w-full items-center gap-2 px-3 py-2 text-left',
+                highlighted === nameRowIndex ? 'bg-surface-2 text-foreground' : 'hover:bg-surface-2',
+              )}
+            >
+              <Search className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Search dispensaries for “{query.trim()}”</span>
+            </button>
           </div>
         )}
       </div>
       <Button
         type="button"
-        variant={coords ? 'primary' : 'outline'}
+        variant="outline"
         size={size === 'lg' ? 'lg' : 'md'}
         onClick={useMyLocation}
         disabled={locating}
@@ -159,7 +190,7 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
         ) : (
           <LocateFixed className="h-4 w-4" />
         )}
-        {coords ? 'Located' : 'Use my location'}
+        {locating ? 'Locating…' : 'Use my location'}
       </Button>
       <Button type="submit" size={size === 'lg' ? 'lg' : 'md'}>
         Search
