@@ -56,16 +56,35 @@ export async function generateMetadata({
   const supabase = await createClient();
   const { data } = await supabase
     .from('dispensaries')
-    .select('name,city,state,description')
+    .select('name,city,state,description,address')
     .eq('slug', slug)
     .maybeSingle();
   if (!data) return { title: 'Dispensary' };
 
+  // Chains run several branches in one city (10 LivWell in Denver, 8 Trulieve in
+  // Tampa), so "Name — City, ST" is identical across all of them — which made
+  // both the title and the fallback description duplicate sitewide. Those are
+  // genuinely distinct stores, so disambiguate them by street address rather than
+  // merging or de-indexing. Unique shops keep the shorter, cleaner title.
+  let branch: string | null = null;
+  if (data.city && data.address) {
+    const { count } = await supabase
+      .from('dispensaries')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .eq('name', data.name)
+      .eq('city', data.city);
+    if ((count ?? 0) > 1) branch = data.address;
+  }
+
   const place = data.city ? `${data.city}, ${data.state}` : `${data.state} (delivery)`;
-  const title = `${data.name} — ${place}`;
+  const title = branch ? `${data.name} — ${branch}, ${place}` : `${data.name} — ${place}`;
+  const where = data.city
+    ? ` ${branch ? `at ${branch} in ` : 'in '}${data.city}, ${data.state}`
+    : ` — delivery in ${data.state}`;
   const description =
     (data.description ? stripMarkdown(data.description).slice(0, 160) : undefined) ??
-    `${data.name}${data.city ? ` in ${data.city}, ${data.state}` : ` — delivery in ${data.state}`}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
+    `${data.name}${where}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
   const canonical = `/dispensary/${slug}`;
   return {
     title,

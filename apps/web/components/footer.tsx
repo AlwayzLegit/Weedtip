@@ -6,10 +6,17 @@ import { DealAlertSignup } from './deal-alert-signup';
 import { Logo } from './brand/logo';
 import { PaymentLogos } from './payment-logos';
 
+// Only link destinations that resolve 200 for an anonymous visitor. The footer
+// renders on all ~17k pages, so a single link to a redirecting or auth-gated URL
+// multiplies into ~17k redirect hits in a crawl (Semrush flagged exactly that):
+//   • /map was retired into /dispensaries (301) — the route stays for old inbound
+//     deep links, but "Dispensaries" already IS the map-first view.
+//   • /studio is auth-gated (307 → /sign-in or /for-brands). Brand owners reach it
+//     from the nav menu, which gates on actual brand ownership; "For brands" is
+//     the public entry point.
 const DISCOVER = [
   { href: '/dispensaries', label: 'Dispensaries' },
   { href: '/deliveries', label: 'Deliveries' },
-  { href: '/map', label: 'Map' },
   { href: '/deals', label: 'Nearby deals' },
   { href: '/brands', label: 'Brands' },
   { href: '/products', label: 'Products' },
@@ -21,8 +28,6 @@ const BUSINESS = [
   { href: '/claim', label: 'List your shop' },
   { href: '/for-brands', label: 'For brands' },
   { href: '/advertise', label: 'Advertise' },
-  { href: '/dashboard', label: 'Owner dashboard' },
-  { href: '/studio', label: 'Brand Studio' },
 ];
 
 const LEGAL = [
