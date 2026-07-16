@@ -69,14 +69,19 @@ export function GeoSearch({
     onSubmitQuery(draft.trim());
   };
 
+  // Top suggestion is highlighted by default so Enter commits to it visibly.
+  const showList = open && (draft.trim().length >= 3 || suggestions.length > 0);
+  const highlighted = active < 0 ? 0 : active;
+  const activeId = showList && suggestions.length > 0 ? `geo-opt-${highlighted}` : undefined;
+
   return (
     <div ref={boxRef} className={cn('relative', className)}>
       <form
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
-          // Enter = highlighted suggestion > top suggestion > name search.
-          const chosen = active >= 0 ? suggestions[active] : suggestions[0];
+          // Enter = highlighted suggestion (top by default) > name search.
+          const chosen = suggestions.length > 0 ? suggestions[highlighted] : undefined;
           if (open && chosen) pick(chosen);
           else submitText();
         }}
@@ -89,31 +94,44 @@ export function GeoSearch({
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') {
               e.preventDefault();
-              setActive((a) => Math.min(a + 1, suggestions.length - 1));
+              setActive((a) => Math.min((a < 0 ? 0 : a) + 1, suggestions.length - 1));
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
-              setActive((a) => Math.max(a - 1, -1));
+              setActive((a) => Math.max((a < 0 ? 0 : a) - 1, 0));
             } else if (e.key === 'Escape') {
               setOpen(false);
             }
           }}
           placeholder="City, zip, or shop name…"
           aria-label="Search by place or dispensary name"
+          role="combobox"
+          aria-expanded={showList}
+          aria-controls="geo-search-listbox"
+          aria-autocomplete="list"
+          aria-activedescendant={activeId}
           className="border-border bg-surface focus:border-primary h-9 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors"
         />
       </form>
 
-      {open && (draft.trim().length >= 3 || suggestions.length > 0) && (
-        <div className="border-border bg-surface shadow-card-hover absolute left-0 right-0 top-11 z-40 overflow-hidden rounded-xl border py-1 text-sm">
+      {showList && (
+        <div
+          id="geo-search-listbox"
+          role="listbox"
+          className="border-border bg-surface shadow-card-hover absolute left-0 right-0 top-11 z-40 overflow-hidden rounded-xl border py-1 text-sm"
+        >
           {suggestions.map((s, i) => (
             <button
               key={s.id}
               type="button"
+              role="option"
+              id={`geo-opt-${i}`}
+              aria-selected={i === highlighted}
+              tabIndex={-1}
               onClick={() => pick(s)}
               onMouseEnter={() => setActive(i)}
               className={cn(
                 'flex w-full items-center gap-2 px-3 py-2 text-left',
-                active === i ? 'bg-surface-2' : 'hover:bg-surface-2',
+                i === highlighted ? 'bg-surface-2' : 'hover:bg-surface-2',
               )}
             >
               <MapPin className="text-primary h-3.5 w-3.5 shrink-0" />

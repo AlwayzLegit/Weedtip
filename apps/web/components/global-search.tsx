@@ -106,17 +106,25 @@ export function GlobalSearch({ className }: { className?: string }) {
     if (sel) router.push(searchResultHref(sel));
   }
 
+  // The top suggestion is highlighted by default (active < 0), so Enter commits
+  // to the best match without requiring an arrow-key press — the behavior the
+  // ⌘K palette already has. A new result set resets active to -1, returning the
+  // highlight to the top.
+  const highlighted = active < 0 ? 0 : active;
+
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActive((a) => Math.min(a + 1, itemCount - 1));
+      setActive((a) => Math.min((a < 0 ? 0 : a) + 1, itemCount - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setActive((a) => Math.max(a - 1, -1));
+      setActive((a) => Math.max((a < 0 ? 0 : a) - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const q = query.trim();
-      if (active >= 0 && active < itemCount) activate(active);
+      // Prefer the highlighted suggestion (top by default); fall back to a ZIP
+      // map jump, then to the full results page when there's nothing to pick.
+      if (itemCount > 0 && highlighted < itemCount) activate(highlighted);
       else if (/^\d{5}(?:-\d{4})?$/.test(q)) void goToZip(q);
       else goToResults();
     } else if (e.key === 'Escape') {
@@ -125,6 +133,7 @@ export function GlobalSearch({ className }: { className?: string }) {
   }
 
   const showDropdown = open && query.trim().length >= 2;
+  const activeId = showDropdown && itemCount > 0 ? `gs-opt-${highlighted}` : undefined;
 
   return (
     <div ref={rootRef} className={cn('relative', className)}>
@@ -141,6 +150,11 @@ export function GlobalSearch({ className }: { className?: string }) {
           onKeyDown={onKeyDown}
           placeholder="Search stores, products, brands, strains…"
           aria-label="Search Weedtip"
+          role="combobox"
+          aria-expanded={showDropdown}
+          aria-controls="global-search-listbox"
+          aria-autocomplete="list"
+          aria-activedescendant={activeId}
           className="border-border bg-surface focus-visible:ring-primary/40 focus-visible:border-primary/60 h-10 w-full rounded-full border pl-9 pr-14 text-sm outline-none transition-colors focus-visible:ring-2"
         />
         {/* Discoverability hint for the ⌘K palette (hidden while typing). */}
@@ -156,16 +170,17 @@ export function GlobalSearch({ className }: { className?: string }) {
           {itemCount === 0 ? (
             <p className="text-muted px-4 py-6 text-center text-sm">No matches yet — keep typing.</p>
           ) : (
-            <ul className="max-h-[70vh] overflow-y-auto py-1">
+            <ul id="global-search-listbox" role="listbox" className="max-h-[70vh] overflow-y-auto py-1">
               {places.map((p, i) => (
-                <li key={p.id}>
+                <li key={p.id} role="option" id={`gs-opt-${i}`} aria-selected={i === highlighted}>
                   <button
                     type="button"
+                    tabIndex={-1}
                     onMouseEnter={() => setActive(i)}
                     onClick={() => activate(i)}
                     className={cn(
                       'flex w-full items-center gap-3 px-3 py-2 text-left',
-                      i === active ? 'bg-surface-2' : 'hover:bg-surface-2',
+                      i === highlighted ? 'bg-surface-2' : 'hover:bg-surface-2',
                     )}
                   >
                     <span className="bg-primary-muted text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
@@ -185,14 +200,20 @@ export function GlobalSearch({ className }: { className?: string }) {
                 const Icon = KIND_ICON[r.kind] ?? Search;
                 const index = places.length + i;
                 return (
-                  <li key={`${r.kind}-${r.id}`}>
+                  <li
+                    key={`${r.kind}-${r.id}`}
+                    role="option"
+                    id={`gs-opt-${index}`}
+                    aria-selected={index === highlighted}
+                  >
                     <button
                       type="button"
+                      tabIndex={-1}
                       onMouseEnter={() => setActive(index)}
                       onClick={() => activate(index)}
                       className={cn(
                         'flex w-full items-center gap-3 px-3 py-2 text-left',
-                        index === active ? 'bg-surface-2' : 'hover:bg-surface-2',
+                        index === highlighted ? 'bg-surface-2' : 'hover:bg-surface-2',
                       )}
                     >
                       {r.image_url ? (
