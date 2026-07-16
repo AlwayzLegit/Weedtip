@@ -14,7 +14,7 @@ import { mapPinsBounds, searchDispensariesBounds } from '@weedtip/supabase/queri
 import { dealBadge, formatDistance, isOpenNow } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
-import type { BBox } from '@/lib/us-state-bounds';
+import { US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
 import type { BrowseMapApi, BrowserShop, MapPinPoint } from './browse-map';
 import { DispensaryResultRow } from './dispensary-result-row';
 import { GeoSearch, type GeoPlace } from './geo-search';
@@ -309,11 +309,17 @@ export function DispensariesBrowser({
   }, []);
 
   const runSearch = useCallback(
-    async (
+    async function run(
       bounds: BBox,
       nextFilters: BrowseFilters,
-      opts: { append?: boolean; offset?: number; origin?: { lat: number; lng: number } | null },
-    ) => {
+      opts: {
+        append?: boolean;
+        offset?: number;
+        origin?: { lat: number; lng: number } | null;
+        /** Set on the automatic nationwide retry after a zero-result text search. */
+        widened?: boolean;
+      },
+    ) {
       const id = ++requestId.current;
       setLoading(true);
       setFailed(false);
@@ -345,8 +351,36 @@ export function DispensariesBrowser({
         return;
       }
       const rows = (data ?? []).map(toShop);
+      // A text search that misses in the current viewport retries nationwide
+      // (Weedmaps behavior) — the shop the user typed is usually just outside
+      // the visible area, and "0 results" for a real shop reads as broken.
+      if (
+        !opts.append &&
+        !opts.widened &&
+        rows.length === 0 &&
+        (nextFilters.query ?? '').trim() &&
+        boundsChanged(bounds, US_BOUNDS)
+      ) {
+        void run(US_BOUNDS, nextFilters, { ...opts, widened: true });
+        return;
+      }
       setTotal(data?.[0]?.total_count ?? (opts.append ? total : 0));
       setShops((prev) => (opts.append ? [...prev, ...rows] : rows));
+      // The widened pass found matches elsewhere — bring them into view.
+      if (opts.widened && rows.length > 0) {
+        const pts = rows.filter((r) => typeof r.lat === 'number' && typeof r.lng === 'number');
+        if (pts.length > 0) {
+          const lngs = pts.map((p) => p.lng as number);
+          const lats = pts.map((p) => p.lat as number);
+          autoSearchNextMove.current = false;
+          mapApi.current?.fitBounds([
+            Math.min(...lngs),
+            Math.min(...lats),
+            Math.max(...lngs),
+            Math.max(...lats),
+          ]);
+        }
+      }
       // Deal badges for the visible page of results (soonest-ending live deal
       // per shop) — the bounds RPC itself stays lean.
       if (rows.length > 0) {
@@ -443,6 +477,32 @@ export function DispensariesBrowser({
       void runSearch(viewBounds.current, next, {});
     },
     [filters, runSearch, syncFiltersToUrl],
+  );
+
+  // "Nearest" needs a reference point. When none is known yet, ask the browser
+  // for one on selection (the Google/Weedmaps pattern) instead of hiding the
+  // option; a denied prompt still applies the sort, which then falls back to
+  // the default order server-side.
+  const handleSortChange = useCallback(
+    (value: DispensarySort) => {
+      if (value === 'distance' && !origin && typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const o = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setOrigin(o);
+            const next = { ...filters, sort: value };
+            setFilters(next);
+            syncFiltersToUrl(next);
+            void runSearch(viewBounds.current, next, { origin: o });
+          },
+          () => applyFilters({ sort: value }),
+          { enableHighAccuracy: false, timeout: 8000 },
+        );
+        return;
+      }
+      applyFilters({ sort: value });
+    },
+    [origin, filters, runSearch, syncFiltersToUrl, applyFilters],
   );
 
   // The map fits initialBounds to its own aspect ratio, so the viewport it
@@ -596,13 +656,14 @@ export function DispensariesBrowser({
           </button>
           <select
             value={filters.sort}
-            onChange={(e) => applyFilters({ sort: e.target.value as DispensarySort })}
+            onChange={(e) => handleSortChange(e.target.value as DispensarySort)}
             className="border-border bg-surface h-9 shrink-0 rounded-full border px-3 text-sm"
             aria-label="Sort by"
           >
             <option value="default">Sort: Recommended</option>
             <option value="rating">Top rated</option>
-            {origin && <option value="distance">Nearest</option>}
+            <option value="reviewed">Most reviewed</option>
+            <option value="distance">Nearest</option>
             <option value="name">Name (A–Z)</option>
           </select>
         </div>

@@ -368,7 +368,7 @@ export const dispensarySearchSchema = z.object({
 });
 export type DispensarySearchParams = z.infer<typeof dispensarySearchSchema>;
 
-export const dispensarySortSchema = z.enum(['default', 'rating', 'distance', 'name']);
+export const dispensarySortSchema = z.enum(['default', 'rating', 'reviewed', 'distance', 'name']);
 export type DispensarySort = z.infer<typeof dispensarySortSchema>;
 
 /**
