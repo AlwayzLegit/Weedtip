@@ -208,6 +208,11 @@ export function BrowseMap({
   const [mounted, setMounted] = useState(false);
   const [overInteractive, setOverInteractive] = useState(false);
   const [tilesFailed, setTilesFailed] = useState(false);
+  // The map errored before its first successful load (WebGL init, style fetch,
+  // network) — without this the panel is just a silent blank rectangle.
+  const [initFailed, setInitFailed] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const loadedOnce = useRef(false);
   const mapRef = useRef<MapRef>(null);
   useEffect(() => setMounted(true), []);
 
@@ -278,6 +283,29 @@ export function BrowseMap({
 
   if (!mounted) return <div className="bg-surface-2 h-full w-full animate-pulse" />;
 
+  if (initFailed) {
+    return (
+      <div className="bg-surface-2 flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center">
+        <MapPin className="text-muted h-8 w-8" />
+        <p className="text-sm font-medium">The map couldn&apos;t load</p>
+        <p className="text-muted max-w-xs text-xs">
+          The list on the side still works. Check your connection, then try again.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            loadedOnce.current = false;
+            setInitFailed(false);
+            setRetryKey((k) => k + 1);
+          }}
+          className="border-border bg-surface hover:border-primary/50 hover:text-primary rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+        >
+          Reload map
+        </button>
+      </div>
+    );
+  }
+
   if (!token) {
     return (
       <div className="bg-surface-2 flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center">
@@ -324,13 +352,17 @@ export function BrowseMap({
 
   return (
     <Map
+      key={retryKey}
       ref={mapRef}
       mapboxAccessToken={token}
       // Surface style/tile failures (commonly a URL-restricted token rejecting
-      // this domain with a 403) instead of a silent blank canvas.
+      // this domain with a 403) instead of a silent blank canvas. Any error
+      // before the first successful load means no tiles ever rendered — swap
+      // in the retry fallback rather than leaving a blank rectangle.
       onError={(e) => {
         const status = (e.error as { status?: number } | undefined)?.status;
         if (status === 401 || status === 403) setTilesFailed(true);
+        else if (!loadedOnce.current) setInitFailed(true);
       }}
       initialViewState={{
         bounds: initialBounds,
@@ -346,6 +378,7 @@ export function BrowseMap({
         onHover(null);
       }}
       onLoad={(e) => {
+        loadedOnce.current = true;
         // The fitted viewport differs from initialBounds (aspect + padding);
         // report it so "Search this area" compares against what's really shown.
         const b = e.target.getBounds();
