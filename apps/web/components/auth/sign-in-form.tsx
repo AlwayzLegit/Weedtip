@@ -6,6 +6,7 @@ import { signIn, type AuthState } from '@/app/actions/auth';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { FormMessage } from './form-message';
+import { OAuthButtons } from './oauth-buttons';
 import { SubmitButton } from './submit-button';
 
 export function SignInForm({ next }: { next?: string }) {
@@ -13,6 +14,7 @@ export function SignInForm({ next }: { next?: string }) {
 
   return (
     <form action={action} className="space-y-4">
+      <OAuthButtons next={next} />
       {next && <input type="hidden" name="next" value={next} />}
       <FormMessage state={state} />
       <div>
