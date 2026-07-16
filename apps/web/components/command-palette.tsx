@@ -63,7 +63,10 @@ export function CommandPalette() {
   // Global hotkey: ⌘K / Ctrl-K toggles; "/" opens when not already typing.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const k = e.key.toLowerCase();
+      // e.key is undefined on some synthetic keydown events (IME composition,
+      // browser autofill), which crashed the global listener; bail on those.
+      const k = e.key?.toLowerCase();
+      if (!k) return;
       if ((e.metaKey || e.ctrlKey) && k === 'k') {
         e.preventDefault();
         setOpen((v) => !v);
