@@ -67,11 +67,16 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
     );
   }
 
+  // Top suggestion is highlighted by default so Enter commits to it visibly.
+  const showList = open && suggestions.length > 0;
+  const highlighted = active < 0 ? 0 : active;
+  const activeId = showList ? `sb-opt-${highlighted}` : undefined;
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     // Enter = highlighted suggestion > top suggestion > name/near-me search.
-    const chosen = active >= 0 ? suggestions[active] : suggestions[0];
-    if (open && chosen && query.trim()) {
+    const chosen = showList ? suggestions[highlighted] : undefined;
+    if (chosen && query.trim()) {
       goToPlace(chosen);
       return;
     }
@@ -96,10 +101,10 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') {
               e.preventDefault();
-              setActive((a) => Math.min(a + 1, suggestions.length - 1));
+              setActive((a) => Math.min((a < 0 ? 0 : a) + 1, suggestions.length - 1));
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
-              setActive((a) => Math.max(a - 1, -1));
+              setActive((a) => Math.max((a < 0 ? 0 : a) - 1, 0));
             } else if (e.key === 'Escape') {
               setOpen(false);
             }
@@ -107,19 +112,32 @@ export function SearchBar({ size = 'md' }: { size?: 'md' | 'lg' }) {
           placeholder="City, ZIP, address, or dispensary"
           className={size === 'lg' ? 'h-12 pl-9 text-base' : 'pl-9'}
           aria-label="Search by place or dispensary name"
+          role="combobox"
+          aria-expanded={showList}
+          aria-controls="homepage-search-listbox"
+          aria-autocomplete="list"
+          aria-activedescendant={activeId}
         />
 
-        {open && suggestions.length > 0 && (
-          <div className="border-border bg-surface shadow-card-hover absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-xl border py-1 text-left text-sm">
+        {showList && (
+          <div
+            id="homepage-search-listbox"
+            role="listbox"
+            className="border-border bg-surface shadow-card-hover absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-xl border py-1 text-left text-sm"
+          >
             {suggestions.map((s, i) => (
               <button
                 key={s.id}
                 type="button"
+                role="option"
+                id={`sb-opt-${i}`}
+                aria-selected={i === highlighted}
+                tabIndex={-1}
                 onClick={() => goToPlace(s)}
                 onMouseEnter={() => setActive(i)}
                 className={cn(
                   'flex w-full items-center gap-2 px-3 py-2 text-left',
-                  active === i ? 'bg-surface-2' : 'hover:bg-surface-2',
+                  i === highlighted ? 'bg-surface-2' : 'hover:bg-surface-2',
                 )}
               >
                 <MapPin className="text-primary h-3.5 w-3.5 shrink-0" />
