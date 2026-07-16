@@ -916,6 +916,7 @@ export type Database = {
           legal_name: string | null
           license_number: string | null
           location: unknown
+          location_approximate: boolean
           logo_url: string | null
           longitude: number | null
           name: string
@@ -975,6 +976,7 @@ export type Database = {
           legal_name?: string | null
           license_number?: string | null
           location?: unknown
+          location_approximate?: boolean
           logo_url?: string | null
           longitude?: number | null
           name: string
@@ -1034,6 +1036,7 @@ export type Database = {
           legal_name?: string | null
           license_number?: string | null
           location?: unknown
+          location_approximate?: boolean
           logo_url?: string | null
           longitude?: number | null
           name?: string
@@ -2824,6 +2827,7 @@ export type Database = {
         Returns: {
           deal_type: string
           deal_value: number
+          delivery_only: boolean
           featured: boolean
           is_open_now: boolean
           latitude: number

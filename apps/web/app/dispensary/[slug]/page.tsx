@@ -404,7 +404,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       ...(d.zip ? { postalCode: d.zip } : {}),
       addressCountry: 'US',
     },
-    ...(d.latitude != null && d.longitude != null
+    // Approximate service-area coordinates aren't a real storefront geo —
+    // publishing them in structured data would misplace the business.
+    ...(d.latitude != null && d.longitude != null && !d.location_approximate
       ? { geo: { '@type': 'GeoCoordinates', latitude: d.latitude, longitude: d.longitude } }
       : {}),
     ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
@@ -584,7 +586,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 {d.accepting_orders ? 'Order online' : 'View menu'}
               </a>
             ) : (
-              (d.latitude != null || d.address) && (
+              // Approximate (service-area) pins have no storefront to navigate
+              // to — never offer directions to a county centroid.
+              (d.latitude != null || d.address) &&
+              !d.location_approximate && (
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
                     d.latitude != null && d.longitude != null
@@ -601,7 +606,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             )}
             {/* Secondary Directions (only when the primary CTA is the menu, to
                 avoid duplicating the directions action). */}
-            {menuItems.length > 0 && (d.latitude != null || d.address) && (
+            {menuItems.length > 0 && (d.latitude != null || d.address) && !d.location_approximate && (
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
                   d.latitude != null && d.longitude != null
@@ -1131,9 +1136,11 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             )}
           </div>
 
-          {/* Sidebar: location + hours + contact */}
+          {/* Sidebar: location + hours + contact. Approximate (service-area)
+              coordinates mark a delivery region, not a storefront — show the
+              service area instead of a pin implying an exact address. */}
           <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
-            {d.latitude != null && d.longitude != null && (
+            {d.latitude != null && d.longitude != null && !d.location_approximate && (
               <div className="rounded-card border-border bg-surface shadow-card border p-5">
                 <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
                   Location
@@ -1153,6 +1160,21 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 >
                   <Navigation className="h-4 w-4" /> Get directions
                 </a>
+              </div>
+            )}
+            {d.location_approximate && (
+              <div className="rounded-card border-border bg-surface shadow-card border p-5">
+                <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
+                  Service area
+                </h2>
+                <p className="flex items-center gap-1.5 text-sm">
+                  <Truck className="text-primary h-4 w-4" />
+                  {d.county ? `${d.county} County, ${d.state}` : d.state}
+                </p>
+                <p className="text-muted mt-1.5 text-xs">
+                  Delivery service — no storefront to visit. Order for delivery within the service
+                  area.
+                </p>
               </div>
             )}
 

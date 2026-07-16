@@ -75,6 +75,8 @@ export interface MapPinPoint {
   dealLabel?: string | null;
   /** 1-based list position — numbered pin matching the result card. */
   rank?: number;
+  /** Delivery service without a storefront — distinct pin (Weedmaps car-vs-leaf). */
+  deliveryOnly?: boolean;
 }
 
 /** How many merchandised pins (logo/deal markers) we'll put in the DOM. */
@@ -113,8 +115,9 @@ const clusterCountLayer: LayerProps = {
   paint: { 'text-color': '#04231a' },
 };
 
-// Closed shops fade to slate; featured stay amber; open/unknown are brand green.
-// Ranked pins (in the visible result list) grow to fit their number.
+// Closed shops fade to slate; featured stay amber; delivery services are sky
+// blue (Weedmaps' car-vs-leaf distinction); open/unknown storefronts are brand
+// green. Ranked pins (in the visible result list) grow to fit their number.
 const unclusteredLayer: LayerProps = {
   id: 'unclustered-point',
   type: 'circle',
@@ -126,6 +129,8 @@ const unclusteredLayer: LayerProps = {
       '#fbbf24',
       ['==', ['get', 'open'], false],
       '#64748b',
+      ['==', ['get', 'delivery'], true],
+      '#38bdf8',
       '#34d399',
     ],
     'circle-radius': [
@@ -248,6 +253,7 @@ export function BrowseMap({
             name: p.name,
             featured: p.featured,
             open: p.isOpenNow,
+            delivery: p.deliveryOnly ?? false,
             ...(p.rank != null ? { rank: p.rank } : {}),
           },
           geometry: { type: 'Point' as const, coordinates: [p.lng, p.lat] },
@@ -523,14 +529,18 @@ export function BrowseMap({
               >
                 View menu →
               </Link>
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted hover:text-foreground inline-flex items-center gap-1 text-xs font-medium"
-              >
-                <Navigation className="h-3 w-3" /> Directions
-              </a>
+              {/* Delivery-only pins mark a service AREA — no storefront to
+                  navigate to. */}
+              {!(selected.isDelivery && !selected.isPickup) && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted hover:text-foreground inline-flex items-center gap-1 text-xs font-medium"
+                >
+                  <Navigation className="h-3 w-3" /> Directions
+                </a>
+              )}
             </div>
           </div>
         </Popup>
