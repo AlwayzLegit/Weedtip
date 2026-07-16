@@ -831,6 +831,7 @@ export type Database = {
       dispensaries: {
         Row: {
           accepting_orders: boolean
+          grandfathered: boolean
           gallery_urls: string[]
           post_order_message: string | null
           require_id: boolean
@@ -889,6 +890,7 @@ export type Database = {
         }
         Insert: {
           accepting_orders?: boolean
+          grandfathered?: boolean
           gallery_urls?: string[]
           post_order_message?: string | null
           require_id?: boolean
@@ -947,6 +949,7 @@ export type Database = {
         }
         Update: {
           accepting_orders?: boolean
+          grandfathered?: boolean
           gallery_urls?: string[]
           post_order_message?: string | null
           require_id?: boolean
@@ -1747,6 +1750,7 @@ export type Database = {
       plans: {
         Row: {
           commission_bps: number
+          tier: number
           created_at: string
           description: string | null
           features: Json
@@ -1759,6 +1763,7 @@ export type Database = {
         }
         Insert: {
           commission_bps?: number
+          tier?: number
           created_at?: string
           description?: string | null
           features?: Json
@@ -1771,6 +1776,7 @@ export type Database = {
         }
         Update: {
           commission_bps?: number
+          tier?: number
           created_at?: string
           description?: string | null
           features?: Json
@@ -2676,6 +2682,10 @@ export type Database = {
         Returns: boolean
       }
       dispensary_effective_tax_bps: {
+        Args: { p_dispensary_id: string }
+        Returns: number
+      }
+      dispensary_tier: {
         Args: { p_dispensary_id: string }
         Returns: number
       }
