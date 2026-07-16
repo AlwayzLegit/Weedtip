@@ -15,7 +15,7 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import type { BBox } from '@/lib/us-state-bounds';
 import { BrowseMap, type BrowseMapApi, type BrowserShop, type MapPinPoint } from './browse-map';
-import { DispensaryCard } from './dispensary-card';
+import { DispensaryResultRow } from './dispensary-result-row';
 import { GeoSearch, type GeoPlace } from './geo-search';
 import { MediaImage } from './media-image';
 
@@ -637,11 +637,11 @@ export function DispensariesBrowser({
         <div
           ref={listRef}
           className={cn(
-            'min-h-0 w-full overflow-y-auto px-4 py-4 lg:block lg:w-[42%] xl:w-[38%]',
+            'min-h-0 w-full overflow-y-auto py-3 lg:block lg:w-[40%] xl:w-[36%] 2xl:w-[32%]',
             mobileView === 'map' && 'hidden',
           )}
         >
-          <p className="text-muted mb-3 text-sm" aria-live="polite">
+          <p className="text-muted mb-2 px-3 text-sm" aria-live="polite">
             {loading ? (
               <span className="inline-flex items-center gap-1.5">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching…
@@ -655,7 +655,7 @@ export function DispensariesBrowser({
           </p>
 
           {failed ? (
-            <div className="card text-muted p-10 text-center text-sm">
+            <div className="card text-muted mx-3 p-10 text-center text-sm">
               Couldn&apos;t load results.{' '}
               <button
                 type="button"
@@ -666,13 +666,13 @@ export function DispensariesBrowser({
               </button>
             </div>
           ) : shops.length === 0 && !loading ? (
-            <div className="card text-muted p-10 text-center text-sm">
+            <div className="card text-muted mx-3 p-10 text-center text-sm">
               No dispensaries match here. Zoom out, move the map, or clear filters.
             </div>
           ) : (
             <div
               className={cn(
-                'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2',
+                'divide-border border-border divide-y border-y',
                 loading && 'opacity-60',
               )}
             >
@@ -686,12 +686,11 @@ export function DispensariesBrowser({
                   onMouseEnter={() => setHovered(s.slug)}
                   onMouseLeave={() => setHovered(null)}
                   className={cn(
-                    'rounded-card transition-shadow',
-                    (hovered === s.slug || popupShop?.slug === s.slug) &&
-                      'ring-primary/60 ring-2 ring-offset-0',
+                    'transition-colors',
+                    (hovered === s.slug || popupShop?.slug === s.slug) && 'bg-surface-2',
                   )}
                 >
-                  <DispensaryCard
+                  <DispensaryResultRow
                     d={{
                       slug: s.slug,
                       name: s.name,
