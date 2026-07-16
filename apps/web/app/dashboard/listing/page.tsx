@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
 import { ListingForm } from '@/components/dashboard/listing-form';
+import { getOwnerFeature } from '@/lib/features';
 import { licenseAuthority } from '@/lib/license';
 import { getOwnerContext } from '@/lib/owner';
 
@@ -9,6 +10,8 @@ export const metadata: Metadata = { title: 'Listing' };
 export default async function ListingPage() {
   const { dispensary } = await getOwnerContext();
   const authority = dispensary ? licenseAuthority(dispensary.state) : null;
+  // "Complete profile" is Basic-tier; a free listing edits only the basics.
+  const canComplete = dispensary ? await getOwnerFeature('complete_profile') : false;
 
   return (
     <div className="space-y-6">
@@ -75,7 +78,7 @@ export default async function ListingPage() {
             </dl>
           </div>
         )}
-      <ListingForm dispensary={dispensary} />
+      <ListingForm dispensary={dispensary} canComplete={canComplete} />
     </div>
   );
 }
