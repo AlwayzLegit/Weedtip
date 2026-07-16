@@ -17,7 +17,7 @@ import { isAiEnabled, summarizeReviews } from '@/lib/ai';
 import { canUseFeature } from '@/lib/features';
 import { notifyAdmins } from '@/lib/notify';
 import { ACTIVE_DISPENSARY_COOKIE } from '@/lib/owner';
-import { MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
+import { BASIC_UPGRADE_MESSAGE, MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import { videoEmbed } from '@/lib/video';
@@ -541,6 +541,9 @@ export async function importProducts(_prev: FormState, fd: FormData): Promise<Fo
   const { supabase, userId } = auth;
   const dispensaryId = await ownerDispensaryId(supabase, userId);
   if (!dispensaryId) return formError('Create your dispensary listing first.');
+
+  // Bulk CSV import is a Basic-tier feature; adding products by hand stays free.
+  if (!(await canUseFeature(dispensaryId, 'bulk_import'))) return formError(BASIC_UPGRADE_MESSAGE);
 
   const lines = (str(fd, 'csv') ?? '')
     .split(/\r?\n/)

@@ -2,9 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { canUseFeature } from '@/lib/features';
 import { EMPTY_FORM_STATE, formError, formSuccess, type FormState } from '@/lib/forms';
 import { runMenuSync } from '@/lib/menu-sync';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { BASIC_UPGRADE_MESSAGE } from '@/lib/plan';
 import { createClient } from '@/lib/supabase/server';
 
 export { EMPTY_FORM_STATE };
@@ -22,6 +24,9 @@ const sourceSchema = z.object({
 /** Create or update the shop's single menu feed connection. */
 export async function saveMenuSource(_prev: FormState, fd: FormData): Promise<FormState> {
   const { dispensary } = await requireOwnerDispensary();
+  // Syncing an existing store/POS menu is a Basic-tier feature; adding products
+  // by hand stays free.
+  if (!(await canUseFeature(dispensary.id, 'bulk_import'))) return formError(BASIC_UPGRADE_MESSAGE);
   const parsed = sourceSchema.safeParse({
     provider: fd.get('provider'),
     feed_url: String(fd.get('feed_url') ?? '').trim(),
@@ -59,6 +64,7 @@ export async function deleteMenuSource(): Promise<void> {
 /** Run the sync now with the owner's own session (RLS enforces scope). */
 export async function syncMenuNow(_prev: FormState, _fd: FormData): Promise<FormState> {
   const { dispensary } = await requireOwnerDispensary();
+  if (!(await canUseFeature(dispensary.id, 'bulk_import'))) return formError(BASIC_UPGRADE_MESSAGE);
   const supabase = await createClient();
 
   const { data: source } = await supabase
