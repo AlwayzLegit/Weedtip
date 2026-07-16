@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { FormMessage } from './form-message';
+import { OAuthButtons } from './oauth-buttons';
 import { SubmitButton } from './submit-button';
 
 type Persona = 'consumer' | 'dispensary_owner' | 'brand';
@@ -28,6 +29,10 @@ export function SignUpForm({
 
   return (
     <form action={action} className="space-y-4">
+      {/* OAuth can't carry the dispensary_owner role in metadata (the profile
+          trigger would default them to consumer), so Google is offered for the
+          shopper/brand personas only — owners keep the email path. */}
+      {role === 'consumer' && <OAuthButtons next={nextValue} />}
       <FormMessage state={state} />
 
       <input type="hidden" name="role" value={role} />
