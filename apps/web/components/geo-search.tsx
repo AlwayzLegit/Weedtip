@@ -69,6 +69,25 @@ export function GeoSearch({
     onSubmitQuery(draft.trim());
   };
 
+  /**
+   * Enter can beat the 300ms debounce + geocoder round trip, leaving zero
+   * suggestions for a query like "Pasadena, CA" — which then fell through to a
+   * dispensary-NAME search and returned nothing. Google geocodes the raw text
+   * on submit, so do the same: one direct geocode, jump to the top place if it
+   * resolves, else fall back to the name search.
+   */
+  const submitRaw = async () => {
+    const q = draft.trim();
+    if (q.length >= 3) {
+      const places = await geocodePlaces(q, { limit: 1 });
+      if (places[0]) {
+        pick(places[0]);
+        return;
+      }
+    }
+    submitText();
+  };
+
   // Top suggestion is highlighted by default so Enter commits to it visibly.
   const showList = open && (draft.trim().length >= 3 || suggestions.length > 0);
   const highlighted = active < 0 ? 0 : active;
@@ -80,10 +99,11 @@ export function GeoSearch({
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
-          // Enter = highlighted suggestion (top by default) > name search.
+          // Enter = highlighted suggestion (top by default) > direct geocode
+          // of the raw text > name search.
           const chosen = suggestions.length > 0 ? suggestions[highlighted] : undefined;
           if (open && chosen) pick(chosen);
-          else submitText();
+          else void submitRaw();
         }}
       >
         <Search className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />

@@ -13,7 +13,7 @@ import { mapPinsBounds, searchDispensariesBounds } from '@weedtip/supabase/queri
 import { dealBadge, formatDistance, isOpenNow } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
-import type { BBox } from '@/lib/us-state-bounds';
+import { US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
 import { BrowseMap, type BrowseMapApi, type BrowserShop, type MapPinPoint } from './browse-map';
 import { DispensaryResultRow } from './dispensary-result-row';
 import { GeoSearch, type GeoPlace } from './geo-search';
@@ -298,11 +298,17 @@ export function DispensariesBrowser({
   }, []);
 
   const runSearch = useCallback(
-    async (
+    async function run(
       bounds: BBox,
       nextFilters: BrowseFilters,
-      opts: { append?: boolean; offset?: number; origin?: { lat: number; lng: number } | null },
-    ) => {
+      opts: {
+        append?: boolean;
+        offset?: number;
+        origin?: { lat: number; lng: number } | null;
+        /** Set on the automatic nationwide retry after a zero-result text search. */
+        widened?: boolean;
+      },
+    ) {
       const id = ++requestId.current;
       setLoading(true);
       setFailed(false);
@@ -334,8 +340,36 @@ export function DispensariesBrowser({
         return;
       }
       const rows = (data ?? []).map(toShop);
+      // A text search that misses in the current viewport retries nationwide
+      // (Weedmaps behavior) — the shop the user typed is usually just outside
+      // the visible area, and "0 results" for a real shop reads as broken.
+      if (
+        !opts.append &&
+        !opts.widened &&
+        rows.length === 0 &&
+        (nextFilters.query ?? '').trim() &&
+        boundsChanged(bounds, US_BOUNDS)
+      ) {
+        void run(US_BOUNDS, nextFilters, { ...opts, widened: true });
+        return;
+      }
       setTotal(data?.[0]?.total_count ?? (opts.append ? total : 0));
       setShops((prev) => (opts.append ? [...prev, ...rows] : rows));
+      // The widened pass found matches elsewhere — bring them into view.
+      if (opts.widened && rows.length > 0) {
+        const pts = rows.filter((r) => typeof r.lat === 'number' && typeof r.lng === 'number');
+        if (pts.length > 0) {
+          const lngs = pts.map((p) => p.lng as number);
+          const lats = pts.map((p) => p.lat as number);
+          autoSearchNextMove.current = false;
+          mapApi.current?.fitBounds([
+            Math.min(...lngs),
+            Math.min(...lats),
+            Math.max(...lngs),
+            Math.max(...lats),
+          ]);
+        }
+      }
       // Deal badges for the visible page of results (soonest-ending live deal
       // per shop) — the bounds RPC itself stays lean.
       if (rows.length > 0) {
