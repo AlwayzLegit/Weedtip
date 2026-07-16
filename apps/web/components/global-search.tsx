@@ -152,7 +152,7 @@ export function GlobalSearch({ className }: { className?: string }) {
           aria-label="Search Weedtip"
           role="combobox"
           aria-expanded={showDropdown}
-          aria-controls="global-search-listbox"
+          aria-controls={showDropdown && itemCount > 0 ? 'global-search-listbox' : undefined}
           aria-autocomplete="list"
           aria-activedescendant={activeId}
           className="border-border bg-surface focus-visible:ring-primary/40 focus-visible:border-primary/60 h-10 w-full rounded-full border pl-9 pr-14 text-sm outline-none transition-colors focus-visible:ring-2"
