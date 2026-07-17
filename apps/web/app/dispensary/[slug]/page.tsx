@@ -412,6 +412,32 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       : {}),
     ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
     ...(priceRange ? { priceRange } : {}),
+    // Menu as an OfferCatalog (per category, capped): lets search engines
+    // surface actual products + prices under the listing. Only in-stock items
+    // — advertising sold-out stock in the SERP is worse than omitting it.
+    ...(menuItems.length > 0
+      ? {
+          hasOfferCatalog: {
+            '@type': 'OfferCatalog',
+            name: `${d.name} menu`,
+            itemListElement: menuItems
+              .filter((mi) => mi.inStock)
+              .slice(0, 25)
+              .map((mi) => ({
+                '@type': 'Offer',
+                itemOffered: {
+                  '@type': 'Product',
+                  name: mi.name,
+                  ...(mi.brand ? { brand: { '@type': 'Brand', name: mi.brand } } : {}),
+                  ...(mi.categoryName ? { category: mi.categoryName } : {}),
+                },
+                price: (mi.priceCents / 100).toFixed(2),
+                priceCurrency: 'USD',
+                availability: 'https://schema.org/InStock',
+              })),
+          },
+        }
+      : {}),
     // Prefer the denormalized rating columns (a shop can have a numeric rating
     // with no loaded text reviews); attach individual Review nodes when present.
     ...(d.rating_count > 0

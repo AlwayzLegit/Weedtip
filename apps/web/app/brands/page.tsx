@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
-import { Package, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import { BrandTile } from '@/components/brand/brand-tile';
 import { PlacementBeacon } from '@/components/placement-beacon';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
@@ -237,39 +238,22 @@ export default async function BrandsPage({
             : `No brands${selectedState ? ` in ${selectedState}` : ' yet'}.`}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        // Weedmaps-style tile grid: artwork-forward square logo tiles.
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
           {ranked.map((b) => (
-            <Link
+            <BrandTile
               key={b.slug}
-              href={`/brand/${b.slug}`}
-              className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover flex items-start gap-4 border p-5 transition-all duration-200 hover:-translate-y-0.5"
-            >
-              {b.logo_url ? (
-                <img
-                  src={b.logo_url}
-                  alt={b.name}
-                  className="bg-surface-2 border-border h-12 w-12 shrink-0 rounded-xl border object-contain p-1"
-                />
-              ) : (
-                <span className="bg-primary-muted text-primary ring-primary/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold ring-1">
-                  {b.name.charAt(0).toUpperCase()}
-                </span>
-              )}
-              <div className="min-w-0">
-                <h2 className="font-semibold">{b.name}</h2>
-                {b.description && (
-                  <p className="text-muted mt-1 line-clamp-2 text-sm">{b.description}</p>
-                )}
-                <p className="text-muted mt-2 flex items-center gap-1 text-xs">
-                  <Package className="h-3.5 w-3.5" />
-                  {b.count > 0
-                    ? `${b.count} ${b.count === 1 ? 'product' : 'products'} in stores${selectedState ? ` in ${selectedState}` : ''}`
-                    : b.lineupCount > 0
-                      ? `${b.lineupCount} ${b.lineupCount === 1 ? 'product' : 'products'} in lineup`
-                      : 'No products yet'}
-                </p>
-              </div>
-            </Link>
+              slug={b.slug}
+              name={b.name}
+              logoUrl={b.logo_url}
+              sub={
+                b.count > 0
+                  ? `${b.count} ${b.count === 1 ? 'product' : 'products'} in stores${selectedState ? ` in ${selectedState}` : ''}`
+                  : b.lineupCount > 0
+                    ? `${b.lineupCount} in lineup`
+                    : 'New brand'
+              }
+            />
           ))}
         </div>
       )}
