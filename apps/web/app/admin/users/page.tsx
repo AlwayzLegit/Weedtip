@@ -105,7 +105,11 @@ export default async function AdminUsers({
             ) : (
               (users ?? []).map((u) => (
                 <tr key={u.id} className="bg-surface hover:bg-surface-2/50 transition-colors">
-                  <td className="px-4 py-3 font-medium">{u.display_name ?? '—'}</td>
+                  <td className="px-4 py-3 font-medium">
+                    <Link href={`/admin/users/${u.id}`} className="hover:text-primary block">
+                      {u.display_name ?? '—'}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge tone={ROLE_TONE[u.role] ?? 'default'}>{u.role.replace('_', ' ')}</Badge>
