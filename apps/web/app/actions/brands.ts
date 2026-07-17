@@ -8,6 +8,7 @@ import {
   SALES_INBOX,
   sendEmail,
 } from '@/lib/email';
+import { canUseBrandFeature } from '@/lib/brand-plan';
 import { type FormState, formError, formSuccess, fromZodError, str } from '@/lib/forms';
 import { notifyAdmins } from '@/lib/notify';
 import { createClient } from '@/lib/supabase/server';
@@ -147,11 +148,27 @@ export async function updateOwnedBrand(_prev: FormState, fd: FormData): Promise<
   if (!brandId) return formError('Missing brand.');
 
   const supabase = await createClient();
+
+  // Description + website are a Basic-tier feature ("complete profile"); logo is
+  // free. The RPC overwrites, so a free brand's save must PRESERVE the stored
+  // rich fields rather than blank them (the free form doesn't render them).
+  let description = str(fd, 'description') ?? '';
+  let website = str(fd, 'website') ?? '';
+  if (!(await canUseBrandFeature(brandId, 'brand_complete_profile'))) {
+    const { data: cur } = await supabase
+      .from('brands')
+      .select('description, website')
+      .eq('id', brandId)
+      .maybeSingle();
+    description = cur?.description ?? '';
+    website = cur?.website ?? '';
+  }
+
   const { error } = await supabase.rpc('update_owned_brand', {
     p_brand_id: brandId,
-    p_description: str(fd, 'description') ?? '',
+    p_description: description,
     p_logo_url: str(fd, 'logo_url') ?? '',
-    p_website: str(fd, 'website') ?? '',
+    p_website: website,
   });
   if (error) return formError(error.message);
 
