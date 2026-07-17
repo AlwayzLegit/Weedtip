@@ -38,10 +38,14 @@ function browseAllHref(kind: string, q: string): string {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; more?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, more } = await searchParams;
   const query = (q ?? '').trim();
+  // "Show more" bumps the per-kind cap (server-rendered, shareable URL) —
+  // cheaper than true pagination across four result kinds.
+  const expanded = more === '1';
+  const perKind = expanded ? 36 : 12;
 
   // ZIP-shaped queries mean "dispensaries near this place" — the entity-name
   // search matches nothing for them. Center the map on our own listings for
@@ -75,13 +79,16 @@ export default async function SearchPage({
     const supabase = await createClient();
     const { data } = await supabase.rpc('search_global', {
       search_query: query,
-      per_kind_limit: 12,
+      per_kind_limit: perKind,
     });
     results = data ?? [];
   }
 
   const byKind = (kind: string) => results.filter((r) => r.kind === kind);
   const hasResults = results.length > 0;
+  // Any kind filled to its cap may be truncated — offer the expanded view.
+  const maybeTruncated =
+    !expanded && SEARCH_KIND_ORDER.some((k) => byKind(k).length === perKind);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
@@ -182,6 +189,16 @@ export default async function SearchPage({
               </section>
             );
           })}
+          {maybeTruncated && (
+            <div className="text-center">
+              <Link
+                href={`/search?q=${encodeURIComponent(query)}&more=1`}
+                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center rounded-full border px-5 py-2.5 text-sm font-medium transition-colors"
+              >
+                Show more results
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </main>

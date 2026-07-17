@@ -37,7 +37,7 @@ import { ReviewForm } from '@/components/review-form';
 import { ShareButton } from '@/components/share-button';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
-import { DAY_ORDER, dayLabel, dealBadge, formatTime } from '@/lib/format';
+import { DAY_ORDER, dayLabel, dealBadge, formatTime, nextOpeningLabel } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
 import { renderMarkdown, stripMarkdown } from '@/lib/markdown';
@@ -360,6 +360,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     !!todayHours &&
     nowMinutes >= toMinutes(todayHours.open) &&
     nowMinutes < toMinutes(todayHours.close);
+  const nextOpenLabel = isOpenNow ? null : nextOpeningLabel(hours ?? null, d.timezone);
 
   const prices = (products ?? []).map((p) => p.price_cents);
   const priceRange = prices.length
@@ -550,7 +551,8 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 >
                   {isOpenNow && todayHours
                     ? `Open until ${formatTime(todayHours.close)}`
-                    : 'Closed now'}
+                    : // "Closed · Opens 9:00 AM Thu" beats a dead-end "Closed now".
+                      `Closed${nextOpenLabel ? ` · ${nextOpenLabel}` : ' now'}`}
                 </span>
               )}
             </div>
@@ -1189,7 +1191,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         : 'bg-surface-2 text-muted border-border border'
                     }`}
                   >
-                    {isOpenNow ? 'Open now' : 'Closed now'}
+                    {isOpenNow ? 'Open now' : (nextOpenLabel ?? 'Closed now')}
                   </span>
                 )}
               </div>

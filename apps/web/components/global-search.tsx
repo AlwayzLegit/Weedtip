@@ -92,11 +92,17 @@ export function GlobalSearch({ className }: { className?: string }) {
     }
   }
 
-  // Keyboard focus runs over one combined list: places first, then entities.
+  // Keyboard focus runs over one combined list: places first, then entities,
+  // then a final "See all results" row (index === itemCount) so the SERP is
+  // reachable without a mouse — the ⌘K palette's behavior.
   const itemCount = places.length + results.length;
 
   function activate(index: number) {
     setOpen(false);
+    if (index >= itemCount) {
+      goToResults();
+      return;
+    }
     if (index < places.length) {
       const place = places[index];
       if (place) router.push(dispensariesUrlForPlace(place));
@@ -115,7 +121,7 @@ export function GlobalSearch({ className }: { className?: string }) {
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActive((a) => Math.min((a < 0 ? 0 : a) + 1, itemCount - 1));
+      setActive((a) => Math.min((a < 0 ? 0 : a) + 1, itemCount));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActive((a) => Math.max((a < 0 ? 0 : a) - 1, 0));
@@ -124,7 +130,7 @@ export function GlobalSearch({ className }: { className?: string }) {
       const q = query.trim();
       // Prefer the highlighted suggestion (top by default); fall back to a ZIP
       // map jump, then to the full results page when there's nothing to pick.
-      if (itemCount > 0 && highlighted < itemCount) activate(highlighted);
+      if (itemCount > 0 && highlighted <= itemCount) activate(highlighted);
       else if (/^\d{5}(?:-\d{4})?$/.test(q)) void goToZip(q);
       else goToResults();
     } else if (e.key === 'Escape') {
@@ -238,15 +244,37 @@ export function GlobalSearch({ className }: { className?: string }) {
                   </li>
                 );
               })}
+              {/* Final option: keyboard-reachable SERP escape (arrow past the
+                  last suggestion, like the ⌘K palette). */}
+              <li role="option" id={`gs-opt-${itemCount}`} aria-selected={highlighted === itemCount}>
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onMouseEnter={() => setActive(itemCount)}
+                  onClick={goToResults}
+                  className={cn(
+                    'border-border text-primary block w-full border-t px-4 py-2.5 text-left text-sm font-medium',
+                    highlighted === itemCount ? 'bg-surface-2' : 'hover:bg-surface-2',
+                  )}
+                >
+                  See all results for “{query.trim()}” →
+                </button>
+              </li>
             </ul>
           )}
-          <button
-            type="button"
-            onClick={goToResults}
-            className="border-border text-primary hover:bg-surface-2 block w-full border-t px-4 py-2.5 text-left text-sm font-medium"
-          >
-            See all results for “{query.trim()}” →
-          </button>
+          {itemCount === 0 && (
+            <button
+              type="button"
+              onClick={goToResults}
+              className="border-border text-primary hover:bg-surface-2 block w-full border-t px-4 py-2.5 text-left text-sm font-medium"
+            >
+              See all results for “{query.trim()}” →
+            </button>
+          )}
+          {/* Result-count announcement for screen readers. */}
+          <p aria-live="polite" className="sr-only">
+            {itemCount > 0 ? `${itemCount} suggestion${itemCount === 1 ? '' : 's'}` : 'No matches yet'}
+          </p>
         </div>
       )}
     </div>
