@@ -15,10 +15,12 @@ import { dealBadge, formatDistance, isOpenNow } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
+import { track } from '@/lib/analytics';
 import type { BrowseMapApi, BrowserShop, MapPinPoint } from './browse-map';
 import { DispensaryResultRow } from './dispensary-result-row';
 import { GeoSearch, type GeoPlace } from './geo-search';
 import { MediaImage } from './media-image';
+import { RowQuickActions } from './row-quick-actions';
 
 export type { BrowserShop };
 
@@ -175,6 +177,10 @@ export function DispensariesBrowser({
   const [areaChanged, setAreaChanged] = useState(false);
   // Google Maps-style "search as I move": on by default, persisted per browser.
   const [autoSearch, setAutoSearch] = useState(true);
+  // Row-level Save: the signed-in user's favorite set, loaded once. null user
+  // → hearts route to sign-in.
+  const [userId, setUserId] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   // Every matching shop in the viewport (the list stays paginated).
   const [pins, setPins] = useState<MapPinPoint[]>(() =>
     initialShops
@@ -307,6 +313,62 @@ export function DispensariesBrowser({
   useEffect(() => {
     void fetchPins(initialBounds, initialFilters);
   }, []);
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      setUserId(data.user.id);
+      void supabase
+        .from('favorites')
+        .select('dispensary_id')
+        .eq('user_id', data.user.id)
+        .then(({ data: favs }) =>
+          setFavorites(new Set((favs ?? []).map((f) => f.dispensary_id))),
+        );
+    });
+  }, [supabase]);
+
+  // Optimistic heart toggle straight through RLS (favorites_*_self policies);
+  // reverts on failure. Signed-out users go to sign-in and come back here.
+  const toggleFavorite = useCallback(
+    (dispensaryId: string, slug: string) => {
+      if (!userId) {
+        window.location.href = `/sign-in?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        return;
+      }
+      const adding = !favorites.has(dispensaryId);
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (adding) next.add(dispensaryId);
+        else next.delete(dispensaryId);
+        return next;
+      });
+      track(adding ? 'favorite_added' : 'favorite_removed', {
+        kind: 'dispensary',
+        dispensary_id: dispensaryId,
+        slug,
+        surface: 'map_list',
+      });
+      const op = adding
+        ? supabase.from('favorites').insert({ user_id: userId, dispensary_id: dispensaryId })
+        : supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', userId)
+            .eq('dispensary_id', dispensaryId);
+      void op.then(({ error }) => {
+        if (error) {
+          setFavorites((prev) => {
+            const next = new Set(prev);
+            if (adding) next.delete(dispensaryId);
+            else next.add(dispensaryId);
+            return next;
+          });
+        }
+      });
+    },
+    [userId, favorites, supabase],
+  );
 
   const runSearch = useCallback(
     async function run(
@@ -763,6 +825,22 @@ export function DispensariesBrowser({
                 Try again
               </button>
             </div>
+          ) : shops.length === 0 && loading ? (
+            // Fresh area with nothing on screen yet — skeleton rows shaped
+            // like DispensaryResultRow so the panel doesn't jump on arrival.
+            // (Searches over existing results keep the rows and dim instead.)
+            <div className="divide-border border-border divide-y border-y" aria-hidden>
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="flex animate-pulse gap-3 px-3 py-3">
+                  <div className="min-w-0 flex-1 space-y-2 py-1">
+                    <div className="bg-surface-2 h-4 w-3/4 rounded" />
+                    <div className="bg-surface-2 h-3 w-1/2 rounded" />
+                    <div className="bg-surface-2 h-3 w-2/3 rounded" />
+                  </div>
+                  <div className="bg-surface-2 h-[84px] w-[84px] shrink-0 rounded-lg" />
+                </div>
+              ))}
+            </div>
           ) : shops.length === 0 && !loading ? (
             <div className="card text-muted mx-3 p-10 text-center text-sm">
               No dispensaries match here. Zoom out, move the map, or clear filters.
@@ -814,6 +892,17 @@ export function DispensariesBrowser({
                       timezone: s.timezone,
                       dealBadge: s.dealBadge,
                     }}
+                    quickActions={
+                      <RowQuickActions
+                        slug={s.slug}
+                        dispensaryId={s.id}
+                        lat={s.lat}
+                        lng={s.lng}
+                        deliveryOnly={s.isDelivery && !s.isPickup}
+                        isFavorite={favorites.has(s.id)}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    }
                   />
                 </div>
               ))}
