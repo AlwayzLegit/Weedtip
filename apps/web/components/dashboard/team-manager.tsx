@@ -1,21 +1,33 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useActionState, useTransition } from 'react';
 import { UserPlus } from 'lucide-react';
 import type { Tables } from '@weedtip/supabase/types';
 import { inviteMember, removeMember, setMemberRole } from '@/app/dashboard/team/actions';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
+import {
+  INVITABLE_ROLES,
+  MEMBER_ROLE_DESCRIPTION,
+  MEMBER_ROLE_LABEL,
+  toMemberRole,
+  type InvitableRole,
+} from '@/lib/member-roles';
 import { SubmitButton } from '../auth/submit-button';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
 type Member = Tables<'dispensary_members'>;
 
-/** Owner-facing team roster: invite by email, change role, remove. */
+const roleSelectClass =
+  'border-border bg-surface-2 text-foreground h-9 rounded-lg border px-2.5 text-sm';
+
+/** Owner-facing team roster: invite by email, set role, remove. P4 role matrix. */
 export function TeamManager({ members }: { members: Member[] }) {
   const [state, action] = useActionState(inviteMember, EMPTY_FORM_STATE);
+  const router = useRouter();
+  const [, start] = useTransition();
 
   return (
     <div className="space-y-6">
@@ -34,12 +46,15 @@ export function TeamManager({ members }: { members: Member[] }) {
           />
           <select
             name="role"
-            defaultValue="staff"
+            defaultValue="associate"
             className="border-border bg-surface-2 text-foreground h-11 rounded-lg border px-3.5 text-sm"
             aria-label="Role"
           >
-            <option value="staff">Staff</option>
-            <option value="manager">Manager</option>
+            {INVITABLE_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {MEMBER_ROLE_LABEL[r]}
+              </option>
+            ))}
           </select>
           <SubmitButton>Send invite</SubmitButton>
         </div>
@@ -47,10 +62,17 @@ export function TeamManager({ members }: { members: Member[] }) {
           <p className="text-danger text-sm">{state.message}</p>
         )}
         {state.status === 'success' && <p className="text-primary text-sm">{state.message}</p>}
-        <p className="text-muted text-xs">
-          Staff manage the menu, deals, and orders. Managers can also run promotions. Only you (the
-          owner) control billing and the team.
-        </p>
+        <dl className="text-muted space-y-0.5 text-xs">
+          {INVITABLE_ROLES.map((r) => (
+            <div key={r}>
+              <dt className="text-foreground inline font-medium">{MEMBER_ROLE_LABEL[r]}: </dt>
+              <dd className="inline">{MEMBER_ROLE_DESCRIPTION[r]}</dd>
+            </div>
+          ))}
+          <p className="pt-1">
+            Only you (Admin) control billing, taxes, and the team.
+          </p>
+        </dl>
       </form>
 
       {members.length > 0 ? (
@@ -68,23 +90,30 @@ export function TeamManager({ members }: { members: Member[] }) {
               {members.map((m) => (
                 <tr key={m.id} className="bg-surface">
                   <td className="px-4 py-3">{m.email}</td>
-                  <td className="px-4 py-3 capitalize">{m.role}</td>
+                  <td className="px-4 py-3">
+                    <select
+                      defaultValue={toMemberRole(m.role)}
+                      aria-label={`Role for ${m.email}`}
+                      className={roleSelectClass}
+                      onChange={(e) =>
+                        start(async () => {
+                          await setMemberRole(m.id, e.target.value as InvitableRole);
+                          router.refresh();
+                        })
+                      }
+                    >
+                      {INVITABLE_ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {MEMBER_ROLE_LABEL[r]}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td className="px-4 py-3">
                     <Badge tone={m.status === 'active' ? 'primary' : 'muted'}>{m.status}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <form
-                        action={setMemberRole.bind(
-                          null,
-                          m.id,
-                          m.role === 'manager' ? 'staff' : 'manager',
-                        )}
-                      >
-                        <Button type="submit" variant="ghost" size="sm">
-                          Make {m.role === 'manager' ? 'staff' : 'manager'}
-                        </Button>
-                      </form>
+                    <div className="flex items-center justify-end">
                       <DeleteButton
                         action={removeMember.bind(null, m.id)}
                         confirmText={`Remove ${m.email}?`}

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { sendEmail, teamInviteEmail } from '@/lib/email';
 import { canUseFeature } from '@/lib/features';
 import { formError, formSuccess, fromZodError, str, type FormState } from '@/lib/forms';
+import { INVITABLE_ROLES, type InvitableRole } from '@/lib/member-roles';
 import { notifyUser } from '@/lib/notify';
 import { requireDispensaryOwner } from '@/lib/owner';
 import { createClient } from '@/lib/supabase/server';
@@ -14,7 +15,7 @@ const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000
 
 const inviteSchema = z.object({
   email: z.string().trim().toLowerCase().email('Enter a valid email').max(254),
-  role: z.enum(['manager', 'staff']),
+  role: z.enum(INVITABLE_ROLES),
 });
 
 /** Owner invites a teammate by email. Growth-gated. */
@@ -25,7 +26,7 @@ export async function inviteMember(_prev: FormState, fd: FormData): Promise<Form
   }
   const parsed = inviteSchema.safeParse({
     email: str(fd, 'email') ?? '',
-    role: str(fd, 'role') ?? 'staff',
+    role: str(fd, 'role') ?? 'associate',
   });
   if (!parsed.success) return fromZodError(parsed.error);
 
@@ -49,7 +50,8 @@ export async function inviteMember(_prev: FormState, fd: FormData): Promise<Form
 }
 
 /** Owner changes a member's role. */
-export async function setMemberRole(memberId: string, role: 'manager' | 'staff'): Promise<void> {
+export async function setMemberRole(memberId: string, role: InvitableRole): Promise<void> {
+  if (!INVITABLE_ROLES.includes(role)) return;
   const { dispensary } = await requireDispensaryOwner();
   const supabase = await createClient();
   await supabase
