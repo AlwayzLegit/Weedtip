@@ -4,8 +4,11 @@ import { useActionState, useState } from 'react';
 import type { Tables } from '@weedtip/supabase/types';
 import { upsertDeal } from '@/app/dashboard/actions';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
+import { cn } from '@/lib/utils';
 import { FormMessage } from '../auth/form-message';
 import { SubmitButton } from '../auth/submit-button';
+import { Button } from '../ui/button';
+import { Stepper } from '../ui/stepper';
 import { ImagePicker } from './image-picker';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
@@ -71,6 +74,18 @@ export function DealForm({
   const [autoApply, setAutoApply] = useState(d?.auto_apply ?? false);
   const [scope, setScope] = useState(d?.target_scope ?? 'menu');
 
+  // Stepped wizard (P2). Every field stays mounted (hidden per step) so state +
+  // submission never change — this is presentation over the existing form. The
+  // online-sale vs in-person-code fork lives WITHIN the "Discount & rules" step
+  // (the auto-apply toggle), so the step count stays a robust 3.
+  const [step, setStep] = useState(1);
+  const steps = ['Details', 'Discount & rules', 'Schedule'];
+  const lastStep = steps.length;
+  const currentStep = Math.min(step, lastStep);
+  const detailsStep = 1;
+  const discountStep = 2;
+  const scheduleStep = 3;
+
   const defaultValue =
     kind === 'price_target'
       ? d?.target_price_cents != null
@@ -78,13 +93,19 @@ export function DealForm({
         : ''
       : (d?.discount_value ?? '');
 
+  const show = (n: number) => (currentStep === n ? '' : 'hidden');
+
   return (
     <form action={action} className="space-y-5">
       <FormMessage state={{ error: state.status === 'error' ? state.message : undefined }} />
       {d && <input type="hidden" name="id" value={d.id} />}
 
+      <Stepper steps={steps} current={currentStep} />
+
+      {/* Step: Details */}
+      <div className={cn('space-y-5', show(detailsStep))}>
       <Field label="Title" htmlFor="title" error={fe.title}>
-        <Input id="title" name="title" defaultValue={d?.title ?? ''} required />
+        <Input id="title" name="title" defaultValue={d?.title ?? ''} />
       </Field>
 
       <Field label="Description" htmlFor="description" error={fe.description}>
@@ -92,7 +113,10 @@ export function DealForm({
       </Field>
 
       <ImagePicker name="image_url" label="Deal image (optional)" defaultUrl={d?.image_url} />
+      </div>
 
+      {/* Step: Discount (+ in-person code lives here on the 3-step fork) */}
+      <div className={cn('space-y-5', show(discountStep))}>
       <section className="grid gap-4 sm:grid-cols-2">
         <Field label="Discount" htmlFor="kind" error={fe.kind}>
           <Select
@@ -312,7 +336,10 @@ export function DealForm({
         )}
         </section>
       )}
+      </div>
 
+      {/* Step: Schedule */}
+      <div className={cn('space-y-5', show(scheduleStep))}>
       <section className="grid gap-4 sm:grid-cols-2">
         <Field label="Starts" htmlFor="start_date" error={fe.start_date}>
           <Input
@@ -320,7 +347,6 @@ export function DealForm({
             name="start_date"
             type="datetime-local"
             defaultValue={toLocalInput(d?.start_date)}
-            required
           />
         </Field>
         <Field label="Ends" htmlFor="end_date" error={fe.end_date}>
@@ -329,14 +355,30 @@ export function DealForm({
             name="end_date"
             type="datetime-local"
             defaultValue={toLocalInput(d?.end_date)}
-            required
           />
         </Field>
       </section>
 
       <Checkbox name="is_active" label="Active" defaultChecked={d?.is_active ?? true} />
+      </div>
 
-      <SubmitButton size="lg">{d ? 'Save deal' : 'Create deal'}</SubmitButton>
+      {/* Wizard navigation */}
+      <div className="border-border flex items-center justify-between border-t pt-4">
+        {currentStep > 1 ? (
+          <Button type="button" variant="outline" onClick={() => setStep((s) => s - 1)}>
+            Back
+          </Button>
+        ) : (
+          <span />
+        )}
+        {currentStep < lastStep ? (
+          <Button type="button" onClick={() => setStep((s) => Math.min(lastStep, s + 1))}>
+            Next
+          </Button>
+        ) : (
+          <SubmitButton size="lg">{d ? 'Save deal' : 'Create deal'}</SubmitButton>
+        )}
+      </div>
     </form>
   );
 }
