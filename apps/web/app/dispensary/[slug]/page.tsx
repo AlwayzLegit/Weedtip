@@ -41,7 +41,8 @@ import { DAY_ORDER, dayLabel, dealBadge, formatTime, nextOpeningLabel } from '@/
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
 import { renderMarkdown, stripMarkdown } from '@/lib/markdown';
-import { generatedAbout } from '@/lib/shop-copy';
+import { FaqSection } from '@/components/seo/faq-section';
+import { dispensaryFaqs, generatedAbout } from '@/lib/shop-copy';
 import { videoEmbed } from '@/lib/video';
 import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site';
@@ -1208,6 +1209,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 </ul>
               </section>
             )}
+
+            {/* Factual, per-shop FAQ — unique content depth + FAQPage schema for
+                the thousands of unclaimed listings with no owner description or
+                menu, which were thin on word count. */}
+            <FaqSection
+              items={dispensaryFaqs(d, hours, { hasMenu: (products ?? []).length > 0 })}
+              heading={`${d.name} — frequently asked questions`}
+            />
           </div>
 
           {/* Sidebar: location + hours + contact. Approximate (service-area)
