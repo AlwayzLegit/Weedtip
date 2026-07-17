@@ -194,6 +194,8 @@ export function brandJsonLd(b: {
   description?: string | null;
   logoUrl?: string | null;
   website?: string | null;
+  ratingAvg?: number;
+  ratingCount?: number;
 }): Json {
   const node: Json = {
     '@context': 'https://schema.org',
@@ -205,6 +207,13 @@ export function brandJsonLd(b: {
   if (b.description) node.description = b.description;
   if (b.logoUrl) node.logo = b.logoUrl;
   if (b.website) node.sameAs = [b.website];
+  if (b.ratingCount && b.ratingCount > 0 && b.ratingAvg) {
+    node.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: b.ratingAvg,
+      reviewCount: b.ratingCount,
+    };
+  }
   return node;
 }
 

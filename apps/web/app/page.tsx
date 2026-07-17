@@ -110,7 +110,7 @@ export default async function HomePage() {
       .order('rating_count', { ascending: false })
       .order('rating_avg', { ascending: false })
       .limit(12),
-    supabase.from('brands').select('id,slug,name,logo_url').order('name'),
+    supabase.from('brands').select('id,slug,name,logo_url,rating_avg,rating_count').order('name'),
     supabase.from('brand_products').select('brand_id'),
     supabase
       .from('dispensaries')
@@ -337,6 +337,8 @@ export default async function HomePage() {
                   slug={b.slug}
                   name={b.name}
                   logoUrl={b.logo_url}
+                  rating={b.rating_avg}
+                  ratingCount={b.rating_count}
                   sub={b.products > 0 ? `${b.products} products` : null}
                 />
               ))}

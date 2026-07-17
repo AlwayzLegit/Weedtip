@@ -577,6 +577,54 @@ export type Database = {
           },
         ]
       }
+      brand_reviews: {
+        Row: {
+          author_name: string | null
+          body: string | null
+          brand_id: string
+          created_at: string
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          body?: string | null
+          brand_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string | null
+          body?: string | null
+          brand_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_reviews_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           created_at: string
@@ -586,6 +634,8 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_id: string | null
+          rating_avg: number
+          rating_count: number
           slug: string
           status: string
           updated_at: string
@@ -599,6 +649,8 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_id?: string | null
+          rating_avg?: number
+          rating_count?: number
           slug: string
           status?: string
           updated_at?: string
@@ -612,6 +664,8 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_id?: string | null
+          rating_avg?: number
+          rating_count?: number
           slug?: string
           status?: string
           updated_at?: string

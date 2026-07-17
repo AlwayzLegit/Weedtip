@@ -35,7 +35,7 @@ export default async function BrandsPage({
     { data: bidStates },
     { data: lineupRows },
   ] = await Promise.all([
-    supabase.from('brands').select('id,slug,name,description,logo_url').order('name'),
+    supabase.from('brands').select('id,slug,name,description,logo_url,rating_avg,rating_count').order('name'),
     supabase
       .from('products')
       .select('brand_id, dispensary:dispensaries!inner(status,state)')
@@ -246,6 +246,8 @@ export default async function BrandsPage({
               slug={b.slug}
               name={b.name}
               logoUrl={b.logo_url}
+              rating={b.rating_avg}
+              ratingCount={b.rating_count}
               sub={
                 b.count > 0
                   ? `${b.count} ${b.count === 1 ? 'product' : 'products'} in stores${selectedState ? ` in ${selectedState}` : ''}`
