@@ -203,20 +203,19 @@ export default async function AdminOverview() {
       {/* Growth tooling */}
       <section className="space-y-3">
         <h3 className="text-muted text-sm font-semibold uppercase tracking-wide">Growth</h3>
-        <a
-          href="/admin/exports/claims-outreach"
-          download
+        <Link
+          href="/admin/outreach"
           className="rounded-card border-border bg-surface hover:border-primary/50 flex items-center justify-between border p-4 transition-colors"
         >
           <div className="text-sm">
-            <p className="font-medium">Claims outreach export (CSV)</p>
+            <p className="font-medium">Claim outreach campaign</p>
             <p className="text-muted mt-0.5 text-xs">
-              Every unclaimed active listing with its best contact channel (email → phone →
-              website) and listing URL — generated fresh on download for claim-invite campaigns.
+              Invite unclaimed, license-verified shops to claim their listing — batched sending,
+              open/claim tracking, unsubscribe suppression, and the raw CSV export.
             </p>
           </div>
           <ArrowRight className="text-muted h-4 w-4 shrink-0" />
-        </a>
+        </Link>
       </section>
 
       {/* Revenue streams */}
