@@ -23,6 +23,25 @@ export function writeMarketCookie(code: string | null) {
   }
 }
 
+/**
+ * IP-detected city, seeded by middleware as "city|ST" (city percent-encoded).
+ * Returns null unless the pair's state matches the given market — a manual
+ * state switch makes the detected city inapplicable, not wrong.
+ */
+export function readCityCookie(market: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const m = document.cookie.match(/(?:^|; )wt_city=([^;]+)/);
+  if (!m?.[1]) return null;
+  const [encCity, st] = m[1].split('|');
+  if (!encCity || st !== market) return null;
+  try {
+    const city = decodeURIComponent(decodeURIComponent(encCity)).trim();
+    return city.length >= 2 && city.length <= 60 ? city : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Where "switch market to {st}" should land from the current surface. */
 function destinationFor(pathname: string, code: string): string {
   const st = code.toLowerCase();
