@@ -107,7 +107,9 @@ export default async function AdminOwnership({
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 font-medium">
                     <UserCircle className="text-muted h-4 w-4 shrink-0" />
-                    <span className="truncate">{o.email ?? o.displayName ?? o.userId}</span>
+                    <Link href={`/admin/users/${o.userId}`} className="hover:text-primary truncate">
+                      {o.email ?? o.displayName ?? o.userId}
+                    </Link>
                   </p>
                   <p className="text-muted mt-0.5 text-xs">
                     {o.displayName ? `${o.displayName} · ` : ''}
