@@ -187,6 +187,10 @@ export function CommandPalette() {
     } else if (e.key === 'Escape') {
       e.preventDefault();
       close();
+    } else if (e.key === 'Tab') {
+      // Focus trap: the input is the dialog's only tabbable element (rows are
+      // arrow-key targets), so Tab would escape to the page underneath.
+      e.preventDefault();
     }
   }
 
@@ -220,6 +224,11 @@ export function CommandPalette() {
             onKeyDown={onKeyDown}
             placeholder="Search dispensaries, products, brands, strains…"
             aria-label="Search Weedtip"
+            role="combobox"
+            aria-expanded={actions.length > 0}
+            aria-controls="cmdk-listbox"
+            aria-autocomplete="list"
+            aria-activedescendant={actions.length > 0 ? `cmdk-opt-${active}` : undefined}
             className="h-14 w-full bg-transparent text-sm outline-none placeholder:text-muted"
           />
           <kbd className="border-border text-muted hidden shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium sm:block">
@@ -227,19 +236,34 @@ export function CommandPalette() {
           </kbd>
         </div>
 
-        <ul ref={listRef} className="max-h-[52vh] overflow-y-auto p-2">
+        {/* Result-count announcement for screen readers (visual list follows). */}
+        <p aria-live="polite" className="sr-only">
+          {hasQuery
+            ? `${actions.length} result${actions.length === 1 ? '' : 's'}`
+            : `${actions.length} quick links`}
+        </p>
+        <ul ref={listRef} id="cmdk-listbox" role="listbox" className="max-h-[52vh] overflow-y-auto p-2">
           {!hasQuery && (
-            <li className="text-muted flex items-center gap-1.5 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide">
+            <li
+              role="presentation"
+              className="text-muted flex items-center gap-1.5 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide"
+            >
               <Sparkles className="h-3 w-3" /> Jump to
             </li>
           )}
           {actions.map((a, i) => (
-            <li key={a.key}>
+            <li key={a.key} role="option" id={`cmdk-opt-${i}`} aria-selected={i === active}>
               <button
                 type="button"
+                tabIndex={-1}
                 data-active={i === active}
                 onMouseEnter={() => setActive(i)}
-                onClick={runActive}
+                // Run THIS row, not the active one — on touch there's no
+                // mouseenter to sync `active` before the click lands.
+                onClick={() => {
+                  close();
+                  a.run();
+                }}
                 className={cn(
                   'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors',
                   i === active ? 'bg-surface-2' : 'hover:bg-surface-2',

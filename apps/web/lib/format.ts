@@ -47,6 +47,33 @@ export function formatTime(hhmm: string): string {
 const OPEN_DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 /**
+ * Human label for the next time a closed shop opens, in the shop's timezone:
+ * "Opens 9:00 AM" (later today), "Opens 9:00 AM tomorrow", or
+ * "Opens 9:00 AM Thu". Null when hours are missing or every day is closed.
+ */
+export function nextOpeningLabel(
+  hours: OperatingHours | null,
+  timezone: string | null,
+): string | null {
+  if (!hours) return null;
+  const now = new Date(
+    new Date().toLocaleString('en-US', { timeZone: timezone || 'America/New_York' }),
+  );
+  const mins = now.getHours() * 60 + now.getMinutes();
+  for (let offset = 0; offset < 7; offset += 1) {
+    const key = OPEN_DAY_KEYS[(now.getDay() + offset) % 7]!;
+    const day = hours[key];
+    if (!day?.open) continue;
+    const [h = '0', m = '0'] = day.open.split(':');
+    const openMins = Number(h) * 60 + Number(m);
+    if (offset === 0 && openMins <= mins) continue; // already past today's opening
+    const when = offset === 0 ? '' : offset === 1 ? ' tomorrow' : ` ${dayLabel(key)}`;
+    return `Opens ${formatTime(day.open)}${when}`;
+  }
+  return null;
+}
+
+/**
  * Open-now in the shop's own timezone, computed client-side so ISR-cached pages
  * still show a live badge. Server surfaces use is_dispensary_open() in SQL;
  * keep the two in sync (both treat close < open as an overnight window).
