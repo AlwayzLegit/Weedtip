@@ -25,7 +25,7 @@ export default async function StudioUpdates() {
         <UpgradeWall
           feature="Brand updates"
           tier="basic"
-          href="/for-brands"
+          href="/studio/promote"
           description="Upgrade to Basic to broadcast news to your followers. Your brand page stays live for free."
         />
       </div>

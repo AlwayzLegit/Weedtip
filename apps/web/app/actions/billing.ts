@@ -155,6 +155,104 @@ export async function requestPlanChange(planId: string): Promise<BillingRequestR
   return { ok: true, message: REQUEST_ACK };
 }
 
+/**
+ * Brand equivalent of requestPlanChange. Brands run on the same plans ladder;
+ * Basic unlocks the working Brand Studio (catalog, analytics, updates, complete
+ * profile). Sales-led: paid requests land as a pending brand_subscription for
+ * /admin/billing to activate.
+ */
+export async function requestBrandPlanChange(
+  brandId: string,
+  planId: string,
+): Promise<BillingRequestResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Please sign in.' };
+
+  const { data: brand } = await supabase
+    .from('brands')
+    .select('id, name, owner_id')
+    .eq('id', brandId)
+    .maybeSingle();
+  if (!brand || brand.owner_id !== user.id) return { ok: false, error: 'You do not own this brand.' };
+
+  if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, brand.id)).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
+
+  const { data: plan } = await supabase
+    .from('plans')
+    .select('id, name, price_cents, is_active')
+    .eq('id', planId)
+    .maybeSingle();
+  if (!plan || !plan.is_active) return { ok: false, error: 'That plan is unavailable.' };
+
+  const service = createServiceClient();
+
+  const { data: current } = await supabase
+    .from('brand_subscriptions')
+    .select('status, plan:plans(price_cents)')
+    .eq('brand_id', brand.id)
+    .maybeSingle();
+  const onActivePaid =
+    current?.status === 'active' &&
+    ((current.plan as { price_cents: number } | null)?.price_cents ?? 0) > 0;
+
+  // Downgrade to Free is immediate.
+  if (plan.price_cents <= 0) {
+    const { error } = await service.from('brand_subscriptions').upsert(
+      {
+        brand_id: brand.id,
+        plan_id: plan.id,
+        status: 'active',
+        current_period_end: null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'brand_id' },
+    );
+    if (error) return { ok: false, error: 'Could not change your plan.' };
+    revalidatePath('/studio/promote');
+    return { ok: true, message: 'You are on the Free plan.' };
+  }
+
+  // Never flip a live paid row to pending — leave it active, log the change.
+  if (onActivePaid) {
+    await sendBillingEmails(`Brand plan change to ${plan.name}`, brand.name, user.email ?? null, {
+      Brand: brand.name,
+      'New plan': plan.name,
+      'Price / month': `$${(plan.price_cents / 100).toFixed(2)}`,
+      Note: 'Already on an active paid plan — do not downgrade until confirmed.',
+    });
+    revalidatePath('/studio/promote');
+    return {
+      ok: true,
+      message: 'Change requested — your current plan stays active until our team confirms it.',
+    };
+  }
+
+  const { error } = await service.from('brand_subscriptions').upsert(
+    {
+      brand_id: brand.id,
+      plan_id: plan.id,
+      status: 'pending',
+      current_period_end: null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'brand_id' },
+  );
+  if (error) return { ok: false, error: 'Could not submit your plan request.' };
+
+  await sendBillingEmails(`${plan.name} brand plan subscription`, brand.name, user.email ?? null, {
+    Brand: brand.name,
+    Plan: plan.name,
+    'Price / month': `$${(plan.price_cents / 100).toFixed(2)}`,
+  });
+  revalidatePath('/studio/promote');
+  return { ok: true, message: REQUEST_ACK };
+}
+
 /** Cancel the paid plan — immediate, no money involved until the gateway era. */
 export async function cancelPlan(): Promise<BillingRequestResult> {
   const { dispensary } = await requireDispensaryOwner();

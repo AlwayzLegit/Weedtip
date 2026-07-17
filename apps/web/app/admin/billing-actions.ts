@@ -90,6 +90,47 @@ export async function activatePlanRequest(dispensaryId: string): Promise<void> {
   refresh();
 }
 
+/** Brand plan request → active (no POS — that's dispensary-only). */
+export async function activateBrandPlanRequest(brandId: string): Promise<void> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data: updated, error } = await supabase
+    .from('brand_subscriptions')
+    .update({ status: 'active', current_period_end: null, updated_at: new Date().toISOString() })
+    .eq('brand_id', brandId)
+    .eq('status', 'pending')
+    .select('brand_id');
+  if (error || !updated?.length) {
+    throw new Error(error?.message ?? 'Request was already handled — refresh and re-check.');
+  }
+  const { data: brand } = await supabase
+    .from('brands')
+    .select('owner_id, name')
+    .eq('id', brandId)
+    .maybeSingle();
+  if (brand?.owner_id) {
+    await notifyUser(brand.owner_id, {
+      type: 'billing_update',
+      title: `Your ${brand.name} plan is active`,
+      body: 'Your Brand Studio plan was activated — catalog, analytics, and updates are unlocked.',
+      href: '/studio/promote',
+    });
+  }
+  revalidatePath('/studio/promote');
+  refresh();
+}
+
+export async function rejectBrandPlanRequest(brandId: string): Promise<void> {
+  await requireAdmin();
+  const supabase = await createClient();
+  await supabase
+    .from('brand_subscriptions')
+    .update({ status: 'canceled', updated_at: new Date().toISOString() })
+    .eq('brand_id', brandId)
+    .eq('status', 'pending');
+  refresh();
+}
+
 export async function rejectPlanRequest(dispensaryId: string): Promise<void> {
   await requireAdmin();
   const supabase = await createClient();

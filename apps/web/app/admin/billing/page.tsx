@@ -7,9 +7,11 @@ import {
 } from '@/app/admin/ad-region-actions';
 import {
   activateBrandBidRequest,
+  activateBrandPlanRequest,
   activatePlacementRequest,
   activatePlanRequest,
   rejectBrandBidRequest,
+  rejectBrandPlanRequest,
   rejectPlanRequest,
 } from '@/app/admin/billing-actions';
 import { deletePlacement } from '@/app/admin/actions';
@@ -28,11 +30,20 @@ export const metadata: Metadata = { title: 'Billing requests' };
 export default async function AdminBillingPage() {
   const supabase = await createClient();
 
-  const [{ data: planReqs }, { data: placementReqs }, { data: slotReqs }, { data: bidReqs }] =
-    await Promise.all([
+  const [
+    { data: planReqs },
+    { data: brandPlanReqs },
+    { data: placementReqs },
+    { data: slotReqs },
+    { data: bidReqs },
+  ] = await Promise.all([
       supabase
         .from('dispensary_subscriptions')
         .select('dispensary_id, status, updated_at, plan:plans(name, price_cents), dispensary:dispensaries(name, slug)')
+        .eq('status', 'pending'),
+      supabase
+        .from('brand_subscriptions')
+        .select('brand_id, status, plan:plans(name, price_cents), brand:brands(name, slug)')
         .eq('status', 'pending'),
       supabase
         .from('placements')
@@ -53,6 +64,7 @@ export default async function AdminBillingPage() {
 
   const total =
     (planReqs?.length ?? 0) +
+    (brandPlanReqs?.length ?? 0) +
     (placementReqs?.length ?? 0) +
     (slotReqs?.length ?? 0) +
     (bidReqs?.length ?? 0);
@@ -110,6 +122,32 @@ export default async function AdminBillingPage() {
           );
         })}
         {(planReqs ?? []).length === 0 && <p className="text-muted text-sm">None pending.</p>}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Brand plan subscriptions ({brandPlanReqs?.length ?? 0})</h2>
+        {(brandPlanReqs ?? []).map((r) => {
+          const brand = r.brand as { name: string; slug: string } | null;
+          const plan = r.plan as { name: string; price_cents: number } | null;
+          return (
+            <div
+              key={r.brand_id}
+              className="rounded-card border-border bg-surface flex items-center justify-between border p-4 text-sm"
+            >
+              <div>
+                <Link href={`/brand/${brand?.slug}`} className="text-primary font-medium hover:underline">
+                  {brand?.name}
+                </Link>
+                <span className="text-muted"> · {plan?.name} · {formatPrice(plan?.price_cents ?? 0)}/mo</span>
+              </div>
+              <Actions
+                onActivate={activateBrandPlanRequest.bind(null, r.brand_id)}
+                onReject={rejectBrandPlanRequest.bind(null, r.brand_id)}
+              />
+            </div>
+          );
+        })}
+        {(brandPlanReqs ?? []).length === 0 && <p className="text-muted text-sm">None pending.</p>}
       </section>
 
       <section className="space-y-3">

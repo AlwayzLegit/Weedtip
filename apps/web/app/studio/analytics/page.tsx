@@ -22,7 +22,7 @@ export default async function StudioAnalytics() {
         <UpgradeWall
           feature="Brand analytics"
           tier="basic"
-          href="/for-brands"
+          href="/studio/promote"
           description="Upgrade to Basic to see your brand's views, followers, and where your products are stocked. Your brand page stays live for free."
         />
       </div>
