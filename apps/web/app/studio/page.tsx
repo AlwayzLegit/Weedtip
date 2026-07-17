@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, Clock, Store } from 'lucide-react';
 import { BrandManageForm } from '@/components/dashboard/brand-manage-form';
 import { brandSetupProgress, brandSetupSteps } from '@/lib/brand-onboarding';
 import { getBrandOwnerContext } from '@/lib/brand-owner';
+import { canUseBrandFeature } from '@/lib/brand-plan';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Brand profile · Studio' };
@@ -28,6 +29,13 @@ export default async function StudioProfile() {
   for (const p of catalog ?? []) {
     if (p.brand_id) catalogCount.set(p.brand_id, (catalogCount.get(p.brand_id) ?? 0) + 1);
   }
+
+  // Description + website are Basic-tier ("complete profile") per brand.
+  const canCompleteByBrand = new Map(
+    await Promise.all(
+      brands.map(async (b) => [b.id, await canUseBrandFeature(b.id, 'brand_complete_profile')] as const),
+    ),
+  );
 
   // brand_id → { products, shops }
   const carried = new Map<string, { products: number; shops: Map<string, string> }>();
@@ -88,7 +96,7 @@ export default async function StudioProfile() {
               </div>
             )}
 
-            <BrandManageForm brand={b} />
+            <BrandManageForm brand={b} canComplete={canCompleteByBrand.get(b.id) ?? false} />
 
             <div className="border-border border-t pt-4">
               <h3 className="text-muted mb-2 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide">

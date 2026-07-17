@@ -14,11 +14,7 @@ import { createClient } from './supabase/server';
  * purchases — putting a subscription in front of someone trying to spend money
  * with us would block revenue, not protect it.
  */
-export type BrandFeatureKey =
-  | 'brand_complete_profile'
-  | 'brand_catalog'
-  | 'brand_analytics'
-  | 'brand_updates';
+export type BrandFeatureKey = 'brand_complete_profile' | 'brand_analytics' | 'brand_updates';
 
 export const BRAND_FEATURES: {
   key: BrandFeatureKey;
@@ -30,12 +26,6 @@ export const BRAND_FEATURES: {
     key: 'brand_complete_profile',
     label: 'Complete brand profile',
     description: 'Description, website, and the full brand page.',
-    minTier: 'basic',
-  },
-  {
-    key: 'brand_catalog',
-    label: 'Product catalog',
-    description: 'Publish your product catalog across Weedtip.',
     minTier: 'basic',
   },
   {
