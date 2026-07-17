@@ -627,6 +627,50 @@ export type Database = {
           },
         ]
       }
+      claim_invites: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          dispensary_id: string
+          email: string
+          id: string
+          opened_at: string | null
+          sent_at: string | null
+          token: string
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          dispensary_id: string
+          email: string
+          id?: string
+          opened_at?: string | null
+          sent_at?: string | null
+          token?: string
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          dispensary_id?: string
+          email?: string
+          id?: string
+          opened_at?: string | null
+          sent_at?: string | null
+          token?: string
+          unsubscribed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_invites_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: true
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           icon: string | null
@@ -2551,6 +2595,16 @@ export type Database = {
           region_id: string
           zone_names: string[]
         }[]
+      }
+      claim_invite_open: {
+        Args: { p_token: string }
+        Returns: {
+          slug: string
+        }[]
+      }
+      claim_invite_unsubscribe: {
+        Args: { p_token: string }
+        Returns: boolean
       }
       ad_slot_availability: {
         Args: never
