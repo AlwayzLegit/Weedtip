@@ -56,6 +56,23 @@ export async function middleware(request: NextRequest) {
       });
     }
   }
+  // City-level market ("Shopping in Pasadena" beats "Shopping in California").
+  // Stored as "city|ST" so a manual state switch in the picker can't pair a
+  // stale city with the wrong state — readers ignore a mismatched pair.
+  if (!request.cookies.get('wt_city')) {
+    const country = request.headers.get('x-vercel-ip-country');
+    const region = request.headers.get('x-vercel-ip-country-region')?.toUpperCase();
+    // Header value is percent-encoded ("Los%20Angeles"); keep it encoded in
+    // the cookie (safe charset) and decode client-side.
+    const city = request.headers.get('x-vercel-ip-city');
+    if (country === 'US' && region && US_STATE_CODES.has(region) && city && city.length <= 80) {
+      response.cookies.set('wt_city', `${city}|${region}`, {
+        maxAge: 60 * 60 * 24 * 365,
+        path: '/',
+        sameSite: 'lax',
+      });
+    }
+  }
   // Attribution: remember when a shopper arrives from an embedded menu so the
   // eventual order can be credited to source=embed.
   if (request.nextUrl.searchParams.get('source') === 'embed') {

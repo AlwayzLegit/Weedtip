@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { US_STATES } from '@/lib/seo';
 import { DealCard, type DealCardData } from '../deal-card';
 import { DispensaryCard, type DispensaryCardData } from '../dispensary-card';
-import { readMarketCookie } from '../market-selector';
+import { readCityCookie, readMarketCookie } from '../market-selector';
 import { Button } from '../ui/button';
 import { ScrollCarousel } from './scroll-carousel';
 
@@ -77,15 +77,30 @@ export function MarketFeed({
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [market, setMarket] = useState<string | null>(null);
+  const [city, setCity] = useState<string | null>(null);
   const [shops, setShops] = useState<FeedShop[]>(initialShops);
   const [deals, setDeals] = useState<FeedDeal[]>(initialDeals);
   // Tracks which market the current rows belong to ('' = nationwide).
   const [loadedFor, setLoadedFor] = useState('');
 
   const loadMarket = useCallback(
-    async (code: string) => {
+    async (code: string, cityName: string | null) => {
       const nowIso = new Date().toISOString();
-      const [shopRes, dealRes] = await Promise.all([
+      const [cityRes, shopRes, dealRes] = await Promise.all([
+        // City rows lead (Weedmaps scopes to the metro, not the state).
+        cityName
+          ? supabase
+              .from('dispensaries')
+              .select(SHOP_FIELDS)
+              .eq('status', 'active')
+              .eq('state', code)
+              .ilike('city', cityName)
+              .not('cover_image_url', 'is', null)
+              .order('featured', { ascending: false })
+              .order('rating_count', { ascending: false })
+              .order('rating_avg', { ascending: false })
+              .limit(12)
+          : Promise.resolve({ data: [] as ShopRow[] }),
         supabase
           .from('dispensaries')
           .select(SHOP_FIELDS)
@@ -112,9 +127,14 @@ export function MarketFeed({
           .limit(12),
       ]);
 
-      const scopedShops = (shopRes.data ?? []).map(toShop);
-      // State listings lead, but a thin market's rail fills out with the
-      // nationwide set so the band never looks half-stocked.
+      // City listings lead, state fills, then a thin market's rail fills out
+      // with the nationwide set so the band never looks half-stocked.
+      const cityShops = ((cityRes.data ?? []) as ShopRow[]).map(toShop);
+      const citySlugs = new Set(cityShops.map((s) => s.slug));
+      const stateShops = (shopRes.data ?? [])
+        .map(toShop)
+        .filter((s) => !citySlugs.has(s.slug));
+      const scopedShops = [...cityShops, ...stateShops].slice(0, 12);
       const scopedSlugs = new Set(scopedShops.map((s) => s.slug));
       setShops(
         scopedShops.length >= 4
@@ -154,13 +174,20 @@ export function MarketFeed({
   useEffect(() => {
     const code = readMarketCookie();
     if (code) {
+      const detectedCity = readCityCookie(code);
       setMarket(code);
-      void loadMarket(code);
+      setCity(detectedCity);
+      void loadMarket(code, detectedCity);
     }
   }, [loadMarket]);
 
   const scoped = market !== null && loadedFor === market;
   const stateName = scoped ? US_STATES[market] : null;
+  // "Pasadena, CA" beats "California" when the IP city is known and rows for
+  // it actually lead the rail.
+  const placeName = scoped && city && shops.some((s) => s.city?.toLowerCase() === city.toLowerCase())
+    ? `${city}, ${market}`
+    : stateName;
   const st = market?.toLowerCase();
 
   // Card-family deal badge: a shop's soonest-ending live deal, e.g. "20% off".
@@ -182,10 +209,10 @@ export function MarketFeed({
           <div>
             <p className="eyebrow mb-1 flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5" />
-              {stateName ? `Shopping in ${stateName}` : 'Shopping nationwide'}
+              {placeName ? `Shopping in ${placeName}` : 'Shopping nationwide'}
             </p>
             <h2 className="text-xl font-semibold sm:text-2xl">
-              {stateName ? `Dispensaries in ${stateName}` : 'Dispensaries near you'}
+              {placeName ? `Dispensaries in ${placeName}` : 'Dispensaries near you'}
             </h2>
           </div>
           {/* Location changes live in the header's market picker — one
