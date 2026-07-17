@@ -4,7 +4,7 @@ import { DeleteButton } from '@/components/dashboard/delete-button';
 import { UpdateForm } from '@/components/dashboard/update-form';
 import { UpgradeWall } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
-import { requireOwnerDispensary } from '@/lib/owner';
+import { requireMemberCapability } from '@/lib/owner';
 import { getOwnerFeature } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
 import { deleteDispensaryUpdate } from '@/app/actions/updates';
@@ -12,7 +12,7 @@ import { deleteDispensaryUpdate } from '@/app/actions/updates';
 export const metadata: Metadata = { title: 'Updates' };
 
 export default async function DashboardUpdates() {
-  const { dispensary } = await requireOwnerDispensary();
+  const { dispensary } = await requireMemberCapability('marketing');
   const isPaid = await getOwnerFeature('updates');
   const supabase = await createClient();
 

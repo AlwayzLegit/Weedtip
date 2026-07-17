@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {dispensaries.length > 1 && dispensary && (
             <LocationSwitcher items={dispensaries} currentId={dispensary.id} />
           )}
-          <DashboardNav variant="owner" showBrandStudio={showBrandStudio} isOwner={isOwner} />
+          <DashboardNav variant="owner" showBrandStudio={showBrandStudio} memberRole={memberRole} />
         </aside>
         <div className="min-w-0">{children}</div>
       </div>

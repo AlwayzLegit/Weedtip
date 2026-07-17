@@ -9,7 +9,7 @@ import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
-import { requireOwnerDispensary } from '@/lib/owner';
+import { requireMemberCapability } from '@/lib/owner';
 import { getOwnerFeature } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
 
@@ -50,7 +50,7 @@ function mechanism(d: Tables<'deals'>): { label: string; tone: 'primary' | 'mute
 }
 
 export default async function DashboardDeals() {
-  const { dispensary } = await requireOwnerDispensary();
+  const { dispensary } = await requireMemberCapability('marketing');
   const isPaid = await getOwnerFeature('deals');
   const supabase = await createClient();
   const [{ data: deals }, { data: redemptions }] = await Promise.all([

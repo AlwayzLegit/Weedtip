@@ -5,9 +5,11 @@ import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Tables } from '@weedtip/supabase/types';
 import { getAuth } from './auth';
+import { type Capability, type MemberRole, memberCan, toMemberRole } from './member-roles';
 import { createClient } from './supabase/server';
 
-export type MemberRole = 'owner' | 'manager' | 'staff';
+export type { Capability, MemberRole };
+export { memberCan };
 
 /** Cookie holding the id of the dispensary the owner is currently managing. */
 export const ACTIVE_DISPENSARY_COOKIE = 'wt_dispensary';
@@ -43,7 +45,7 @@ export async function manageableDispensaries(
   const memberList: ManageableDispensary[] = (members ?? [])
     .map((m) => ({
       dispensary: m.dispensary as Tables<'dispensaries'> | null,
-      role: (m.role === 'manager' ? 'manager' : 'staff') as MemberRole,
+      role: toMemberRole(m.role),
     }))
     .filter((m): m is ManageableDispensary => !!m.dispensary && !ownedIds.has(m.dispensary.id));
 
@@ -112,5 +114,16 @@ export async function requireOwnerDispensary() {
 export async function requireDispensaryOwner() {
   const ctx = await requireOwnerDispensary();
   if (ctx.memberRole !== 'owner') redirect('/dashboard');
+  return ctx;
+}
+
+/**
+ * Gate a dashboard page on a capability. Owner passes everything; team members
+ * pass only within their role. Redirects to the dashboard root otherwise, so a
+ * menu-only Associate can't reach (e.g.) the deals or billing pages.
+ */
+export async function requireMemberCapability(cap: Capability) {
+  const ctx = await requireOwnerDispensary();
+  if (!memberCan(ctx.memberRole, cap)) redirect('/dashboard');
   return ctx;
 }

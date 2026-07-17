@@ -5,7 +5,7 @@ import { DeleteButton } from '@/components/dashboard/delete-button';
 import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { requireOwnerDispensary } from '@/lib/owner';
+import { requireMemberCapability } from '@/lib/owner';
 import { getOwnerFeature } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
 
@@ -17,7 +17,7 @@ function isLive(p: { is_active: boolean; start_date: string | null; end_date: st
 }
 
 export default async function DashboardPromos() {
-  const { dispensary } = await requireOwnerDispensary();
+  const { dispensary } = await requireMemberCapability('marketing');
   const isPaid = await getOwnerFeature('promos');
   const supabase = await createClient();
   const { data: promos } = await supabase

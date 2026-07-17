@@ -3,12 +3,16 @@ import { Badge } from '@/components/ui/badge';
 import { ListingForm } from '@/components/dashboard/listing-form';
 import { getOwnerFeature } from '@/lib/features';
 import { licenseAuthority } from '@/lib/license';
-import { getOwnerContext } from '@/lib/owner';
+import { getOwnerContext, memberCan } from '@/lib/owner';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = { title: 'Listing' };
 
 export default async function ListingPage() {
-  const { dispensary } = await getOwnerContext();
+  const ctx = await getOwnerContext();
+  const { dispensary } = ctx;
+  // Editing the listing is a 'listing' capability (owner + manager).
+  if (dispensary && !memberCan(ctx.memberRole, 'listing')) redirect('/dashboard');
   const authority = dispensary ? licenseAuthority(dispensary.state) : null;
   // "Complete profile" is Basic-tier; a free listing edits only the basics.
   const canComplete = dispensary ? await getOwnerFeature('complete_profile') : false;

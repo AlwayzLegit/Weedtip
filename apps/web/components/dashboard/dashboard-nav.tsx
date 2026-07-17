@@ -29,29 +29,30 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import { type Capability, type MemberRole, memberCan } from '@/lib/member-roles';
 import { cn } from '@/lib/utils';
 
-type NavItem = { href: string; label: string; icon: LucideIcon; ownerOnly?: boolean };
+type NavItem = { href: string; label: string; icon: LucideIcon; cap?: Capability };
 
 const OWNER_NAV: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/listing', label: 'Listing', icon: Store },
-  { href: '/dashboard/products', label: 'Products', icon: Package },
-  { href: '/dashboard/deals', label: 'Deals', icon: Tag },
-  { href: '/dashboard/promo-codes', label: 'Promo codes', icon: Ticket },
-  { href: '/dashboard/promos', label: 'In-store', icon: BadgeCheck },
-  { href: '/dashboard/register', label: 'Register', icon: Calculator },
-  { href: '/dashboard/taxes', label: 'Taxes', icon: Percent, ownerOnly: true },
-  { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
-  { href: '/dashboard/reviews', label: 'Reviews', icon: Star },
-  { href: '/dashboard/updates', label: 'Updates', icon: Users },
-  { href: '/dashboard/team', label: 'Team', icon: UserCog, ownerOnly: true },
+  { href: '/dashboard/listing', label: 'Listing', icon: Store, cap: 'listing' },
+  { href: '/dashboard/products', label: 'Products', icon: Package, cap: 'menu' },
+  { href: '/dashboard/deals', label: 'Deals', icon: Tag, cap: 'marketing' },
+  { href: '/dashboard/promo-codes', label: 'Promo codes', icon: Ticket, cap: 'marketing' },
+  { href: '/dashboard/promos', label: 'In-store', icon: BadgeCheck, cap: 'marketing' },
+  { href: '/dashboard/register', label: 'Register', icon: Calculator, cap: 'orders' },
+  { href: '/dashboard/taxes', label: 'Taxes', icon: Percent, cap: 'owner' },
+  { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag, cap: 'orders' },
+  { href: '/dashboard/reviews', label: 'Reviews', icon: Star, cap: 'reviews' },
+  { href: '/dashboard/updates', label: 'Updates', icon: Users, cap: 'marketing' },
+  { href: '/dashboard/team', label: 'Team', icon: UserCog, cap: 'owner' },
   { href: '/studio', label: 'Brand Studio', icon: Award },
-  { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/dashboard/qr', label: 'QR codes', icon: QrCode },
-  { href: '/dashboard/google', label: 'Google', icon: Globe },
-  { href: '/dashboard/promote', label: 'Promote', icon: Megaphone, ownerOnly: true },
-  { href: '/advertise', label: 'Advertise', icon: Gavel, ownerOnly: true },
+  { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3, cap: 'analytics' },
+  { href: '/dashboard/qr', label: 'QR codes', icon: QrCode, cap: 'menu' },
+  { href: '/dashboard/google', label: 'Google', icon: Globe, cap: 'listing' },
+  { href: '/dashboard/promote', label: 'Promote', icon: Megaphone, cap: 'owner' },
+  { href: '/advertise', label: 'Advertise', icon: Gavel, cap: 'owner' },
 ];
 
 const ADMIN_NAV: NavItem[] = [
@@ -78,13 +79,13 @@ const ADMIN_NAV: NavItem[] = [
 export function DashboardNav({
   variant,
   showBrandStudio = true,
-  isOwner = true,
+  memberRole = 'owner',
 }: {
   variant: 'owner' | 'admin';
   /** Hide the Brand Studio item for owners who don't manage a brand (avoids a dead-end redirect). */
   showBrandStudio?: boolean;
-  /** Team members (managers/staff) don't see owner-only items (billing, team, taxes). */
-  isOwner?: boolean;
+  /** The active member's role — scopes which nav items show (P4 role matrix). */
+  memberRole?: MemberRole;
 }) {
   const pathname = usePathname();
   const base = variant === 'owner' ? OWNER_NAV : ADMIN_NAV;
@@ -92,7 +93,8 @@ export function DashboardNav({
     variant === 'owner'
       ? base.filter(
           (i) =>
-            (showBrandStudio || i.href !== '/studio') && (isOwner || !i.ownerOnly),
+            (showBrandStudio || i.href !== '/studio') &&
+            (!i.cap || memberCan(memberRole, i.cap)),
         )
       : base;
   const root = variant === 'owner' ? '/dashboard' : '/admin';

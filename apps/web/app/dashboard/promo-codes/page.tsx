@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { DEAL_LIFECYCLE_LABEL, dealLifecycle } from '@/lib/deal-status';
 import { getOwnerFeature } from '@/lib/features';
-import { requireOwnerDispensary } from '@/lib/owner';
+import { requireMemberCapability } from '@/lib/owner';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Promo codes' };
@@ -45,7 +45,7 @@ export default async function PromoCodesPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  const { dispensary } = await requireOwnerDispensary();
+  const { dispensary } = await requireMemberCapability('marketing');
   const isPaid = await getOwnerFeature('deals');
   const supabase = await createClient();
 
