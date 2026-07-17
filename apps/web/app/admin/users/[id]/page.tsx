@@ -70,7 +70,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
     service.auth.admin.getUserById(id),
     supabase
       .from('dispensaries')
-      .select('slug,name,city,state,status')
+      .select('slug,name,city,state,status,grandfathered')
       .eq('owner_id', id)
       .order('name'),
     supabase.from('brands').select('slug,name,status').eq('owner_id', id).order('name'),
@@ -193,15 +193,26 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
             <ul className="space-y-2 text-sm">
               {(shops ?? []).map((s) => (
                 <li key={s.slug} className="flex items-center justify-between gap-2">
-                  <Link href={`/dispensary/${s.slug}`} className="text-primary truncate hover:underline">
-                    {s.name}
-                  </Link>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <Link href={`/dispensary/${s.slug}`} className="text-primary truncate hover:underline">
+                      {s.name}
+                    </Link>
+                    {s.grandfathered && <Badge tone="outline">Grandfathered</Badge>}
+                  </span>
                   <span className="text-muted shrink-0 text-xs">
                     {[s.city, s.state].filter(Boolean).join(', ')} · {s.status}
                   </span>
                 </li>
               ))}
             </ul>
+          )}
+          {((shops ?? []).length > 0 || (brands ?? []).length > 0) && authUser?.email && (
+            <Link
+              href={`/admin/ownership?q=${encodeURIComponent(authUser.email)}`}
+              className="text-primary mt-3 inline-block text-xs font-medium hover:underline"
+            >
+              Manage plans, tiers &amp; ownership →
+            </Link>
           )}
           {(brands ?? []).length > 0 && (
             <>
