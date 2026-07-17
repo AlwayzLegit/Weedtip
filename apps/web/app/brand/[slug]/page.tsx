@@ -3,9 +3,11 @@ import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { BrandFollowButton } from '@/components/brand/brand-follow-button';
+import { BrandReviewForm } from '@/components/brand/brand-review-form';
 import { ClaimBrandButton } from '@/components/brand/claim-brand-button';
 import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
+import { RatingStars } from '@/components/rating-stars';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -96,6 +98,16 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       .maybeSingle();
     isFollowing = !!f;
   }
+
+  // Brand reviews: latest few for the list, plus the viewer's own (the form
+  // doubles as the edit surface).
+  const { data: brandReviews } = await supabase
+    .from('brand_reviews')
+    .select('id,rating,body,author_name,created_at,user_id')
+    .eq('brand_id', brand.id)
+    .order('created_at', { ascending: false })
+    .limit(10);
+  const myBrandReview = user ? (brandReviews ?? []).find((r) => r.user_id === user.id) : undefined;
   const { data: brandUpdates } = await supabase
     .from('brand_updates')
     .select('id,title,body,created_at')
@@ -147,6 +159,8 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           description: brand.description,
           logoUrl: brand.logo_url,
           website: brand.website,
+          ratingAvg: brand.rating_avg,
+          ratingCount: brand.rating_count,
         })}
       />
       <Breadcrumbs
@@ -169,6 +183,15 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         <div className="min-w-0 flex-1">
           <p className="eyebrow mb-1">Brand</p>
           <h1 className="text-2xl font-bold sm:text-3xl">{brand.name}</h1>
+          {brand.rating_count > 0 && (
+            <a href="#reviews" className="mt-1.5 inline-flex items-center gap-1.5 hover:underline">
+              <span className="text-sm font-semibold">{brand.rating_avg.toFixed(1)}</span>
+              <RatingStars rating={brand.rating_avg} />
+              <span className="text-muted text-sm">
+                ({brand.rating_count} review{brand.rating_count === 1 ? '' : 's'})
+              </span>
+            </a>
+          )}
           <p className="text-muted mt-2 max-w-2xl text-sm">
             {brand.description ??
               `Official ${brand.name} lineup — ${lineup?.length ?? 0} product${(lineup?.length ?? 0) === 1 ? '' : 's'} on Weedtip. Follow the brand to catch new drops and find shops that carry it.`}
@@ -301,6 +324,55 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                 />
               );
             })}
+          </div>
+        )}
+      </section>
+
+      <section id="reviews" className="mt-10 scroll-mt-24">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <h2 className="text-lg font-semibold">Reviews</h2>
+          {brand.rating_count > 0 && (
+            <span className="flex items-center gap-1.5 text-sm">
+              <span className="font-semibold">{brand.rating_avg.toFixed(1)}</span>
+              <RatingStars rating={brand.rating_avg} />
+              <span className="text-muted">({brand.rating_count})</span>
+            </span>
+          )}
+        </div>
+
+        {user ? (
+          <BrandReviewForm
+            brandId={brand.id}
+            slug={brand.slug}
+            initialRating={myBrandReview?.rating ?? 0}
+            initialBody={myBrandReview?.body ?? ''}
+          />
+        ) : (
+          <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-4">
+            <p className="text-muted text-sm">Tried {brand.name}? Rate the brand for other shoppers.</p>
+            <Link
+              href={`/sign-in?next=/brand/${brand.slug}`}
+              className="border-primary text-primary hover:bg-primary-muted shrink-0 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+            >
+              Sign in to review
+            </Link>
+          </div>
+        )}
+
+        {(brandReviews ?? []).length > 0 && (
+          <div className="mt-4 space-y-3">
+            {(brandReviews ?? []).map((r) => (
+              <div key={r.id} className="rounded-card border-border bg-surface border p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <RatingStars rating={r.rating} />
+                  <span className="text-sm font-medium">{r.author_name ?? 'Weedtip shopper'}</span>
+                  <span className="text-muted text-xs">
+                    {new Date(r.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                {r.body && <p className="text-muted mt-2 text-sm">{r.body}</p>}
+              </div>
+            ))}
           </div>
         )}
       </section>
