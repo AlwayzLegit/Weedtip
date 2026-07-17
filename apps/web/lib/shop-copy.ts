@@ -61,3 +61,79 @@ export function generatedAbout(d: ShopFacts, hours: OperatingHours | null): stri
 
   return sentences.join(' ');
 }
+
+/**
+ * Factual FAQ set assembled from the same verified listing facts. Adds unique,
+ * per-shop content depth (and FAQPage structured data) to listing pages — most
+ * of which are unclaimed shops with no owner description or menu, and were thin
+ * on word count. Every answer states only what the record supports.
+ */
+export function dispensaryFaqs(
+  d: ShopFacts,
+  hours: OperatingHours | null,
+  opts: { hasMenu?: boolean } = {},
+): { question: string; answer: string }[] {
+  const stateName = US_STATES[d.state] ?? d.state;
+  const place = d.city ? `${d.city}, ${stateName}` : stateName;
+  const faqs: { question: string; answer: string }[] = [];
+
+  const svc =
+    d.is_pickup && d.is_delivery
+      ? 'both in-store pickup and local delivery'
+      : d.is_delivery && !d.is_pickup
+        ? 'cannabis delivery'
+        : 'in-store pickup';
+  faqs.push({
+    question: `Does ${d.name} offer pickup or delivery?`,
+    answer: `${d.name} offers ${svc} in ${place}. Options can change, so check the listing above for what's currently available before you visit.`,
+  });
+
+  const type =
+    d.is_medical && d.is_recreational
+      ? `${d.name} serves both recreational customers 21 and older and registered medical patients`
+      : d.is_medical
+        ? `${d.name} is a medical dispensary serving registered patients`
+        : `${d.name} is a recreational dispensary serving adults 21 and older`;
+  faqs.push({
+    question: `Is ${d.name} a recreational or medical dispensary?`,
+    answer: `${type}. Bring a valid government-issued photo ID${
+      d.is_medical && !d.is_recreational ? ' and your medical card' : ''
+    } when you shop.`,
+  });
+
+  const openDays = hours ? DAY_ORDER.filter((day) => hours[day]) : [];
+  if (openDays.length > 0) {
+    faqs.push({
+      question: `What are ${d.name}'s hours?`,
+      answer:
+        openDays.length === 7
+          ? `${d.name} is open seven days a week. The Hours section above shows each day's opening and closing times in the shop's local time.`
+          : `${d.name} is open ${openDays.length} ${openDays.length === 1 ? 'day' : 'days'} a week. The Hours section above lists opening and closing times for each day in the shop's local time.`,
+    });
+  }
+
+  faqs.push({
+    question: `How do I order from ${d.name} on Weedtip?`,
+    answer: opts.hasMenu
+      ? `Browse ${d.name}'s live menu above, add items to your cart, and check out for ${
+          d.is_delivery && !d.is_pickup ? 'delivery' : 'pickup'
+        }. You pay the dispensary directly — Weedtip never charges your card.`
+      : `${d.name} hasn't published its menu on Weedtip yet. You can still see its address, hours, and contact details above, and check back soon for live products and deals.`,
+  });
+
+  faqs.push({
+    question: `Where is ${d.name} located?`,
+    answer: `${d.name} is in ${place}${
+      d.county ? `, in ${d.county} County` : ''
+    }. Use the map and directions on this page to get there.`,
+  });
+
+  if (d.license_number) {
+    faqs.push({
+      question: `Is ${d.name} a licensed dispensary?`,
+      answer: `Yes — ${d.name} operates under ${stateName} cannabis license #${d.license_number}, verified against the state's public licensing registry.`,
+    });
+  }
+
+  return faqs;
+}
