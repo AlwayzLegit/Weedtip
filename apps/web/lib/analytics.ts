@@ -15,6 +15,7 @@ export type AnalyticsEvent =
   | 'order_placed'
   | 'favorite_added'
   | 'favorite_removed'
+  | 'directions_clicked'
   | 'deal_alert_subscribed'
   // Business journey (claim → monetize)
   | 'claim_started'

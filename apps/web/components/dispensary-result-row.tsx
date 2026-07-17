@@ -13,8 +13,18 @@ import { RatingStars } from './rating-stars';
  * single column, small thumbnail on the right, hairline divider between rows.
  * Consumes the same DispensaryCardData as the (vertical) DispensaryCard so the
  * browser can swap one for the other without reshaping its data.
+ *
+ * The whole row is clickable via a stretched link on the title (valid markup:
+ * no nested interactives); `quickActions` renders above that overlay (z-10)
+ * for row-level Save / Directions buttons.
  */
-export function DispensaryResultRow({ d }: { d: DispensaryCardData }) {
+export function DispensaryResultRow({
+  d,
+  quickActions,
+}: {
+  d: DispensaryCardData;
+  quickActions?: React.ReactNode;
+}) {
   const distance = formatDistance(d.distanceMeters ?? null);
   const services = [
     ...(d.isPickup ? ['Pickup'] : []),
@@ -29,11 +39,7 @@ export function DispensaryResultRow({ d }: { d: DispensaryCardData }) {
       : 'Delivery only';
 
   return (
-    <Link
-      href={`/dispensary/${d.slug}`}
-      prefetch={false}
-      className="group flex gap-3 px-3 py-3"
-    >
+    <div className="group relative flex gap-3 px-3 py-3">
       {d.placementId && <PlacementBeacon placementId={d.placementId} />}
       {d.adSlot && <AdSlotBeacon slot={d.adSlot} />}
 
@@ -45,7 +51,13 @@ export function DispensaryResultRow({ d }: { d: DispensaryCardData }) {
         )}
         <h3 className="group-hover:text-primary flex items-baseline gap-1.5 font-semibold leading-tight">
           {d.rank != null && <span className="text-muted text-xs font-normal">{d.rank}.</span>}
-          <span className="truncate">{d.name}</span>
+          <Link
+            href={`/dispensary/${d.slug}`}
+            prefetch={false}
+            className="truncate after:absolute after:inset-0"
+          >
+            {d.name}
+          </Link>
         </h3>
 
         {/* Rating, or the licensed trust cue when there are no reviews yet. */}
@@ -89,6 +101,10 @@ export function DispensaryResultRow({ d }: { d: DispensaryCardData }) {
             {d.dealBadge}
           </span>
         )}
+
+        {quickActions && (
+          <div className="relative z-10 mt-1.5 flex items-center gap-1.5">{quickActions}</div>
+        )}
       </div>
 
       <MediaImage
@@ -97,6 +113,6 @@ export function DispensaryResultRow({ d }: { d: DispensaryCardData }) {
         className="h-[84px] w-[84px] shrink-0 rounded-lg"
         iconClassName="h-7 w-7"
       />
-    </Link>
+    </div>
   );
 }
