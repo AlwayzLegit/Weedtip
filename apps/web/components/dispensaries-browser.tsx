@@ -188,6 +188,7 @@ export function DispensariesBrowser({
         isOpenNow: s.isOpenNow,
         logoUrl: s.featured ? s.logoUrl : null,
         dealLabel: s.dealBadge ?? null,
+        deliveryOnly: !!s.isDelivery && !s.isPickup,
       })),
   );
 
@@ -294,6 +295,7 @@ export function DispensariesBrowser({
           isOpenNow: r.is_open_now,
           logoUrl: r.logo_url,
           dealLabel: r.deal_type ? dealBadge(r.deal_type, Number(r.deal_value)) : null,
+          deliveryOnly: r.delivery_only,
         })),
       );
     },
