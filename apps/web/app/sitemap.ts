@@ -94,7 +94,7 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/deals', priority: 0.7, freq: 'daily' as const },
     { path: '/learn', priority: 0.6, freq: 'weekly' as const },
     { path: '/claim', priority: 0.4, freq: 'monthly' as const },
-    { path: '/advertise', priority: 0.4, freq: 'monthly' as const },
+    // /advertise is auth-gated (advertiser accounts) — not indexable.
     { path: '/terms', priority: 0.2, freq: 'yearly' as const },
     { path: '/privacy', priority: 0.2, freq: 'yearly' as const },
     { path: '/disclaimer', priority: 0.2, freq: 'yearly' as const },

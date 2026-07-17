@@ -4,6 +4,7 @@ import { ViewTracker } from '@/components/analytics/view-tracker';
 import { Badge } from '@/components/ui/badge';
 import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
+import { requireAdvertiserAccess } from '@/lib/advertiser-access';
 import { pageSeo } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
 
@@ -14,8 +15,8 @@ export const metadata = pageSeo({
   path: '/advertise',
 });
 
-// Availability drives urgency — keep it fresh.
-export const revalidate = 60;
+// Auth-gated (advertiser accounts only) — always rendered per-request.
+export const dynamic = 'force-dynamic';
 
 const TIER_LABEL: Record<string, string> = {
   A_PLUS: 'A+',
@@ -25,6 +26,7 @@ const TIER_LABEL: Record<string, string> = {
 };
 
 export default async function AdvertisePage() {
+  await requireAdvertiserAccess('/advertise');
   const supabase = createStaticClient();
   const [{ data: markets }, { data: regions }, { data: zones }, { data: products }, availability] =
     await Promise.all([
