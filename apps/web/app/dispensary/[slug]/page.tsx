@@ -230,6 +230,30 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     paidListing = paid === true;
   }
 
+  // Chain siblings — other branches sharing this exact name. Unlike the nearby
+  // rail these are the SAME brand (not competitors), so they show for paid AND
+  // free listings, and they're the fix for Semrush's "one internal link" issue:
+  // every branch of a chain gains an inbound link from each of its siblings on
+  // top of its city-hub link. Same-state branches first, capped so a large chain
+  // stays reasonable.
+  const chainSiblings = await (async () => {
+    const { data } = await supabase
+      .from('dispensaries')
+      .select('slug,name,city,state,address')
+      .eq('status', 'active')
+      .eq('name', d.name)
+      .neq('id', d.id)
+      .limit(30);
+    return (data ?? [])
+      .sort(
+        (a, b) =>
+          Number(b.state === d.state) - Number(a.state === d.state) ||
+          (a.city ?? '').localeCompare(b.city ?? '') ||
+          (a.address ?? '').localeCompare(b.address ?? ''),
+      )
+      .slice(0, 12);
+  })();
+
   // Nearby shops rail (Weedmaps pattern): same city first, top state shops as
   // fill — always photo-backed so the rail merchandises well. Also the main
   // internal-linking surface between the 9k+ listing pages. Skipped entirely
@@ -1160,6 +1184,28 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                     />
                   ))}
                 </ScrollCarousel>
+              </section>
+            )}
+
+            {/* Other branches of this chain — crawlable internal links that give
+                every location more than one inbound link, and a genuine "find
+                another {name}" for shoppers. */}
+            {chainSiblings.length > 0 && (
+              <section aria-label={`Other ${d.name} locations`}>
+                <h2 className="mb-3 text-lg font-semibold">Other {d.name} locations</h2>
+                <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2">
+                  {chainSiblings.map((s) => (
+                    <li key={s.slug} className="truncate">
+                      <Link
+                        href={`/dispensary/${s.slug}`}
+                        className="text-muted hover:text-primary text-sm hover:underline"
+                      >
+                        {s.city ? `${s.city}, ${s.state}` : US_STATES[s.state] ?? s.state}
+                        {s.address ? ` · ${s.address}` : ''}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </section>
             )}
           </div>
