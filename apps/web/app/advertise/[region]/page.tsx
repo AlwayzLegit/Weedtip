@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { SlotCheckoutButton } from '@/components/ads/slot-checkout-button';
 import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
+import { requireAdvertiserAccess } from '@/lib/advertiser-access';
 import { getPlatformSettings } from '@/lib/settings';
 import { createStaticClient } from '@/lib/supabase/static';
 
-export const revalidate = 60;
+// Auth-gated (advertiser accounts only) — always rendered per-request.
+export const dynamic = 'force-dynamic';
 
 const TIER_LABEL: Record<string, string> = {
   A_PLUS: 'A+',
@@ -57,6 +59,7 @@ export default async function AdvertiseRegionPage({
   params: Promise<{ region: string }>;
 }) {
   const { region: slug } = await params;
+  await requireAdvertiserAccess(`/advertise/${slug}`);
   const found = await loadRegion(slug);
   if (!found) notFound();
   const { region, zones, products } = found;
