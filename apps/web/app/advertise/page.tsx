@@ -26,7 +26,7 @@ const TIER_LABEL: Record<string, string> = {
 };
 
 export default async function AdvertisePage() {
-  await requireAdvertiserAccess('/advertise');
+  const access = await requireAdvertiserAccess('/advertise');
   const supabase = createStaticClient();
   const [{ data: markets }, { data: regions }, { data: zones }, { data: products }, availability] =
     await Promise.all([
@@ -49,6 +49,12 @@ export default async function AdvertisePage() {
   for (const z of zones ?? []) {
     zonesByRegion.set(z.region_id, z.zone_names ?? []);
   }
+  // Shop owners only see the areas their listings are in — a shop in Missouri
+  // has no use for LA rate cards. Admins and brand owners (state/nationwide
+  // campaigns) see the full catalog.
+  const visibleMarkets = (markets ?? []).filter(
+    (m) => !access.applicableStates || access.applicableStates.includes(m.state),
+  );
   const price = (slotType: string, tier: string) =>
     (products ?? []).find((p) => p.slot_type === slotType && p.tier === tier);
 
@@ -70,7 +76,19 @@ export default async function AdvertisePage() {
         </p>
       </div>
 
-      {(markets ?? []).map((market) => {
+      {access.applicableStates && (
+        <p className="text-muted mt-4 text-sm">
+          Showing regions in {access.applicableStates.join(', ')} — where your listings are.
+        </p>
+      )}
+      {visibleMarkets.length === 0 && (
+        <div className="card text-muted mt-10 p-10 text-center text-sm">
+          No ad regions are live in your listings&apos; state{access.applicableStates && access.applicableStates.length === 1 ? '' : 's'} yet
+          {access.applicableStates ? ` (${access.applicableStates.join(', ')})` : ''}. New markets
+          open regularly — check back soon.
+        </div>
+      )}
+      {visibleMarkets.map((market) => {
         const marketRegions = (regions ?? []).filter((r) => r.market_id === market.id);
         if (marketRegions.length === 0) return null;
         return (
