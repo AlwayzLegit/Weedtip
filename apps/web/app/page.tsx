@@ -6,6 +6,7 @@ import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
 import { MarketFeed, type FeedDeal, type FeedShop } from '@/components/home/market-feed';
 import { RegionGrid, type RegionEntry } from '@/components/home/region-grid';
 import { ScrollCarousel } from '@/components/home/scroll-carousel';
+import { BrandTile } from '@/components/brand/brand-tile';
 import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
 import { SearchBar } from '@/components/search-bar';
@@ -328,19 +329,16 @@ export default async function HomePage() {
           <Reveal>
           <section>
             <SectionHeading eyebrow="Official lineups" title="Featured brands" href="/brands" />
-            <ScrollCarousel itemClassName="w-44" ariaLabel="Popular brands">
+            {/* Weedmaps-style square logo tiles — artwork-forward, name below. */}
+            <ScrollCarousel itemClassName="w-44 sm:w-52" ariaLabel="Popular brands">
               {topBrands.map((b) => (
-                <Link
+                <BrandTile
                   key={b.slug}
-                  href={`/brand/${b.slug}`}
-                  className="card card-interactive flex h-full flex-col items-center gap-3 p-5 text-center"
-                >
-                  <LogoImage src={b.logo_url} name={b.name} className="h-14 w-14" />
-                  <span className="line-clamp-2 text-sm font-semibold leading-tight">
-                    {b.name}
-                  </span>
-                  <span className="text-muted text-xs">{b.products} products</span>
-                </Link>
+                  slug={b.slug}
+                  name={b.name}
+                  logoUrl={b.logo_url}
+                  sub={b.products > 0 ? `${b.products} products` : null}
+                />
               ))}
             </ScrollCarousel>
           </section>
