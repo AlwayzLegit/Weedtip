@@ -12,7 +12,7 @@ export default async function AdminClaims() {
     supabase
       .from('ownership_requests')
       .select(
-        'id, status, message, license_number, license_match, email_domain_match, document_path, claimant_role, business_email, business_phone, created_at, dispensary:dispensaries(name,slug,city,state), requester:profiles(display_name)',
+        'id, status, message, license_number, license_match, email_domain_match, document_path, claimant_role, business_email, business_phone, plan_preference, created_at, dispensary:dispensaries(name,slug,city,state), requester:profiles(display_name)',
       )
       .eq('status', 'pending')
       .order('created_at', { ascending: true }),
@@ -114,6 +114,13 @@ export default async function AdminClaims() {
                         >
                           {strength} verification
                         </span>
+                        {/* Sales signal: the plan they picked while claiming. */}
+                        {r.plan_preference && r.plan_preference !== 'free' && (
+                          <span className="border-primary/30 bg-primary-muted text-primary ml-1.5 inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
+                            wants {r.plan_preference}
+                            {r.plan_preference === 'growth' ? ' · $99/mo' : ' · $29/mo'}
+                          </span>
+                        )}
                         <ul className="text-xs">
                           <li>
                             <span className={r.license_match ? 'text-primary' : 'text-muted'}>

@@ -8,7 +8,7 @@ import {
   STRAIN_TYPES,
   type DispensaryStatus,
 } from '@weedtip/shared';
-import { brandClaimDecisionEmail, claimDecisionEmail, sendEmail } from '@/lib/email';
+import { brandClaimDecisionEmail, claimDecisionEmail, SALES_INBOX, sendEmail } from '@/lib/email';
 import { notifyUser } from '@/lib/notify';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -345,8 +345,64 @@ export async function approveOwnershipRequest(id: string): Promise<void> {
   // SECURITY DEFINER RPC: verifies admin, sets dispensaries.owner_id, auto-rejects rivals.
   await supabase.rpc('approve_ownership_request', { p_request_id: id });
   await notifyClaimDecision(id, true);
+  await followUpClaimPlanPreference(id);
   revalidatePath('/admin/claims');
   revalidatePath('/admin');
+}
+
+/**
+ * Tier-based claim funnel: a paid plan picked at claim time becomes a PENDING
+ * sales-led subscription request the moment the claim is approved — it lands
+ * in /admin/billing exactly like a self-serve upgrade. Never touches a listing
+ * that already has an active subscription. Best-effort.
+ */
+async function followUpClaimPlanPreference(requestId: string): Promise<void> {
+  const supabase = await createClient();
+  const { data: req } = await supabase
+    .from('ownership_requests')
+    .select('plan_preference, dispensary_id, business_email, dispensary:dispensaries(name)')
+    .eq('id', requestId)
+    .maybeSingle();
+  const tier = req?.plan_preference === 'growth' ? 2 : req?.plan_preference === 'basic' ? 1 : 0;
+  if (!req || tier === 0) return;
+
+  const [{ data: existing }, { data: plan }] = await Promise.all([
+    supabase
+      .from('dispensary_subscriptions')
+      .select('status')
+      .eq('dispensary_id', req.dispensary_id)
+      .maybeSingle(),
+    supabase
+      .from('plans')
+      .select('id, name, price_cents')
+      .eq('tier', tier)
+      .eq('is_active', true)
+      .order('price_cents')
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (!plan || existing?.status === 'active') return;
+
+  const { error } = await supabase.from('dispensary_subscriptions').upsert(
+    {
+      dispensary_id: req.dispensary_id,
+      plan_id: plan.id,
+      status: 'pending',
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'dispensary_id' },
+  );
+  if (error) return;
+
+  const shop = req.dispensary as { name: string } | null;
+  await sendEmail({
+    to: SALES_INBOX,
+    subject: `[Billing] Claim-funnel plan request — ${shop?.name ?? req.dispensary_id}`,
+    html: `<p><strong>${shop?.name ?? 'A newly claimed listing'}</strong> picked the
+<strong>${plan.name}</strong> plan ($${(plan.price_cents / 100).toFixed(2)}/mo) during their claim,
+which is now approved. A pending subscription is waiting in /admin/billing — reach out to
+${req.business_email ?? 'the owner'} to set up invoicing.</p>`,
+  });
 }
 
 export async function rejectOwnershipRequest(id: string): Promise<void> {
