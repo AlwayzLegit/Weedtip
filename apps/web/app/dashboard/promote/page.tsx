@@ -70,13 +70,21 @@ export default async function PromotePage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">Promote {dispensary.name}</h1>
-        <p className="text-muted mt-1 text-sm">
-          Upgrade your plan or reserve placements to put your shop in front of more customers.
-          Reserving is free — our team confirms billing before anything is charged, and placements
-          expire automatically.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Promote {dispensary.name}</h1>
+          <p className="text-muted mt-1 text-sm">
+            Upgrade your plan or reserve placements to put your shop in front of more customers.
+            Reserving is free — our team confirms billing before anything is charged, and placements
+            expire automatically.
+          </p>
+        </div>
+        <a
+          href="/dashboard/promote/spend"
+          className="border-border bg-surface hover:border-primary/50 shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+        >
+          Marketing spend report →
+        </a>
       </div>
 
       {/* Current plan */}
