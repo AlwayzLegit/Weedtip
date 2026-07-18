@@ -82,11 +82,27 @@ export function MediaImage({
           priority={priority}
           className="object-cover"
         />
-      ) : (
+      ) : artIcon ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          {artIcon ?? (
-            <Leaf className={cn('text-foreground/20', iconClassName)} strokeWidth={1.5} />
-          )}
+          {artIcon}
+        </div>
+      ) : (
+        /* Branded placeholder — reads as intentional Weedtip art, not a hole:
+           oversized pattern leaf in the corner, brand chip + wordmark centered. */
+        <div className="pointer-events-none absolute inset-0">
+          <Leaf
+            className="text-foreground/[0.06] absolute -right-4 -top-4 h-2/3 w-2/3 rotate-12"
+            strokeWidth={1}
+            aria-hidden
+          />
+          <div className="flex h-full flex-col items-center justify-center gap-1">
+            <span className="bg-surface/70 flex items-center justify-center rounded-full p-2 backdrop-blur-[2px]">
+              <Leaf className={cn('text-primary/60', iconClassName)} strokeWidth={1.5} />
+            </span>
+            <span className="text-foreground/25 text-[10px] font-bold tracking-[0.08em]">
+              Weedtip
+            </span>
+          </div>
         </div>
       )}
       {children}
