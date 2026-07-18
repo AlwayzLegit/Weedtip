@@ -33,6 +33,7 @@ export function PromoteBilling({
   state,
   deals,
   products,
+  creatives = [],
 }: {
   plans: Plan[];
   currentPlanName: string;
@@ -42,6 +43,8 @@ export function PromoteBilling({
   state: string;
   deals: Target[];
   products: Target[];
+  /** Creative library entries attachable to the placement (spec ⑥). */
+  creatives?: Target[];
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -150,6 +153,7 @@ export function PromoteBilling({
         state={state}
         deals={deals}
         products={products}
+        creatives={creatives}
       />
     </div>
   );
@@ -172,6 +176,7 @@ function PlacementPurchase({
   state,
   deals,
   products,
+  creatives,
 }: {
   pending: boolean;
   go: (action: () => Promise<BillingRequestResult>) => void;
@@ -179,11 +184,14 @@ function PlacementPurchase({
   state: string;
   deals: Target[];
   products: Target[];
+  creatives: Target[];
 }) {
   const [type, setType] = useState<DispensaryPlacementType>('featured');
   const [scope, setScope] = useState<PlacementScope>('city');
   const [days, setDays] = useState(30);
   const [targetId, setTargetId] = useState('');
+  const [creativeId, setCreativeId] = useState('');
+  const [startDate, setStartDate] = useState('');
 
   const needsTarget = type === 'promoted_deal' || type === 'promoted_product';
   const targets = type === 'promoted_deal' ? deals : type === 'promoted_product' ? products : [];
@@ -280,6 +288,42 @@ function PlacementPurchase({
               }
             />
           </label>
+
+          <label className="space-y-1.5 text-sm">
+            <span className="font-medium">Start date (optional)</span>
+            <input
+              type="date"
+              className="border-border bg-background w-full rounded-md border px-3 py-2"
+              value={startDate}
+              min={new Date().toISOString().slice(0, 10)}
+              max={new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10)}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <span className="text-muted text-xs">
+              Schedule ahead (up to 90 days) — blank starts when our team confirms.
+            </span>
+          </label>
+
+          <label className="space-y-1.5 text-sm sm:col-span-2">
+            <span className="font-medium">Creative (optional)</span>
+            <select
+              className="border-border bg-background w-full rounded-md border px-3 py-2"
+              value={creativeId}
+              onChange={(e) => setCreativeId(e.target.value)}
+            >
+              <option value="">Storefront photo (default)</option>
+              {creatives.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            {creatives.length === 0 && (
+              <span className="text-muted text-xs">
+                Build one in the creative library below to run custom ad art + copy.
+              </span>
+            )}
+          </label>
         </div>
 
         <div className="flex items-center justify-between border-t border-border pt-4">
@@ -299,6 +343,8 @@ function PlacementPurchase({
                   scope,
                   days,
                   target_id: needsTarget ? targetId : undefined,
+                  creative_id: creativeId || undefined,
+                  start_date: startDate || undefined,
                 }),
               );
             }}

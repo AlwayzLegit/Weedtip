@@ -81,7 +81,9 @@ export default async function HomePage() {
     supabase.from('categories').select('name,slug').order('sort_order'),
     supabase
       .from('placements')
-      .select(`id,priority,dispensary:dispensaries(${DISP_FIELDS})`)
+      .select(
+        `id,priority,creative:ad_creatives(image_url,headline),dispensary:dispensaries(${DISP_FIELDS})`,
+      )
       .eq('type', 'hero')
       .eq('is_active', true)
       .lte('starts_at', nowIso)
@@ -130,18 +132,29 @@ export default async function HomePage() {
   ]);
 
   const heroSlides: HeroSlide[] = (heroPlacements ?? [])
-    .map((p) => ({ placementId: p.id, d: p.dispensary as Record<string, unknown> | null }))
+    .map((p) => ({
+      placementId: p.id,
+      creative: p.creative as { image_url: string; headline: string | null } | null,
+      d: p.dispensary as Record<string, unknown> | null,
+    }))
     .filter(
-      (s): s is { placementId: string; d: Record<string, unknown> } =>
-        !!s.d && s.d.status === 'active',
+      (
+        s,
+      ): s is {
+        placementId: string;
+        creative: { image_url: string; headline: string | null } | null;
+        d: Record<string, unknown>;
+      } => !!s.d && s.d.status === 'active',
     )
-    .map(({ placementId, d }) => ({
+    .map(({ placementId, creative, d }) => ({
       placementId,
       slug: String(d.slug),
       name: String(d.name),
       city: String(d.city),
       state: String(d.state),
-      coverUrl: (d.cover_image_url as string | null) ?? null,
+      // Creative-library art + copy win over the raw storefront photo (spec ⑥).
+      coverUrl: creative?.image_url ?? (d.cover_image_url as string | null) ?? null,
+      headline: creative?.headline ?? null,
       rating: (d.rating_avg as number | null) ?? null,
       reviewCount: (d.rating_count as number) ?? 0,
     }));

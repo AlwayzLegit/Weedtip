@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CreativeLibrary } from '@/components/dashboard/creative-library';
 import { EmbedSnippet } from '@/components/dashboard/embed-snippet';
 import { PromoteBilling } from '@/components/dashboard/promote-billing';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +37,7 @@ export default async function PromotePage() {
     { data: stats },
     { data: dealTargets },
     { data: productTargets },
+    { data: creatives },
   ] = await Promise.all([
     supabase
       .from('dispensary_subscriptions')
@@ -44,7 +46,7 @@ export default async function PromotePage() {
       .maybeSingle(),
     supabase
       .from('placements')
-      .select('*')
+      .select('*, creative:ad_creatives(name)')
       .eq('dispensary_id', dispensary.id)
       .order('created_at', { ascending: false }),
     supabase.from('plans').select('*').eq('is_active', true).order('sort_order'),
@@ -62,11 +64,26 @@ export default async function PromotePage() {
       .eq('dispensary_id', dispensary.id)
       .order('name')
       .limit(200),
+    supabase
+      .from('ad_creatives')
+      .select('id, name, image_url, headline, body')
+      .eq('dispensary_id', dispensary.id)
+      .order('created_at', { ascending: false }),
   ]);
 
   const plan = sub?.plan as { name: string; price_cents: number } | null;
   const live = (placements ?? []).filter(isLive);
   const statsByPlacement = new Map((stats ?? []).map((s) => [s.placement_id, s] as const));
+  // Insights rollup across every placement (lifetime).
+  const totals = (placements ?? []).reduce(
+    (acc, p) => {
+      const s = statsByPlacement.get(p.id);
+      acc.impressions += s?.impressions ?? 0;
+      acc.clicks += s?.clicks ?? 0;
+      return acc;
+    },
+    { impressions: 0, clicks: 0 },
+  );
 
   return (
     <div className="space-y-8">
@@ -103,45 +120,81 @@ export default async function PromotePage() {
         </div>
       </section>
 
-      {/* Active placements */}
+      {/* Placements + insights (spec ⑥: scheduler view + performance) */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Your placements</h2>
+        {totals.impressions > 0 && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="card p-4">
+              <p className="text-xl font-bold">{totals.impressions.toLocaleString()}</p>
+              <p className="text-muted text-xs">Ad impressions</p>
+            </div>
+            <div className="card p-4">
+              <p className="text-xl font-bold">{totals.clicks.toLocaleString()}</p>
+              <p className="text-muted text-xs">Clicks</p>
+            </div>
+            <div className="card p-4">
+              <p className="text-primary text-xl font-bold">
+                {Math.round((totals.clicks / totals.impressions) * 1000) / 10}%
+              </p>
+              <p className="text-muted text-xs">CTR</p>
+            </div>
+          </div>
+        )}
         {!placements || placements.length === 0 ? (
           <div className="rounded-card border-border bg-surface text-muted border p-6 text-center text-sm">
             No active placements. Get featured to climb search results.
           </div>
         ) : (
           <div className="space-y-2">
-            {placements.map((p) => (
-              <div
-                key={p.id}
-                className="rounded-card border-border bg-surface flex items-center justify-between border p-4"
-              >
-                <div>
-                  <p className="font-medium">{TYPE_LABEL[p.type] ?? p.type}</p>
-                  <p className="text-muted text-xs">
-                    {p.scope_city ? `${p.scope_city}, ` : ''}
-                    {p.scope_state ?? 'Nationwide'} ·{' '}
-                    {new Date(p.starts_at).toLocaleDateString()} –{' '}
-                    {p.ends_at ? new Date(p.ends_at).toLocaleDateString() : 'open-ended'}
-                  </p>
-                  {(() => {
-                    const stat = statsByPlacement.get(p.id);
-                    const impr = stat?.impressions ?? 0;
-                    const clk = stat?.clicks ?? 0;
-                    return (
-                      <p className="text-muted mt-1 text-xs">
-                        {impr.toLocaleString()} impressions · {clk.toLocaleString()} clicks
-                        {impr > 0 && ` · ${Math.round((clk / impr) * 1000) / 10}% CTR`}
-                      </p>
-                    );
-                  })()}
+            {placements.map((p) => {
+              const creative = p.creative as { name: string } | null;
+              const pending = p.status === 'pending';
+              return (
+                <div
+                  key={p.id}
+                  className="rounded-card border-border bg-surface flex items-center justify-between border p-4"
+                >
+                  <div>
+                    <p className="font-medium">{TYPE_LABEL[p.type] ?? p.type}</p>
+                    <p className="text-muted text-xs">
+                      {p.scope_city ? `${p.scope_city}, ` : ''}
+                      {p.scope_state ?? 'Nationwide'} ·{' '}
+                      {pending
+                        ? p.requested_start
+                          ? `requested to start ${new Date(`${p.requested_start}T00:00:00`).toLocaleDateString()}`
+                          : 'starts when confirmed'
+                        : `${new Date(p.starts_at).toLocaleDateString()} – ${
+                            p.ends_at ? new Date(p.ends_at).toLocaleDateString() : 'open-ended'
+                          }`}
+                      {creative && ` · creative: ${creative.name}`}
+                    </p>
+                    {(() => {
+                      const stat = statsByPlacement.get(p.id);
+                      const impr = stat?.impressions ?? 0;
+                      const clk = stat?.clicks ?? 0;
+                      return (
+                        <p className="text-muted mt-1 text-xs">
+                          {impr.toLocaleString()} impressions · {clk.toLocaleString()} clicks
+                          {impr > 0 && ` · ${Math.round((clk / impr) * 1000) / 10}% CTR`}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                  <Badge tone={isLive(p) ? 'primary' : 'muted'}>
+                    {isLive(p)
+                      ? 'Live'
+                      : pending
+                        ? 'Awaiting confirmation'
+                        : p.is_active && new Date(p.starts_at).getTime() > Date.now()
+                          ? 'Scheduled'
+                          : p.is_active
+                            ? 'Ended'
+                            : 'Paused'}
+                  </Badge>
                 </div>
-                <Badge tone={isLive(p) ? 'primary' : 'muted'}>
-                  {isLive(p) ? 'Live' : p.is_active ? 'Scheduled' : 'Paused'}
-                </Badge>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         {live.length > 0 && (
@@ -165,7 +218,11 @@ export default async function PromotePage() {
         state={dispensary.state}
         deals={(dealTargets ?? []).map((d) => ({ id: d.id, label: d.title }))}
         products={(productTargets ?? []).map((p) => ({ id: p.id, label: p.name }))}
+        creatives={(creatives ?? []).map((c) => ({ id: c.id, label: c.name }))}
       />
+
+      {/* Creative library (spec ⑥) */}
+      <CreativeLibrary creatives={creatives ?? []} />
 
       {/* Embeddable menu widget */}
       <section className="space-y-3">
