@@ -42,9 +42,15 @@ export function readCityCookie(market: string): string | null {
   }
 }
 
-/** Where "switch market to {st}" should land from the current surface. */
-function destinationFor(pathname: string, code: string): string {
+/** Fired on market change so location-driven client blocks (home feed) re-scope
+    in place without a navigation. */
+export const MARKET_CHANGE_EVENT = 'wt:market-change';
+
+/** Where "switch market to {st}" should land from the current surface.
+    null = stay put (the surface re-scopes itself via MARKET_CHANGE_EVENT). */
+function destinationFor(pathname: string, code: string): string | null {
   const st = code.toLowerCase();
+  if (pathname === '/') return null; // home feed re-scopes in place
   if (pathname.startsWith('/deals')) return `/deals/${st}`;
   if (pathname.startsWith('/brands')) return `/brands?state=${code}`;
   return `/dispensaries/${st}`;
@@ -80,7 +86,9 @@ export function MarketSelector({ className }: { className?: string }) {
     writeMarketCookie(code);
     setSelected(code);
     setOpen(false);
-    router.push(destinationFor(pathname ?? '/', code));
+    window.dispatchEvent(new CustomEvent(MARKET_CHANGE_EVENT, { detail: code }));
+    const dest = destinationFor(pathname ?? '/', code);
+    if (dest) router.push(dest);
   }
 
   return (

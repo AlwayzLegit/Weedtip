@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { US_STATES } from '@/lib/seo';
 import { DealCard, type DealCardData } from '../deal-card';
 import { DispensaryCard, type DispensaryCardData } from '../dispensary-card';
-import { readCityCookie, readMarketCookie } from '../market-selector';
+import { MARKET_CHANGE_EVENT, readCityCookie, readMarketCookie } from '../market-selector';
 import { Button } from '../ui/button';
 import { ScrollCarousel } from './scroll-carousel';
 
@@ -179,6 +179,20 @@ export function MarketFeed({
       setCity(detectedCity);
       void loadMarket(code, detectedCity);
     }
+  }, [loadMarket]);
+
+  // Header location picker changed while on home → re-scope the feed in place.
+  useEffect(() => {
+    function onMarketChange(e: Event) {
+      const code = (e as CustomEvent<string>).detail;
+      if (!code || !US_STATES[code]) return;
+      const detectedCity = readCityCookie(code);
+      setMarket(code);
+      setCity(detectedCity);
+      void loadMarket(code, detectedCity);
+    }
+    window.addEventListener(MARKET_CHANGE_EVENT, onMarketChange);
+    return () => window.removeEventListener(MARKET_CHANGE_EVENT, onMarketChange);
   }, [loadMarket]);
 
   const scoped = market !== null && loadedFor === market;

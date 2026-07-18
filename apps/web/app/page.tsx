@@ -9,7 +9,6 @@ import { ScrollCarousel } from '@/components/home/scroll-carousel';
 import { BrandTile } from '@/components/brand/brand-tile';
 import { LogoImage } from '@/components/logo-image';
 import { ProductCard } from '@/components/product-card';
-import { SearchBar } from '@/components/search-bar';
 import { ArticleCard } from '@/components/article-card';
 import { StrainCard } from '@/components/strain-card';
 import { Button } from '@/components/ui/button';
@@ -257,19 +256,17 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* Search band — task-first like Weedmaps: what you can do, then the box. */}
+      {/* Compact headline band — search + location moved to the header
+          (Weedmaps pattern: the page itself is the location's feed). */}
       <section className="border-border/70 bg-hero-glow relative overflow-hidden border-b">
-        <div className="relative mx-auto max-w-3xl px-4 py-10 text-center sm:py-12">
-          <h1 className="animate-slide-up text-3xl font-bold tracking-tight sm:text-4xl">
+        <div className="relative mx-auto max-w-7xl px-4 py-8">
+          <h1 className="animate-slide-up text-2xl font-bold tracking-tight sm:text-3xl">
             Find cannabis near you
           </h1>
-          <p className="text-muted mx-auto mt-3 max-w-xl">
+          <p className="text-muted mt-1.5 max-w-xl text-sm">
             Browse menus, deals, and reviews from licensed dispensaries — order for pickup or
             delivery.
           </p>
-          <div className="mx-auto mt-6 max-w-2xl">
-            <SearchBar size="lg" />
-          </div>
         </div>
       </section>
 
