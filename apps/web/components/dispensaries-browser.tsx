@@ -106,6 +106,7 @@ type RpcRow = {
   licensed: boolean;
   distance_meters: number;
   is_open_now: boolean;
+  paid_tier?: number;
   total_count: number;
 };
 
@@ -123,6 +124,9 @@ function toShop(r: RpcRow): BrowserShop {
     isMedical: r.is_medical,
     isRecreational: r.is_recreational,
     featured: r.featured,
+    // Paying subscribers/placements get the Sponsored treatment (merchandised
+    // ranking). `?? 0` keeps this safe until the ranking migration is applied.
+    sponsored: (r.paid_tier ?? 0) > 0,
     rating: r.rating_avg,
     reviewCount: r.rating_count,
     licensed: r.licensed,
@@ -190,9 +194,9 @@ export function DispensariesBrowser({
         name: s.name,
         lat: s.lat as number,
         lng: s.lng as number,
-        featured: s.featured,
+        featured: s.featured || !!s.sponsored,
         isOpenNow: s.isOpenNow,
-        logoUrl: s.featured ? s.logoUrl : null,
+        logoUrl: s.featured || s.sponsored ? s.logoUrl : null,
         dealLabel: s.dealBadge ?? null,
         deliveryOnly: !!s.isDelivery && !s.isPickup,
       })),
@@ -297,7 +301,8 @@ export function DispensariesBrowser({
           name: r.name,
           lat: r.latitude,
           lng: r.longitude,
-          featured: r.featured,
+          // Paid shops share the featured pin treatment (server decides logo_url).
+          featured: r.featured || ((r as { paid?: boolean }).paid ?? false),
           isOpenNow: r.is_open_now,
           logoUrl: r.logo_url,
           dealLabel: r.deal_type ? dealBadge(r.deal_type, Number(r.deal_value)) : null,

@@ -48,7 +48,7 @@ export function LocationSwitcher({ items, currentId }: { items: Item[]; currentI
           className="rounded-card border-border bg-surface shadow-card-hover absolute z-40 mt-1 max-h-72 w-full overflow-auto border p-1"
         >
           {items.map((i) => (
-            <form key={i.id} action={selectDispensary.bind(null, i.id)}>
+            <form key={i.id} action={selectDispensary.bind(null, i.id)} onSubmit={() => setOpen(false)}>
               <button
                 type="submit"
                 role="option"

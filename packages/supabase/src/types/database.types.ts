@@ -2942,6 +2942,7 @@ export type Database = {
           logo_url: string
           longitude: number
           name: string
+          paid: boolean
           slug: string
         }[]
       }
@@ -3021,6 +3022,7 @@ export type Database = {
           longitude: number
           name: string
           owner_id: string
+          paid_tier: number
           phone: string
           rank: number
           rating_avg: number
@@ -3071,6 +3073,7 @@ export type Database = {
           logo_url: string
           longitude: number
           name: string
+          paid_tier: number
           rating_avg: number
           rating_count: number
           slug: string
