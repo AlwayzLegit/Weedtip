@@ -55,9 +55,12 @@ export function UpgradeWall({
 export function UpgradeBanner({
   message,
   tier = 'growth',
+  href = '/dashboard/promote',
 }: {
   message: string;
   tier?: UpgradeTier;
+  /** Where "Upgrade" goes — brands use their own Studio, not the dispensary billing page. */
+  href?: string;
 }) {
   const plan = TIER_NAME[tier];
   return (
@@ -66,7 +69,7 @@ export function UpgradeBanner({
         <Sparkles className="h-4 w-4 shrink-0" />
         {message}
       </p>
-      <Link href="/dashboard/promote" className="shrink-0">
+      <Link href={href} className="shrink-0">
         <Button size="sm">Upgrade to {plan}</Button>
       </Link>
     </div>

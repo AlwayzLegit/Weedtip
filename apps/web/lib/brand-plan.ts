@@ -63,4 +63,4 @@ export async function canUseBrandFeature(brandId: string, key: BrandFeatureKey):
 
 /** Shared copy for the upgrade prompt on gated Brand Studio features. */
 export const BRAND_UPGRADE_MESSAGE =
-  'This is a Basic feature. Upgrade to Basic to publish your catalog, post updates, and see your brand analytics.';
+  'This is a Basic feature. Upgrade to Basic to complete your brand profile, post updates, and see your brand analytics.';

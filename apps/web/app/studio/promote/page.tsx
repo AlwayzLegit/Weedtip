@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
-import { BrandPlanRequest } from '@/components/dashboard/brand-plan-request';
 import { BrandPromote } from '@/components/dashboard/brand-promote';
 import { getBrandOwnerContext } from '@/lib/brand-owner';
-import { getBrandTier } from '@/lib/brand-plan';
 import { formatPrice } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 
@@ -23,20 +21,12 @@ export default async function StudioPromote() {
 
   const ids = brands.map((b) => b.id);
   const supabase = await createClient();
-  const [{ data: promos }, { data: basicPlan }, { data: subs }, tiers] = await Promise.all([
-    supabase
-      .from('placements')
-      .select('id,brand_id,is_active,starts_at,ends_at,price_cents,scope_state')
-      .eq('type', 'promoted_brand')
-      .in('brand_id', ids)
-      .order('created_at', { ascending: false }),
-    supabase.from('plans').select('id, price_cents').eq('slug', 'basic').eq('is_active', true).maybeSingle(),
-    supabase.from('brand_subscriptions').select('brand_id, status').in('brand_id', ids),
-    Promise.all(brands.map(async (b) => [b.id, await getBrandTier(b.id)] as const)),
-  ]);
-  const subStatus = new Map((subs ?? []).map((s) => [s.brand_id, s.status]));
-  const tierByBrand = new Map(tiers);
-  const basic = basicPlan ? { id: basicPlan.id, priceCents: basicPlan.price_cents } : null;
+  const { data: promos } = await supabase
+    .from('placements')
+    .select('id,brand_id,is_active,starts_at,ends_at,price_cents,scope_state')
+    .eq('type', 'promoted_brand')
+    .in('brand_id', ids)
+    .order('created_at', { ascending: false });
 
   type Promo = NonNullable<typeof promos>[number];
   const byBrand = new Map<string, Promo[]>();
@@ -61,12 +51,6 @@ export default async function StudioPromote() {
         return (
           <section key={b.id} className="card space-y-4 p-6">
             <h2 className="text-lg font-semibold">{b.name}</h2>
-            <BrandPlanRequest
-              brandId={b.id}
-              isPaid={(tierByBrand.get(b.id) ?? 'free') !== 'free'}
-              pending={subStatus.get(b.id) === 'pending'}
-              basic={basic}
-            />
             {live.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Badge tone="primary">Live</Badge>
