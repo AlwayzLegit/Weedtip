@@ -6,6 +6,7 @@ import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
 import { requireAdvertiserAccess } from '@/lib/advertiser-access';
 import { pageSeo } from '@/lib/seo';
+import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
 
 export const metadata = pageSeo({
@@ -55,6 +56,30 @@ export default async function AdvertisePage() {
   const visibleMarkets = (markets ?? []).filter(
     (m) => !access.applicableStates || access.applicableStates.includes(m.state),
   );
+
+  // Resolve each of the owner's listings to its ad region (polygon match with
+  // a nearest-centroid fallback) so THEIR areas lead the catalog with a badge.
+  const shopsByRegion = new Map<string, string[]>();
+  if (access.applicableStates) {
+    const authed = await createClient();
+    const { data: ownShops } = await authed
+      .from('dispensaries')
+      .select('name, latitude, longitude')
+      .eq('owner_id', access.userId)
+      .not('latitude', 'is', null);
+    await Promise.all(
+      (ownShops ?? []).map(async (s) => {
+        if (typeof s.latitude !== 'number' || typeof s.longitude !== 'number') return;
+        const { data: geo } = await authed.rpc('resolve_geo', {
+          lng: s.longitude,
+          lat: s.latitude,
+        });
+        const regionId = geo?.[0]?.region_id;
+        if (!regionId) return;
+        shopsByRegion.set(regionId, [...(shopsByRegion.get(regionId) ?? []), s.name]);
+      }),
+    );
+  }
   const price = (slotType: string, tier: string) =>
     (products ?? []).find((p) => p.slot_type === slotType && p.tier === tier);
 
@@ -88,8 +113,21 @@ export default async function AdvertisePage() {
           open regularly — check back soon.
         </div>
       )}
-      {visibleMarkets.map((market) => {
-        const marketRegions = (regions ?? []).filter((r) => r.market_id === market.id);
+      {visibleMarkets
+        .slice()
+        .sort((a, b) => {
+          const owns = (m: { id: string }) =>
+            (regions ?? []).some((r) => r.market_id === m.id && shopsByRegion.has(r.id));
+          return Number(owns(b)) - Number(owns(a));
+        })
+        .map((market) => {
+        // The regions covering the owner's own listings lead the market's grid.
+        const marketRegions = (regions ?? [])
+          .filter((r) => r.market_id === market.id)
+          .sort(
+            (a, b) =>
+              Number(shopsByRegion.has(b.id)) - Number(shopsByRegion.has(a.id)),
+          );
         if (marketRegions.length === 0) return null;
         return (
           <section key={market.id} className="mt-10">
@@ -103,12 +141,21 @@ export default async function AdvertisePage() {
                 const zoneNames = zonesByRegion.get(region.id) ?? [];
                 const featured = price('featured', region.tier);
                 const premium = price('premium', region.tier);
+                const ownShops = shopsByRegion.get(region.id);
                 return (
                   <Link
                     key={region.id}
                     href={`/advertise/${region.slug}`}
-                    className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group block border p-5 transition-all duration-200 hover:-translate-y-0.5"
+                    className={
+                      'rounded-card bg-surface shadow-card hover:shadow-card-hover group block border p-5 transition-all duration-200 hover:-translate-y-0.5 ' +
+                      (ownShops ? 'border-primary/50' : 'border-border hover:border-primary/50')
+                    }
                   >
+                    {ownShops && (
+                      <Badge tone="primary" className="mb-2">
+                        Your area · {ownShops.join(', ')}
+                      </Badge>
+                    )}
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="group-hover:text-primary font-semibold">{region.name}</h3>
                       <Badge tone="outline">Tier {TIER_LABEL[region.tier] ?? region.tier}</Badge>
