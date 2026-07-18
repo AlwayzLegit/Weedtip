@@ -155,7 +155,7 @@ export async function activatePlacementRequest(placementId: string): Promise<voi
   const supabase = await createClient();
   const { data: placement } = await supabase
     .from('placements')
-    .select('id, notes, type, dispensary_id, status')
+    .select('id, notes, type, dispensary_id, status, requested_start')
     .eq('id', placementId)
     .maybeSingle();
   if (!placement || placement.status !== 'pending') return;
@@ -163,7 +163,11 @@ export async function activatePlacementRequest(placementId: string): Promise<voi
   // Days are server-authored into notes at request time ("… · N days", N
   // clamped 1–90 by the request schema), so the parse is trusted input.
   const days = Number(/(\d+)\s*day/.exec(placement.notes ?? '')?.[1] ?? '30') || 30;
-  const start = new Date();
+  // Scheduler: honor an owner-requested future start; never start in the past.
+  const requested = placement.requested_start
+    ? new Date(`${placement.requested_start}T00:00:00Z`)
+    : null;
+  const start = requested && requested.getTime() > Date.now() ? requested : new Date();
   const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
   const { data: updated } = await supabase
     .from('placements')

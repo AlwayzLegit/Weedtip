@@ -280,6 +280,13 @@ const placementSchema = z.object({
   scope: z.enum(['city', 'state', 'nationwide']),
   days: z.number().int().min(PLACEMENT_MIN_DAYS).max(PLACEMENT_MAX_DAYS),
   target_id: z.string().uuid().optional(),
+  /** Optional creative from the shop's library — rendered on the ad surface. */
+  creative_id: z.string().uuid().optional(),
+  /** Optional scheduled start (YYYY-MM-DD, today..+90d); blank = on activation. */
+  start_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 export type RequestPlacementInput = z.infer<typeof placementSchema>;
 
@@ -300,6 +307,15 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
   const { dispensary } = await requireDispensaryOwner();
   if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, dispensary.id)).success) {
     return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
+
+  // Scheduled start must be today..+90 days (activation clamps to "not past").
+  if (input.start_date) {
+    const start = new Date(`${input.start_date}T00:00:00Z`).getTime();
+    const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z').getTime();
+    if (Number.isNaN(start) || start < today || start > today + 90 * 86_400_000) {
+      return { ok: false, error: 'Start date must be within the next 90 days.' };
+    }
   }
   const supabase = await createClient();
   const {
@@ -324,6 +340,17 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
   const scope_city = input.scope === 'city' ? dispensary.city : null;
   const priceCents = placementPriceCents(input.type, input.scope, input.days);
 
+  // An attached creative must belong to this shop's library.
+  if (input.creative_id) {
+    const { data: creative } = await supabase
+      .from('ad_creatives')
+      .select('id')
+      .eq('id', input.creative_id)
+      .eq('dispensary_id', dispensary.id)
+      .maybeSingle();
+    if (!creative) return { ok: false, error: 'That creative is not in your library.' };
+  }
+
   // Service client: placement writes are admin-only under RLS, and we've
   // already authorized the owner against their own dispensary.
   const service = createServiceClient();
@@ -331,12 +358,16 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
     dispensary_id: dispensary.id,
     type: input.type,
     target_id: input.target_id ?? null,
+    creative_id: input.creative_id ?? null,
+    requested_start: input.start_date ?? null,
     scope_state,
     scope_city,
     is_active: false,
     status: 'pending',
     price_cents: priceCents,
-    notes: `Self-serve request · ${input.days} day${input.days === 1 ? '' : 's'}`,
+    notes: `Self-serve request · ${input.days} day${input.days === 1 ? '' : 's'}${
+      input.start_date ? ` · starts ${input.start_date}` : ''
+    }`,
   });
   if (insErr) return { ok: false, error: 'Could not create the placement request.' };
 

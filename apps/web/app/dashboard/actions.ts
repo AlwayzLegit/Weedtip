@@ -493,6 +493,54 @@ export async function deleteDeal(id: string): Promise<void> {
   revalidatePath('/dashboard/deals');
 }
 
+// ─── Ad creatives ──────────────────────────────────────────────────────────
+
+/** Save a reusable ad creative (image + headline + body) to the shop's library.
+    RLS enforces the 'marketing' capability. */
+export async function saveAdCreative(_prev: FormState, fd: FormData): Promise<FormState> {
+  const name = String(fd.get('name') ?? '').trim();
+  const imageUrl = String(fd.get('image_url') ?? '').trim();
+  const headline = String(fd.get('headline') ?? '').trim() || null;
+  const body = String(fd.get('body') ?? '').trim() || null;
+  if (!name || name.length > 80) return formError('Creative name is required (max 80 chars).');
+  if (!imageUrl) return formError('Upload or pick an image for the creative.');
+  if (headline && headline.length > 80) return formError('Headline is 80 characters max.');
+  if (body && body.length > 140) return formError('Body copy is 140 characters max.');
+
+  const auth = await authedClient();
+  if (!auth) return formError('Sign in first.');
+  const { supabase, userId } = auth;
+  const dispensaryId = await ownerDispensaryId(supabase, userId);
+  if (!dispensaryId) return formError('No listing found.');
+
+  const { error } = await supabase.from('ad_creatives').insert({
+    dispensary_id: dispensaryId,
+    name,
+    image_url: imageUrl,
+    headline,
+    body,
+  });
+  if (error) return formError(error.message);
+  revalidatePath('/dashboard/promote');
+  return formSuccess('Creative saved to your library.');
+}
+
+/** Remove a creative from the library (live placements keep rendering their
+    shop cover — placements.creative_id nulls via FK). */
+export async function deleteAdCreative(creativeId: string): Promise<void> {
+  const auth = await authedClient();
+  if (!auth) return;
+  const { supabase, userId } = auth;
+  const dispensaryId = await ownerDispensaryId(supabase, userId);
+  if (!dispensaryId) return;
+  await supabase
+    .from('ad_creatives')
+    .delete()
+    .eq('id', creativeId)
+    .eq('dispensary_id', dispensaryId);
+  revalidatePath('/dashboard/promote');
+}
+
 // ─── Orders ────────────────────────────────────────────────────────────────
 
 export async function updateOrderStatus(orderId: string, status: string): Promise<void> {

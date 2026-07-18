@@ -15,6 +15,8 @@ export type HeroSlide = {
   city: string;
   state: string;
   coverUrl: string | null;
+  /** Creative-library headline — replaces the shop name as the display line. */
+  headline?: string | null;
   rating: number | null;
   reviewCount: number;
 };
@@ -108,7 +110,12 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
               {/* Not a heading: this sits above the page's h1, so keep it a
                   styled span to preserve document heading order. */}
-              <span className="block text-2xl font-bold tracking-tight sm:text-4xl">{s.name}</span>
+              <span className="block text-2xl font-bold tracking-tight sm:text-4xl">
+                {s.headline || s.name}
+              </span>
+              {s.headline && (
+                <span className="text-muted mt-0.5 block text-sm font-medium">{s.name}</span>
+              )}
               <p className="text-muted mt-1.5 flex items-center gap-3 text-sm">
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="h-4 w-4" /> {s.city}, {s.state}

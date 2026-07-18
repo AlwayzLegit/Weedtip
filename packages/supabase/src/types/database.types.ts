@@ -59,6 +59,54 @@ export type Database = {
           },
         ]
       }
+      ad_creatives: {
+        Row: {
+          body: string | null
+          brand_id: string | null
+          created_at: string
+          dispensary_id: string | null
+          headline: string | null
+          id: string
+          image_url: string
+          name: string
+        }
+        Insert: {
+          body?: string | null
+          brand_id?: string | null
+          created_at?: string
+          dispensary_id?: string | null
+          headline?: string | null
+          id?: string
+          image_url: string
+          name: string
+        }
+        Update: {
+          body?: string | null
+          brand_id?: string | null
+          created_at?: string
+          dispensary_id?: string | null
+          headline?: string | null
+          id?: string
+          image_url?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_creatives_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_creatives_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_markets: {
         Row: {
           created_at: string
@@ -1918,6 +1966,7 @@ export type Database = {
         Row: {
           brand_id: string | null
           created_at: string
+          creative_id: string | null
           dispensary_id: string | null
           ends_at: string | null
           id: string
@@ -1925,6 +1974,7 @@ export type Database = {
           notes: string | null
           price_cents: number
           priority: number
+          requested_start: string | null
           scope_city: string | null
           scope_state: string | null
           starts_at: string
@@ -1935,6 +1985,7 @@ export type Database = {
         Insert: {
           brand_id?: string | null
           created_at?: string
+          creative_id?: string | null
           dispensary_id?: string | null
           ends_at?: string | null
           id?: string
@@ -1942,6 +1993,7 @@ export type Database = {
           notes?: string | null
           price_cents?: number
           priority?: number
+          requested_start?: string | null
           scope_city?: string | null
           scope_state?: string | null
           starts_at?: string
@@ -1952,6 +2004,7 @@ export type Database = {
         Update: {
           brand_id?: string | null
           created_at?: string
+          creative_id?: string | null
           dispensary_id?: string | null
           ends_at?: string | null
           id?: string
@@ -1959,6 +2012,7 @@ export type Database = {
           notes?: string | null
           price_cents?: number
           priority?: number
+          requested_start?: string | null
           scope_city?: string | null
           scope_state?: string | null
           starts_at?: string
@@ -1967,6 +2021,13 @@ export type Database = {
           type?: Database["public"]["Enums"]["placement_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "placements_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "ad_creatives"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "placements_brand_id_fkey"
             columns: ["brand_id"]
