@@ -21,7 +21,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
           )}
           <DashboardNav variant="owner" showBrandStudio={showBrandStudio} memberRole={memberRole} />
         </aside>
-        <div className="min-w-0">{children}</div>
+        {/* Keyed by the active listing so EVERY dashboard page remounts on switch —
+            the forms use uncontrolled inputs (defaultValue), which ignore new
+            props on an in-place re-render and would otherwise show the previous
+            listing's values until a manual reload. */}
+        <div className="min-w-0" key={dispensary?.id ?? 'none'}>
+          {children}
+        </div>
       </div>
     </div>
   );

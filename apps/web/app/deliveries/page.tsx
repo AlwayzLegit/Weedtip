@@ -139,6 +139,7 @@ export default async function DeliveriesPage({
     isMedical: r.is_medical,
     isRecreational: r.is_recreational,
     featured: r.featured,
+    sponsored: ((r as { paid_tier?: number }).paid_tier ?? 0) > 0,
     rating: r.rating_avg,
     reviewCount: r.rating_count,
     licensed: r.licensed,
