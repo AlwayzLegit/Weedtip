@@ -1165,6 +1165,45 @@ export type Database = {
           },
         ]
       }
+      dispensary_audit_log: {
+        Row: {
+          actor_id: string | null
+          changes: Json
+          created_at: string
+          dispensary_id: string
+          id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          changes: Json
+          created_at?: string
+          dispensary_id: string
+          id?: string
+        }
+        Update: {
+          actor_id?: string | null
+          changes?: Json
+          created_at?: string
+          dispensary_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispensary_audit_log_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispensary_audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispensary_feature_overrides: {
         Row: {
           dispensary_id: string

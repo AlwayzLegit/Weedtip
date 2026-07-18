@@ -24,9 +24,17 @@ export default async function ListingPage() {
           {dispensary ? 'Edit listing' : 'Create your listing'}
         </h1>
         {dispensary && (
-          <Badge tone={dispensary.status === 'active' ? 'primary' : 'muted'}>
-            {dispensary.status}
-          </Badge>
+          <span className="flex items-center gap-3">
+            <a
+              href="/dashboard/listing/history"
+              className="text-primary text-sm font-medium hover:underline"
+            >
+              Change history
+            </a>
+            <Badge tone={dispensary.status === 'active' ? 'primary' : 'muted'}>
+              {dispensary.status}
+            </Badge>
+          </span>
         )}
       </div>
       {!dispensary && (
