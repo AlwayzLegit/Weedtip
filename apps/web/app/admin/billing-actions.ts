@@ -112,11 +112,11 @@ export async function activateBrandPlanRequest(brandId: string): Promise<void> {
     await notifyUser(brand.owner_id, {
       type: 'billing_update',
       title: `Your ${brand.name} plan is active`,
-      body: 'Your Brand Studio plan was activated — catalog, analytics, and updates are unlocked.',
-      href: '/studio/promote',
+      body: 'Your Brand Studio plan was activated — your full profile, updates, and analytics are unlocked.',
+      href: '/studio',
     });
   }
-  revalidatePath('/studio/promote');
+  revalidatePath('/studio');
   refresh();
 }
 

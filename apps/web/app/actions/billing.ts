@@ -213,7 +213,7 @@ export async function requestBrandPlanChange(
       { onConflict: 'brand_id' },
     );
     if (error) return { ok: false, error: 'Could not change your plan.' };
-    revalidatePath('/studio/promote');
+    revalidatePath('/studio');
     return { ok: true, message: 'You are on the Free plan.' };
   }
 
@@ -225,7 +225,7 @@ export async function requestBrandPlanChange(
       'Price / month': `$${(plan.price_cents / 100).toFixed(2)}`,
       Note: 'Already on an active paid plan — do not downgrade until confirmed.',
     });
-    revalidatePath('/studio/promote');
+    revalidatePath('/studio');
     return {
       ok: true,
       message: 'Change requested — your current plan stays active until our team confirms it.',
@@ -249,7 +249,7 @@ export async function requestBrandPlanChange(
     Plan: plan.name,
     'Price / month': `$${(plan.price_cents / 100).toFixed(2)}`,
   });
-  revalidatePath('/studio/promote');
+  revalidatePath('/studio');
   return { ok: true, message: REQUEST_ACK };
 }
 

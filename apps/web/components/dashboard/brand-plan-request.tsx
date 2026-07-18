@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { requestBrandPlanChange } from '@/app/actions/billing';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+
+// Mirrors the Basic-tier BRAND_FEATURES labels (lib/brand-plan.ts, server-only)
+// so this client card can show what an upgrade unlocks without importing it.
+const BASIC_BENEFITS = ['Complete brand profile', 'Brand updates', 'Brand analytics'];
 
 /**
  * Brand Studio plan card: shows the brand's current tier and a one-click
@@ -46,8 +50,8 @@ export function BrandPlanRequest({
           </p>
           <p className="text-muted mt-0.5 text-xs">
             {isPaid
-              ? 'Basic is active — your catalog, analytics, and updates are unlocked.'
-              : 'Free — your brand page is live. Upgrade to publish your catalog, post updates, and see analytics.'}
+              ? 'Basic is active — your full profile, updates, and analytics are unlocked.'
+              : 'Free — your brand page and catalog are live. Upgrade to complete your profile, post updates, and see analytics.'}
           </p>
         </div>
         {isPaid ? (
@@ -60,6 +64,16 @@ export function BrandPlanRequest({
           </Button>
         ) : null}
       </div>
+
+      {!isPaid && (
+        <ul className="text-muted mt-3 grid gap-1.5 text-xs sm:grid-cols-3">
+          {BASIC_BENEFITS.map((b) => (
+            <li key={b} className="flex items-center gap-1.5">
+              <Check className="text-primary h-3.5 w-3.5 shrink-0" /> {b}
+            </li>
+          ))}
+        </ul>
+      )}
       {msg && <p className="text-primary mt-2 text-xs">{msg}</p>}
       {err && <p className="text-danger mt-2 text-xs">{err}</p>}
     </div>

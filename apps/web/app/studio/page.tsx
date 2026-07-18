@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CheckCircle2, Circle, Clock, Store } from 'lucide-react';
 import { BrandManageForm } from '@/components/dashboard/brand-manage-form';
+import { BrandPlanRequest } from '@/components/dashboard/brand-plan-request';
 import { brandSetupProgress, brandSetupSteps } from '@/lib/brand-onboarding';
 import { getBrandOwnerContext } from '@/lib/brand-owner';
-import { canUseBrandFeature } from '@/lib/brand-plan';
+import { canUseBrandFeature, getBrandTier } from '@/lib/brand-plan';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Brand profile · Studio' };
@@ -14,15 +15,23 @@ export default async function StudioProfile() {
   const ids = brands.map((b) => b.id);
 
   const supabase = await createClient();
-  const [{ data: prods }, { data: catalog }] = await Promise.all([
-    supabase
-      .from('products')
-      .select('id,brand_id, dispensary:dispensaries!inner(slug,name,status)')
-      .in('brand_id', ids)
-      .eq('dispensary.status', 'active'),
-    // Owner's own catalog products (drives the "add your first product" step).
-    supabase.from('brand_products').select('id,brand_id').in('brand_id', ids),
-  ]);
+  const [{ data: prods }, { data: catalog }, { data: basicPlan }, { data: subs }, tiers] =
+    await Promise.all([
+      supabase
+        .from('products')
+        .select('id,brand_id, dispensary:dispensaries!inner(slug,name,status)')
+        .in('brand_id', ids)
+        .eq('dispensary.status', 'active'),
+      // Owner's own catalog products (drives the "add your first product" step).
+      supabase.from('brand_products').select('id,brand_id').in('brand_id', ids),
+      supabase.from('plans').select('id, price_cents').eq('slug', 'basic').eq('is_active', true).maybeSingle(),
+      supabase.from('brand_subscriptions').select('brand_id, status').in('brand_id', ids),
+      Promise.all(brands.map(async (b) => [b.id, await getBrandTier(b.id)] as const)),
+    ]);
+
+  const basic = basicPlan ? { id: basicPlan.id, priceCents: basicPlan.price_cents } : null;
+  const subStatus = new Map((subs ?? []).map((s) => [s.brand_id, s.status]));
+  const tierByBrand = new Map(tiers);
 
   // brand_id → number of catalog products the owner has added.
   const catalogCount = new Map<string, number>();
@@ -75,6 +84,13 @@ export default async function StudioProfile() {
                 </span>
               )}
             </div>
+
+            <BrandPlanRequest
+              brandId={b.id}
+              isPaid={(tierByBrand.get(b.id) ?? 'free') !== 'free'}
+              pending={subStatus.get(b.id) === 'pending'}
+              basic={basic}
+            />
 
             {done < total && (
               <div className="rounded-card border-border bg-surface-2 border p-4">
