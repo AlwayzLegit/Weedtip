@@ -24,21 +24,21 @@ export function ogCard({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        background: '#0F1117',
-        color: '#E5E7EB',
+        background: '#F0F4F1',
+        color: '#1B2420',
         padding: 80,
         fontFamily: 'sans-serif',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', fontSize: 38, fontWeight: 700 }}>
-        <span style={{ color: '#E5E7EB' }}>Weed</span>
-        <span style={{ color: '#34D399' }}>tip</span>
+        <span style={{ color: '#1B2420' }}>Weed</span>
+        <span style={{ color: '#047857' }}>tip</span>
       </div>
       <div
         style={{
           display: 'flex',
           fontSize: 26,
-          color: '#34D399',
+          color: '#047857',
           marginTop: 40,
           letterSpacing: 2,
         }}
@@ -49,7 +49,7 @@ export function ogCard({
         {title.slice(0, 80)}
       </div>
       {subtitle ? (
-        <div style={{ display: 'flex', fontSize: 30, color: '#9CA3AF', marginTop: 24 }}>
+        <div style={{ display: 'flex', fontSize: 30, color: '#57635C', marginTop: 24 }}>
           {subtitle.slice(0, 100)}
         </div>
       ) : null}
@@ -59,7 +59,7 @@ export function ogCard({
           marginTop: 36,
           height: 10,
           width: 180,
-          background: '#34D399',
+          background: '#047857',
           borderRadius: 9999,
         }}
       />

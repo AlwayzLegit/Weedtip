@@ -3,8 +3,8 @@ import config from '../../tailwind.config';
 
 /**
  * WCAG contrast guards for the design tokens (WT-14). Text pairings must meet
- * AA (≥ 4.5:1 normal text, ≥ 3:1 large/UI), and adjacent surfaces must differ
- * by ≥ ~1.25:1 so cards read as raised panels on the dark theme. Editing
+ * AA (≥ 4.5:1 normal text, ≥ 3:1 large/UI), and adjacent surfaces must remain
+ * visibly distinct so panels read as layers on the light theme. Editing
  * tailwind.config.ts colors below these floors fails CI.
  */
 
@@ -62,24 +62,26 @@ describe('design token contrast (WCAG AA)', () => {
 });
 
 describe('surface elevation separation', () => {
-  // Near-black luminances compress WCAG ratios (the +0.05 flare term
-  // dominates), so 1.1:1 here is already a clearly visible step; 1px borders
-  // (enforced below) do the rest of the separation work on dark UIs.
+  // Near-white luminances compress WCAG ratios (the +0.05 flare term
+  // dominates), so 1.1:1 here is already a clearly visible step; borders and
+  // soft shadows (enforced below) do the rest of the separation on light UIs.
   it.each([
     ['surface', 'background'],
-    ['surface-2', 'surface'],
-    ['surface-3', 'surface-2'],
-  ])('%s vs %s ≥ 1.1:1 so panels visibly separate', (upper, lower) => {
-    expect(contrast(token(upper), token(lower))).toBeGreaterThanOrEqual(1.1);
+    ['surface', 'surface-2'],
+    ['surface-2', 'surface-3'],
+  ])('%s vs %s ≥ 1.1:1 so panels visibly separate', (a, b) => {
+    expect(contrast(token(a), token(b))).toBeGreaterThanOrEqual(1.1);
   });
 
-  it('elevation ladder is strictly increasing in luminance', () => {
-    const ladder = ['background', 'surface', 'surface-2', 'surface-3'].map((t) =>
-      luminance(token(t)),
+  it('light-theme elevation: cards are the lightest layer; nested fills step down', () => {
+    // Cards (surface) must pop as the brightest layer on the tinted page, and
+    // the nested fills used inside cards must darken monotonically so wells and
+    // inputs visibly recede: surface > background ≥ surface-2 > surface-3.
+    expect(luminance(token('surface'))).toBeGreaterThan(luminance(token('background')));
+    expect(luminance(token('background'))).toBeGreaterThanOrEqual(
+      luminance(token('surface-2')),
     );
-    for (let i = 1; i < ladder.length; i++) {
-      expect(ladder[i]!).toBeGreaterThan(ladder[i - 1]!);
-    }
+    expect(luminance(token('surface-2'))).toBeGreaterThan(luminance(token('surface-3')));
   });
 
   it('card borders are distinguishable from their surface (≥ 1.2:1)', () => {

@@ -74,7 +74,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
           {d.rank != null && (
             <span
               aria-label={`Result ${d.rank}`}
-              className="bg-background/85 text-foreground flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[11px] font-bold shadow ring-1 ring-white/15 backdrop-blur"
+              className="bg-background/85 text-foreground ring-border flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[11px] font-bold shadow ring-1 backdrop-blur"
             >
               {d.rank}
             </span>

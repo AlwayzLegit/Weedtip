@@ -67,7 +67,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0F1117',
+  themeColor: '#F0F4F1',
   width: 'device-width',
   initialScale: 1,
   // Enables env(safe-area-inset-*) so floating mobile controls clear the

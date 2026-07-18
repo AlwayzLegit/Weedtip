@@ -21,8 +21,8 @@ export default function GlobalError({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#0F1117',
-          color: '#E5E7EB',
+          background: '#F0F4F1',
+          color: '#1B2420',
           fontFamily:
             'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
         }}
@@ -31,20 +31,20 @@ export default function GlobalError({
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 8px' }}>
             Something went wrong
           </h1>
-          <p style={{ color: '#9CA3AF', margin: '0 0 20px', lineHeight: 1.5 }}>
+          <p style={{ color: '#57635C', margin: '0 0 20px', lineHeight: 1.5 }}>
             An unexpected error occurred. Try again, and if it keeps happening please come back
             shortly.
           </p>
           {error.digest && (
-            <p style={{ color: '#6B7280', fontSize: 12, margin: '0 0 20px' }}>
+            <p style={{ color: '#71807A', fontSize: 12, margin: '0 0 20px' }}>
               Reference: {error.digest}
             </p>
           )}
           <button
             onClick={reset}
             style={{
-              background: '#34D399',
-              color: '#0F1117',
+              background: '#047857',
+              color: '#FFFFFF',
               border: 0,
               borderRadius: 10,
               padding: '10px 18px',

@@ -15,27 +15,27 @@ function shell(title: string, body: string) {
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${esc(title)}</title>
 <style>
-  :root { color-scheme: dark; }
+  :root { color-scheme: light; }
   * { box-sizing: border-box; }
   body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Inter, sans-serif;
-    background:#0B0D12; color:#F4F6F8; -webkit-font-smoothing:antialiased; }
+    background:#F0F4F1; color:#1B2420; -webkit-font-smoothing:antialiased; }
   .wrap { max-width: 680px; margin: 0 auto; padding: 16px; }
   .head { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
-    padding-bottom:12px; border-bottom:1px solid #2A2F3C; margin-bottom:12px; }
+    padding-bottom:12px; border-bottom:1px solid #E3E8E4; margin-bottom:12px; }
   .head h1 { font-size:18px; margin:0; }
-  .head span { color:#9AA3B2; font-size:12px; }
+  .head span { color:#57635C; font-size:12px; }
   ul { list-style:none; margin:0; padding:0; }
   li a { display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding:12px; border:1px solid #2A2F3C; border-radius:12px; margin-bottom:8px;
-    text-decoration:none; color:inherit; background:#161922; transition:border-color .15s; }
-  li a:hover { border-color:rgba(16,185,129,.5); }
+    padding:12px; border:1px solid #E3E8E4; border-radius:12px; margin-bottom:8px;
+    text-decoration:none; color:inherit; background:#FFFFFF; transition:border-color .15s; }
+  li a:hover { border-color:rgba(4,120,87,.45); }
   .name { font-weight:600; font-size:14px; }
-  .brand { color:#9AA3B2; font-size:12px; }
-  .price { font-weight:600; color:#10B981; white-space:nowrap; }
-  .was { color:#9AA3B2; font-size:12px; text-decoration:line-through; margin-right:6px; }
+  .brand { color:#57635C; font-size:12px; }
+  .price { font-weight:600; color:#047857; white-space:nowrap; }
+  .was { color:#57635C; font-size:12px; text-decoration:line-through; margin-right:6px; }
   .foot { text-align:center; padding:14px 0 4px; }
-  .foot a { color:#10B981; font-size:12px; text-decoration:none; }
-  .empty { color:#9AA3B2; text-align:center; padding:32px 0; }
+  .foot a { color:#047857; font-size:12px; text-decoration:none; }
+  .empty { color:#57635C; text-align:center; padding:32px 0; }
 </style></head><body><div class="wrap">${body}</div></body></html>`;
 }
 
