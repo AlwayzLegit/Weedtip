@@ -18,7 +18,8 @@
 -- discs. Idempotent (fills NULLs only); hand-refined GeoJSON via the admin
 -- boundary editor still wins whenever set.
 -- ════════════════════════════════════════════════════════════════════════════
-set search_path = public;
+-- (PostGIS types live in the extensions schema — it must be on the path.)
+set search_path = public, extensions;
 
 update public.ad_zones
 set boundary = st_multi(st_buffer(centroid::geography, 2500)::geometry)
