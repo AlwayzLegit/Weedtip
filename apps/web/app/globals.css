@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html {
@@ -18,11 +18,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Ambient brand glow anchored to the top of the page — subtle depth. */
+/* Ambient brand tint anchored to the top of the page — subtle pastel depth. */
 body {
   background-image: radial-gradient(
     70% 40% at 50% -10%,
-    rgba(16, 185, 129, 0.07),
+    rgba(4, 120, 87, 0.06),
     transparent 70%
   );
   background-attachment: fixed;
@@ -30,7 +30,7 @@ body {
 }
 
 ::selection {
-  background-color: rgba(16, 185, 129, 0.28);
+  background-color: rgba(4, 120, 87, 0.18);
   color: theme('colors.foreground');
 }
 
@@ -90,12 +90,12 @@ body {
     @apply border-border/70 border bg-surface/80 backdrop-blur-xl;
   }
 
-  /* Green gradient text for hero accents. */
+  /* Green gradient text for hero accents (deep → medium emerald, AA on light). */
   .gradient-text {
-    @apply from-primary bg-gradient-to-r to-emerald-300 bg-clip-text text-transparent;
+    @apply from-primary bg-gradient-to-r to-emerald-600 bg-clip-text text-transparent;
   }
 
-  /* Thin top sheen to add depth to dark panels. */
+  /* Thin top sheen to add depth to panels. */
   .sheen {
     @apply bg-surface-sheen;
   }
@@ -159,7 +159,7 @@ body {
   display: none;
 }
 
-/* Mapbox popups default to a white card; restyle to the dark design system. */
+/* Mapbox popups — restyle to the design-system tokens. */
 .browse-popup .mapboxgl-popup-content {
   background: theme('colors.surface');
   color: theme('colors.foreground');
