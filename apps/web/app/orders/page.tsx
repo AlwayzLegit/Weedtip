@@ -14,6 +14,7 @@ const STATUS_TONE: Record<string, 'primary' | 'muted' | 'default'> = {
   pending: 'default',
   confirmed: 'primary',
   ready: 'primary',
+  out_for_delivery: 'primary',
   completed: 'muted',
   cancelled: 'muted',
 };

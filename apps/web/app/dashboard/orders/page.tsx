@@ -20,12 +20,14 @@ const LANES: { status: OrderStatus; label: string }[] = [
   { status: 'pending', label: 'New' },
   { status: 'confirmed', label: 'Preparing' },
   { status: 'ready', label: 'Ready' },
+  { status: 'out_for_delivery', label: 'Out for delivery' },
 ];
 
 const STATUS_TONE: Record<string, 'primary' | 'muted' | 'default'> = {
   pending: 'default',
   confirmed: 'primary',
   ready: 'primary',
+  out_for_delivery: 'primary',
   completed: 'muted',
   cancelled: 'muted',
 };
@@ -78,7 +80,7 @@ function OrderCard({ o }: { o: Order }) {
         </p>
       ) : null}
       <div className="mt-3 flex items-center justify-between gap-2">
-        <OrderStatusControl orderId={o.id} status={o.status} />
+        <OrderStatusControl orderId={o.id} status={o.status} orderType={o.order_type} />
         <Link
           href={`/dashboard/orders/${o.id}`}
           className="text-primary shrink-0 text-xs font-medium hover:underline"
@@ -135,7 +137,7 @@ export default async function DashboardOrders() {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {LANES.map((lane) => {
               const laneOrders = byStatus(lane.status);
               return (

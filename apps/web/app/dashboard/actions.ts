@@ -510,6 +510,72 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
   revalidatePath('/dashboard/orders');
 }
 
+/** Assign (or clear) a delivery driver on an order. RLS enforces the 'orders'
+    capability; the dispensary_id filter keeps it scoped to the active shop. */
+export async function assignOrderDriver(orderId: string, driverId: string | null): Promise<void> {
+  const auth = await authedClient();
+  if (!auth) return;
+  const { supabase, userId } = auth;
+  const dispensaryId = await ownerDispensaryId(supabase, userId);
+  if (!dispensaryId) return;
+  await supabase
+    .from('orders')
+    .update({ driver_id: driverId })
+    .eq('id', orderId)
+    .eq('dispensary_id', dispensaryId);
+  revalidatePath('/dashboard/orders');
+}
+
+/** Set (or clear) the customer-facing ready/delivery ETA in minutes. */
+export async function setOrderEta(orderId: string, minutes: number | null): Promise<void> {
+  const value =
+    minutes === null || Number.isNaN(minutes) ? null : Math.min(480, Math.max(1, Math.round(minutes)));
+  const auth = await authedClient();
+  if (!auth) return;
+  const { supabase, userId } = auth;
+  const dispensaryId = await ownerDispensaryId(supabase, userId);
+  if (!dispensaryId) return;
+  await supabase
+    .from('orders')
+    .update({ ready_eta_minutes: value })
+    .eq('id', orderId)
+    .eq('dispensary_id', dispensaryId);
+  revalidatePath('/dashboard/orders');
+}
+
+/** Add a driver to the shop's roster (name required, phone optional). */
+export async function addDriver(_prev: FormState, fd: FormData): Promise<FormState> {
+  const name = String(fd.get('name') ?? '').trim();
+  const phone = String(fd.get('phone') ?? '').trim() || null;
+  if (!name || name.length > 80) return formError('Driver name is required (max 80 chars).');
+  const auth = await authedClient();
+  if (!auth) return formError('Sign in first.');
+  const { supabase, userId } = auth;
+  const dispensaryId = await ownerDispensaryId(supabase, userId);
+  if (!dispensaryId) return formError('No listing found.');
+  const { error } = await supabase
+    .from('dispensary_drivers')
+    .insert({ dispensary_id: dispensaryId, name, phone });
+  if (error) return formError(error.message);
+  revalidatePath('/dashboard/orders');
+  return formSuccess('Driver added.');
+}
+
+/** Deactivate a roster driver (kept for order history; no hard delete). */
+export async function deactivateDriver(driverId: string): Promise<void> {
+  const auth = await authedClient();
+  if (!auth) return;
+  const { supabase, userId } = auth;
+  const dispensaryId = await ownerDispensaryId(supabase, userId);
+  if (!dispensaryId) return;
+  await supabase
+    .from('dispensary_drivers')
+    .update({ is_active: false })
+    .eq('id', driverId)
+    .eq('dispensary_id', dispensaryId);
+  revalidatePath('/dashboard/orders');
+}
+
 /** Pause or resume incoming online orders for the owner's dispensary. */
 export async function setAcceptingOrders(accepting: boolean): Promise<void> {
   const auth = await authedClient();

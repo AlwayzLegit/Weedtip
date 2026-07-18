@@ -21,7 +21,14 @@ export const DISCOUNT_TYPES = ['percentage', 'fixed', 'bogo'] as const;
 export type DiscountType = (typeof DISCOUNT_TYPES)[number];
 
 // ─── Order lifecycle status ──────────────────────────────────────────────────
-export const ORDER_STATUSES = ['pending', 'confirmed', 'ready', 'completed', 'cancelled'] as const;
+export const ORDER_STATUSES = [
+  'pending',
+  'confirmed',
+  'ready',
+  'out_for_delivery',
+  'completed',
+  'cancelled',
+] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 // ─── Order fulfilment type ───────────────────────────────────────────────────
