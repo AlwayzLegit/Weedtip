@@ -13,7 +13,7 @@ import {
 } from '@weedtip/shared';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@weedtip/supabase/types';
-import { isAiEnabled, summarizeReviews } from '@/lib/ai';
+import { aiEnabled, summarizeReviews } from '@/lib/ai';
 import { getAuth } from '@/lib/auth';
 import { canUseFeature } from '@/lib/features';
 import { notifyAdmins } from '@/lib/notify';
@@ -440,10 +440,10 @@ export async function upsertDeal(_prev: FormState, fd: FormData): Promise<FormSt
 
 /**
  * Generate + cache an AI summary of this shop's reviews (owner-triggered, not
- * per page view). No-ops when ANTHROPIC_API_KEY is unset (isAiEnabled=false).
+ * per page view). No-ops until an Anthropic key is configured (env or super-admin).
  */
 export async function generateReviewsSummary(_prev: FormState, _fd: FormData): Promise<FormState> {
-  if (!isAiEnabled) return formError('AI summaries are not enabled on this site.');
+  if (!(await aiEnabled())) return formError('AI summaries are not enabled on this site.');
   const auth = await authedClient();
   if (!auth) return formError('You must be signed in.');
   const { supabase, userId } = auth;

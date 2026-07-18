@@ -16,6 +16,7 @@ import {
   Truck,
 } from 'lucide-react';
 import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours, type SpecialHour } from '@weedtip/shared';
+import { aiEnabled } from '@/lib/ai';
 import { AMENITY_ICON } from '@/lib/amenity-icons';
 import { ShopViewTracker } from '@/components/analytics/shop-view-tracker';
 import { RecordRecentlyViewed } from '@/components/recently-viewed';
@@ -225,6 +226,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   // a free-listing tradeoff, removed once the shop pays. `featured` is the
   // public paid signal; is_paid_listing() additionally covers subscriptions
   // and non-featured placements. RPC errors degrade to "free" (rail shows).
+  // AI review summary stays fully hidden until the Anthropic key is configured
+  // (super-admin switch) — even if a cached summary exists from before.
+  const showAiSummary = !!d.reviews_summary && (await aiEnabled());
+
   let paidListing = d.featured;
   if (!paidListing) {
     const { data: paid } = await supabase.rpc('is_paid_listing', { p_dispensary_id: d.id });
@@ -1052,7 +1057,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             {/* Reviews */}
             <section id="reviews" className="scroll-mt-32">
               <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
-              {d.reviews_summary && (
+              {showAiSummary && (
                 <div className="border-primary/25 bg-primary-muted/50 mb-4 rounded-lg border p-4">
                   <p className="text-primary flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
                     <Sparkles className="h-3.5 w-3.5" /> AI summary
