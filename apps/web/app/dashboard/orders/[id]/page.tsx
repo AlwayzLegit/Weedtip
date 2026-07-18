@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import type { OrderItem } from '@weedtip/shared';
+import { DeliveryDispatch } from '@/components/dashboard/delivery-dispatch';
 import { OrderStatusControl } from '@/components/dashboard/order-status-control';
 import { PrintButton } from '@/components/dashboard/print-button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ const STATUS_TONE: Record<string, 'primary' | 'muted' | 'default'> = {
   pending: 'default',
   confirmed: 'primary',
   ready: 'primary',
+  out_for_delivery: 'primary',
   completed: 'muted',
   cancelled: 'muted',
 };
@@ -25,13 +27,19 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const { dispensary } = await requireOwnerDispensary();
   const supabase = await createClient();
-  const [{ data: order }, settings] = await Promise.all([
+  const [{ data: order }, { data: drivers }, settings] = await Promise.all([
     supabase
       .from('orders')
       .select('*')
       .eq('id', id)
       .eq('dispensary_id', dispensary.id)
       .maybeSingle(),
+    supabase
+      .from('dispensary_drivers')
+      .select('id, name, phone')
+      .eq('dispensary_id', dispensary.id)
+      .eq('is_active', true)
+      .order('name'),
     getPlatformSettings(),
   ]);
 
@@ -164,9 +172,21 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
         )}
       </div>
 
+      {order.status !== 'completed' && order.status !== 'cancelled' && (
+        <div className="no-print">
+          <DeliveryDispatch
+            orderId={order.id}
+            orderType={order.order_type}
+            driverId={order.driver_id}
+            etaMinutes={order.ready_eta_minutes}
+            drivers={drivers ?? []}
+          />
+        </div>
+      )}
+
       <div className="no-print">
         <p className="text-muted mb-2 text-sm font-medium">Update status</p>
-        <OrderStatusControl orderId={order.id} status={order.status} />
+        <OrderStatusControl orderId={order.id} status={order.status} orderType={order.order_type} />
       </div>
     </div>
   );

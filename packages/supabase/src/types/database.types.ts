@@ -1204,6 +1204,41 @@ export type Database = {
           },
         ]
       }
+      dispensary_drivers: {
+        Row: {
+          created_at: string
+          dispensary_id: string
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          dispensary_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          dispensary_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispensary_drivers_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispensary_feature_overrides: {
         Row: {
           dispensary_id: string
@@ -1667,9 +1702,11 @@ export type Database = {
           device: string | null
           discount_cents: number
           dispensary_id: string
+          driver_id: string | null
           id: string
           items: Json
           notes: string | null
+          ready_eta_minutes: number | null
           order_type: Database["public"]["Enums"]["order_type"]
           paid_at: string | null
           payment_method: string | null
@@ -1692,9 +1729,11 @@ export type Database = {
           device?: string | null
           discount_cents?: number
           dispensary_id: string
+          driver_id?: string | null
           id?: string
           items: Json
           notes?: string | null
+          ready_eta_minutes?: number | null
           order_type: Database["public"]["Enums"]["order_type"]
           paid_at?: string | null
           payment_method?: string | null
@@ -1717,9 +1756,11 @@ export type Database = {
           device?: string | null
           discount_cents?: number
           dispensary_id?: string
+          driver_id?: string | null
           id?: string
           items?: Json
           notes?: string | null
+          ready_eta_minutes?: number | null
           order_type?: Database["public"]["Enums"]["order_type"]
           paid_at?: string | null
           payment_method?: string | null
@@ -1736,6 +1777,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "dispensary_drivers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_deal_id_fkey"
             columns: ["deal_id"]
@@ -3208,6 +3256,7 @@ export type Database = {
         | "pending"
         | "confirmed"
         | "ready"
+        | "out_for_delivery"
         | "completed"
         | "cancelled"
       order_type: "pickup" | "delivery"
@@ -3360,7 +3409,7 @@ export const Constants = {
       deal_target_scope: ["menu", "category", "brand", "products"],
       discount_type: ["percentage", "fixed", "bogo"],
       dispensary_status: ["pending", "active", "suspended"],
-      order_status: ["pending", "confirmed", "ready", "completed", "cancelled"],
+      order_status: ["pending", "confirmed", "ready", "out_for_delivery", "completed", "cancelled"],
       order_type: ["pickup", "delivery"],
       payment_status: ["unpaid", "paid", "refunded"],
       placement_type: [

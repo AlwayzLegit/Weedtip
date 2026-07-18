@@ -16,8 +16,14 @@ const STATUS_TONE: Record<string, 'primary' | 'muted' | 'default'> = {
   pending: 'default',
   confirmed: 'primary',
   ready: 'primary',
+  out_for_delivery: 'primary',
   completed: 'muted',
   cancelled: 'muted',
+};
+
+/** Human copy for the raw status value ("out_for_delivery" → "out for delivery"). */
+const STATUS_LABEL: Record<string, string> = {
+  out_for_delivery: 'out for delivery',
 };
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,7 +34,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const supabase = await createClient();
   const { data: order } = await supabase
     .from('orders')
-    .select('*, dispensary:dispensaries(name,slug,address,city,state,post_order_message)')
+    .select(
+      '*, dispensary:dispensaries(name,slug,address,city,state,post_order_message), driver:dispensary_drivers(name,phone)',
+    )
     .eq('id', id)
     .maybeSingle();
 
@@ -43,6 +51,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     post_order_message: string | null;
   } | null;
   const items = (order.items as OrderItem[]) ?? [];
+  const driver = order.driver as { name: string; phone: string | null } | null;
+  const showEta =
+    order.ready_eta_minutes !== null &&
+    order.status !== 'completed' &&
+    order.status !== 'cancelled';
   const canCancel =
     order.user_id === user.id &&
     (order.status === 'pending' || order.status === 'confirmed');
@@ -61,7 +74,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
           <div className="flex flex-col items-end gap-1.5">
-            <Badge tone={STATUS_TONE[order.status] ?? 'default'}>{order.status}</Badge>
+            <Badge tone={STATUS_TONE[order.status] ?? 'default'}>
+              {STATUS_LABEL[order.status] ?? order.status}
+            </Badge>
             {order.payment_status === 'paid' ? (
               <Badge tone="primary">Paid</Badge>
             ) : order.payment_status === 'refunded' ? (
@@ -83,6 +98,29 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </Link>{' '}
             · {dispensary.address}, {dispensary.city}, {dispensary.state}
           </p>
+        )}
+
+        {(showEta || (driver && order.status === 'out_for_delivery')) && (
+          <div className="border-primary/30 bg-primary-muted mt-4 rounded-lg border p-3 text-sm">
+            {order.status === 'out_for_delivery' ? (
+              <p className="text-primary font-medium">
+                Your order is on its way
+                {driver ? ` with ${driver.name}` : ''}
+                {showEta ? ` — about ${order.ready_eta_minutes} min` : ''}.
+              </p>
+            ) : (
+              <p className="text-primary font-medium">
+                {order.order_type === 'delivery'
+                  ? `Estimated delivery in about ${order.ready_eta_minutes} min.`
+                  : `Ready in about ${order.ready_eta_minutes} min.`}
+              </p>
+            )}
+            {driver?.phone && order.status === 'out_for_delivery' && (
+              <p className="text-foreground/90 mt-1">
+                Driver: {driver.name} · {driver.phone}
+              </p>
+            )}
+          </div>
         )}
 
         {dispensary?.post_order_message && (
