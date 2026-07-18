@@ -6,7 +6,7 @@ import { DisputeForm } from '@/components/dashboard/dispute-form';
 import { ReplyForm } from '@/components/dashboard/reply-form';
 import { SummaryGenerator } from '@/components/dashboard/summary-generator';
 import { Badge } from '@/components/ui/badge';
-import { isAiEnabled } from '@/lib/ai';
+import { aiEnabled } from '@/lib/ai';
 import { requireOwnerDispensary } from '@/lib/owner';
 import { createClient } from '@/lib/supabase/server';
 
@@ -18,6 +18,7 @@ export default async function DashboardReviews({
   searchParams: Promise<{ filter?: string; rating?: string }>;
 }) {
   const { dispensary } = await requireOwnerDispensary();
+  const ai = await aiEnabled();
   const sp = await searchParams;
   const supabase = await createClient();
   const { data: allReviews } = await supabase
@@ -79,7 +80,7 @@ export default async function DashboardReviews({
         your listing.
       </p>
 
-      {isAiEnabled && (
+      {ai && (
         <div className="rounded-card border-border bg-surface border p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">

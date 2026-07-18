@@ -1,19 +1,44 @@
 import 'server-only';
+import { cache } from 'react';
+import { createServiceClient } from './supabase/service';
 
 /**
- * Optional AI features, gated on ANTHROPIC_API_KEY (same graceful-fallback
- * pattern as Mapbox/Stripe): when the key is unset every helper no-ops and the
- * UI hides the feature. Calls the Anthropic Messages API directly via fetch so
- * there's no SDK dependency. Server-only — the key never reaches the client.
+ * Optional AI features, switched on by an Anthropic API key from either the
+ * ANTHROPIC_API_KEY env var or the super-admin console (platform_secrets,
+ * admin-only RLS). While no key is configured every helper no-ops and ALL
+ * AI surfaces stay hidden. Calls the Anthropic Messages API directly via
+ * fetch so there's no SDK dependency. Server-only — the key never reaches
+ * the client.
  */
-export const isAiEnabled = !!process.env.ANTHROPIC_API_KEY;
+const SECRET_NAME = 'anthropic_api_key';
+
+/** Resolve the key: env var wins; else the super-admin secret. Per-request cached. */
+export const getAnthropicKey = cache(async (): Promise<string | null> => {
+  const env = process.env.ANTHROPIC_API_KEY?.trim();
+  if (env) return env;
+  try {
+    const service = createServiceClient();
+    const { data } = await service
+      .from('platform_secrets')
+      .select('value')
+      .eq('name', SECRET_NAME)
+      .maybeSingle();
+    const v = data?.value?.trim();
+    return v && v.length > 0 ? v : null;
+  } catch {
+    return null;
+  }
+});
+
+/** The switch every AI surface gates on (dashboard card, storefront blurb, action). */
+export const aiEnabled = cache(async (): Promise<boolean> => !!(await getAnthropicKey()));
 
 const MODEL = 'claude-haiku-4-5-20251001'; // fast + cheap; summaries are short
 
 export async function summarizeReviews(
   reviews: { rating: number; body: string }[],
 ): Promise<string | null> {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = await getAnthropicKey();
   if (!key) return null;
 
   const usable = reviews.filter((r) => r.body && r.body.trim().length > 0).slice(0, 40);

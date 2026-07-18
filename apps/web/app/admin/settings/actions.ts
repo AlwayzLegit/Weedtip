@@ -71,3 +71,31 @@ export async function updatePlatformSettings(_prev: FormState, fd: FormData): Pr
   revalidatePath('/', 'layout');
   return formSuccess('Settings saved.');
 }
+
+/**
+ * Set or clear the Anthropic API key in platform_secrets — the super-admin
+ * switch for AI review summaries. Admin-only via RLS; the value is never
+ * echoed back to any client. Clearing the key hides every AI surface again.
+ */
+export async function saveAnthropicKey(_prev: FormState, fd: FormData): Promise<FormState> {
+  const value = (str(fd, 'anthropic_key') ?? '').trim();
+  const supabase = await createClient();
+
+  if (!value) {
+    const { error } = await supabase.from('platform_secrets').delete().eq('name', 'anthropic_api_key');
+    if (error) return formError(error.message);
+    revalidatePath('/admin/settings');
+    return formSuccess('Anthropic key cleared — AI review summaries are now hidden site-wide.');
+  }
+
+  if (!/^sk-ant-/.test(value)) {
+    return formError('That does not look like an Anthropic API key (they start with sk-ant-).');
+  }
+  const { error } = await supabase.from('platform_secrets').upsert(
+    { name: 'anthropic_api_key', value, updated_at: new Date().toISOString() },
+    { onConflict: 'name' },
+  );
+  if (error) return formError(error.message);
+  revalidatePath('/admin/settings');
+  return formSuccess('Anthropic key saved — AI review summaries are now active.');
+}
