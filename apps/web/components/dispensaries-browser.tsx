@@ -797,12 +797,16 @@ export function DispensariesBrowser({
     >
       {filtersBar}
 
-      <div className="relative flex min-h-0 flex-1">
-        {/* Result list */}
+      <div className="relative min-h-0 flex-1">
+        {/* Result list — mobile: full-width list view; desktop: a floating
+            panel hovering over the left edge of the full-bleed map (Weedmaps
+            pattern) so the map keeps ONE scroll/zoom surface. */}
         <div
           ref={listRef}
           className={cn(
-            'min-h-0 w-full overflow-y-auto py-3 lg:block lg:w-[40%] xl:w-[36%] 2xl:w-[32%]',
+            'min-h-0 w-full overflow-y-auto py-3',
+            'lg:absolute lg:bottom-4 lg:left-4 lg:top-4 lg:z-10 lg:block lg:w-[25.5rem]',
+            'lg:rounded-card lg:border-border lg:bg-surface lg:shadow-card-hover lg:border',
             mobileView === 'map' && 'hidden',
           )}
         >
@@ -933,10 +937,10 @@ export function DispensariesBrowser({
           )}
         </div>
 
-        {/* Sticky full-height map */}
+        {/* Full-bleed map — fills the whole page under the floating list. */}
         <div
           className={cn(
-            'relative min-h-0 flex-1',
+            'absolute inset-0',
             mobileView === 'list' && 'hidden lg:block',
           )}
         >
@@ -968,8 +972,9 @@ export function DispensariesBrowser({
             </button>
           )}
 
-          {/* Google Maps-style auto-search toggle */}
-          <label className="bg-surface/90 border-border text-foreground absolute left-3 top-3 z-10 inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium backdrop-blur">
+          {/* Google Maps-style auto-search toggle — sits right of the floating
+              list panel on desktop, top-left on mobile map view. */}
+          <label className="bg-surface/90 border-border text-foreground absolute left-3 top-3 z-10 inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium backdrop-blur lg:left-[27.5rem]">
             <input
               type="checkbox"
               checked={autoSearch}
