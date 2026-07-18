@@ -16,6 +16,8 @@ const claimSchema = z.object({
   message: z.string().max(2000).nullable(),
   license_number: z.string().max(120).nullable(),
   document_path: z.string().max(400).nullable(),
+  /** Tier-based funnel: starting plan picked with the claim (default free). */
+  plan_preference: z.enum(['free', 'basic', 'growth']).default('free'),
 });
 
 /** Loose license comparison: case/spacing/punctuation insensitive. */
@@ -61,6 +63,7 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
     message: str(fd, 'message') ?? null,
     license_number: str(fd, 'license_number') ?? null,
     document_path: str(fd, 'document_path') ?? null,
+    plan_preference: str(fd, 'plan_preference') ?? 'free',
   });
   if (!parsed.success) return fromZodError(parsed.error);
 
@@ -120,6 +123,7 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
     license_match: licenseMatch,
     email_domain_match: emailDomainMatch,
     document_path: documentPath,
+    plan_preference: parsed.data.plan_preference,
   });
 
   if (error) {
@@ -149,6 +153,13 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
 <li>Email-domain match: ${emailDomainMatch ? 'YES' : 'no'}</li>
 <li>Document uploaded: ${documentPath ? 'yes' : 'no'}</li>
 <li>Verification strength: <strong>${strength}</strong></li>
+<li>Plan interest: <strong>${parsed.data.plan_preference.toUpperCase()}</strong>${
+        parsed.data.plan_preference === 'growth'
+          ? ' ($99/mo)'
+          : parsed.data.plan_preference === 'basic'
+            ? ' ($29/mo)'
+            : ''
+      }</li>
 </ul>
 <p>Review in /admin/claims.</p>`,
     });

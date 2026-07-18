@@ -4,12 +4,42 @@ import { Store } from 'lucide-react';
 import { useActionState, useEffect, useState } from 'react';
 import { requestOwnership, withdrawOwnership } from '@/app/actions/ownership';
 import { track } from '@/lib/analytics';
+import { cn } from '@/lib/utils';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
 import { ClaimDocumentUpload } from './claim-document-upload';
 import { SubmitButton } from './auth/submit-button';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
+
+/**
+ * Tier cards for the claim funnel. Copy mirrors the plans ladder (Free $0 /
+ * Basic $29 / Growth $99 — sales-led, no card at claim time); kept as local
+ * literals so this client component doesn't need server plan data.
+ */
+const CLAIM_TIERS = [
+  {
+    value: 'free',
+    name: 'Free',
+    price: '$0',
+    blurb: 'Claim + manage the basics',
+    bullets: ['Name, logo, phone & hours', 'Manual menu items', '0% commission, forever'],
+  },
+  {
+    value: 'basic',
+    name: 'Basic',
+    price: '$29/mo',
+    blurb: 'Run the shop online',
+    bullets: ['Online orders + website link', 'Complete profile & photo gallery', 'Google sync + menu imports'],
+  },
+  {
+    value: 'growth',
+    name: 'Growth',
+    price: '$99/mo',
+    blurb: 'Grow with marketing',
+    bullets: ['Everything in Basic', 'Deals, promo codes & updates', 'Analytics, taxes & team'],
+  },
+] as const;
 
 /**
  * "Claim this listing" CTA shown to dispensary-owner accounts on unclaimed, active
@@ -32,6 +62,7 @@ export function ClaimListing({
 }) {
   const [state, action] = useActionState(requestOwnership, EMPTY_FORM_STATE);
   const [open, setOpen] = useState(false);
+  const [tier, setTier] = useState<string>('free');
 
   useEffect(() => {
     if (state.status === 'success') {
@@ -132,6 +163,48 @@ export function ClaimListing({
             placeholder="Anything else that helps verify you own this dispensary (optional)"
             maxLength={2000}
           />
+          {/* Tier-based funnel: pick a starting plan with the claim. Free is the
+              default; a paid pick becomes a pending sales-led request on
+              approval — no card collected here. */}
+          <div>
+            <p className="mb-1.5 text-sm font-medium">Choose your starting plan</p>
+            <input type="hidden" name="plan_preference" value={tier} />
+            <div className="grid gap-2 sm:grid-cols-3">
+              {CLAIM_TIERS.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setTier(t.value)}
+                  aria-pressed={tier === t.value}
+                  className={cn(
+                    'rounded-card border p-3 text-left transition-colors',
+                    tier === t.value
+                      ? 'border-primary bg-primary-subtle'
+                      : 'border-border bg-surface hover:border-border-strong',
+                  )}
+                >
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="text-sm font-semibold">{t.name}</span>
+                    <span className={cn('text-xs font-medium', tier === t.value ? 'text-primary' : 'text-muted')}>
+                      {t.price}
+                    </span>
+                  </span>
+                  <span className="text-muted mt-0.5 block text-xs">{t.blurb}</span>
+                  <ul className="text-muted mt-1.5 space-y-0.5 text-[11px]">
+                    {t.bullets.map((b) => (
+                      <li key={b}>· {b}</li>
+                    ))}
+                  </ul>
+                </button>
+              ))}
+            </div>
+            {tier !== 'free' && (
+              <p className="text-muted mt-1.5 text-xs">
+                No card needed now — once your claim is approved, our team reaches out to set up
+                billing. Your listing stays live on Free in the meantime.
+              </p>
+            )}
+          </div>
           <div>
             <p className="mb-1.5 text-sm font-medium">Proof of ownership (recommended)</p>
             <p className="text-muted mb-2 text-xs">

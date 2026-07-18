@@ -1875,6 +1875,7 @@ export type Database = {
           license_match: boolean
           license_number: string | null
           message: string | null
+          plan_preference: string
           status: string
           updated_at: string
           user_id: string
@@ -1891,6 +1892,7 @@ export type Database = {
           license_match?: boolean
           license_number?: string | null
           message?: string | null
+          plan_preference?: string
           status?: string
           updated_at?: string
           user_id: string
@@ -1905,6 +1907,7 @@ export type Database = {
           license_match?: boolean
           license_number?: string | null
           message?: string | null
+          plan_preference?: string
           status?: string
           updated_at?: string
           user_id?: string
