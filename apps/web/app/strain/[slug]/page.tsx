@@ -25,6 +25,31 @@ const TYPE_LABEL: Record<string, string> = {
   cbd: 'CBD',
 };
 
+/** Per-family color identity (Weedmaps pattern: indica purple, sativa amber,
+    hybrid green, CBD blue). Complete class strings so Tailwind keeps them. */
+const TYPE_ACCENT: Record<string, { badge: string; panel: string; chip: string }> = {
+  indica: {
+    badge: 'bg-violet-500/15 text-violet-700',
+    panel: 'from-violet-500/25 via-violet-500/[0.06] to-surface-2',
+    chip: 'border-violet-500/30 bg-violet-500/10 text-violet-700',
+  },
+  sativa: {
+    badge: 'bg-amber-500/15 text-amber-700',
+    panel: 'from-amber-500/25 via-amber-500/[0.06] to-surface-2',
+    chip: 'border-amber-500/30 bg-amber-500/10 text-amber-700',
+  },
+  hybrid: {
+    badge: 'bg-primary-muted text-primary',
+    panel: 'from-emerald-500/25 via-emerald-500/[0.06] to-surface-2',
+    chip: 'border-primary/30 bg-primary-muted text-primary',
+  },
+  cbd: {
+    badge: 'bg-sky-500/15 text-sky-700',
+    panel: 'from-sky-500/25 via-sky-500/[0.06] to-surface-2',
+    chip: 'border-sky-500/30 bg-sky-500/10 text-sky-700',
+  },
+};
+
 export async function generateMetadata({
   params,
 }: {
@@ -146,50 +171,85 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
           { name: strain.name, href: `/strain/${strain.slug}` },
         ]}
       />
-      <div className="flex flex-wrap items-center gap-2">
-        <Leaf className="text-primary h-6 w-6" />
-        <h1 className="text-3xl font-bold">{strain.name}</h1>
-        <Badge tone="primary">{TYPE_LABEL[strain.type]}</Badge>
-        <div className="ml-auto">
-          <StrainFavoriteButton
-            strainId={strain.id}
-            slug={strain.slug}
-            initialSaved={saved}
-            initialCount={strain.saves_count}
-            isAuthed={!!user}
+      {/* Weedmaps-style hero: strain art panel + identity/stat column. */}
+      <div className="rounded-card border-border bg-surface mt-2 grid overflow-hidden border sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div
+          className={`relative flex min-h-56 items-center justify-center bg-gradient-to-br ${
+            (TYPE_ACCENT[strain.type] ?? TYPE_ACCENT.hybrid!).panel
+          }`}
+        >
+          {/* Static local art (already-optimized webp) — same pattern as StrainCard. */}
+          <img
+            src={strainArtUrl(strain.slug, strain.type)}
+            alt={`${strain.name} strain art`}
+            className="h-full max-h-72 w-full object-cover"
           />
         </div>
-      </div>
-
-      {(strain.thc_low != null || strain.cbd_low != null) && (
-        <p className="text-muted mt-2 flex flex-wrap gap-x-4">
-          {strain.thc_low != null && strain.thc_high != null && (
-            <span>
-              THC {strain.thc_low}–{strain.thc_high}%
+        <div className="p-6 sm:p-7">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                (TYPE_ACCENT[strain.type] ?? TYPE_ACCENT.hybrid!).badge
+              }`}
+            >
+              <Leaf className="h-3.5 w-3.5" /> {TYPE_LABEL[strain.type]}
             </span>
-          )}
-          {strain.cbd_low != null && strain.cbd_high != null && (
-            <span>
-              CBD {strain.cbd_low}–{strain.cbd_high}%
-            </span>
-          )}
-        </p>
-      )}
+            {strain.parents.length > 0 && (
+              <span className="text-muted text-xs">{strain.parents.join(' × ')}</span>
+            )}
+            <div className="ml-auto">
+              <StrainFavoriteButton
+                strainId={strain.id}
+                slug={strain.slug}
+                initialSaved={saved}
+                initialCount={strain.saves_count}
+                isAuthed={!!user}
+              />
+            </div>
+          </div>
+          <h1 className="mt-2 text-3xl font-bold">{strain.name}</h1>
 
-      <div className="mt-4 max-w-md">
-        <div className="text-muted flex justify-between text-xs">
-          <span>Calming</span>
-          <span>Energizing</span>
-        </div>
-        <div className="bg-surface-2 relative mt-1 h-2 rounded-full">
-          <span
-            className="bg-primary absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-background"
-            style={{ left: `${energizing}%` }}
-          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            {strain.thc_low != null && strain.thc_high != null && (
+              <span className="border-border bg-surface-2 rounded-lg border px-3 py-1.5 text-sm">
+                <span className="text-muted mr-1 text-xs font-semibold uppercase">THC</span>
+                <span className="font-semibold">
+                  {strain.thc_low}–{strain.thc_high}%
+                </span>
+              </span>
+            )}
+            {strain.cbd_low != null && strain.cbd_high != null && (
+              <span className="border-border bg-surface-2 rounded-lg border px-3 py-1.5 text-sm">
+                <span className="text-muted mr-1 text-xs font-semibold uppercase">CBD</span>
+                <span className="font-semibold">
+                  {strain.cbd_low}–{strain.cbd_high}%
+                </span>
+              </span>
+            )}
+            {strain.effects[0] && (
+              <span className="border-border bg-surface-2 rounded-lg border px-3 py-1.5 text-sm">
+                <span className="text-muted mr-1 text-xs font-semibold uppercase">Feels</span>
+                <span className="font-semibold capitalize">{strain.effects[0]}</span>
+              </span>
+            )}
+          </div>
+
+          <div className="mt-4 max-w-md">
+            <div className="text-muted flex justify-between text-xs">
+              <span>Calming</span>
+              <span>Energizing</span>
+            </div>
+            <div className="bg-surface-2 relative mt-1 h-2 rounded-full">
+              <span
+                className="bg-primary absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-background"
+                style={{ left: `${energizing}%` }}
+              />
+            </div>
+          </div>
+
+          {strain.description && <p className="text-muted mt-4 text-sm">{strain.description}</p>}
         </div>
       </div>
-
-      {strain.description && <p className="text-muted mt-4 max-w-2xl">{strain.description}</p>}
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2">
         {strain.effects.length > 0 && (
@@ -199,9 +259,14 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
             </h2>
             <div className="flex flex-wrap gap-2">
               {strain.effects.map((e) => (
-                <Badge key={e} tone="primary">
+                <span
+                  key={e}
+                  className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${
+                    (TYPE_ACCENT[strain.type] ?? TYPE_ACCENT.hybrid!).chip
+                  }`}
+                >
                   {e}
-                </Badge>
+                </span>
               ))}
             </div>
           </section>
