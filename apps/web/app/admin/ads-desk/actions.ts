@@ -68,7 +68,7 @@ export async function extendRenewal(subscriptionId: string): Promise<void> {
   const base = sub.ends_at && new Date(sub.ends_at).getTime() > Date.now()
     ? new Date(sub.ends_at)
     : new Date();
-  await service
+  const { error: extendErr } = await service
     .from('ad_subscriptions')
     .update({
       status: 'active',
@@ -78,6 +78,10 @@ export async function extendRenewal(subscriptionId: string): Promise<void> {
       renewal_offered_at: null,
     })
     .eq('id', subscriptionId);
+  // If the extension failed (e.g. the slot was resold after a cancellation),
+  // leave the renewal_accept request OPEN so the accepted renewal is not
+  // silently dropped from the queue.
+  if (extendErr) return;
 
   // Close the matching renewal-accept request, if one exists.
   const slot = sub.slot as {

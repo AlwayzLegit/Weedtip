@@ -16,6 +16,23 @@ import { slugify } from '@/lib/utils';
 
 const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
+/**
+ * http(s)-only website URL — blocks stored-XSS vectors like `javascript:`
+ * landing in the public page's `href`. Bare domains get https:// prepended.
+ * Returns '' for unset, null for invalid.
+ */
+function safeWebsite(raw: string): string | null {
+  const v = raw.trim();
+  if (!v) return '';
+  const candidate = /^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v}`;
+  try {
+    const u = new URL(candidate);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 const claimSchema = z.object({
   brand_id: z.string().uuid(),
   business_email: z.string().email('Enter a valid business email').max(254),
@@ -91,6 +108,10 @@ export async function createBrand(_prev: FormState, fd: FormData): Promise<FormS
     description: str(fd, 'description') ?? null,
   });
   if (!parsed.success) return fromZodError(parsed.error);
+  const website = safeWebsite(parsed.data.website ?? '');
+  if (website === null) {
+    return { status: 'error', message: 'Please fix the highlighted fields.', fieldErrors: { website: 'Enter a valid http(s) website URL.' } };
+  }
 
   const supabase = await createClient();
   const {
@@ -114,7 +135,7 @@ export async function createBrand(_prev: FormState, fd: FormData): Promise<FormS
   const { error } = await supabase.from('brands').insert({
     name: parsed.data.name,
     slug,
-    website: parsed.data.website,
+    website: website || null,
     description: parsed.data.description,
     owner_id: user.id,
     status: 'pending',
@@ -153,7 +174,11 @@ export async function updateOwnedBrand(_prev: FormState, fd: FormData): Promise<
   // free. The RPC overwrites, so a free brand's save must PRESERVE the stored
   // rich fields rather than blank them (the free form doesn't render them).
   let description = str(fd, 'description') ?? '';
-  let website = str(fd, 'website') ?? '';
+  const safeSite = safeWebsite(str(fd, 'website') ?? '');
+  if (safeSite === null) {
+    return { status: 'error', message: 'Please fix the highlighted fields.', fieldErrors: { website: 'Enter a valid http(s) website URL.' } };
+  }
+  let website = safeSite;
   if (!(await canUseBrandFeature(brandId, 'brand_complete_profile'))) {
     const { data: cur } = await supabase
       .from('brands')
@@ -164,15 +189,17 @@ export async function updateOwnedBrand(_prev: FormState, fd: FormData): Promise<
     website = cur?.website ?? '';
   }
 
-  // Cover is a free identity basic (like the dispensary cover). Omitting the
-  // param preserves the stored banner (RPC coalesces null → current value).
-  const cover = str(fd, 'cover_image_url');
+  // Cover is a free identity basic (like the dispensary cover). Three states:
+  // field absent → omit the param (RPC keeps the stored banner, deploy-overlap
+  // safety); present but empty → pass '' (RPC nullifs → banner CLEARED, so the
+  // ImagePicker's "Remove image" actually sticks); present with value → set.
+  const coverField = fd.get('cover_image_url');
   const { error } = await supabase.rpc('update_owned_brand', {
     p_brand_id: brandId,
     p_description: description,
     p_logo_url: str(fd, 'logo_url') ?? '',
     p_website: website,
-    ...(cover !== null && cover !== undefined ? { p_cover_image_url: cover } : {}),
+    ...(typeof coverField === 'string' ? { p_cover_image_url: coverField.trim() } : {}),
   });
   if (error) return formError(error.message);
 

@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
       if (house && house.length > 0) {
         await service
           .from('ad_subscriptions')
-          .update({ status: 'canceled' })
+          .update({ status: 'canceled', ends_at: new Date().toISOString() })
           .eq('id', house[0]!.id);
         subscriptionId = await tryClaim();
       }
@@ -205,6 +205,8 @@ export async function POST(req: NextRequest) {
   if (!subscriptionId) {
     // Genuinely sold out (all paid) — waitlist it as an in-admin request
     // instead of a dead end. Duplicate requests no-op via the unique key.
+    // Re-open a previously resolved/dismissed request too - the buyer is
+    // being told "you're on the list", so the row must actually be open.
     await service
       .from('ad_requests')
       .upsert(
@@ -215,7 +217,7 @@ export async function POST(req: NextRequest) {
           kind: 'availability',
           status: 'open',
         },
-        { onConflict: 'dispensary_id,region_id,slot_type,kind', ignoreDuplicates: true },
+        { onConflict: 'dispensary_id,region_id,slot_type,kind' },
       );
     await notifyAdmins({
       type: 'ad_request',

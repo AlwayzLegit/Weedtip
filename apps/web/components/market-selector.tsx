@@ -35,7 +35,20 @@ export function readCityCookie(market: string): string | null {
   if (typeof document === 'undefined') return null;
   const m = document.cookie.match(/(?:^|; )wt_city=([^;]+)/);
   if (!m?.[1]) return null;
-  const [encCity, st] = m[1].split('|');
+  // Two writers, two transport shapes: the modal writes `encCity|ST` with a
+  // literal pipe via document.cookie, but the middleware's value goes through
+  // Next's cookie serializer, which percent-encodes the WHOLE value (pipe →
+  // %7C). When no literal pipe survives, peel that outer layer first —
+  // otherwise the IP-seeded cookie is unreadable and never scopes the feed.
+  let raw = m[1];
+  if (!raw.includes('|')) {
+    try {
+      raw = decodeURIComponent(raw);
+    } catch {
+      return null;
+    }
+  }
+  const [encCity, st] = raw.split('|');
   if (!encCity || st !== market) return null;
   try {
     const city = decodeURIComponent(decodeURIComponent(encCity)).trim();
@@ -86,6 +99,7 @@ export function MarketSelector({ className }: { className?: string }) {
   const [geoError, setGeoError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const geocodeSeqRef = useRef(0);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -115,7 +129,12 @@ export function MarketSelector({ className }: { className?: string }) {
       return;
     }
     debounceRef.current = setTimeout(() => {
-      void geocodePlaces(query, { limit: 6 }).then(setSuggestions);
+      // Sequence-check: a slow response for an older query must not overwrite
+      // fresher suggestions (or repopulate the list after the modal closed).
+      const seq = ++geocodeSeqRef.current;
+      void geocodePlaces(query, { limit: 6 }).then((results) => {
+        if (seq === geocodeSeqRef.current) setSuggestions(results);
+      });
     }, 250);
     return () => clearTimeout(debounceRef.current);
   }, [query]);
@@ -132,12 +151,18 @@ export function MarketSelector({ className }: { className?: string }) {
       // Same "city|ST" shape the middleware seeds, so the home feed's
       // city-level scoping picks the chosen place up unchanged.
       document.cookie = `wt_city=${encodeURIComponent(place.city)}|${stateCode}; max-age=${60 * 60 * 24 * 365}; path=/; samesite=lax`;
+    } else {
+      // No resolvable city (county/address pick, or a state chip): clear the
+      // cookie so a PREVIOUS same-state city doesn't keep scoping the feed
+      // while the header label claims the new place.
+      document.cookie = 'wt_city=; max-age=0; path=/';
     }
     setSelected(stateCode);
     setLabel(display);
     setOpen(false);
     setQuery('');
     setSuggestions([]);
+    geocodeSeqRef.current++; // invalidate any in-flight geocode response
     window.dispatchEvent(new CustomEvent(MARKET_CHANGE_EVENT, { detail: stateCode }));
     const dest = destinationFor(pathname ?? '/', stateCode, place);
     if (dest) router.push(dest);

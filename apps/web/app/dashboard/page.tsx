@@ -100,14 +100,19 @@ export default async function DashboardOverview() {
           p_slot_type: 'featured',
         }),
       ]);
+      // Only render the card when the region actually has seeded inventory —
+      // defaulting to "3 of 3 / 10 of 10 open" would advertise spots that
+      // don't exist and dead-end the CTA.
       const a = availability.get(geo.regionId);
-      adRegion = {
-        name: geo.regionName,
-        slug: geo.regionSlug,
-        featuredOpen: a?.featuredOpen ?? 3,
-        premiumOpen: a?.premiumOpen ?? 10,
-        featuredPrice: typeof price === 'number' ? price : null,
-      };
+      if (a) {
+        adRegion = {
+          name: geo.regionName,
+          slug: geo.regionSlug,
+          featuredOpen: a.featuredOpen,
+          premiumOpen: a.premiumOpen,
+          featuredPrice: typeof price === 'number' ? price : null,
+        };
+      }
     }
   }
 

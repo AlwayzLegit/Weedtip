@@ -154,6 +154,8 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
   let geo: ResolvedGeo | null = null;
   let featuredSlotIds: string[] = [];
   let premiumSlotIds = new Set<string>();
+  let houseSlotIds = new Set<string>();
+  const slotTypeById = new Map<string, 'featured' | 'premium'>();
   let sponsor: SponsorHeroData | null = null;
   const anchorShop = shops.find(
     (s) => typeof s.latitude === 'number' && typeof s.longitude === 'number',
@@ -163,13 +165,27 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     if (geo) {
       const placements = await getRegionPlacements(geo.regionId);
       const cityShopIds = new Set(shopIds);
-      // Rotate the (max 3) featured order per ISR render for fair exposure.
-      // House-comped premium holders get the FEATURED treatment (honest
-      // labeling — nobody paid, so never "Sponsored").
-      featuredSlotIds = [...placements.featuredIds, ...placements.housePremiumIds]
-        .filter((id) => cityShopIds.has(id))
-        .sort(() => Math.random() - 0.5);
+      const shuffle = (ids: string[]) => [...ids].sort(() => Math.random() - 0.5);
+      // Rotate order per ISR render for fair exposure; paid featured slots
+      // lead. House-comped holders (either slot type) get the same pinned
+      // treatment but MUST keep the honest "Featured" label — nobody paid,
+      // so never "Sponsored".
+      const paidFeatured = shuffle(placements.featuredIds.filter((id) => cityShopIds.has(id)));
+      const houseIds = shuffle(
+        [...placements.houseFeaturedIds, ...placements.housePremiumIds].filter((id) =>
+          cityShopIds.has(id),
+        ),
+      );
+      featuredSlotIds = [...paidFeatured, ...houseIds];
+      houseSlotIds = new Set(houseIds);
       premiumSlotIds = new Set(placements.premiumIds.filter((id) => cityShopIds.has(id)));
+      // Beacon accuracy: report the slot actually occupied, not the treatment.
+      for (const id of [...placements.featuredIds, ...placements.houseFeaturedIds]) {
+        slotTypeById.set(id, 'featured');
+      }
+      for (const id of [...placements.premiumIds, ...placements.housePremiumIds]) {
+        slotTypeById.set(id, 'premium');
+      }
       if (placements.exclusiveId) {
         // The sponsor may sit in another city of the same region — fetch it.
         const { data: sp } = await supabase
@@ -270,6 +286,8 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     featuredByDispensary,
     featuredSlotIds: new Set(featuredSlotIds),
     premiumSlotIds,
+    houseSlotIds,
+    slotTypeById,
     dealByDispensary,
     dealsRail,
     geo,
@@ -342,6 +360,8 @@ export default async function CityDispensariesPage({
     featuredByDispensary,
     featuredSlotIds,
     premiumSlotIds,
+    houseSlotIds,
+    slotTypeById,
     dealByDispensary,
     dealsRail,
     geo,
@@ -478,11 +498,11 @@ export default async function CityDispensariesPage({
           initialShops={shops.map((s) => {
             const promo = featuredByDispensary.get(s.id);
             const deal = dealByDispensary.get(s.id);
-            const slotType = featuredSlotIds.has(s.id)
-              ? ('featured' as const)
-              : premiumSlotIds.has(s.id)
-                ? ('premium' as const)
+            const slotType =
+              featuredSlotIds.has(s.id) || premiumSlotIds.has(s.id) || houseSlotIds.has(s.id)
+                ? (slotTypeById.get(s.id) ?? null)
                 : null;
+            const isHouse = houseSlotIds.has(s.id);
             return {
               id: s.id,
               slug: s.slug,
@@ -495,11 +515,11 @@ export default async function CityDispensariesPage({
               isPickup: s.is_pickup,
               isMedical: s.is_medical,
               isRecreational: s.is_recreational,
-              featured: s.featured || !!promo || slotType === 'featured',
+              featured: s.featured || !!promo || isHouse || slotType === 'featured',
               // FTC disclosure: any PAID unit (featured/premium slot or a
-              // promo placement) is labeled "Sponsored". Only editorial
-              // s.featured (unpaid) keeps the plain "Featured" badge.
-              sponsored: !!promo || slotType === 'featured' || slotType === 'premium',
+              // promo placement) is labeled "Sponsored". House comps and
+              // editorial s.featured (unpaid) keep the plain "Featured" badge.
+              sponsored: !!promo || (slotType !== null && !isHouse),
               placementId: promo?.placementId || undefined,
               adSlot:
                 slotType && geo

@@ -16,11 +16,13 @@ export interface ResolvedGeo {
 export interface RegionPlacements {
   /** Dispensary pinned above all results in every zone of the region. */
   exclusiveId: string | null;
-  /** Up to 3 rotating premium positions below the sponsor, in slot order. */
+  /** Up to 3 rotating PAID premium positions below the sponsor, in slot order. */
   featuredIds: string[];
-  /** Up to 10 rank-boosted listings with a Sponsored badge. */
+  /** Up to 10 PAID rank-boosted listings with a Sponsored badge. */
   premiumIds: string[];
-  /** House-comped premium holders — label "Featured", never "Sponsored". */
+  /** House-comped featured-slot holders — label "Featured", never "Sponsored". */
+  houseFeaturedIds: string[];
+  /** House-comped premium-slot holders — label "Featured", never "Sponsored". */
   housePremiumIds: string[];
 }
 
@@ -87,14 +89,21 @@ export function getRegionPlacements(regionId: string): Promise<RegionPlacements>
         exclusiveId: null,
         featuredIds: [],
         premiumIds: [],
+        houseFeaturedIds: [],
         housePremiumIds: [],
       };
       for (const row of data ?? []) {
-        if (row.slot_type === 'exclusive') placements.exclusiveId ??= row.dispensary_id;
-        else if (row.slot_type === 'featured') placements.featuredIds.push(row.dispensary_id);
-        else if (row.slot_type === 'premium') {
-          if ((row as { is_house?: boolean }).is_house) placements.housePremiumIds.push(row.dispensary_id);
-          else placements.premiumIds.push(row.dispensary_id);
+        // House comps must NEVER surface through the paid buckets — every paid
+        // bucket carries a "Sponsored" label downstream, and house fills are
+        // exactly the shops that did not pay.
+        const isHouse = !!(row as { is_house?: boolean }).is_house;
+        if (row.slot_type === 'exclusive') {
+          if (isHouse) placements.houseFeaturedIds.push(row.dispensary_id);
+          else placements.exclusiveId ??= row.dispensary_id;
+        } else if (row.slot_type === 'featured') {
+          (isHouse ? placements.houseFeaturedIds : placements.featuredIds).push(row.dispensary_id);
+        } else if (row.slot_type === 'premium') {
+          (isHouse ? placements.housePremiumIds : placements.premiumIds).push(row.dispensary_id);
         }
       }
       return placements;

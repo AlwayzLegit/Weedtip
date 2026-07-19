@@ -13,7 +13,19 @@ export type RenewalOffer = {
   currentCents: number;
   offerCents: number;
   endsAt: string | null;
+  /** An open renewal_accept request already exists — show "processing". */
+  accepted?: boolean;
 };
+
+/** Locale+timezone pinned so the SSR'd string matches client hydration. */
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', {
+    timeZone: 'UTC',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
 
 /**
  * First right of renewal: the incumbent sees their expiring placement and the
@@ -29,7 +41,7 @@ export function RenewalOfferCard({ offer }: { offer: RenewalOffer }) {
       <p className="flex items-center gap-1.5 text-sm font-semibold">
         <RefreshCcw className="text-primary h-4 w-4" /> Your {offer.slotType} spot in{' '}
         {offer.regionName} is ending
-        {offer.endsAt ? ` ${new Date(offer.endsAt).toLocaleDateString()}` : ' soon'}
+        {offer.endsAt ? ` ${fmtDate(offer.endsAt)}` : ' soon'}
       </p>
       <p className="text-muted mt-1 text-xs">
         As the current holder you get it first — renew at the going rate of{' '}
@@ -39,9 +51,10 @@ export function RenewalOfferCard({ offer }: { offer: RenewalOffer }) {
         )}
         . After that, the spot goes back on the market at the same price.
       </p>
-      {result?.ok ? (
+      {offer.accepted || result?.ok ? (
         <p className="text-primary mt-2 flex items-center gap-1.5 text-sm font-medium">
-          <CheckCircle2 className="h-4 w-4" /> {result.message}
+          <CheckCircle2 className="h-4 w-4" />{' '}
+          {result?.message ?? 'Renewal requested — our team is extending your term.'}
         </p>
       ) : (
         <div className="mt-3 flex items-center gap-3">

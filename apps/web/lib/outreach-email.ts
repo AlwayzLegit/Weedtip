@@ -18,6 +18,17 @@ export type InviteEmailParams = {
 
 const BRAND_GREEN = '#047857';
 
+/** Escape DB strings before HTML interpolation — shop names/cities come from
+    scraped registries and could carry markup (phishing vector on OUR sender). */
+function esc(v: string | null | undefined): string {
+  return (v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function footer(unsubscribeUrl: string): string {
   const postal = process.env.OUTREACH_POSTAL_ADDRESS ?? 'Weedtip · weedtip.com · United States';
   return `
@@ -30,13 +41,13 @@ function footer(unsubscribeUrl: string): string {
 }
 
 export function inviteEmailHtml(params: InviteEmailParams): string {
-  const where = params.city ? `${params.city}, ${params.state}` : params.state;
+  const where = esc(params.city ? `${params.city}, ${params.state}` : params.state);
   return `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a">
     <h2 style="margin:0 0 16px">Your dispensary is listed on Weedtip</h2>
-    <p><strong>${params.shopName}</strong> in ${where} has a live listing on Weedtip,
+    <p><strong>${esc(params.shopName)}</strong> in ${where} has a live listing on Weedtip,
     the cannabis discovery map. Shoppers nearby can already find your hours, location,
-    and license details${params.license ? ` (license ${params.license} on file)` : ''}.</p>
+    and license details${params.license ? ` (license ${esc(params.license)} on file)` : ''}.</p>
     <p>Claiming is <strong>free forever</strong> and takes a few minutes — verified against
     the state license on file. Once claimed you control the listing:</p>
     <ul style="padding-left:20px">
@@ -61,11 +72,11 @@ export function inviteEmailHtml(params: InviteEmailParams): string {
 
 /** One-time follow-up for invites that never converted (sent ≥5 days ago). */
 export function reminderEmailHtml(params: InviteEmailParams): string {
-  const where = params.city ? `${params.city}, ${params.state}` : params.state;
+  const where = esc(params.city ? `${params.city}, ${params.state}` : params.state);
   return `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a">
-    <h2 style="margin:0 0 16px">Shoppers are viewing ${params.shopName} on Weedtip</h2>
-    <p>A quick follow-up: the listing for <strong>${params.shopName}</strong> in ${where}
+    <h2 style="margin:0 0 16px">Shoppers are viewing ${esc(params.shopName)} on Weedtip</h2>
+    <p>A quick follow-up: the listing for <strong>${esc(params.shopName)}</strong> in ${where}
     is live on Weedtip and unmanaged. Nearby shoppers see its hours and location today —
     but no menu, no photos, and no deals.</p>
     <p>Claiming takes a few minutes and is verified against the state license on file.
@@ -73,7 +84,7 @@ export function reminderEmailHtml(params: InviteEmailParams): string {
     <p style="margin:24px 0">
       <a href="${params.claimUrl}"
          style="background:${BRAND_GREEN};color:#ffffff;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:8px;display:inline-block">
-        Claim ${params.shopName}
+        Claim ${esc(params.shopName)}
       </a>
     </p>
     <p style="color:#666;font-size:13px">This is the last email about this listing unless

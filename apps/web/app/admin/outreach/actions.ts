@@ -8,6 +8,27 @@ import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
 const BATCH_LIMIT = 50;
+
+/**
+ * Full suppression set, lowercased. Paged past PostgREST's 1,000-row response
+ * cap — a truncated suppression list silently re-emails unsubscribed
+ * addresses at exactly the scale this console is built for.
+ */
+async function fetchSuppressedEmails(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<Set<string>> {
+  const suppressed = new Set<string>();
+  for (let from = 0; ; from += 1000) {
+    const { data } = await supabase
+      .from('claim_invites')
+      .select('email')
+      .not('unsubscribed_at', 'is', null)
+      .range(from, from + 999);
+    for (const row of data ?? []) suppressed.add(row.email.toLowerCase());
+    if (!data || data.length < 1000) break;
+  }
+  return suppressed;
+}
 /** An invite must be this old before its one-and-only reminder can go. */
 const REMINDER_AFTER_DAYS = 5;
 
@@ -69,10 +90,12 @@ export async function sendClaimInviteBatch(
   // Eligible: active, unclaimed, contactable, never invited.
   let query = supabase
     .from('dispensaries')
-    .select('id,slug,name,city,state,email,dcc_email,license_number,claim_invites!left(id)')
+    .select('id,slug,name,city,state,email,dcc_email,license_number,claim_invites!left(id,sent_at)')
     .eq('status', 'active')
     .is('owner_id', null)
-    .is('claim_invites.id', null)
+    // Exclude shops with a SENT invite; a failed attempt (row without
+    // sent_at) stays eligible so transient send failures aren't permanent.
+    .is('claim_invites.sent_at', null)
     .order('rating_count', { ascending: false })
     .limit(BATCH_LIMIT * 3);
   // Broad contactability filter; exact address selection (trim + public-vs-
@@ -85,12 +108,11 @@ export async function sendClaimInviteBatch(
   const { data: candidates, error } = await query;
   if (error) return { ok: false, message: `Query failed: ${error.message}` };
 
-  const { data: unsubs } = await supabase
-    .from('claim_invites')
-    .select('email')
-    .not('unsubscribed_at', 'is', null);
-  const suppressed = new Set((unsubs ?? []).map((u) => u.email.toLowerCase()));
+  const suppressed = await fetchSuppressedEmails(supabase);
 
+  // One email per ADDRESS per batch: chains share a contact inbox, and 50
+  // near-identical cold emails to one mailbox is a spam-complaint magnet.
+  const seenAddresses = new Set<string>();
   const batch = (candidates ?? [])
     .map((c) => {
       const publicEmail = c.email && c.email.trim() ? c.email.trim() : null;
@@ -101,7 +123,13 @@ export async function sendClaimInviteBatch(
         ? { ...c, to, source: publicEmail ? ('email' as const) : ('dcc_email' as const) }
         : null;
     })
-    .filter((c): c is NonNullable<typeof c> => !!c && !suppressed.has(c.to.toLowerCase()))
+    .filter((c): c is NonNullable<typeof c> => {
+      if (!c) return false;
+      const key = c.to.toLowerCase();
+      if (suppressed.has(key) || seenAddresses.has(key)) return false;
+      seenAddresses.add(key);
+      return true;
+    })
     .slice(0, BATCH_LIMIT);
   if (batch.length === 0) {
     return { ok: true, message: 'No eligible shops left to invite for this target.', sent: 0, failed: 0 };
@@ -112,12 +140,15 @@ export async function sendClaimInviteBatch(
   for (const shop of batch) {
     const { data: invite, error: insErr } = await supabase
       .from('claim_invites')
-      .insert({
-        dispensary_id: shop.id,
-        email: shop.to,
-        contact_source: shop.source,
-        campaign,
-      })
+      .upsert(
+        {
+          dispensary_id: shop.id,
+          email: shop.to,
+          contact_source: shop.source,
+          campaign,
+        },
+        { onConflict: 'dispensary_id' },
+      )
       .select('token')
       .single();
     if (insErr || !invite) {
@@ -186,10 +217,13 @@ export async function sendClaimReminderBatch(): Promise<OutreachSendResult> {
     .limit(BATCH_LIMIT);
   if (error) return { ok: false, message: `Query failed: ${error.message}` };
 
-  // Belt-and-braces: skip anything that gained an owner without the stamp.
+  // Belt-and-braces: skip anything that gained an owner without the stamp,
+  // and re-check suppression by lowercased ADDRESS — the same mailbox may
+  // have unsubscribed via a different shop's invite row.
+  const suppressed = await fetchSuppressedEmails(supabase);
   const batch = (due ?? []).filter((i) => {
     const d = i.dispensary as { owner_id: string | null } | null;
-    return d && !d.owner_id;
+    return d && !d.owner_id && !suppressed.has(i.email.toLowerCase());
   });
   if (batch.length === 0) {
     return { ok: true, message: 'No reminders due yet.', sent: 0, failed: 0 };

@@ -3,7 +3,9 @@
 import { z } from 'zod';
 import { getAuth } from '@/lib/auth';
 import { notifyAdmins } from '@/lib/notify';
+import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 const requestSchema = z.object({
   region_id: z.string().uuid(),
@@ -26,6 +28,9 @@ export async function requestAdAvailability(input: {
 
   const { user } = await getAuth();
   if (!user) return { ok: false, message: 'Sign in to request availability.' };
+  if (!(await rateLimit('ad-requests', { limit: 5, window: '60 s' }, user.id)).success) {
+    return { ok: false, message: 'Too many requests - please wait a moment.' };
+  }
   const supabase = await createClient();
   const { data: dispensary } = await supabase
     .from('dispensaries')
@@ -36,7 +41,23 @@ export async function requestAdAvailability(input: {
     .maybeSingle();
   if (!dispensary) return { ok: false, message: 'Claim your listing first.' };
 
-  const { error } = await supabase.from('ad_requests').upsert(
+  // Service client with an explicit re-open: the owner's RLS can insert but
+  // not update, so a previously resolved/dismissed request would otherwise
+  // no-op while the UI still says "you're on the list". Ownership is verified
+  // above; admins are notified only when the row actually (re)opened.
+  const service = createServiceClient();
+  const { data: existing } = await service
+    .from('ad_requests')
+    .select('id, status')
+    .eq('dispensary_id', dispensary.id)
+    .eq('region_id', parsed.data.region_id)
+    .eq('slot_type', parsed.data.slot_type)
+    .eq('kind', 'availability')
+    .maybeSingle();
+  if (existing?.status === 'open') {
+    return { ok: true, message: "You're already on the list - we'll reach out when a spot opens." };
+  }
+  const { error } = await service.from('ad_requests').upsert(
     {
       dispensary_id: dispensary.id,
       region_id: parsed.data.region_id,
@@ -44,7 +65,7 @@ export async function requestAdAvailability(input: {
       kind: 'availability',
       status: 'open',
     },
-    { onConflict: 'dispensary_id,region_id,slot_type,kind', ignoreDuplicates: true },
+    { onConflict: 'dispensary_id,region_id,slot_type,kind' },
   );
   if (error) return { ok: false, message: 'Could not save your request.' };
 
@@ -72,6 +93,9 @@ export async function requestAdAvailability(input: {
 export async function acceptRenewalOffer(subscriptionId: string): Promise<AdRequestResult> {
   const { user } = await getAuth();
   if (!user) return { ok: false, message: 'Sign in first.' };
+  if (!(await rateLimit('ad-requests', { limit: 5, window: '60 s' }, user.id)).success) {
+    return { ok: false, message: 'Too many requests - please wait a moment.' };
+  }
   const supabase = await createClient();
 
   const { data: sub } = await supabase
@@ -91,7 +115,11 @@ export async function acceptRenewalOffer(subscriptionId: string): Promise<AdRequ
     return { ok: false, message: 'No renewal offer found for this placement.' };
   }
 
-  const { error } = await supabase.from('ad_requests').upsert(
+  // Service client: the owner's RLS can insert but not UPDATE, so a repeat
+  // renewal (conflicting with last cycle's resolved row) would fail under the
+  // authed client's ON CONFLICT DO UPDATE. Ownership verified above.
+  const service = createServiceClient();
+  const { error } = await service.from('ad_requests').upsert(
     {
       dispensary_id: disp.id,
       region_id: slot.region_id,
@@ -99,7 +127,7 @@ export async function acceptRenewalOffer(subscriptionId: string): Promise<AdRequ
       kind: 'renewal_accept',
       status: 'open',
     },
-    { onConflict: 'dispensary_id,region_id,slot_type,kind', ignoreDuplicates: false },
+    { onConflict: 'dispensary_id,region_id,slot_type,kind' },
   );
   if (error) return { ok: false, message: 'Could not record your renewal.' };
 

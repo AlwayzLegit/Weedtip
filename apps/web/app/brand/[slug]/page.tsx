@@ -222,7 +222,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
             {brand.description ??
               `Official ${brand.name} lineup — ${lineup?.length ?? 0} product${(lineup?.length ?? 0) === 1 ? '' : 's'} on Weedtip. Follow the brand to catch new drops and find shops that carry it.`}
           </p>
-          {brand.website && (
+          {brand.website && /^https?:\/\//i.test(brand.website) && (
             <a
               href={brand.website}
               target="_blank"

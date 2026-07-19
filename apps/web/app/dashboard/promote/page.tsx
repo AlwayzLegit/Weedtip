@@ -79,6 +79,16 @@ export default async function PromotePage() {
     .eq('dispensary_id', dispensary.id)
     .eq('status', 'active')
     .not('renewal_price_cents', 'is', null);
+  // Already-accepted offers render as "processing" instead of a live button —
+  // otherwise the offer looks unanswered on every reload until the ad desk
+  // extends the term.
+  const { data: acceptedReqs } = await supabase
+    .from('ad_requests')
+    .select('slot_type')
+    .eq('dispensary_id', dispensary.id)
+    .eq('kind', 'renewal_accept')
+    .eq('status', 'open');
+  const acceptedSlotTypes = new Set<string>((acceptedReqs ?? []).map((r) => r.slot_type));
   const renewalOffers = (renewalSubs ?? []).flatMap((r) => {
     const slot = r.slot as { slot_type: string; region: { name: string } | null } | null;
     if (!slot || !r.renewal_price_cents) return [];
@@ -90,6 +100,7 @@ export default async function PromotePage() {
         currentCents: r.price_paid,
         offerCents: r.renewal_price_cents,
         endsAt: r.ends_at,
+        accepted: acceptedSlotTypes.has(slot.slot_type),
       },
     ];
   });
