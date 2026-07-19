@@ -834,6 +834,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             </div>
             <Link
               href={`/sign-up?role=dispensary_owner&next=/dispensary/${d.slug}`}
+              // nofollow: 8.6k per-listing ?next= variants of a robots-blocked
+              // route — don't make crawlers queue them at all.
+              rel="nofollow"
               className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
             >
               Claim this listing

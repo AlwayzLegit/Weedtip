@@ -39,7 +39,11 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   return {
     rules: {
       userAgent: '*',
-      allow: '/',
+      // The two image-proxy routes must stay crawlable despite the /api/
+      // blanket block: covers are every listing's og:image (social crawlers
+      // respect robots.txt — blocking them kills link previews) and both feed
+      // Google Images. Longest-match specificity makes these win over /api/.
+      allow: ['/', '/api/dispensary-cover/', '/api/dispensary-photo/'],
       // Keep authenticated, transactional, and API surfaces out of the index.
       disallow: [
         '/admin',

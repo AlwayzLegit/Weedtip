@@ -141,10 +141,11 @@ export function itemListJsonLd(paths: string[]): Json | null {
 }
 
 /**
- * Strain entity schema. There's no schema.org type for a cannabis cultivar, so
- * we model it as a Product with a Brand of the strain type (Indica/Sativa/etc)
- * and THC potency as an additionalProperty — the shape Google accepts for
- * non-retail product knowledge. aggregateRating is added only when real.
+ * Strain entity schema. There's no schema.org type for a cannabis cultivar.
+ * Google's Product rich-result rules REQUIRE one of offers/review/
+ * aggregateRating — an unrated strain as Product fails validation on every
+ * page (Semrush flagged 9k of these). So: Product only when a real rating
+ * exists (rich-result eligible), plain Thing otherwise (no required fields).
  */
 export function strainJsonLd(s: {
   slug: string;
@@ -165,25 +166,26 @@ export function strainJsonLd(s: {
         : `${s.thcLow ?? s.thcHigh}%`;
     props.push({ '@type': 'PropertyValue', name: 'THC', value: thc });
   }
+  const rated = s.ratingValue != null && s.ratingCount != null && s.ratingCount > 0;
   const node: Json = {
     '@context': 'https://schema.org',
-    '@type': 'Product',
+    '@type': rated ? 'Product' : 'Thing',
     '@id': absoluteUrl(`/strain/${s.slug}`),
     url: absoluteUrl(`/strain/${s.slug}`),
     name: s.name,
-    category: 'Cannabis strain',
-    brand: { '@type': 'Brand', name: s.type },
     additionalProperty: props,
   };
-  if (s.description) node.description = s.description;
-  if (s.image) node.image = absoluteUrl(s.image);
-  if (s.ratingValue != null && s.ratingCount != null && s.ratingCount > 0) {
+  if (rated) {
+    node.category = 'Cannabis strain';
+    node.brand = { '@type': 'Brand', name: s.type };
     node.aggregateRating = {
       '@type': 'AggregateRating',
-      ratingValue: Number(s.ratingValue.toFixed(1)),
+      ratingValue: Number((s.ratingValue as number).toFixed(1)),
       reviewCount: s.ratingCount,
     };
   }
+  if (s.description) node.description = s.description;
+  if (s.image) node.image = absoluteUrl(s.image);
   return node;
 }
 
