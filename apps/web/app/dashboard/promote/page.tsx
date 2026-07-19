@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { RenewalOfferCard } from '@/components/ads/renewal-offer-card';
 import { CreativeLibrary } from '@/components/dashboard/creative-library';
 import { EmbedSnippet } from '@/components/dashboard/embed-snippet';
 import { PromoteBilling } from '@/components/dashboard/promote-billing';
@@ -71,6 +72,28 @@ export default async function PromotePage() {
       .order('created_at', { ascending: false }),
   ]);
 
+  // First-right renewal offers on this shop's expiring ad slots.
+  const { data: renewalSubs } = await supabase
+    .from('ad_subscriptions')
+    .select('id, price_paid, ends_at, renewal_price_cents, slot:ad_slots(slot_type, region:ad_regions(name))')
+    .eq('dispensary_id', dispensary.id)
+    .eq('status', 'active')
+    .not('renewal_price_cents', 'is', null);
+  const renewalOffers = (renewalSubs ?? []).flatMap((r) => {
+    const slot = r.slot as { slot_type: string; region: { name: string } | null } | null;
+    if (!slot || !r.renewal_price_cents) return [];
+    return [
+      {
+        subscriptionId: r.id,
+        slotType: slot.slot_type,
+        regionName: slot.region?.name ?? 'your region',
+        currentCents: r.price_paid,
+        offerCents: r.renewal_price_cents,
+        endsAt: r.ends_at,
+      },
+    ];
+  });
+
   const plan = sub?.plan as { name: string; price_cents: number } | null;
   const live = (placements ?? []).filter(isLive);
   const statsByPlacement = new Map((stats ?? []).map((s) => [s.placement_id, s] as const));
@@ -103,6 +126,14 @@ export default async function PromotePage() {
           Marketing spend report →
         </a>
       </div>
+
+      {renewalOffers.length > 0 && (
+        <section className="space-y-3">
+          {renewalOffers.map((o) => (
+            <RenewalOfferCard key={o.subscriptionId} offer={o} />
+          ))}
+        </section>
+      )}
 
       {/* Current plan */}
       <section className="space-y-3">

@@ -205,6 +205,51 @@ export type Database = {
           },
         ]
       }
+      ad_requests: {
+        Row: {
+          created_at: string
+          dispensary_id: string
+          id: string
+          kind: string
+          region_id: string
+          slot_type: Database["public"]["Enums"]["ad_slot_type"]
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          dispensary_id: string
+          id?: string
+          kind?: string
+          region_id: string
+          slot_type: Database["public"]["Enums"]["ad_slot_type"]
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          dispensary_id?: string
+          id?: string
+          kind?: string
+          region_id?: string
+          slot_type?: Database["public"]["Enums"]["ad_slot_type"]
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_requests_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_requests_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "ad_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_slots: {
         Row: {
           id: string
@@ -240,7 +285,10 @@ export type Database = {
           dispensary_id: string
           ends_at: string | null
           id: string
+          is_house: boolean
           price_paid: number
+          renewal_offered_at: string | null
+          renewal_price_cents: number | null
           slot_id: string
           starts_at: string | null
           status: Database["public"]["Enums"]["ad_sub_status"]
@@ -250,7 +298,10 @@ export type Database = {
           dispensary_id: string
           ends_at?: string | null
           id?: string
+          is_house?: boolean
           price_paid: number
+          renewal_offered_at?: string | null
+          renewal_price_cents?: number | null
           slot_id: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["ad_sub_status"]
@@ -260,7 +311,10 @@ export type Database = {
           dispensary_id?: string
           ends_at?: string | null
           id?: string
+          is_house?: boolean
           price_paid?: number
+          renewal_offered_at?: string | null
+          renewal_price_cents?: number | null
           slot_id?: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["ad_sub_status"]
@@ -3052,6 +3106,7 @@ export type Database = {
           slot_type: Database["public"]["Enums"]["ad_slot_type"]
           position: number
           dispensary_id: string
+          is_house: boolean
         }[]
       }
       grant_pos_addon: {
@@ -3156,6 +3211,17 @@ export type Database = {
         Args: { p_reply: string; p_review_id: string }
         Returns: undefined
       }
+      region_house_candidates: {
+        Args: { p_limit?: number; p_region_id: string }
+        Returns: {
+          dispensary_id: string
+          has_photo: boolean
+          name: string
+          rating_avg: number
+          rating_count: number
+          slug: string
+        }[]
+      }
       sale_prices_for: {
         Args: { p_product_ids: string[] }
         Returns: {
@@ -3164,6 +3230,13 @@ export type Database = {
           product_id: string
           sale_cents: number
         }[]
+      }
+      slot_price_cents: {
+        Args: {
+          p_region_id: string
+          p_slot_type: Database["public"]["Enums"]["ad_slot_type"]
+        }
+        Returns: number
       }
       search_dispensaries: {
         Args: {

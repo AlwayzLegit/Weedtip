@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Megaphone } from 'lucide-react';
+import { getSlotAvailability, resolveGeo } from '@/lib/ad-serving';
+import { formatPrice as fmtPrice } from '@/lib/format';
+import { promotionGate } from '@/lib/promotion-gate';
 import { SetupChecklist } from '@/components/dashboard/setup-checklist';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -77,6 +80,37 @@ export default async function DashboardOverview() {
     deals: dealCount ?? 0,
   });
 
+  // The shop's ad region: open spots + today's step price + the tiered-setup
+  // unlock state — owners should SEE their market's inventory from day one.
+  const gate = await promotionGate(dispensary.id);
+  let adRegion: {
+    name: string;
+    slug: string;
+    featuredOpen: number;
+    premiumOpen: number;
+    featuredPrice: number | null;
+  } | null = null;
+  if (typeof dispensary.latitude === 'number' && typeof dispensary.longitude === 'number') {
+    const geo = await resolveGeo(dispensary.longitude, dispensary.latitude);
+    if (geo) {
+      const [availability, { data: price }] = await Promise.all([
+        getSlotAvailability(),
+        supabase.rpc('slot_price_cents', {
+          p_region_id: geo.regionId,
+          p_slot_type: 'featured',
+        }),
+      ]);
+      const a = availability.get(geo.regionId);
+      adRegion = {
+        name: geo.regionName,
+        slug: geo.regionSlug,
+        featuredOpen: a?.featuredOpen ?? 3,
+        premiumOpen: a?.premiumOpen ?? 10,
+        featuredPrice: typeof price === 'number' ? price : null,
+      };
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -99,6 +133,40 @@ export default async function DashboardOverview() {
 
       {/* Guided first-run activation — the fastest path to a live, sellable page. */}
       <SetupChecklist steps={steps} />
+
+      {/* Their market's ad inventory, front and center (tiered-setup aware). */}
+      {adRegion && (
+        <div className="rounded-card border-primary/30 bg-primary-subtle flex flex-wrap items-center justify-between gap-3 border p-5">
+          <div>
+            <p className="flex items-center gap-1.5 font-semibold">
+              <Megaphone className="text-primary h-4 w-4" /> Your area: {adRegion.name}
+            </p>
+            <p className="text-muted mt-0.5 text-sm">
+              {adRegion.featuredOpen > 0 || adRegion.premiumOpen > 0 ? (
+                <>
+                  {adRegion.featuredOpen} of 3 featured and {adRegion.premiumOpen} of 10 premium
+                  spots open
+                  {adRegion.featuredPrice != null &&
+                    ` — featured from ${fmtPrice(adRegion.featuredPrice)}/mo`}
+                  . Each spot sold raises the next spot&apos;s price.
+                </>
+              ) : (
+                <>All sponsored spots are taken — join the waitlist for the next opening.</>
+              )}
+              {!gate.unlocked && (
+                <span className="block">
+                  Unlock advertising by finishing setup: {gate.missing.join(' · ')}.
+                </span>
+              )}
+            </p>
+          </div>
+          <Link href={`/advertise/${adRegion.slug}`}>
+            <Button size="sm" variant={gate.unlocked ? 'primary' : 'outline'}>
+              {gate.unlocked ? 'See placements' : 'Preview placements'}
+            </Button>
+          </Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Revenue" value={formatPrice(revenue)} accent />

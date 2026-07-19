@@ -164,7 +164,9 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
       const placements = await getRegionPlacements(geo.regionId);
       const cityShopIds = new Set(shopIds);
       // Rotate the (max 3) featured order per ISR render for fair exposure.
-      featuredSlotIds = [...placements.featuredIds]
+      // House-comped premium holders get the FEATURED treatment (honest
+      // labeling — nobody paid, so never "Sponsored").
+      featuredSlotIds = [...placements.featuredIds, ...placements.housePremiumIds]
         .filter((id) => cityShopIds.has(id))
         .sort(() => Math.random() - 0.5);
       premiumSlotIds = new Set(placements.premiumIds.filter((id) => cityShopIds.has(id)));
