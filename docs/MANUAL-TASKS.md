@@ -1,5 +1,10 @@
 # Manual tasks — owner action items
 
+> **⚠ Superseded (2026-07-19):** the current, ordered owner checklist lives in
+> [`LAUNCH-RUNBOOK.md`](./LAUNCH-RUNBOOK.md). This file is kept for the
+> per-task detail it contains.
+
+
 Everything built this session is merged to `main` and deployed, and all database
 migrations are applied to production (`ggpnghpcclngqkyelkes`). The items below are
 the things **only you can do** (dashboard toggles, secrets, external config) plus
