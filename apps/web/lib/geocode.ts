@@ -6,14 +6,41 @@ export interface GeoPlace {
   name: string;
   center: { lat: number; lng: number };
   bbox: BBox | null;
+  /** Two-letter state code from the feature context (e.g. "CA"), if resolvable. */
+  state: string | null;
+  /** City/place name from the feature or its context, if resolvable. */
+  city: string | null;
 }
 
+type GeocodeContext = { id: string; text: string; short_code?: string };
 type GeocodeFeature = {
   id: string;
+  text: string;
   place_name: string;
   center: [number, number];
   bbox?: number[];
+  context?: GeocodeContext[];
+  properties?: { short_code?: string };
 };
+
+/** Pull the US state code + city out of a feature and its context chain. */
+function placeParts(f: GeocodeFeature): { state: string | null; city: string | null } {
+  const chain: GeocodeContext[] = [
+    { id: f.id, text: f.text, short_code: f.properties?.short_code },
+    ...(f.context ?? []),
+  ];
+  let state: string | null = null;
+  let city: string | null = null;
+  for (const c of chain) {
+    if (c.id.startsWith('region') && c.short_code?.startsWith('US-')) {
+      state = c.short_code.slice(3).toUpperCase();
+    }
+    if (!city && (c.id.startsWith('place') || c.id.startsWith('locality'))) {
+      city = c.text;
+    }
+  }
+  return { state, city };
+}
 
 /**
  * Client-side forward geocoding (Mapbox v5, US-only). Returns [] when the
@@ -44,9 +71,36 @@ export async function geocodePlaces(
       center: { lat: f.center[1], lng: f.center[0] },
       bbox:
         f.bbox && f.bbox.length === 4 ? ([f.bbox[0], f.bbox[1], f.bbox[2], f.bbox[3]] as BBox) : null,
+      ...placeParts(f),
     }));
   } catch {
     return [];
+  }
+}
+
+/** Reverse geocode a point to its city/state ("Use my location"). */
+export async function reverseGeocode(lat: number, lng: number): Promise<GeoPlace | null> {
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  if (!token) return null;
+  const url =
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json` +
+    `?access_token=${token}&country=us&limit=1&types=place,locality,postcode`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { features?: GeocodeFeature[] };
+    const f = json.features?.[0];
+    if (!f) return null;
+    return {
+      id: f.id,
+      name: f.place_name.replace(/, United States$/, ''),
+      center: { lat, lng },
+      bbox:
+        f.bbox && f.bbox.length === 4 ? ([f.bbox[0], f.bbox[1], f.bbox[2], f.bbox[3]] as BBox) : null,
+      ...placeParts(f),
+    };
+  } catch {
+    return null;
   }
 }
 
