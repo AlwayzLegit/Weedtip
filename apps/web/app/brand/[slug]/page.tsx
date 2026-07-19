@@ -5,7 +5,9 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { BrandFollowButton } from '@/components/brand/brand-follow-button';
 import { BrandReviewForm } from '@/components/brand/brand-review-form';
 import { ClaimBrandButton } from '@/components/brand/claim-brand-button';
+import { BadgeCheck } from 'lucide-react';
 import { LogoImage } from '@/components/logo-image';
+import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
 import { RatingStars } from '@/components/rating-stars';
 import { getAuth } from '@/lib/auth';
@@ -116,13 +118,22 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
     .order('created_at', { ascending: false })
     .limit(10);
 
-  // The brand's official catalog lineup.
-  const { data: lineup } = await supabase
-    .from('brand_products')
-    .select('id,name,strain_type,thc_percentage,cbd_percentage,description,image_url')
-    .eq('brand_id', brand.id)
-    .order('sort_order')
-    .order('name');
+  // The brand's official catalog lineup, grouped by category (Weedmaps pattern).
+  const [{ data: lineup }, { data: categories }] = await Promise.all([
+    supabase
+      .from('brand_products')
+      .select('id,name,strain_type,thc_percentage,cbd_percentage,description,image_url,category_id')
+      .eq('brand_id', brand.id)
+      .order('sort_order')
+      .order('name'),
+    supabase.from('categories').select('id,name').order('sort_order'),
+  ]);
+  const categoryName = new Map((categories ?? []).map((c) => [c.id, c.name]));
+  const lineupByCategory = new Map<string, NonNullable<typeof lineup>>();
+  for (const it of lineup ?? []) {
+    const key = (it.category_id && categoryName.get(it.category_id)) || 'More products';
+    lineupByCategory.set(key, [...(lineupByCategory.get(key) ?? []), it]);
+  }
 
   // Adaptive stat strip: catalog size always; store metrics only once real
   // menus carry the brand (a '0 in stores / — rating' row reads as broken).
@@ -171,18 +182,33 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         ]}
       />
 
-      <div className="card sheen mt-4 flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
-        <LogoImage
-          src={brand.logo_url}
-          name={brand.name}
-          className="h-16 w-16"
-          rounded="rounded-2xl"
-          textClassName="text-2xl"
-          hideWhenEmpty={false}
+      {/* Weedmaps-style banner hero: cover across the top, logo overlapping. */}
+      <div className="card sheen mt-4 overflow-hidden">
+        <MediaImage
+          url={brand.cover_image_url}
+          alt={`${brand.name} cover`}
+          artSeed={brand.slug}
+          className="h-36 sm:h-44"
+          iconClassName="h-10 w-10"
         />
-        <div className="min-w-0 flex-1">
-          <p className="eyebrow mb-1">Brand</p>
-          <h1 className="text-2xl font-bold sm:text-3xl">{brand.name}</h1>
+        <div className="flex flex-col gap-5 p-6 pt-0 sm:flex-row sm:items-end">
+          <LogoImage
+            src={brand.logo_url}
+            name={brand.name}
+            className="border-surface bg-surface -mt-8 h-20 w-20 border-4 shadow-sm"
+            rounded="rounded-2xl"
+            textClassName="text-2xl"
+            hideWhenEmpty={false}
+          />
+          <div className="min-w-0 flex-1 sm:pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold sm:text-3xl">{brand.name}</h1>
+              {brand.owner_id && (
+                <span className="border-primary/30 bg-primary-muted text-primary inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold">
+                  <BadgeCheck className="h-3.5 w-3.5" /> Verified brand
+                </span>
+              )}
+            </div>
           {brand.rating_count > 0 && (
             <a href="#reviews" className="mt-1.5 inline-flex items-center gap-1.5 hover:underline">
               <span className="text-sm font-semibold">{brand.rating_avg.toFixed(1)}</span>
@@ -215,10 +241,11 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
             </div>
           )}
         </div>
-        <div className="flex gap-6 sm:flex-col sm:gap-3">
-          {stats.map((s) => (
-            <Stat key={s.label} value={s.value} label={s.label} />
-          ))}
+          <div className="flex gap-6 sm:flex-col sm:gap-3 sm:pt-4">
+            {stats.map((s) => (
+              <Stat key={s.label} value={s.value} label={s.label} />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -242,25 +269,45 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       {lineup && lineup.length > 0 && (
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Official lineup</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {lineup.map((it) => (
-              <div key={it.id} className="rounded-card border-border bg-surface overflow-hidden border">
-                {it.image_url ? (
-                  <img src={catalogImageSrc(it.id, it.image_url) ?? undefined} alt={it.name} className="bg-surface-2 h-32 w-full object-cover" />
-                ) : (
-                  <div className="bg-surface-2 flex h-32 w-full items-center justify-center text-3xl font-bold text-muted">
-                    {it.name.charAt(0).toUpperCase()}
-                  </div>
+          <div className="space-y-6">
+            {[...lineupByCategory.entries()].map(([category, items]) => (
+              <div key={category}>
+                {lineupByCategory.size > 1 && (
+                  <h3 className="text-muted mb-2 text-sm font-semibold uppercase tracking-wide">
+                    {category} <span className="font-normal">({items.length})</span>
+                  </h3>
                 )}
-                <div className="p-3">
-                  <p className="truncate text-sm font-medium">{it.name}</p>
-                  <p className="text-muted mt-0.5 text-xs capitalize">
-                    {it.strain_type ?? ''}
-                    {it.thc_percentage != null ? `${it.strain_type ? ' · ' : ''}${it.thc_percentage}% THC` : ''}
-                  </p>
-                  {it.description && (
-                    <p className="text-muted mt-1 line-clamp-2 text-xs">{it.description}</p>
-                  )}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  {items.map((it) => (
+                    <div
+                      key={it.id}
+                      className="rounded-card border-border bg-surface overflow-hidden border"
+                    >
+                      {it.image_url ? (
+                        <img
+                          src={catalogImageSrc(it.id, it.image_url) ?? undefined}
+                          alt={it.name}
+                          className="bg-surface-2 h-32 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="bg-surface-2 text-muted flex h-32 w-full items-center justify-center text-3xl font-bold">
+                          {it.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <p className="truncate text-sm font-medium">{it.name}</p>
+                        <p className="text-muted mt-0.5 text-xs capitalize">
+                          {it.strain_type ?? ''}
+                          {it.thc_percentage != null
+                            ? `${it.strain_type ? ' · ' : ''}${it.thc_percentage}% THC`
+                            : ''}
+                        </p>
+                        {it.description && (
+                          <p className="text-muted mt-1 line-clamp-2 text-xs">{it.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
