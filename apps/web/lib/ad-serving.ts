@@ -20,6 +20,8 @@ export interface RegionPlacements {
   featuredIds: string[];
   /** Up to 10 rank-boosted listings with a Sponsored badge. */
   premiumIds: string[];
+  /** House-comped premium holders — label "Featured", never "Sponsored". */
+  housePremiumIds: string[];
 }
 
 /**
@@ -81,11 +83,19 @@ export function getRegionPlacements(regionId: string): Promise<RegionPlacements>
     async (): Promise<RegionPlacements> => {
       const supabase = createStaticClient();
       const { data } = await supabase.rpc('get_region_placements', { p_region_id: regionId });
-      const placements: RegionPlacements = { exclusiveId: null, featuredIds: [], premiumIds: [] };
+      const placements: RegionPlacements = {
+        exclusiveId: null,
+        featuredIds: [],
+        premiumIds: [],
+        housePremiumIds: [],
+      };
       for (const row of data ?? []) {
         if (row.slot_type === 'exclusive') placements.exclusiveId ??= row.dispensary_id;
         else if (row.slot_type === 'featured') placements.featuredIds.push(row.dispensary_id);
-        else if (row.slot_type === 'premium') placements.premiumIds.push(row.dispensary_id);
+        else if (row.slot_type === 'premium') {
+          if ((row as { is_house?: boolean }).is_house) placements.housePremiumIds.push(row.dispensary_id);
+          else placements.premiumIds.push(row.dispensary_id);
+        }
       }
       return placements;
     },

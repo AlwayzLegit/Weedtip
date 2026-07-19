@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getAuth } from '@/lib/auth';
 import { billingRequestAckEmail, billingRequestEmail, SALES_INBOX, sendEmail } from '@/lib/email';
+import { notifyAdmins } from '@/lib/notify';
+import { promotionGate } from '@/lib/promotion-gate';
 import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -69,6 +71,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Create your dispensary listing first.' }, { status: 403 });
   }
 
+  // Tiered setup: advertising unlocks once the listing basics are done — a
+  // half-empty listing in a paid slot burns the buyer's money.
+  const gate = await promotionGate(dispensary.id);
+  if (!gate.unlocked) {
+    return NextResponse.json(
+      {
+        error: `Finish setting up your listing to unlock advertising: ${gate.missing.join(', ')}.`,
+      },
+      { status: 403 },
+    );
+  }
+
   const service = createServiceClient();
 
   const { data: region } = await service
@@ -89,6 +103,14 @@ export async function POST(req: NextRequest) {
   if (!product) {
     return NextResponse.json({ error: 'Pricing is not configured for this product.' }, { status: 500 });
   }
+
+  // Dynamic step pricing: every live PAID claim in this region+type raises the
+  // next spot ~15%, capped at list price. The buyer pays TODAY's step price.
+  const { data: stepPrice } = await service.rpc('slot_price_cents', {
+    p_region_id: region.id,
+    p_slot_type: slot_type,
+  });
+  const priceCents = typeof stepPrice === 'number' && stepPrice > 0 ? stepPrice : product.launch_price;
 
   // Free abandoned holds before looking for an open slot.
   await service.rpc('release_stale_ad_claims');
@@ -139,27 +161,84 @@ export async function POST(req: NextRequest) {
   // Race for a slot: the claim_slot RPC raises SLOT_TAKEN when a slot has a
   // live subscription, so we simply try each in order. Two concurrent buyers
   // on the same last slot: exactly one insert wins, the loser gets 409.
+  const tryClaim = async (): Promise<string | null> => {
+    for (const slot of slots ?? []) {
+      const { data, error } = await service.rpc('claim_slot', {
+        p_slot_id: slot.id,
+        p_dispensary_id: dispensary.id,
+        p_price: priceCents,
+      });
+      if (!error && data) return data;
+      if (error && !error.message.includes('SLOT_TAKEN')) {
+        throw new Error('claim failed');
+      }
+    }
+    return null;
+  };
+
   let subscriptionId: string | null = null;
-  for (const slot of slots ?? []) {
-    const { data, error } = await service.rpc('claim_slot', {
-      p_slot_id: slot.id,
-      p_dispensary_id: dispensary.id,
-      p_price: product.launch_price,
-    });
-    if (!error && data) {
-      subscriptionId = data;
-      break;
+  try {
+    subscriptionId = await tryClaim();
+    if (!subscriptionId) {
+      // Cold-start rule: a PAID claim always preempts a house fill. Release
+      // the lowest-priority house sub in this region+type, then claim again.
+      const { data: house } = await service
+        .from('ad_subscriptions')
+        .select('id, slot:ad_slots!inner(region_id, slot_type, position)')
+        .eq('is_house', true)
+        .in('status', ['active', 'pending'])
+        .eq('slot.region_id', region.id)
+        .eq('slot.slot_type', slot_type)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (house && house.length > 0) {
+        await service
+          .from('ad_subscriptions')
+          .update({ status: 'canceled' })
+          .eq('id', house[0]!.id);
+        subscriptionId = await tryClaim();
+      }
     }
-    if (error && !error.message.includes('SLOT_TAKEN')) {
-      return NextResponse.json({ error: 'Could not reserve the slot.' }, { status: 500 });
-    }
+  } catch {
+    return NextResponse.json({ error: 'Could not reserve the slot.' }, { status: 500 });
   }
   if (!subscriptionId) {
+    // Genuinely sold out (all paid) — waitlist it as an in-admin request
+    // instead of a dead end. Duplicate requests no-op via the unique key.
+    await service
+      .from('ad_requests')
+      .upsert(
+        {
+          dispensary_id: dispensary.id,
+          region_id: region.id,
+          slot_type,
+          kind: 'availability',
+          status: 'open',
+        },
+        { onConflict: 'dispensary_id,region_id,slot_type,kind', ignoreDuplicates: true },
+      );
+    await notifyAdmins({
+      type: 'ad_request',
+      title: `Waitlist: ${slot_type} in ${region.name}`,
+      body: `${dispensary.name} wants a ${slot_type} spot in ${region.name} — inventory is sold out.`,
+      href: '/admin/ads-desk',
+    });
     return NextResponse.json(
-      { error: 'SLOT_TAKEN', message: `All ${slot_type} slots in ${region.name} are taken.` },
+      {
+        error: 'SLOT_TAKEN',
+        message: `All ${slot_type} spots in ${region.name} are taken — you're on the list. We'll reach out the moment one opens.`,
+      },
       { status: 409 },
     );
   }
+
+  // Prompt the admin desk (email below is just a copy for the inbox).
+  await notifyAdmins({
+    type: 'ad_hold',
+    title: `New ${slot_type} slot hold — ${region.name}`,
+    body: `${dispensary.name} reserved a ${slot_type} spot at $${(priceCents / 100).toFixed(2)}/mo. Activate it from the Ad desk.`,
+    href: '/admin/ads-desk',
+  });
 
   // Slot is held — hand the request to sales for invoicing + activation.
   const kind = `${slot_type === 'featured' ? 'Featured' : 'Premium'} slot — ${region.name} (Tier ${TIER_LABEL[region.tier] ?? region.tier})`;
@@ -170,7 +249,7 @@ export async function POST(req: NextRequest) {
       Dispensary: dispensary.name,
       Region: region.name,
       Slot: slot_type,
-      'Price / month': `$${(product.launch_price / 100).toFixed(2)}`,
+      'Price / month': `$${(priceCents / 100).toFixed(2)}`,
     },
     siteUrl: siteUrl(),
   });

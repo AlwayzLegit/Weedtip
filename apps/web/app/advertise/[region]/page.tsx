@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, BadgeCheck, Crown, Mail, MapPin, Star } from 'lucide-react';
 import { ViewTracker } from '@/components/analytics/view-tracker';
 import { Badge } from '@/components/ui/badge';
+import { RequestAvailabilityButton } from '@/components/ads/request-availability-button';
 import { SlotCheckoutButton } from '@/components/ads/slot-checkout-button';
 import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
@@ -66,6 +67,14 @@ export default async function AdvertiseRegionPage({
   const availability = (await getSlotAvailability()).get(region.id);
   const market = region.market as { name: string; state: string } | null;
 
+  // Dynamic step pricing: each spot sold raises the next spot ~15% (capped at
+  // list price) — the rate card always shows the price of the NEXT spot.
+  const supabase = createStaticClient();
+  const [{ data: featuredNow }, { data: premiumNow }] = await Promise.all([
+    supabase.rpc('slot_price_cents', { p_region_id: region.id, p_slot_type: 'featured' }),
+    supabase.rpc('slot_price_cents', { p_region_id: region.id, p_slot_type: 'premium' }),
+  ]);
+
   const product = (slotType: string) => products.find((p) => p.slot_type === slotType);
   const featured = product('featured');
   const premium = product('premium');
@@ -125,11 +134,17 @@ export default async function AdvertiseRegionPage({
             <li>· “Regional Sponsor” hero unit</li>
             <li>· Only one per region — total ownership</li>
           </ul>
-          <a href={contactHref} className="mt-4 block">
-            <span className="border-primary text-primary hover:bg-primary-muted inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors">
-              <Mail className="h-4 w-4" /> Contact to reserve
-            </span>
-          </a>
+          {availability?.exclusiveOpen ? (
+            <a href={contactHref} className="mt-4 block">
+              <span className="border-primary text-primary hover:bg-primary-muted inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors">
+                <Mail className="h-4 w-4" /> Contact to reserve
+              </span>
+            </a>
+          ) : (
+            <div className="mt-4">
+              <RequestAvailabilityButton regionId={region.id} slotType="exclusive" />
+            </div>
+          )}
         </div>
 
         {/* Featured — self-serve. */}
@@ -143,26 +158,42 @@ export default async function AdvertiseRegionPage({
             </Badge>
           </div>
           <p className="mt-2 text-2xl font-bold">
-            {featured ? formatPrice(featured.launch_price) : '—'}
+            {typeof featuredNow === 'number'
+              ? formatPrice(featuredNow)
+              : featured
+                ? formatPrice(featured.launch_price)
+                : '—'}
             <span className="text-muted text-sm font-normal">/mo</span>
           </p>
-          {featured && featured.list_price > featured.launch_price && (
-            <p className="text-muted text-xs">
-              Launch price — regularly <s>{formatPrice(featured.list_price)}/mo</s>
-            </p>
-          )}
+          {featured &&
+            (typeof featuredNow === 'number' && featuredNow > featured.launch_price ? (
+              <p className="text-muted text-xs">
+                Price for the next spot — each spot sold raises the next (launch was{' '}
+                {formatPrice(featured.launch_price)}/mo).
+              </p>
+            ) : (
+              featured.list_price > featured.launch_price && (
+                <p className="text-muted text-xs">
+                  Launch price — regularly <s>{formatPrice(featured.list_price)}/mo</s>. Locks in
+                  for you; the next spot costs more.
+                </p>
+              )
+            ))}
           <ul className="text-muted mt-3 space-y-1 text-sm">
             <li>· Rotating top position under the sponsor</li>
             <li>· Pinned above organic results, region-wide</li>
             <li>· “Featured” label</li>
           </ul>
           <div className="mt-4">
-            <SlotCheckoutButton
-              regionId={region.id}
-              slotType="featured"
-              label="Claim a Featured slot"
-              disabled={!availability?.featuredOpen}
-            />
+            {availability?.featuredOpen ? (
+              <SlotCheckoutButton
+                regionId={region.id}
+                slotType="featured"
+                label="Claim a Featured slot"
+              />
+            ) : (
+              <RequestAvailabilityButton regionId={region.id} slotType="featured" />
+            )}
           </div>
         </div>
 
@@ -177,26 +208,42 @@ export default async function AdvertiseRegionPage({
             </Badge>
           </div>
           <p className="mt-2 text-2xl font-bold">
-            {premium ? formatPrice(premium.launch_price) : '—'}
+            {typeof premiumNow === 'number'
+              ? formatPrice(premiumNow)
+              : premium
+                ? formatPrice(premium.launch_price)
+                : '—'}
             <span className="text-muted text-sm font-normal">/mo</span>
           </p>
-          {premium && premium.list_price > premium.launch_price && (
-            <p className="text-muted text-xs">
-              Launch price — regularly <s>{formatPrice(premium.list_price)}/mo</s>
-            </p>
-          )}
+          {premium &&
+            (typeof premiumNow === 'number' && premiumNow > premium.launch_price ? (
+              <p className="text-muted text-xs">
+                Price for the next spot — each spot sold raises the next (launch was{' '}
+                {formatPrice(premium.launch_price)}/mo).
+              </p>
+            ) : (
+              premium.list_price > premium.launch_price && (
+                <p className="text-muted text-xs">
+                  Launch price — regularly <s>{formatPrice(premium.list_price)}/mo</s>. Locks in
+                  for you; the next spot costs more.
+                </p>
+              )
+            ))}
           <ul className="text-muted mt-3 space-y-1 text-sm">
             <li>· Boosted rank above standard listings</li>
             <li>· “Sponsored” badge on your card</li>
             <li>· 10 per region, first come first served</li>
           </ul>
           <div className="mt-4">
-            <SlotCheckoutButton
-              regionId={region.id}
-              slotType="premium"
-              label="Claim a Premium slot"
-              disabled={!availability?.premiumOpen}
-            />
+            {availability?.premiumOpen ? (
+              <SlotCheckoutButton
+                regionId={region.id}
+                slotType="premium"
+                label="Claim a Premium slot"
+              />
+            ) : (
+              <RequestAvailabilityButton regionId={region.id} slotType="premium" />
+            )}
           </div>
         </div>
       </div>

@@ -17,6 +17,7 @@ import {
   PLACEMENT_TYPE_LABEL,
   type PlacementType,
 } from '@/lib/placement-pricing';
+import { promotionGate } from '@/lib/promotion-gate';
 import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -307,6 +308,15 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
   const { dispensary } = await requireDispensaryOwner();
   if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, dispensary.id)).success) {
     return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
+
+  // Tiered setup: promotion unlocks once the listing basics are complete.
+  const gate = await promotionGate(dispensary.id);
+  if (!gate.unlocked) {
+    return {
+      ok: false,
+      error: `Finish setting up your listing to unlock promotion: ${gate.missing.join(', ')}.`,
+    };
   }
 
   // Scheduled start must be today..+90 days (activation clamps to "not past").
