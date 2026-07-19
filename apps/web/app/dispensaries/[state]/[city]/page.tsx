@@ -617,6 +617,46 @@ export default async function CityDispensariesPage({
         </div>
       </section>
 
+      {/* Editorial guide rail: routes shoppers (and crawlers) from every city
+          hub into the Learn library — the internal-link depth these directory
+          pages otherwise lack. */}
+      <section className="mt-10">
+        <h2 className="mb-3 text-lg font-semibold">New to dispensaries?</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              href: '/learn/first-time-dispensary-visit',
+              title: 'Your first dispensary visit',
+              blurb: 'What happens at the door, the counter, and checkout.',
+            },
+            {
+              href: '/learn/weed-measurements-and-prices',
+              title: 'Grams, eighths & prices',
+              blurb: 'What each amount means and what it should cost.',
+            },
+            {
+              href: '/learn/how-to-order-cannabis-online',
+              title: 'How to order online',
+              blurb: 'Browse menus, reserve for pickup, skip the line.',
+            },
+            {
+              href: '/learn/medical-vs-recreational',
+              title: 'Medical vs recreational',
+              blurb: 'Which counter you can shop and why cards still matter.',
+            },
+          ].map((g) => (
+            <Link
+              key={g.href}
+              href={g.href}
+              className="rounded-card border-border bg-surface hover:border-primary/50 group border p-4 transition-colors"
+            >
+              <p className="group-hover:text-primary font-medium transition-colors">{g.title}</p>
+              <p className="text-muted mt-1 text-sm">{g.blurb}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {nearbyCities.length > 0 && (
         <section className="mt-10">
           <h2 className="mb-3 text-lg font-semibold">Dispensaries near {cityName}</h2>

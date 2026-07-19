@@ -4,6 +4,7 @@
  * MDX/a CMS later without changing the routes or schema.
  */
 import { MORE_ARTICLES } from './learn-articles-2';
+import { MORE_ARTICLES_3 } from './learn-articles-3';
 
 export interface LearnSection {
   heading?: string;
@@ -190,7 +191,7 @@ const CORE_ARTICLES: Article[] = [
   },
 ];
 
-export const ARTICLES: Article[] = [...CORE_ARTICLES, ...MORE_ARTICLES];
+export const ARTICLES: Article[] = [...CORE_ARTICLES, ...MORE_ARTICLES, ...MORE_ARTICLES_3];
 
 export function getArticle(slug: string): Article | null {
   return ARTICLES.find((a) => a.slug === slug) ?? null;
