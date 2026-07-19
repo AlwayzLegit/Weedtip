@@ -41,7 +41,12 @@ export function SignInForm({ next }: { next?: string }) {
       </SubmitButton>
       <p className="text-muted text-center text-sm">
         New to Weedtip?{' '}
-        <Link href="/sign-up" className="text-primary hover:underline">
+        {/* Keep the return path when bouncing to sign-up — losing it strands
+            claim-funnel visitors on the homepage after registration. */}
+        <Link
+          href={next ? `/sign-up?next=${encodeURIComponent(next)}` : '/sign-up'}
+          className="text-primary hover:underline"
+        >
           Create an account
         </Link>
       </p>

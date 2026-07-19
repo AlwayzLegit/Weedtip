@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, BadgeCheck, Crown, Mail, MapPin, Star } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CheckCircle2, Crown, Mail, MapPin, Star } from 'lucide-react';
 import { ViewTracker } from '@/components/analytics/view-tracker';
 import { Badge } from '@/components/ui/badge';
 import { RequestAvailabilityButton } from '@/components/ads/request-availability-button';
@@ -10,10 +10,23 @@ import { getSlotAvailability } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
 import { requireAdvertiserAccess } from '@/lib/advertiser-access';
 import { getPlatformSettings } from '@/lib/settings';
+import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
 
 // Auth-gated (advertiser accounts only) — always rendered per-request.
 export const dynamic = 'force-dynamic';
+
+/** Persistent "you hold this spot" state on the rate card. */
+function HeldSpotNote({ status }: { status: string }) {
+  return (
+    <p className="text-primary flex items-start gap-1.5 text-xs font-medium">
+      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+      {status === 'active'
+        ? 'You hold this spot — your placement is live.'
+        : 'You hold this spot — reserved; our team is setting up billing.'}
+    </p>
+  );
+}
 
 const TIER_LABEL: Record<string, string> = {
   A_PLUS: 'A+',
@@ -78,6 +91,26 @@ export default async function AdvertiseRegionPage({
   const product = (slotType: string) => products.find((p) => p.slot_type === slotType);
   const featured = product('featured');
   const premium = product('premium');
+
+  // The viewer's own live holds here: a reserved spot must LOOK reserved on
+  // every return visit — otherwise the rate card re-offers the (now stepped)
+  // price and the owner wonders whether their click did anything.
+  const heldByType = new Map<string, string>();
+  const authed = await createClient();
+  const {
+    data: { user },
+  } = await authed.auth.getUser();
+  if (user) {
+    const { data: own } = await authed
+      .from('ad_subscriptions')
+      .select('status, slot:ad_slots!inner(region_id, slot_type)')
+      .in('status', ['pending', 'active', 'past_due'])
+      .eq('slot.region_id', region.id);
+    for (const s of own ?? []) {
+      const slot = s.slot as unknown as { slot_type: string } | null;
+      if (slot) heldByType.set(slot.slot_type, s.status);
+    }
+  }
 
   const { adsEmail } = await getPlatformSettings();
   const contactHref = `mailto:${adsEmail}?subject=${encodeURIComponent(
@@ -185,7 +218,9 @@ export default async function AdvertiseRegionPage({
             <li>· “Featured” label</li>
           </ul>
           <div className="mt-4">
-            {availability?.featuredOpen ? (
+            {heldByType.has('featured') ? (
+              <HeldSpotNote status={heldByType.get('featured')!} />
+            ) : availability?.featuredOpen ? (
               <SlotCheckoutButton
                 regionId={region.id}
                 slotType="featured"
@@ -235,7 +270,9 @@ export default async function AdvertiseRegionPage({
             <li>· 10 per region, first come first served</li>
           </ul>
           <div className="mt-4">
-            {availability?.premiumOpen ? (
+            {heldByType.has('premium') ? (
+              <HeldSpotNote status={heldByType.get('premium')!} />
+            ) : availability?.premiumOpen ? (
               <SlotCheckoutButton
                 regionId={region.id}
                 slotType="premium"

@@ -91,7 +91,12 @@ export function SignUpForm({
       </SubmitButton>
       <p className="text-muted text-center text-sm">
         Already have an account?{' '}
-        <Link href="/sign-in" className="text-primary hover:underline">
+        {/* Carry the return path across — an invited owner who already has an
+            account must land back on THEIR listing after signing in. */}
+        <Link
+          href={nextValue ? `/sign-in?next=${encodeURIComponent(nextValue)}` : '/sign-in'}
+          className="text-primary hover:underline"
+        >
           Sign in
         </Link>
       </p>

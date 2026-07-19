@@ -72,6 +72,31 @@ export default async function PromotePage() {
       .order('created_at', { ascending: false }),
   ]);
 
+  // Every live ad-slot hold, pending or active — the owner's persistent
+  // record that their one-click reserve actually took. Without this, a
+  // reserved spot is invisible everywhere until billing activates it.
+  const { data: adSlotSubs } = await supabase
+    .from('ad_subscriptions')
+    .select('id, status, price_paid, is_house, ends_at, slot:ad_slots(slot_type, region:ad_regions(name))')
+    .eq('dispensary_id', dispensary.id)
+    .in('status', ['pending', 'active', 'past_due'])
+    .order('created_at', { ascending: false });
+  const slotHolds = (adSlotSubs ?? []).flatMap((r) => {
+    const slot = r.slot as { slot_type: string; region: { name: string } | null } | null;
+    if (!slot) return [];
+    return [
+      {
+        id: r.id,
+        status: r.status,
+        isHouse: r.is_house,
+        priceCents: r.price_paid,
+        endsAt: r.ends_at,
+        slotType: slot.slot_type,
+        regionName: slot.region?.name ?? 'your region',
+      },
+    ];
+  });
+
   // First-right renewal offers on this shop's expiring ad slots.
   const { data: renewalSubs } = await supabase
     .from('ad_subscriptions')
@@ -142,6 +167,39 @@ export default async function PromotePage() {
         <section className="space-y-3">
           {renewalOffers.map((o) => (
             <RenewalOfferCard key={o.subscriptionId} offer={o} />
+          ))}
+        </section>
+      )}
+
+      {/* Sponsored ad-slot holds — pending reserves must stay visible. */}
+      {slotHolds.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Sponsored placements</h2>
+          {slotHolds.map((h) => (
+            <div
+              key={h.id}
+              className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-4"
+            >
+              <div>
+                <p className="text-sm font-semibold capitalize">
+                  {h.slotType} spot — {h.regionName}
+                </p>
+                <p className="text-muted mt-0.5 text-xs">
+                  {h.isHouse
+                    ? 'Comped by Weedtip while the region ramps up — free, labeled "Featured".'
+                    : h.status === 'pending'
+                      ? `Reserved at ${formatPrice(h.priceCents)}/mo — our team is setting up billing (within 1 business day).`
+                      : h.status === 'past_due'
+                        ? `${formatPrice(h.priceCents)}/mo — payment past due; contact us to keep the spot.`
+                        : `Live at ${formatPrice(h.priceCents)}/mo${h.endsAt ? ` · current term ends ${new Date(h.endsAt).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' })}` : ''}.`}
+                </p>
+              </div>
+              <Badge
+                tone={h.status === 'active' ? 'primary' : h.status === 'pending' ? 'outline' : 'muted'}
+              >
+                {h.status === 'pending' ? 'Reserved' : h.status === 'past_due' ? 'Past due' : 'Live'}
+              </Badge>
+            </div>
           ))}
         </section>
       )}
