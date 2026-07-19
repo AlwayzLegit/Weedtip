@@ -734,9 +734,12 @@ export type Database = {
           claimed_at: string | null
           created_at: string
           dispensary_id: string
+          campaign: string | null
+          contact_source: string
           email: string
           id: string
           opened_at: string | null
+          reminder_sent_at: string | null
           sent_at: string | null
           token: string
           unsubscribed_at: string | null
@@ -745,9 +748,12 @@ export type Database = {
           claimed_at?: string | null
           created_at?: string
           dispensary_id: string
+          campaign?: string | null
+          contact_source?: string
           email: string
           id?: string
           opened_at?: string | null
+          reminder_sent_at?: string | null
           sent_at?: string | null
           token?: string
           unsubscribed_at?: string | null
@@ -756,9 +762,12 @@ export type Database = {
           claimed_at?: string | null
           created_at?: string
           dispensary_id?: string
+          campaign?: string | null
+          contact_source?: string
           email?: string
           id?: string
           opened_at?: string | null
+          reminder_sent_at?: string | null
           sent_at?: string | null
           token?: string
           unsubscribed_at?: string | null
