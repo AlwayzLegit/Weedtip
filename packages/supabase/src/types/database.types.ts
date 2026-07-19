@@ -675,6 +675,7 @@ export type Database = {
       }
       brands: {
         Row: {
+          cover_image_url: string | null
           created_at: string
           description: string | null
           grandfathered: boolean
@@ -690,6 +691,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           grandfathered?: boolean
@@ -705,6 +707,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           grandfathered?: boolean
@@ -3315,6 +3318,7 @@ export type Database = {
       update_owned_brand: {
         Args: {
           p_brand_id: string
+          p_cover_image_url?: string
           p_description: string
           p_logo_url: string
           p_website: string

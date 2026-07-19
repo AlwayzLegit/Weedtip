@@ -5,12 +5,19 @@ import { updateOwnedBrand } from '@/app/actions/brands';
 import { FormMessage } from '@/components/auth/form-message';
 import { SubmitButton } from '@/components/auth/submit-button';
 import { Field } from '@/components/dashboard/field';
+import { ImagePicker } from '@/components/dashboard/image-picker';
 import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
 
-type Brand = { id: string; description: string | null; logo_url: string | null; website: string | null };
+type Brand = {
+  id: string;
+  description: string | null;
+  logo_url: string | null;
+  website: string | null;
+  cover_image_url?: string | null;
+};
 
 export function BrandManageForm({
   brand,
@@ -50,6 +57,12 @@ export function BrandManageForm({
           />
         </Field>
       )}
+      <ImagePicker
+        name="cover_image_url"
+        label="Cover banner (free)"
+        defaultUrl={brand.cover_image_url}
+        hint="Shown across the top of your brand page — PNG/JPG/WebP, wide (~3:1) looks best."
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Logo URL" htmlFor={`logo-${brand.id}`}>
           <Input

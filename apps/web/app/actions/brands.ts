@@ -164,11 +164,15 @@ export async function updateOwnedBrand(_prev: FormState, fd: FormData): Promise<
     website = cur?.website ?? '';
   }
 
+  // Cover is a free identity basic (like the dispensary cover). Omitting the
+  // param preserves the stored banner (RPC coalesces null → current value).
+  const cover = str(fd, 'cover_image_url');
   const { error } = await supabase.rpc('update_owned_brand', {
     p_brand_id: brandId,
     p_description: description,
     p_logo_url: str(fd, 'logo_url') ?? '',
     p_website: website,
+    ...(cover !== null && cover !== undefined ? { p_cover_image_url: cover } : {}),
   });
   if (error) return formError(error.message);
 
