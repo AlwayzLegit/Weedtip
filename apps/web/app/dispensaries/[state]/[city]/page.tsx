@@ -4,8 +4,11 @@ import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
 import { PRODUCT_CATEGORIES, type OperatingHours } from '@weedtip/shared';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { DealCard } from '@/components/deal-card';
 import { DispensariesBrowser } from '@/components/dispensaries-browser';
+import { DispensaryCard } from '@/components/dispensary-card';
 import { FaqSection } from '@/components/seo/faq-section';
+import { ScrollCarousel } from '@/components/home/scroll-carousel';
 import { JsonLd } from '@/components/seo/json-ld';
 import { dealBadge } from '@/lib/format';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
@@ -217,7 +220,9 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
   // small regardless of how many shops the city has.
   const { data: liveDeals } = await supabase
     .from('deals')
-    .select('dispensary_id,discount_type,discount_value,dispensary:dispensaries!inner(state,city,status)')
+    .select(
+      'id,title,description,code,dispensary_id,discount_type,discount_value,dispensary:dispensaries!inner(name,slug,state,city,status)',
+    )
     .eq('is_active', true)
     .lte('start_date', nowIso)
     .gte('end_date', nowIso)
@@ -231,6 +236,30 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
       dealByDispensary.set(d.dispensary_id, { type: d.discount_type, value: d.discount_value });
     }
   }
+  // Deals rail (editorial texture above the exhaustive finder).
+  const dealsRail = (liveDeals ?? []).slice(0, 8).flatMap((d) => {
+    const disp = d.dispensary as unknown as {
+      name: string;
+      slug: string;
+      city: string | null;
+      state: string;
+    } | null;
+    if (!disp) return [];
+    return [
+      {
+        id: d.id,
+        title: d.title,
+        description: d.description,
+        code: d.code,
+        discountType: d.discount_type,
+        discountValue: d.discount_value,
+        dispensarySlug: disp.slug,
+        dispensaryName: disp.name,
+        city: disp.city ?? '',
+        state: disp.state,
+      },
+    ];
+  });
 
   return {
     stateName,
@@ -240,6 +269,7 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     featuredSlotIds: new Set(featuredSlotIds),
     premiumSlotIds,
     dealByDispensary,
+    dealsRail,
     geo,
     sponsor,
     stats,
@@ -311,6 +341,7 @@ export default async function CityDispensariesPage({
     featuredSlotIds,
     premiumSlotIds,
     dealByDispensary,
+    dealsRail,
     geo,
     sponsor,
     stats,
@@ -376,6 +407,65 @@ export default async function CityDispensariesPage({
             zoneId={geo.zoneId}
           />
         </div>
+      )}
+
+      {/* Editorial rails before the exhaustive finder (Weedmaps pattern):
+          the market's best-rated shops and today's live deals. */}
+      {(() => {
+        const topRated = [...shops]
+          .filter((s) => s.rating_count > 0 && s.rating_avg >= 4)
+          .sort((a, b) => b.rating_avg - a.rating_avg || b.rating_count - a.rating_count)
+          .slice(0, 6);
+        if (topRated.length < 2) return null;
+        return (
+          <section className="mt-8">
+            <h2 className="mb-3 text-lg font-semibold">Top rated in {cityName}</h2>
+            <ScrollCarousel itemClassName="w-72" ariaLabel={`Top rated dispensaries in ${cityName}`}>
+              {topRated.map((s) => (
+                <DispensaryCard
+                  key={s.slug}
+                  d={{
+                    slug: s.slug,
+                    name: s.name,
+                    city: s.city,
+                    state: s.state,
+                    coverImageUrl: s.cover_image_url,
+                    logoUrl: s.logo_url,
+                    isDelivery: s.is_delivery,
+                    isPickup: s.is_pickup,
+                    isMedical: s.is_medical,
+                    isRecreational: s.is_recreational,
+                    featured: s.featured,
+                    rating: s.rating_avg,
+                    reviewCount: s.rating_count,
+                    licensed: !!s.license_number,
+                    hours: (s.hours ?? null) as OperatingHours | null,
+                    timezone: s.timezone,
+                  }}
+                />
+              ))}
+            </ScrollCarousel>
+          </section>
+        );
+      })()}
+
+      {dealsRail.length > 0 && (
+        <section className="mt-8">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">Today&apos;s deals in {cityName}</h2>
+            <Link
+              href={`/deals/${state.toLowerCase()}/${city.toLowerCase()}`}
+              className="text-primary shrink-0 text-sm font-medium hover:underline"
+            >
+              View all →
+            </Link>
+          </div>
+          <ScrollCarousel itemClassName="w-80" ariaLabel={`Deals in ${cityName}`}>
+            {dealsRail.map((d) => (
+              <DealCard key={d.id} deal={d} />
+            ))}
+          </ScrollCarousel>
+        </section>
       )}
 
       <div className="mt-6">
