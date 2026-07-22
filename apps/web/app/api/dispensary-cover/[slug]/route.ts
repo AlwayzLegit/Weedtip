@@ -46,27 +46,38 @@ export async function GET(
   const supabase = await createClient();
   const { data } = await supabase
     .from('dispensaries')
-    .select('google_photo_name, google_place_id')
+    .select('google_photo_name, google_photo_names, google_place_id')
     .eq('slug', slug)
     .maybeSingle();
 
-  // Prefer the cached photo reference; fall back to resolving it live from the
-  // place_id (covers rows enriched before the photo name was stored).
-  let name = data?.google_photo_name ?? null;
-  if (!name && data?.google_place_id) {
+  // Build the candidate list from the SAME source the gallery uses: the plural
+  // google_photo_names array, with the singular google_photo_name first. This
+  // is why a shop could show gallery photos yet a blank cover — the cover relied
+  // on the single reference alone, and if that one reference failed to fetch,
+  // the hero fell back to a placeholder even though other photos load fine.
+  const candidates: string[] = [];
+  if (data?.google_photo_name) candidates.push(data.google_photo_name);
+  for (const n of (data?.google_photo_names as string[] | null) ?? []) {
+    if (n && !candidates.includes(n)) candidates.push(n);
+  }
+
+  // Nothing cached — resolve live from the place_id (covers rows enriched before
+  // any photo name was stored) and persist it for next time.
+  if (candidates.length === 0 && data?.google_place_id) {
     const det = await fetch(
       `https://places.googleapis.com/v1/places/${data.google_place_id}`,
       { headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'photos' } },
     );
     if (det.ok) {
       const j = (await det.json()) as { photos?: { name: string }[] };
-      name = j.photos?.[0]?.name ?? null;
-      if (name) {
+      const resolved = j.photos?.[0]?.name ?? null;
+      if (resolved) {
+        candidates.push(resolved);
         // Persist so the next cache miss skips the Place Details round trip.
         try {
           await createServiceClient()
             .from('dispensaries')
-            .update({ google_photo_name: name })
+            .update({ google_photo_name: resolved })
             .eq('slug', slug);
         } catch {
           // Best-effort write-back; serving the photo matters more.
@@ -74,22 +85,28 @@ export async function GET(
       }
     }
   }
+
   // No photo on file for this place — placeholder for a day, in case the
   // owner enriches the listing later.
-  if (!name) return placeholder(86400);
+  if (candidates.length === 0) return placeholder(86400);
 
-  const mediaUrl = `https://places.googleapis.com/v1/${name}/media?maxWidthPx=1200&key=${key}`;
-  const res = await fetch(mediaUrl, { redirect: 'follow' });
-  // Transient upstream failure — short-lived placeholder so we retry soon.
-  if (!res.ok) return placeholder(300);
+  // Try each candidate until one actually loads, so a single stale/failed
+  // reference never leaves the hero blank when other photos would serve.
+  for (const name of candidates) {
+    const mediaUrl = `https://places.googleapis.com/v1/${name}/media?maxWidthPx=1200&key=${key}`;
+    const res = await fetch(mediaUrl, { redirect: 'follow' });
+    if (!res.ok) continue;
+    const body = await res.arrayBuffer();
+    return new NextResponse(body, {
+      status: 200,
+      headers: {
+        'Content-Type': res.headers.get('content-type') ?? 'image/jpeg',
+        // Cache hard: storefront photos rarely change; refreshed when re-enriched.
+        'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+      },
+    });
+  }
 
-  const body = await res.arrayBuffer();
-  return new NextResponse(body, {
-    status: 200,
-    headers: {
-      'Content-Type': res.headers.get('content-type') ?? 'image/jpeg',
-      // Cache hard: storefront photos rarely change; refreshed when re-enriched.
-      'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
-    },
-  });
+  // Every candidate failed upstream — short-lived placeholder so we retry soon.
+  return placeholder(300);
 }
