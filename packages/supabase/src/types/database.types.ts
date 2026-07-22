@@ -1103,6 +1103,7 @@ export type Database = {
           address: string | null
           amenities: string[]
           announcement: string | null
+          canonical_slug: string | null
           city: string | null
           county: string | null
           cover_image_url: string | null
@@ -1163,6 +1164,7 @@ export type Database = {
           address?: string | null
           amenities?: string[]
           announcement?: string | null
+          canonical_slug?: string | null
           city?: string | null
           county?: string | null
           cover_image_url?: string | null
@@ -1223,6 +1225,7 @@ export type Database = {
           address?: string | null
           amenities?: string[]
           announcement?: string | null
+          canonical_slug?: string | null
           city?: string | null
           county?: string | null
           cover_image_url?: string | null
