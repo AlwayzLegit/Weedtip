@@ -26,7 +26,7 @@ export async function generateMetadata({
     .maybeSingle();
   if (!data) return { title: 'Products' };
   const title = `Cannabis ${data.name}`;
-  const description = `Browse cannabis ${data.name.toLowerCase()} from licensed dispensaries near you — compare prices, THC/CBD, brands, and reviews, then order for pickup or delivery on Weedtip.`;
+  const description = `Browse cannabis ${data.name.toLowerCase()} from licensed dispensaries near you — compare prices, THC/CBD, brands, and reviews on Weedtip.`;
   return pageSeo({ title, description, path: `/products/${category}` });
 }
 
@@ -96,12 +96,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       answer: `Weedtip lists ${products.length} ${label} ${products.length === 1 ? 'product' : 'products'} from licensed dispensary menus, plus ${lineupCount ?? 0} from official brand catalogs, with THC/CBD, brands, and reviews.`,
     },
     {
-      question: `How do I order ${label} for pickup or delivery?`,
-      answer: `Open any product to see which dispensary carries it, add it to your cart, and check out for in-store pickup or delivery where available.`,
+      question: `How do I find ${label} near me?`,
+      answer: `Open any product to see which dispensaries carry it, then browse each shop's menu, prices, hours, and reviews to find the right one near you.`,
     },
     {
       question: `Do I need to be 21 to buy ${label}?`,
-      answer: `Yes — you must be 21 or older (or a qualifying medical patient where permitted) and present a valid government-issued ID at pickup or delivery.`,
+      answer: `Yes — you must be 21 or older (or a qualifying medical patient where permitted) and present a valid government-issued ID at the dispensary.`,
     },
   ];
 
@@ -169,8 +169,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         <h2 className="mb-2 text-lg font-semibold">About cannabis {label} on Weedtip</h2>
         <p className="text-muted text-sm leading-relaxed">
           Compare cannabis {label} from licensed dispensaries near you. Browse by price, potency,
-          and brand, read reviews, and order online for pickup or delivery. Always bring a valid 21+
-          ID and check your local regulations before ordering.
+          and brand, and read reviews to find the right shop near you. Always bring a valid 21+
+          ID and check your local regulations before you visit.
         </p>
       </section>
 

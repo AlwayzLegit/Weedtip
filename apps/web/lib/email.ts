@@ -316,7 +316,7 @@ export function welcomeShopperEmail(
     subject: 'Welcome to Weedtip 🌿',
     html: emailShell(
       'Welcome to Weedtip',
-      `<p style="margin:0 0 8px;">${hi} you're all set. Weedtip helps you find nearby dispensaries, compare menus, and grab the best deals — pickup or delivery.</p>
+      `<p style="margin:0 0 8px;">${hi} you're all set. Weedtip helps you find nearby dispensaries, compare menus, and grab the best deals near you.</p>
        <ul style="margin:0 0 8px;padding-left:18px;">
          <li style="margin:0 0 4px;">Browse shops near you and save your favorites</li>
          <li style="margin:0 0 4px;">Track live deals and price drops</li>

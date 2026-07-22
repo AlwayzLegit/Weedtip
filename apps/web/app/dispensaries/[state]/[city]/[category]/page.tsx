@@ -67,7 +67,7 @@ export async function generateMetadata({
   const found = await load(state, city, category);
   if (!found) return { title: 'Products' };
   const title = `Cannabis ${found.category.name} in ${found.cityName}, ${state.toUpperCase()}`;
-  const description = `Find cannabis ${found.category.name.toLowerCase()} from licensed dispensaries in ${found.cityName}, ${found.stateName}. Compare prices, THC/CBD, and reviews, then order for pickup or delivery on Weedtip.`;
+  const description = `Find cannabis ${found.category.name.toLowerCase()} from licensed dispensaries in ${found.cityName}, ${found.stateName}. Compare prices, THC/CBD, and reviews on Weedtip.`;
   return pageSeo({
     title,
     description,
@@ -93,8 +93,8 @@ export default async function CategoryInCityPage({
       answer: `Weedtip lists ${products.length} ${label} ${products.length === 1 ? 'product' : 'products'} from licensed dispensaries in ${cityName}, ${stateName}, with prices, potency, and reviews.`,
     },
     {
-      question: `How do I order ${label} in ${cityName} for pickup or delivery?`,
-      answer: `Open a product to see which ${cityName} dispensary carries it, add it to your cart, and check out for pickup or delivery where available.`,
+      question: `How do I find ${label} in ${cityName}?`,
+      answer: `Open a product to see which ${cityName} dispensary carries it, then browse that shop's menu, prices, hours, and reviews to plan your visit.`,
     },
     {
       question: `Do I need to be 21 to buy ${label} in ${cityName}?`,

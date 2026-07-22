@@ -337,7 +337,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         {list.length === 0 ? (
           <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-5">
             <p className="text-muted text-sm">
-              No live menus list {brand.name} yet — ask for it at your local shop, or follow the
+              No menus list {brand.name} yet — ask for it at your local shop, or follow the
               brand to hear when it lands.
             </p>
             <Link

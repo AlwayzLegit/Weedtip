@@ -39,7 +39,7 @@ export default async function RefundsPage() {
       </p>
       <p>
         If you receive an incorrect, defective, mislabeled, or unsafe product, contact the
-        dispensary and Weedtip support within <strong>48 hours</strong> of pickup or delivery. State
+        dispensary and Weedtip support within <strong>48 hours</strong> of your purchase. State
         cannabis regulations restrict returns of cannabis products once they leave the licensed
         premises; where a physical return is not permitted, the dispensary may offer a refund,
         replacement, or store credit consistent with its license and state law.

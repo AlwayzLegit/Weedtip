@@ -337,7 +337,7 @@ export async function generateMetadata({
   const found = await loadCity(state, city);
   if (!found) return { title: 'Dispensaries' };
   const title = `Dispensaries in ${found.cityName}, ${state.toUpperCase()}`;
-  const description = `Find licensed cannabis dispensaries in ${found.cityName}, ${found.stateName}. Compare menus, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
+  const description = `Find licensed cannabis dispensaries in ${found.cityName}, ${found.stateName}. Compare menus, deals, hours, and reviews on Weedtip.`;
   return pageSeo({
     title,
     description,
@@ -378,7 +378,7 @@ export default async function CityDispensariesPage({
       answer: `Weedtip lists ${shops.length} licensed ${shops.length === 1 ? 'dispensary' : 'dispensaries'} in ${cityName}, ${stateName}, each with menus, deals, and reviews.`,
     },
     {
-      question: `Can I order cannabis for pickup or delivery in ${cityName}?`,
+      question: `Do dispensaries in ${cityName} offer pickup or delivery?`,
       answer:
         stats.delivery > 0
           ? `Yes — ${stats.pickup} ${cityName} ${stats.pickup === 1 ? 'dispensary offers' : 'dispensaries offer'} in-store pickup and ${stats.delivery} ${stats.delivery === 1 ? 'offers' : 'offer'} delivery${deliveryShops.length > 0 ? `, including ${nameList(deliveryShops)}` : ''}. Each dispensary's page shows the options it supports.`
@@ -394,7 +394,7 @@ export default async function CityDispensariesPage({
       : []),
     {
       question: `Do I need to be 21 to buy cannabis in ${cityName}?`,
-      answer: `You must be 21 or older (or a qualifying medical patient where permitted) and present a valid government-issued ID at pickup or delivery.`,
+      answer: `You must be 21 or older (or a qualifying medical patient where permitted) and present a valid government-issued ID at the dispensary.`,
     },
   ];
 
@@ -636,8 +636,8 @@ export default async function CityDispensariesPage({
             },
             {
               href: '/learn/how-to-order-cannabis-online',
-              title: 'How to order online',
-              blurb: 'Browse menus, reserve for pickup, skip the line.',
+              title: 'How to find a dispensary',
+              blurb: 'Browse menus, compare prices, and find a shop near you.',
             },
             {
               href: '/learn/medical-vs-recreational',
