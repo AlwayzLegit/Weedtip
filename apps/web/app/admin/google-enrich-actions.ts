@@ -193,7 +193,12 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
         .update({
           google_place_id: hit.id,
           google_enriched_at: new Date().toISOString(),
-          ...(photo ? { google_photo_name: photo, cover_image_url: `/api/dispensary-cover/${d.slug}` } : {}),
+          // ?v=2 busts CDN/next-image caches that may hold a pre-fallback blank
+          // cover (see /api/dispensary-cover route). Bump the version to force a
+          // refetch across every already-cached cover.
+          ...(photo
+            ? { google_photo_name: photo, cover_image_url: `/api/dispensary-cover/${d.slug}?v=2` }
+            : {}),
           ...(photoNames.length ? { google_photo_names: photoNames } : {}),
           // Address-verified fallback: replace our centroid-grade point with
           // Google's premise coordinates (EWKT for the geography column).
@@ -291,7 +296,7 @@ export async function backfillPhotoGalleriesBatch(): Promise<PhotoBackfillResult
           google_photo_names: names,
           ...(names[0] && !d.google_photo_name ? { google_photo_name: names[0] } : {}),
           ...(names[0] && !d.cover_image_url
-            ? { cover_image_url: `/api/dispensary-cover/${d.slug}` }
+            ? { cover_image_url: `/api/dispensary-cover/${d.slug}?v=2` }
             : {}),
         })
         .eq('id', d.id);
