@@ -18,8 +18,16 @@ import requests
 FAVICON = "https://www.google.com/s2/favicons?domain={host}&sz=128"
 # Don't use these as a logo source — they're directories/menu platforms, not the shop.
 SKIP_HOSTS = {
+    # Menu / aggregator platforms — favicon is the platform's, not the shop's
     "weedmaps.com", "leafly.com", "iheartjane.com", "jane.com", "dutchie.com",
-    "google.com", "facebook.com", "instagram.com", "linktr.ee", "linktree.com",
+    "allbud.com", "potguide.com", "wheresweed.com", "leaflink.com", "getmeadow.com",
+    "meadow.com", "tymber.io", "sweed.io", "blaze.me", "greenrush.com", "dispenseapp.com",
+    "webjoint.com",
+    # Social / link-in-bio
+    "facebook.com", "instagram.com", "twitter.com", "x.com", "tiktok.com", "linktr.ee",
+    "linktree.com", "beacons.ai", "snapchat.com", "youtube.com",
+    # Generic / non-brand
+    "google.com", "sites.google.com", "business.site", "bit.ly", "yelp.com",
 }
 
 
