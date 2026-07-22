@@ -45,8 +45,13 @@ let chromium;
 try {
   ({ chromium } = await import('playwright'));
 } catch {
-  console.error('Playwright is required: npm i -D playwright && npx playwright install chromium');
-  process.exit(1);
+  try {
+    // @playwright/test (a repo devDependency) re-exports the browser launchers.
+    ({ chromium } = await import('@playwright/test'));
+  } catch {
+    console.error('Playwright is required: pnpm add -D playwright && npx playwright install chromium');
+    process.exit(1);
+  }
 }
 
 const args = process.argv.slice(2);
