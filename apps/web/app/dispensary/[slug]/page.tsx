@@ -403,11 +403,6 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     : undefined;
   const openingHours = openingHoursSpec(hours as Record<string, { open?: string; close?: string }> | null);
 
-  // Delivery methods offered, in schema.org's controlled vocabulary.
-  const deliveryMethods = [
-    ...(d.is_pickup ? ['http://purl.org/goodrelations/v1#PickUp'] : []),
-    ...(d.is_delivery ? ['http://purl.org/goodrelations/v1#DeliveryModeOwnFleet'] : []),
-  ];
 
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -431,7 +426,6 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     // hand free listings entity endorsement or exposure via our pages.
     ...(paidListing && d.website ? { sameAs: [d.website] } : {}),
     currenciesAccepted: 'USD',
-    ...(deliveryMethods.length ? { availableDeliveryMethod: deliveryMethods } : {}),
     address: {
       '@type': 'PostalAddress',
       ...(d.address ? { streetAddress: d.address } : {}),
