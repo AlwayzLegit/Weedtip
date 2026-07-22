@@ -408,6 +408,9 @@ const brandPlacementSchema = z.object({
     .length(2)
     .transform((s) => s.toUpperCase())
     .optional(),
+  /** 'promoted_brand' features the brand on the Brands directory; 'hero' buys a
+   *  homepage carousel slot (brands rank alongside dispensaries). */
+  type: z.enum(['promoted_brand', 'hero']).default('promoted_brand'),
 });
 export type RequestBrandPlacementInput = z.infer<typeof brandPlacementSchema>;
 
@@ -453,22 +456,23 @@ export async function requestBrandPlacement(
   }
 
   const scope = input.state ? 'state' : 'nationwide';
-  const priceCents = placementPriceCents('promoted_brand', scope, input.days);
+  const priceCents = placementPriceCents(input.type, scope, input.days);
   const where = input.state ? input.state : 'Nationwide';
+  const label = input.type === 'hero' ? 'Homepage hero' : 'Promoted brand';
 
   const service = createServiceClient();
   const { error: insErr } = await service.from('placements').insert({
     brand_id: brand.id,
-    type: 'promoted_brand',
+    type: input.type,
     scope_state: input.state ?? null,
     is_active: false,
     status: 'pending',
     price_cents: priceCents,
-    notes: `Self-serve brand promo request · ${where} · ${input.days} day${input.days === 1 ? '' : 's'}`,
+    notes: `Self-serve brand ${input.type === 'hero' ? 'hero' : 'promo'} request · ${where} · ${input.days} day${input.days === 1 ? '' : 's'}`,
   });
   if (insErr) return { ok: false, error: 'Could not create the placement request.' };
 
-  await sendBillingEmails('Promoted brand', brand.name, user.email ?? null, {
+  await sendBillingEmails(label, brand.name, user.email ?? null, {
     Brand: brand.name,
     Reach: where,
     Days: input.days,

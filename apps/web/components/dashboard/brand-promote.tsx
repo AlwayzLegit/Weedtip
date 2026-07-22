@@ -13,6 +13,7 @@ import {
 
 /** Reserve a brand promotion. Brands aren't geo-scoped, so reach is fixed. */
 export function BrandPromote({ brandId }: { brandId: string }) {
+  const [kind, setKind] = useState<'promoted_brand' | 'hero'>('promoted_brand');
   const [days, setDays] = useState(30);
   const [stateCode, setStateCode] = useState('');
   const [pending, start] = useTransition();
@@ -20,8 +21,8 @@ export function BrandPromote({ brandId }: { brandId: string }) {
   const [notice, setNotice] = useState<string | null>(null);
   const targeted = stateCode.trim().length === 2;
   const price = useMemo(
-    () => placementPriceCents('promoted_brand', targeted ? 'state' : 'nationwide', days),
-    [days, targeted],
+    () => placementPriceCents(kind, targeted ? 'state' : 'nationwide', days),
+    [kind, days, targeted],
   );
 
   return (
@@ -36,10 +37,33 @@ export function BrandPromote({ brandId }: { brandId: string }) {
           {notice}
         </p>
       )}
+      {/* Placement type: directory feature vs the homepage hero carousel. */}
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            ['promoted_brand', 'Promoted brand'],
+            ['hero', 'Homepage hero'],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setKind(k)}
+            className={
+              'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ' +
+              (kind === k
+                ? 'border-primary bg-primary-muted text-primary'
+                : 'border-border text-muted hover:text-foreground')
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <p className="text-muted text-sm">
-        Feature your brand on the Brands directory — nationwide or targeted to one state.
-        Reserving is free; our team confirms billing before it goes live, and it expires
-        automatically.
+        {kind === 'hero'
+          ? 'Claim a slot in the homepage hero carousel — your brand rotates alongside dispensaries, nationwide or targeted to one state. Reserving is free; our team confirms billing before it goes live, and it expires automatically.'
+          : 'Feature your brand on the Brands directory — nationwide or targeted to one state. Reserving is free; our team confirms billing before it goes live, and it expires automatically.'}
       </p>
       <div className="flex flex-wrap items-end gap-4">
         <label className="space-y-1.5 text-sm">
@@ -82,19 +106,20 @@ export function BrandPromote({ brandId }: { brandId: string }) {
           onClick={() => {
             setError(null);
             setNotice(null);
-            track('brand_promo_requested', { days, state: targeted ? stateCode.toUpperCase() : 'nationwide', price_cents: price });
+            track('brand_promo_requested', { kind, days, state: targeted ? stateCode.toUpperCase() : 'nationwide', price_cents: price });
             start(async () => {
               const res = await requestBrandPlacement({
                 brand_id: brandId,
                 days,
                 state: targeted ? stateCode.toUpperCase() : undefined,
+                type: kind,
               });
               if (res.ok) setNotice(res.message);
               else setError(res.error);
             });
           }}
         >
-          Promote brand
+          {kind === 'hero' ? 'Claim hero slot' : 'Promote brand'}
         </Button>
       </div>
     </div>
