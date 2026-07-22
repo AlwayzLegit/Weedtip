@@ -2306,6 +2306,7 @@ export type Database = {
           postal_code: string | null
           country: string
           brand_color: string
+          ordering_enabled: boolean
           updated_at: string
         }
         Insert: {
@@ -2326,6 +2327,7 @@ export type Database = {
           postal_code?: string | null
           country?: string
           brand_color?: string
+          ordering_enabled?: boolean
           updated_at?: string
         }
         Update: {
@@ -2346,6 +2348,7 @@ export type Database = {
           postal_code?: string | null
           country?: string
           brand_color?: string
+          ordering_enabled?: boolean
           updated_at?: string
         }
         Relationships: []

@@ -73,6 +73,31 @@ export async function updatePlatformSettings(_prev: FormState, fd: FormData): Pr
 }
 
 /**
+ * Super-admin kill-switch for consumer online ordering/checkout. OFF makes the
+ * site marketing-only (payment-processor compliant — no order-taking); ON
+ * restores the full add-to-bag → checkout flow once bank approval lands. The
+ * create_order RPC enforces the same flag server-side, so this is authoritative
+ * for both UI and API. Admin-only via RLS.
+ */
+export async function setOrderingEnabled(_prev: FormState, fd: FormData): Promise<FormState> {
+  const enable = str(fd, 'enable') === 'true';
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('platform_settings')
+    .update({ ordering_enabled: enable })
+    .eq('id', 1);
+  if (error) return formError(error.message);
+
+  // The flag gates CTAs sitewide (nav cart, add-to-bag, storefront CTA) and the
+  // storefront/cart pages — refresh everything.
+  revalidatePath('/', 'layout');
+  revalidatePath('/admin/settings');
+  return enable
+    ? formSuccess('Online ordering is now ENABLED sitewide — checkout is live.')
+    : formSuccess('Online ordering is now DISABLED sitewide — the site is marketing-only.');
+}
+
+/**
  * Set or clear the Anthropic API key in platform_secrets — the super-admin
  * switch for AI review summaries. Admin-only via RLS; the value is never
  * echoed back to any client. Clearing the key hides every AI surface again.

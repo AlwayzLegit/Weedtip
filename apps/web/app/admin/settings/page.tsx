@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { AiSwitchCard } from '@/components/admin/ai-switch-card';
+import { CheckoutSwitchCard } from '@/components/admin/checkout-switch-card';
 import { SettingsForm } from '@/components/admin/settings-form';
 import { createClient } from '@/lib/supabase/server';
 
@@ -34,6 +35,7 @@ export default async function AdminSettings() {
           Change them once here.
         </p>
       </div>
+      <CheckoutSwitchCard enabled={settings?.ordering_enabled ?? false} />
       <AiSwitchCard configured={viaEnv || !!secret} viaEnv={viaEnv} />
       {settings ? (
         <SettingsForm settings={settings} />

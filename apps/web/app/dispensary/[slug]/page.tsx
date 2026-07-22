@@ -46,6 +46,7 @@ import { FaqSection } from '@/components/seo/faq-section';
 import { dispensaryFaqs, generatedAbout } from '@/lib/shop-copy';
 import { videoEmbed } from '@/lib/video';
 import { citySlug, openingHoursSpec, US_STATES } from '@/lib/seo';
+import { getPlatformSettings } from '@/lib/settings';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
@@ -331,6 +332,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   }
 
   // Flatten the menu for the interactive browser (search + category tabs + sort).
+  // Global ordering kill-switch: when off the storefront is marketing-only, so
+  // the primary CTA reads "View menu" rather than "Order online".
+  const orderingEnabled = (await getPlatformSettings()).orderingEnabled;
+
   const menuItems: MenuBrowserItem[] = (products ?? []).map((p) => {
     const cat = p.category as { name: string; slug: string; sort_order: number } | null;
     const sale = saleByProduct.get(p.id);
@@ -641,7 +646,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 className="bg-primary bg-primary-grad text-primary-foreground shadow-glow-sm inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold transition hover:opacity-95"
               >
                 <Store className="h-4 w-4" />{' '}
-                {d.accepting_orders ? 'Order online' : 'View menu'}
+                {orderingEnabled && d.accepting_orders ? 'Order online' : 'View menu'}
               </a>
             ) : (
               // Approximate (service-area) pins have no storefront to navigate
