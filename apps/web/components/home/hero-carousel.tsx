@@ -10,11 +10,16 @@ import { cn } from '@/lib/utils';
 export type HeroSlide = {
   /** Paid hero placement id; empty string for organic (unsold-slot) slides. */
   placementId: string;
+  /** Dispensary slides link to /dispensary/*, brand slides to /brand/*. */
+  kind?: 'dispensary' | 'brand';
   slug: string;
   name: string;
-  city: string;
-  state: string;
+  /** Present for dispensaries; brands are nationwide so omit the location line. */
+  city?: string | null;
+  state?: string | null;
   coverUrl: string | null;
+  /** Brand fallback art when the creative/cover is missing. */
+  logoUrl?: string | null;
   /** Creative-library headline — replaces the shop name as the display line. */
   headline?: string | null;
   rating: number | null;
@@ -86,12 +91,12 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
         }}
       >
         <Link
-          href={`/dispensary/${s.slug}`}
+          href={s.kind === 'brand' ? `/brand/${s.slug}` : `/dispensary/${s.slug}`}
           onClick={() => s.placementId && track(s.placementId, 'click')}
           className="block"
         >
           <MediaImage
-            url={s.coverUrl}
+            url={s.coverUrl ?? s.logoUrl ?? null}
             alt={s.name}
             className="h-64 sm:h-80"
             iconClassName="h-16 w-16"
@@ -117,9 +122,13 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                 <span className="text-muted mt-0.5 block text-sm font-medium">{s.name}</span>
               )}
               <p className="text-muted mt-1.5 flex items-center gap-3 text-sm">
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-4 w-4" /> {s.city}, {s.state}
-                </span>
+                {s.city ? (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-4 w-4" /> {s.city}, {s.state}
+                  </span>
+                ) : (
+                  s.kind === 'brand' && <span className="font-medium">Brand</span>
+                )}
                 {typeof s.rating === 'number' && s.rating > 0 && (
                   <span className="inline-flex items-center gap-1">
                     <Star className="text-primary h-4 w-4 fill-current" />
@@ -129,7 +138,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                 )}
               </p>
               <span className="bg-primary bg-primary-grad text-primary-foreground shadow-glow-sm mt-4 inline-flex h-10 items-center rounded-lg px-5 text-sm font-medium">
-                Visit shop
+                {s.kind === 'brand' ? 'View brand' : 'Visit shop'}
               </span>
             </div>
           </MediaImage>

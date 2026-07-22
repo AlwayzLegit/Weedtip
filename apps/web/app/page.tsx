@@ -2,7 +2,9 @@ import { Link } from 'next-view-transitions';
 import { ArrowRight, MapPin } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { CategoryTiles } from '@/components/home/category-tiles';
-import { HeroCarousel, type HeroSlide } from '@/components/home/hero-carousel';
+import { type HeroSlide } from '@/components/home/hero-carousel';
+import { RegionalHero } from '@/components/home/regional-hero';
+import { fetchNationwideHeroSlides } from '@/lib/hero';
 import { MarketFeed, type FeedDeal, type FeedShop } from '@/components/home/market-feed';
 import { RegionGrid, type RegionEntry } from '@/components/home/region-grid';
 import { ScrollCarousel } from '@/components/home/scroll-carousel';
@@ -20,9 +22,6 @@ import { createStaticClient } from '@/lib/supabase/static';
 
 // Public, anon-only page — serve cached HTML and refresh every 5 min (ISR).
 export const revalidate = 300;
-
-const DISP_FIELDS =
-  'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,rating_avg,rating_count,status';
 
 function SectionHeading({
   eyebrow,
@@ -57,7 +56,7 @@ export default async function HomePage() {
   const [
     { data: featured },
     { data: categories },
-    { data: heroPlacements },
+    nationwideHero,
     { data: deals },
     { data: popular },
     { data: brands },
@@ -79,17 +78,9 @@ export default async function HomePage() {
       .order('rating_count', { ascending: false })
       .limit(12),
     supabase.from('categories').select('name,slug').order('sort_order'),
-    supabase
-      .from('placements')
-      .select(
-        `id,priority,creative:ad_creatives(image_url,headline),dispensary:dispensaries(${DISP_FIELDS})`,
-      )
-      .eq('type', 'hero')
-      .eq('is_active', true)
-      .lte('starts_at', nowIso)
-      .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
-      .order('priority', { ascending: false })
-      .limit(4),
+    // Nationwide hero (scope-null placements), dispensaries + brands. The
+    // client swaps in the visitor's regional carousel after hydration.
+    fetchNationwideHeroSlides(),
     supabase
       .from('deals')
       .select(
@@ -131,33 +122,7 @@ export default async function HomePage() {
       .limit(10),
   ]);
 
-  const heroSlides: HeroSlide[] = (heroPlacements ?? [])
-    .map((p) => ({
-      placementId: p.id,
-      creative: p.creative as { image_url: string; headline: string | null } | null,
-      d: p.dispensary as Record<string, unknown> | null,
-    }))
-    .filter(
-      (
-        s,
-      ): s is {
-        placementId: string;
-        creative: { image_url: string; headline: string | null } | null;
-        d: Record<string, unknown>;
-      } => !!s.d && s.d.status === 'active',
-    )
-    .map(({ placementId, creative, d }) => ({
-      placementId,
-      slug: String(d.slug),
-      name: String(d.name),
-      city: String(d.city),
-      state: String(d.state),
-      // Creative-library art + copy win over the raw storefront photo (spec ⑥).
-      coverUrl: creative?.image_url ?? (d.cover_image_url as string | null) ?? null,
-      headline: creative?.headline ?? null,
-      rating: (d.rating_avg as number | null) ?? null,
-      reviewCount: (d.rating_count as number) ?? 0,
-    }));
+  const heroSlides: HeroSlide[] = [...nationwideHero];
 
   // The hero band is a merchandising surface — it should never sit empty.
   // Unsold slots fill with organic top shops (with cover photos), badged
@@ -265,7 +230,7 @@ export default async function HomePage() {
           merchandising surface dispensaries and brands buy into. */}
       {heroSlides.length > 0 && (
         <div className="mx-auto max-w-7xl px-4 pt-6">
-          <HeroCarousel slides={heroSlides} />
+          <RegionalHero initialSlides={heroSlides} />
         </div>
       )}
 
