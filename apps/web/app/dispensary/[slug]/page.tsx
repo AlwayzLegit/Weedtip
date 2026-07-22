@@ -59,7 +59,7 @@ export async function generateMetadata({
   const supabase = await createClient();
   const { data } = await supabase
     .from('dispensaries')
-    .select('name,city,state,description,address')
+    .select('name,city,state,description,address,canonical_slug')
     .eq('slug', slug)
     .maybeSingle();
   if (!data) return { title: 'Dispensary' };
@@ -88,7 +88,10 @@ export async function generateMetadata({
   const description =
     (data.description ? stripMarkdown(data.description).slice(0, 160) : undefined) ??
     `${data.name}${where}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
-  const canonical = `/dispensary/${slug}`;
+  // Re-imported duplicates (same physical business, shared google_place_id) point
+  // their canonical at the primary listing so Google consolidates the pages
+  // instead of splitting signals across near-identical duplicates.
+  const canonical = `/dispensary/${data.canonical_slug ?? slug}`;
   return {
     title,
     description,
