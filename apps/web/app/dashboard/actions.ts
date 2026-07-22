@@ -19,6 +19,7 @@ import { canUseFeature } from '@/lib/features';
 import { notifyAdmins } from '@/lib/notify';
 import { ACTIVE_DISPENSARY_COOKIE } from '@/lib/owner';
 import { BASIC_UPGRADE_MESSAGE, MARKETING_UPGRADE_MESSAGE } from '@/lib/plan';
+import { buildCategoryMap, parseProductsCsv } from '@/lib/product-csv';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import { videoEmbed } from '@/lib/video';
@@ -641,35 +642,6 @@ export async function setAcceptingOrders(accepting: boolean): Promise<void> {
 
 // ─── Bulk menu import (CSV) ──────────────────────────────────────────────────
 
-/** Minimal CSV line parser: handles quoted fields and escaped quotes. */
-function parseCsvLine(line: string): string[] {
-  const out: string[] = [];
-  let cur = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (inQuotes) {
-      if (c === '"') {
-        if (line[i + 1] === '"') {
-          cur += '"';
-          i++;
-        } else inQuotes = false;
-      } else cur += c;
-    } else if (c === '"') {
-      inQuotes = true;
-    } else if (c === ',') {
-      out.push(cur);
-      cur = '';
-    } else {
-      cur += c;
-    }
-  }
-  out.push(cur);
-  return out.map((s) => s.trim());
-}
-
-const IMPORT_STRAINS = new Set(['indica', 'sativa', 'hybrid', 'cbd']);
-
 /**
  * Bulk-import products from pasted CSV. Required columns: name, category, price
  * (dollars). Optional: brand, strain_type, thc, cbd, unit, description, in_stock.
@@ -685,82 +657,10 @@ export async function importProducts(_prev: FormState, fd: FormData): Promise<Fo
   // Bulk CSV import is a Basic-tier feature; adding products by hand stays free.
   if (!(await canUseFeature(dispensaryId, 'bulk_import'))) return formError(BASIC_UPGRADE_MESSAGE);
 
-  const lines = (str(fd, 'csv') ?? '')
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-  if (lines.length < 2) {
-    return formError('Paste a CSV with a header row and at least one product row.');
-  }
-
-  const header = parseCsvLine(lines[0]!).map((h) => h.toLowerCase());
-  const idx = (name: string) => header.indexOf(name);
-  const ci = {
-    name: idx('name'),
-    category: idx('category'),
-    price: idx('price'),
-    brand: idx('brand'),
-    strain: idx('strain_type'),
-    thc: idx('thc'),
-    cbd: idx('cbd'),
-    unit: idx('unit'),
-    description: idx('description'),
-    inStock: idx('in_stock'),
-  };
-  if (ci.name < 0 || ci.category < 0 || ci.price < 0) {
-    return formError('CSV must include at least "name", "category", and "price" columns.');
-  }
-
   const { data: categories } = await supabase.from('categories').select('id,slug,name');
-  const catMap = new Map<string, string>();
-  for (const c of categories ?? []) {
-    catMap.set(c.slug.toLowerCase(), c.id);
-    catMap.set(c.name.toLowerCase(), c.id);
-  }
-
-  const rows: Database['public']['Tables']['products']['Insert'][] = [];
-  const errors: string[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cells = parseCsvLine(lines[i]!);
-    const get = (col: number) => (col >= 0 ? (cells[col] ?? '').trim() : '');
-
-    const name = get(ci.name);
-    if (!name) {
-      errors.push(`Row ${i}: missing name`);
-      continue;
-    }
-    const categoryId = catMap.get(get(ci.category).toLowerCase());
-    if (!categoryId) {
-      errors.push(`Row ${i} (${name}): unknown category "${get(ci.category)}"`);
-      continue;
-    }
-    const price = Number(get(ci.price));
-    if (!Number.isFinite(price) || price < 0) {
-      errors.push(`Row ${i} (${name}): invalid price`);
-      continue;
-    }
-    const strain = get(ci.strain).toLowerCase();
-    const thc = Number(get(ci.thc));
-    const cbd = Number(get(ci.cbd));
-    const inStock = get(ci.inStock).toLowerCase();
-
-    rows.push({
-      dispensary_id: dispensaryId,
-      category_id: categoryId,
-      name,
-      slug: slugify(name),
-      brand: get(ci.brand) || null,
-      description: get(ci.description) || null,
-      strain_type: IMPORT_STRAINS.has(strain)
-        ? (strain as Database['public']['Enums']['strain_type'])
-        : null,
-      thc_percentage: Number.isFinite(thc) && thc >= 0 && thc <= 100 ? thc : null,
-      cbd_percentage: Number.isFinite(cbd) && cbd >= 0 && cbd <= 100 ? cbd : null,
-      price_cents: Math.round(price * 100),
-      unit: get(ci.unit) || null,
-      in_stock: inStock ? ['true', 'yes', '1', 'y'].includes(inStock) : true,
-    });
-  }
+  const parsed = parseProductsCsv(str(fd, 'csv') ?? '', dispensaryId, buildCategoryMap(categories));
+  if (!parsed.ok) return formError(parsed.message);
+  const { rows, errors } = parsed;
 
   if (rows.length === 0) {
     return formError(`No valid rows. ${errors.slice(0, 5).join('; ')}`);
