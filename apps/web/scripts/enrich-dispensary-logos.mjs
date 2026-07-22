@@ -104,7 +104,7 @@ async function findLogo(page) {
   return page.evaluate(() => {
     const abs = (u) => {
       try {
-        return new URL(u, location.href).href;
+        return new URL(u, globalThis.location.href).href;
       } catch {
         return null;
       }
