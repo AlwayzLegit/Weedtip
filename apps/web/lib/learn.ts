@@ -40,40 +40,40 @@ const CORE_ARTICLES: Article[] = [
   {
     slug: 'how-to-order-cannabis-online',
     topic: 'Ordering',
-    title: 'How to order cannabis online for pickup or delivery',
+    title: 'How to find a cannabis dispensary near you',
     description:
-      'A step-by-step guide to finding a licensed dispensary, building your cart, and ordering cannabis for pickup or delivery.',
+      'A step-by-step guide to finding a licensed dispensary, browsing its menu, comparing prices, and planning your visit.',
     datePublished: '2026-06-02',
     dateModified: '2026-06-02',
     readMinutes: 4,
     body: [
       {
         paragraphs: [
-          'Ordering cannabis online is fast and convenient once you know the steps. On Weedtip you can browse licensed dispensaries near you, compare menus and prices, and place an order for in-store pickup or delivery where available. Here is how it works from start to finish.',
+          'Finding the right dispensary is easy once you know where to look. On Weedtip you can search licensed dispensaries near you, compare menus and prices, read reviews, and plan a visit. Here is how it works from start to finish.',
         ],
       },
       {
         heading: '1. Find a licensed dispensary near you',
         paragraphs: [
-          'Start on the Dispensaries page and search by name or use your location to see nearby shops. You can filter by pickup, delivery, open-now, and product category. Every listing shows hours, ratings, and the services it offers so you can pick the right one.',
+          'Start on the Dispensaries page and search by name or use your location to see nearby shops. You can filter by open-now and product category, and every listing shows hours, ratings, and the services each shop offers so you can pick the right one.',
         ],
       },
       {
-        heading: '2. Browse the menu and build your cart',
+        heading: '2. Browse the menu and compare',
         paragraphs: [
-          'Open a dispensary to see its full menu grouped by category — flower, vapes, edibles, concentrates, and more. Each product lists price, potency (THC/CBD), brand, and reviews. Add items to your cart and adjust quantities as you go.',
+          'Open a dispensary to see its full menu grouped by category — flower, vapes, edibles, concentrates, and more. Each product lists price, potency (THC/CBD), brand, and reviews, so you can compare your options before you go.',
         ],
       },
       {
-        heading: '3. Choose pickup or delivery and check out',
+        heading: '3. Check prices and plan your visit',
         paragraphs: [
-          'At checkout, choose pickup or delivery (if the shop offers it). Prices and totals are calculated from the dispensary’s live menu, so what you see is what you pay. You can pay online where available, or pay in person at the dispensary.',
+          'Prices come straight from the dispensary’s menu, so you know roughly what to expect. When you’re ready, head to the shop to buy in person — accepted payment methods vary by dispensary.',
         ],
       },
       {
         heading: '4. Bring a valid 21+ ID',
         paragraphs: [
-          'You must be 21 or older (or a qualifying medical patient where permitted) to buy cannabis. Bring a valid government-issued ID to pickup or have it ready for delivery — dispensaries are required to verify your age.',
+          'You must be 21 or older (or a qualifying medical patient where permitted) to buy cannabis. Bring a valid government-issued ID — dispensaries are required to verify your age.',
         ],
       },
     ],

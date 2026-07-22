@@ -48,7 +48,7 @@ export async function generateMetadata({
   const name = US_STATES[state.toUpperCase()];
   if (!name) return { title: 'Deals' };
   const title = `Cannabis Deals in ${name}`;
-  const description = `Find live cannabis deals and discounts from licensed dispensaries in ${name}. Compare offers and order for pickup or delivery on Weedtip.`;
+  const description = `Find live cannabis deals and discounts from licensed dispensaries in ${name}. Compare offers and prices near you on Weedtip.`;
   const meta = pageSeo({ title, description, path: `/deals/${state.toLowerCase()}` });
   // Don't index a state deals page with no live deals — thin content.
   const deals = await activeDealsInState(state.toUpperCase());
@@ -78,7 +78,7 @@ export default async function StateDealsPage({
     },
     {
       question: `Do I need to be 21 to use cannabis deals?`,
-      answer: `Yes — you must be 21 or older (or a qualifying medical patient where permitted) and present a valid ID at pickup or delivery.`,
+      answer: `Yes — you must be 21 or older (or a qualifying medical patient where permitted) and present a valid ID at the dispensary.`,
     },
   ];
 

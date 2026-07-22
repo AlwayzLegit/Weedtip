@@ -72,7 +72,7 @@ export function setupSteps(
     {
       key: 'menu',
       label: 'Add your menu',
-      hint: 'Import a CSV or connect your POS — a live menu is what shoppers come for.',
+      hint: 'Import a CSV or connect your POS — a full menu is what shoppers come for.',
       done: counts.products > 0,
       href: '/dashboard/products/import',
       cta: 'Import menu',

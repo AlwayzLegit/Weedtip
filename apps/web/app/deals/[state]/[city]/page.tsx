@@ -67,7 +67,7 @@ export async function generateMetadata({
   const found = await loadCityDeals(state, city);
   if (!found) return { title: 'Deals' };
   const title = `Cannabis Deals in ${found.cityName}, ${state.toUpperCase()}`;
-  const description = `Find live cannabis deals and discounts from licensed dispensaries in ${found.cityName}, ${found.stateName}. Order for pickup or delivery on Weedtip.`;
+  const description = `Find live cannabis deals and discounts from licensed dispensaries in ${found.cityName}, ${found.stateName}. Compare offers and prices near you on Weedtip.`;
   return pageSeo({
     title,
     description,

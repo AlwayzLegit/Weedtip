@@ -18,4 +18,4 @@ const raw = fromEnv ?? fromVercel ?? CANONICAL_PROD;
 export const SITE_URL = raw === 'https://weedtip.com' ? CANONICAL_PROD : raw;
 export const SITE_NAME = 'Weedtip';
 export const SITE_DESCRIPTION =
-  'Discover licensed dispensaries near you, browse menus, read reviews, find deals, and order for pickup or delivery.';
+  'Find licensed dispensaries near you — browse menus, compare prices, read reviews, and discover the best cannabis deals.';
