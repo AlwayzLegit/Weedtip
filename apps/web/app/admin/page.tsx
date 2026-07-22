@@ -216,6 +216,19 @@ export default async function AdminOverview() {
           </div>
           <ArrowRight className="text-muted h-4 w-4 shrink-0" />
         </Link>
+        <Link
+          href="/admin/menu-import"
+          className="rounded-card border-border bg-surface hover:border-primary/50 flex items-center justify-between border p-4 transition-colors"
+        >
+          <div className="text-sm">
+            <p className="font-medium">Bulk menu import</p>
+            <p className="text-muted mt-0.5 text-xs">
+              Seed menus across many shops from one CSV (keyed by license or slug) — works on
+              unclaimed listings. Per-shop seeding lives on each dispensary&apos;s admin page.
+            </p>
+          </div>
+          <ArrowRight className="text-muted h-4 w-4 shrink-0" />
+        </Link>
       </section>
 
       {/* Revenue streams */}
