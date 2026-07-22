@@ -43,9 +43,9 @@ export const MORE_ARTICLES_3: Article[] = [
         ],
       },
       {
-        heading: 'Skip the line: order ahead online',
+        heading: 'Do your research before you go',
         paragraphs: [
-          'Most dispensaries let you browse the live menu and reserve products online for in-store pickup. You still show ID and pay at the counter, but your order is bagged and waiting. It is the easiest way to shop as a beginner — you can research products calmly at home instead of deciding at the counter.',
+          'Most dispensaries publish their full menu on Weedtip, so you can research products calmly at home — comparing prices, potency, and reviews — instead of deciding at the counter. Note what you want, then visit the shop to buy and show your ID. It is the easiest way to shop as a beginner.',
         ],
       },
     ],

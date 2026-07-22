@@ -87,7 +87,7 @@ export async function generateMetadata({
     : ` — delivery in ${data.state}`;
   const description =
     (data.description ? stripMarkdown(data.description).slice(0, 160) : undefined) ??
-    `${data.name}${where}. Browse the menu, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
+    `${data.name}${where}. Browse the menu, deals, hours, and reviews on Weedtip.`;
   // Re-imported duplicates (same physical business, shared google_place_id) point
   // their canonical at the primary listing so Google consolidates the pages
   // instead of splitting signals across near-identical duplicates.
@@ -992,7 +992,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                       {d.owner_id
                         ? 'This dispensary hasn’t published its menu yet.'
                         : d.license_number
-                          ? 'This is an unclaimed listing. Are you the owner? Claim it to add your live menu, deals, and photos.'
+                          ? 'This is an unclaimed listing. Are you the owner? Claim it to add your menu, deals, and photos.'
                           : 'This is an unclaimed listing. Claiming opens once its state license is verified on our end.'}
                     </p>
                     {d.phone && (

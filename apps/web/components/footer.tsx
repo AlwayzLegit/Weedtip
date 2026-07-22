@@ -71,8 +71,8 @@ export async function Footer() {
           <div className="max-w-xs space-y-2 lg:col-span-2">
             <Logo />
             <p className="text-muted text-sm">
-              The Google Maps of cannabis. Discover licensed dispensaries near you, browse live
-              menus, and order for pickup or delivery.
+              Find licensed dispensaries near you. Browse menus, compare prices, read reviews, and
+              discover the best cannabis deals.
             </p>
             {/* Business contact — required on-site for payment processing. */}
             <address className="text-muted text-sm not-italic">

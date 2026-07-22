@@ -113,12 +113,10 @@ export function dispensaryFaqs(
   }
 
   faqs.push({
-    question: `How do I order from ${d.name} on Weedtip?`,
+    question: `How do I shop at ${d.name}?`,
     answer: opts.hasMenu
-      ? `Browse ${d.name}'s live menu above, add items to your cart, and check out for ${
-          d.is_delivery && !d.is_pickup ? 'delivery' : 'pickup'
-        }. You pay the dispensary directly — Weedtip never charges your card.`
-      : `${d.name} hasn't published its menu on Weedtip yet. You can still see its address, hours, and contact details above, and check back soon for live products and deals.`,
+      ? `Browse ${d.name}'s menu above to see current products, prices, and deals, then visit the shop to buy in person. Bring a valid 21+ ID — you pay the dispensary directly.`
+      : `${d.name} hasn't published its menu on Weedtip yet. You can still see its address, hours, and contact details above, and check back soon for products and deals.`,
   });
 
   faqs.push({

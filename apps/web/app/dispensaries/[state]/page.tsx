@@ -21,7 +21,7 @@ export async function generateMetadata({
   const name = US_STATES[state.toUpperCase()];
   if (!name) return { title: 'Dispensaries' };
   const title = `Cannabis Dispensaries in ${name}`;
-  const description = `Find licensed cannabis dispensaries across ${name} by city. Browse menus, deals, hours, and reviews, then order for pickup or delivery on Weedtip.`;
+  const description = `Find licensed cannabis dispensaries across ${name} by city. Browse menus, deals, hours, and reviews on Weedtip.`;
   return pageSeo({ title, description, path: `/dispensaries/${state.toLowerCase()}` });
 }
 
@@ -67,12 +67,12 @@ export default async function StateDispensariesPage({
       answer: `Weedtip lists ${total} licensed ${total === 1 ? 'dispensary' : 'dispensaries'}${cities.length ? ` across ${cities.length} ${cities.length === 1 ? 'city' : 'cities'}` : ''} in ${stateName}, each with menus, deals, and reviews.`,
     },
     {
-      question: `Can I order cannabis for pickup or delivery in ${stateName}?`,
-      answer: `Many ${stateName} dispensaries on Weedtip offer in-store pickup, and some offer delivery. Each dispensary's page shows the options it supports.`,
+      question: `How do I find a cannabis dispensary in ${stateName}?`,
+      answer: `Browse ${stateName} by city on Weedtip to see licensed dispensaries near you, each with its menu, deals, hours, and reviews. Open any dispensary's page for its address, phone, and directions.`,
     },
     {
       question: `Do I need to be 21 to buy cannabis in ${stateName}?`,
-      answer: `You must be 21 or older (or a qualifying medical patient where permitted) and present a valid government-issued ID at pickup or delivery.`,
+      answer: `You must be 21 or older (or a qualifying medical patient where permitted) and present a valid government-issued ID at the dispensary.`,
     },
     {
       question: `How do I find cannabis deals in ${stateName}?`,
@@ -141,8 +141,8 @@ export default async function StateDispensariesPage({
         <h2 className="mb-2 text-lg font-semibold">About cannabis dispensaries in {stateName}</h2>
         <p className="text-muted text-sm leading-relaxed">
           {stateName} is home to licensed cannabis dispensaries on Weedtip. Browse menus, compare
-          prices and deals, read reviews, and order online for pickup or delivery. Always bring a
-          valid 21+ ID, and check your local regulations before ordering.
+          prices and deals, and read reviews to find the right shop near you. Always bring a
+          valid 21+ ID, and check your local regulations before you visit.
         </p>
       </section>
 

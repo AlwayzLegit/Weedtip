@@ -17,7 +17,7 @@ import { bboxAround, STATE_BOUNDS, US_BOUNDS, type BBox } from '@/lib/us-state-b
 export const metadata: Metadata = pageSeo({
   title: 'Cannabis Delivery',
   description:
-    'Find licensed cannabis delivery services near you on a live map. Browse menus and deals from dispensaries that deliver, and order online on Weedtip.',
+    'Find licensed cannabis delivery services near you on a live map. Browse menus and deals from dispensaries that deliver on Weedtip.',
   path: '/deliveries',
 });
 
@@ -34,7 +34,7 @@ const FAQS = [
   {
     question: 'How does cannabis delivery work on Weedtip?',
     answer:
-      'Browse dispensaries that deliver, add products to your cart, and check out for delivery. A valid 21+ ID is required at handoff.',
+      "Browse dispensaries that deliver near you, compare their menus, prices, and deals, and check each shop's page for its delivery area. A valid 21+ ID is required at handoff.",
   },
   {
     question: 'Is cannabis delivery legal near me?',
@@ -173,9 +173,9 @@ export default async function DeliveriesPage({
         <section className="mt-10 max-w-3xl">
           <h2 className="mb-2 text-lg font-semibold">Cannabis delivery near you</h2>
           <p className="text-muted text-sm leading-relaxed">
-            Compare licensed dispensaries that deliver cannabis near you on Weedtip. Browse live
-            menus, prices, and deals, read reviews, and order online for delivery. Bring a valid
-            21+ ID at handoff and check your local regulations before ordering.
+            Compare licensed dispensaries that deliver cannabis near you on Weedtip. Browse menus,
+            prices, and deals, and read reviews to find the right one. Bring a valid 21+ ID at
+            handoff and check your local regulations.
           </p>
         </section>
         <FaqSection items={FAQS} />

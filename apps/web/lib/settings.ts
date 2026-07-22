@@ -34,7 +34,7 @@ export type PlatformSettings = {
 export const PLATFORM_FALLBACK: PlatformSettings = {
   brandName: SITE_NAME,
   legalName: SITE_NAME,
-  tagline: 'The Google Maps of cannabis',
+  tagline: 'Find licensed dispensaries near you',
   supportEmail: 'support@weedtip.com',
   salesEmail: 'sales@weedtip.com',
   adsEmail: 'ads@weedtip.com',
