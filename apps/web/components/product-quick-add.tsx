@@ -17,8 +17,11 @@ export function ProductQuickAdd({
   dispensary: DispensaryRef;
   product: { productId: string; name: string; priceCents: number };
 }) {
-  const { addItem } = useCart();
+  const { addItem, orderingEnabled } = useCart();
   const [added, setAdded] = useState(false);
+
+  // Marketing-only mode: no quick-add on product cards.
+  if (!orderingEnabled) return null;
 
   return (
     <button

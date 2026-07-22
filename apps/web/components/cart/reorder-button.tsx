@@ -20,8 +20,11 @@ export function ReorderButton({
   dispensary: DispensaryRef;
   items: ReorderItem[];
 }) {
-  const { addItem } = useCart();
+  const { addItem, orderingEnabled } = useCart();
   const router = useRouter();
+
+  // Marketing-only mode: reordering is an ordering action — hide it.
+  if (!orderingEnabled) return null;
 
   return (
     <Button

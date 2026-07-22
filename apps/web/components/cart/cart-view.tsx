@@ -41,7 +41,7 @@ export function CartView({
   isAuthenticated: boolean;
   savedAddress?: DeliveryAddress | null;
 }) {
-  const { cart, subtotalCents, setQuantity, removeItem, clear } = useCart();
+  const { cart, subtotalCents, setQuantity, removeItem, clear, orderingEnabled } = useCart();
   const router = useRouter();
   const [orderType, setOrderType] = useState<OrderType>('pickup');
   const [address, setAddress] = useState<DeliveryAddress>(savedAddress ?? EMPTY_ADDRESS);
@@ -99,6 +99,26 @@ export function CartView({
       cancelled = true;
     };
   }, [dispensaryId, promo, subtotalCents, cart]);
+
+  // Marketing-only mode: online ordering is turned off platform-wide. Direct
+  // visitors to /cart still land somewhere sensible instead of a checkout form.
+  if (!orderingEnabled) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="bg-surface-2 text-muted mx-auto flex h-14 w-14 items-center justify-center rounded-full">
+          <ShoppingCart className="h-7 w-7" />
+        </div>
+        <p className="mt-4 font-medium">Online ordering is currently unavailable</p>
+        <p className="text-muted mx-auto mt-1 max-w-md text-sm">
+          You can browse menus, prices, and deals, then order directly with the dispensary. Online
+          checkout on Weedtip is coming soon.
+        </p>
+        <Link href="/dispensaries" className="mt-5 inline-block">
+          <Button>Find dispensaries</Button>
+        </Link>
+      </div>
+    );
+  }
 
   if (!cart || cart.items.length === 0) {
     return (

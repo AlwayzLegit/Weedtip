@@ -7,6 +7,7 @@ import { deliveryAddressSchema, orderTypeSchema } from '@weedtip/shared';
 import { newOrderForDispensaryEmail, orderConfirmationEmail, sendEmail } from '@/lib/email';
 import { canUseFeature } from '@/lib/features';
 import { rateLimit } from '@/lib/rate-limit';
+import { getPlatformSettings } from '@/lib/settings';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -142,6 +143,13 @@ export async function getCheckoutRules(dispensaryId: string): Promise<CheckoutRu
 }
 
 export async function startCheckout(rawInput: StartCheckoutInput): Promise<StartCheckoutResult> {
+  // Compliance kill-switch: online ordering can be disabled platform-wide. The
+  // create_order RPC enforces this too (belt-and-suspenders for direct calls);
+  // this is the friendly, earlier failure.
+  if (!(await getPlatformSettings()).orderingEnabled) {
+    return { ok: false, error: 'Online ordering is currently unavailable on Weedtip.' };
+  }
+
   if (!(await rateLimit('checkout', { limit: 15, window: '60 s' })).success) {
     return { ok: false, error: 'Too many checkout attempts. Please wait a moment and try again.' };
   }

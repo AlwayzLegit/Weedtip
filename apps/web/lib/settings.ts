@@ -27,6 +27,8 @@ export type PlatformSettings = {
   postalCode: string | null;
   country: string;
   brandColor: string;
+  /** Global kill-switch for consumer online ordering/checkout. OFF = marketing-only (payment-processor compliant). */
+  orderingEnabled: boolean;
 };
 
 export const PLATFORM_FALLBACK: PlatformSettings = {
@@ -46,6 +48,8 @@ export const PLATFORM_FALLBACK: PlatformSettings = {
   postalCode: '91606',
   country: 'US',
   brandColor: '#1a7f4e',
+  // Compliant default: no order-taking until the super-admin turns it on.
+  orderingEnabled: false,
 };
 
 /** Memoized per request; the row is tiny and rarely changes. */
@@ -75,6 +79,7 @@ export const getPlatformSettings = cache(async (): Promise<PlatformSettings> => 
       postalCode: data.postal_code,
       country: data.country,
       brandColor: data.brand_color,
+      orderingEnabled: data.ordering_enabled ?? false,
     };
   } catch {
     return PLATFORM_FALLBACK;

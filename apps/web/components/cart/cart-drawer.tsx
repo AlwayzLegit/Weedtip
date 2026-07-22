@@ -13,7 +13,8 @@ import { useCart } from './cart-provider';
  * never collects payment (pay at the store / to the delivery partner).
  */
 export function CartDrawer() {
-  const { cart, subtotalCents, count, drawerOpen, closeDrawer, setQuantity, removeItem } = useCart();
+  const { cart, subtotalCents, count, drawerOpen, closeDrawer, setQuantity, removeItem, orderingEnabled } =
+    useCart();
 
   // Close on Escape, and lock body scroll while open.
   useEffect(() => {
@@ -27,7 +28,8 @@ export function CartDrawer() {
     };
   }, [drawerOpen, closeDrawer]);
 
-  if (!drawerOpen) return null;
+  // Marketing-only mode: the bag drawer never opens (adds are disabled too).
+  if (!orderingEnabled || !drawerOpen) return null;
 
   const empty = !cart || cart.items.length === 0;
 

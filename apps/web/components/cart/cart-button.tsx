@@ -5,7 +5,9 @@ import { ShoppingCart } from 'lucide-react';
 import { useCart } from './cart-provider';
 
 export function CartButton() {
-  const { count } = useCart();
+  const { count, orderingEnabled } = useCart();
+  // Marketing-only mode: no cart entry point in the nav.
+  if (!orderingEnabled) return null;
   return (
     <Link
       href="/cart"

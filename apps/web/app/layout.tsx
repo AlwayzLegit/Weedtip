@@ -101,7 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
         <PostHogProvider>
-          <CartProvider>
+          <CartProvider orderingEnabled={settings.orderingEnabled}>
             <Navbar />
             <div id="main-content" className="flex-1">
               {children}

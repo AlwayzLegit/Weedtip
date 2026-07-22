@@ -36,6 +36,13 @@ interface CartContextValue {
   cart: Cart | null;
   count: number;
   subtotalCents: number;
+  /**
+   * Global kill-switch for consumer ordering/checkout. When false, every
+   * ordering CTA (add-to-bag, cart, checkout) hides itself — the site is
+   * marketing-only (payment-processor compliant). Sourced from
+   * platform_settings.ordering_enabled and passed in from the server layout.
+   */
+  orderingEnabled: boolean;
   /** Add an item. Switching dispensaries replaces the cart (single-shop carts). */
   addItem: (dispensary: DispensaryRef, item: Omit<CartItem, 'quantity'>, qty?: number) => void;
   setQuantity: (productId: string, quantity: number) => void;
@@ -49,7 +56,13 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({
+  children,
+  orderingEnabled = false,
+}: {
+  children: ReactNode;
+  orderingEnabled?: boolean;
+}) {
   const [cart, setCart] = useState<Cart | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -128,6 +141,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       cart,
       count,
       subtotalCents,
+      orderingEnabled,
       addItem,
       setQuantity,
       removeItem,
@@ -136,7 +150,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       openDrawer,
       closeDrawer,
     };
-  }, [cart, addItem, setQuantity, removeItem, clear, drawerOpen, openDrawer, closeDrawer]);
+  }, [
+    cart,
+    orderingEnabled,
+    addItem,
+    setQuantity,
+    removeItem,
+    clear,
+    drawerOpen,
+    openDrawer,
+    closeDrawer,
+  ]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

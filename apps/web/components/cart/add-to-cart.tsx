@@ -16,9 +16,12 @@ export function AddToCart({
   /** Render a quantity stepper beside the button (product detail pages). */
   showQuantity?: boolean;
 }) {
-  const { addItem } = useCart();
+  const { addItem, orderingEnabled } = useCart();
   const [added, setAdded] = useState(false);
   const [qty, setQty] = useState(1);
+
+  // Marketing-only mode: no add-to-bag on menus/product pages.
+  if (!orderingEnabled) return null;
 
   function add() {
     addItem(dispensary, product, showQuantity ? qty : 1);
