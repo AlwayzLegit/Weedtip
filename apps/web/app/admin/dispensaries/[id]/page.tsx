@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { AdminDispensaryForm } from '@/components/admin/admin-dispensary-form';
 import { AdminDangerZone } from '@/components/admin/admin-danger-zone';
 import { AdminFeaturePanel } from '@/components/admin/admin-feature-panel';
+import { AdminMenuSeed } from '@/components/admin/admin-menu-seed';
 import { Badge } from '@/components/ui/badge';
 import { getFeatureStates } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
@@ -41,6 +42,11 @@ export default async function AdminDispensaryEditPage({
       .select('id', { count: 'exact', head: true })
       .eq('dispensary_id', d.id),
   ]);
+
+  const { count: productCount } = await supabase
+    .from('products')
+    .select('id', { count: 'exact', head: true })
+    .eq('dispensary_id', d.id);
   const dupMap = new Map<
     string,
     { id: string; name: string; city: string | null; state: string; license_number: string | null }
@@ -88,6 +94,8 @@ export default async function AdminDispensaryEditPage({
       />
 
       <AdminDispensaryForm dispensary={d} />
+
+      <AdminMenuSeed dispensaryId={d.id} productCount={productCount ?? 0} />
 
       <AdminDangerZone
         dispensaryId={d.id}
