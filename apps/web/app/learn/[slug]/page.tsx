@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
 import { ArrowRight, BookOpen, ChevronDown, Clock, Leaf, MapPin } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { MediaImage } from '@/components/media-image';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Button } from '@/components/ui/button';
-import { ARTICLES, getArticle, relatedArticles } from '@/lib/learn';
+import { ARTICLES, articleHeroUrl, getArticle, relatedArticles } from '@/lib/learn';
 import { absoluteUrl, DEFAULT_OG_IMAGE, pageSeo } from '@/lib/seo';
 import { SITE_NAME } from '@/lib/site';
 
@@ -39,6 +39,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const article = getArticle(slug);
   if (!article) notFound();
 
+  // Only articles with a real hero webp reference it; the rest avoid a 404'd
+  // image request (and fall back to the seeded gradient art below).
+  const hero = articleHeroUrl(slug);
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -46,7 +50,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     description: article.description,
     datePublished: article.datePublished,
     dateModified: article.dateModified,
-    image: [absoluteUrl(`/learn/${slug}.webp`), absoluteUrl(DEFAULT_OG_IMAGE)],
+    image: hero ? [absoluteUrl(hero), absoluteUrl(DEFAULT_OG_IMAGE)] : [absoluteUrl(DEFAULT_OG_IMAGE)],
     mainEntityOfPage: absoluteUrl(`/learn/${slug}`),
     author: { '@type': 'Organization', name: SITE_NAME },
     publisher: {
@@ -109,15 +113,15 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </span>
         </p>
 
-        {/* Generated editorial hero — every article ships one at
-            public/learn/<slug>.webp (add one when adding an article). */}
-        <Image
-          src={`/learn/${slug}.webp`}
+        {/* Editorial hero: the real webp when the article ships one, else the
+            seeded gradient art (never a 404'd image request). */}
+        <MediaImage
+          url={hero}
           alt={article.title}
-          width={1536}
-          height={864}
+          artSeed={article.title}
+          artIcon={<BookOpen className="text-foreground/20 h-10 w-10" strokeWidth={1.5} />}
           priority
-          className="rounded-card border-border mt-6 w-full border object-cover"
+          className="rounded-card border-border mt-6 aspect-[16/9] w-full border"
         />
 
         {toc.length > 2 && (
