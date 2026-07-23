@@ -9,13 +9,17 @@ import { RecordRecentlyViewed } from '@/components/recently-viewed';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { ProductGallery } from '@/components/product-gallery';
+import { ProductCard, type ProductCardData } from '@/components/product-card';
 import { DispensarySectionNav } from '@/components/dispensary/section-nav';
+import { OpenNowChip } from '@/components/open-now-chip';
 import { StickyCtaBar } from '@/components/sticky-cta-bar';
 import { ProductReviewForm } from '@/components/product-review-form';
 import { RatingStars } from '@/components/rating-stars';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
+import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { dealBadge, formatPrice } from '@/lib/format';
+import type { OperatingHours } from '@weedtip/shared';
 import { getAuth } from '@/lib/auth';
 import { getDispensaryTier, tierAtLeast } from '@/lib/plan';
 import { SITE_URL } from '@/lib/site';
@@ -84,7 +88,38 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const description = product.description ?? catalog?.description ?? null;
 
   const nowIso = new Date().toISOString();
-  const [{ data: reviews }, { user }, { data: shopDeals }, { data: siblings }] = await Promise.all([
+  // Multi-retailer "where to buy": other active-shop listings of the SAME item.
+  // A shared catalog_id is the strong signal, but scraped menus often lack one —
+  // so also match this brand's identically-named SKU. Both run in parallel and
+  // merge, so the compare list populates far more often than catalog_id alone.
+  const siblingSelect =
+    'id,price_cents,in_stock,dispensary:dispensaries!inner(slug,name,city,state,status,hours,timezone)';
+  const siblingQueries = [];
+  if (product.catalog_id) {
+    siblingQueries.push(
+      supabase
+        .from('products')
+        .select(siblingSelect)
+        .eq('catalog_id', product.catalog_id)
+        .neq('id', id)
+        .eq('dispensary.status', 'active')
+        .limit(12),
+    );
+  } else {
+    // No shared catalog id (common for scraped menus) — match the identically
+    // named SKU across shops. Exact (not fuzzy) so we never link unrelated items.
+    siblingQueries.push(
+      supabase
+        .from('products')
+        .select(siblingSelect)
+        .ilike('name', product.name)
+        .neq('id', id)
+        .eq('dispensary.status', 'active')
+        .limit(12),
+    );
+  }
+
+  const [{ data: reviews }, { user }, { data: shopDeals }, siblingResults] = await Promise.all([
     supabase
       .from('product_reviews')
       .select('id,rating,body,created_at,author_name,user_id')
@@ -103,20 +138,32 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           .order('end_date')
           .limit(3)
       : Promise.resolve({ data: [] }),
-    // Multi-retailer compare: other shops carrying the same catalog item.
-    product.catalog_id
-      ? supabase
-          .from('products')
-          .select(
-            'id,price_cents,in_stock,dispensary:dispensaries!inner(slug,name,city,state,status)',
-          )
-          .eq('catalog_id', product.catalog_id)
-          .neq('id', id)
-          .eq('dispensary.status', 'active')
-          .order('price_cents')
-          .limit(6)
-      : Promise.resolve({ data: [] }),
+    siblingQueries.length ? Promise.all(siblingQueries) : Promise.resolve([]),
   ]);
+
+  type SiblingRow = {
+    id: string;
+    price_cents: number;
+    in_stock: boolean;
+    dispensary: {
+      slug: string;
+      name: string;
+      city: string | null;
+      state: string;
+      hours: OperatingHours | null;
+      timezone: string | null;
+    } | null;
+  };
+  // Merge + de-dupe the two match strategies; in-stock first, then cheapest.
+  const siblingById = new Map<string, SiblingRow>();
+  for (const res of siblingResults) {
+    for (const row of (res.data as SiblingRow[] | null) ?? []) {
+      if (!siblingById.has(row.id)) siblingById.set(row.id, row);
+    }
+  }
+  const siblings = [...siblingById.values()]
+    .sort((a, b) => Number(b.in_stock) - Number(a.in_stock) || a.price_cents - b.price_cents)
+    .slice(0, 8);
 
   const dispensary = product.dispensary as { id: string; slug: string; name: string } | null;
   // Online ordering is a Basic-tier feature — free shops list their menu but
@@ -133,6 +180,59 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   } | null;
   const brand = product.brand as { slug: string; name: string } | null;
   const myReview = user ? (reviews ?? []).find((r) => r.user_id === user.id) : undefined;
+
+  // Related products — more from this brand, then same category as a fallback,
+  // on active menus. Cross-sell that keeps discovery moving past the single SKU.
+  type RelatedRow = {
+    id: string;
+    name: string;
+    brand: string | null;
+    price_cents: number;
+    image_urls: string[] | null;
+    strain_type: string | null;
+    thc_percentage: number | null;
+    in_stock: boolean;
+    rating_avg: number;
+    rating_count: number;
+    dispensary: { slug: string; status: string } | null;
+    catalog: { id: string; image_url: string | null } | null;
+  };
+  const relSelect = `id,name,brand,price_cents,image_urls,strain_type,thc_percentage,in_stock,rating_avg,rating_count,dispensary:dispensaries!inner(slug,status), ${CATALOG_IMAGE_EMBED}`;
+  const notInList = (ids: string[]) => `(${ids.join(',')})`;
+  let related: RelatedRow[] = [];
+  const excludeIds = [id, ...siblings.map((s) => s.id)];
+  if (product.brand_id) {
+    const { data } = await supabase
+      .from('products')
+      .select(relSelect)
+      .eq('brand_id', product.brand_id)
+      .eq('dispensary.status', 'active')
+      .not('id', 'in', notInList(excludeIds))
+      .limit(16);
+    related = (data as unknown as RelatedRow[] | null) ?? [];
+  }
+  if (related.length < 4 && product.category_id) {
+    const seen = [...excludeIds, ...related.map((r) => r.id)];
+    const { data } = await supabase
+      .from('products')
+      .select(relSelect)
+      .eq('category_id', product.category_id)
+      .eq('dispensary.status', 'active')
+      .not('id', 'in', notInList(seen))
+      .limit(16);
+    related = [...related, ...((data as unknown as RelatedRow[] | null) ?? [])];
+  }
+  // De-dupe, prefer in-stock then better-rated, cap the rail.
+  const relById = new Map<string, RelatedRow>();
+  for (const r of related) if (!relById.has(r.id)) relById.set(r.id, r);
+  related = [...relById.values()]
+    .sort(
+      (a, b) =>
+        Number(b.in_stock) - Number(a.in_stock) ||
+        b.rating_avg - a.rating_avg ||
+        b.rating_count - a.rating_count,
+    )
+    .slice(0, 8);
 
   // Active auto-apply storefront sale → the price shown and charged.
   const { data: eff } = await supabase.rpc('effective_unit_price', { p_product_id: id });
@@ -347,8 +447,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           (strain.effects.length > 0 || strain.flavors.length > 0 || strain.description)
             ? [{ id: 'strain', label: 'Strain' }]
             : []),
-          ...(siblings && siblings.length > 0 ? [{ id: 'stores', label: 'Where to buy' }] : []),
+          ...(siblings.length > 0 ? [{ id: 'stores', label: 'Where to buy' }] : []),
           { id: 'reviews', label: 'Reviews' },
+          ...(related.length > 0 ? [{ id: 'related', label: 'Related' }] : []),
         ]}
       />
 
@@ -408,19 +509,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </section>
       )}
 
-      {siblings && siblings.length > 0 && (
+      {siblings.length > 0 && (
         <section id="stores" className="mt-8 scroll-mt-24">
-          <h2 className="mb-3 text-lg font-semibold">Also available at</h2>
+          <h2 className="mb-1 text-lg font-semibold">Where to buy</h2>
+          <p className="text-muted mb-3 text-sm">
+            {siblings.length + 1} shop{siblings.length === 0 ? '' : 's'} carry this — compare price
+            and open hours.
+          </p>
           <div className="rounded-card border-border bg-surface divide-border divide-y overflow-hidden border">
             {siblings.map((sib) => {
-              const shop = sib.dispensary as unknown as {
-                slug: string;
-                name: string;
-                city: string | null;
-                state: string;
-              } | null;
+              const shop = sib.dispensary;
               // A malformed join row would render a blank-but-clickable row.
               if (!shop?.name || !shop.state) return null;
+              const cheaper = sib.price_cents < product.price_cents;
               return (
                 <Link
                   key={sib.id}
@@ -429,19 +530,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 >
                   <span className="min-w-0">
                     <span className="text-foreground block truncate font-medium">{shop.name}</span>
-                    <span className="text-muted text-xs">
-                      {shop.city ? `${shop.city}, ${shop.state}` : shop.state}
-                      {!sib.in_stock ? ' · Out of stock' : ''}
+                    <span className="text-muted mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                      <span>{shop.city ? `${shop.city}, ${shop.state}` : shop.state}</span>
+                      <OpenNowChip hours={shop.hours} timezone={shop.timezone} />
+                      {!sib.in_stock && <span className="text-muted">Out of stock</span>}
                     </span>
                   </span>
-                  <span
-                    className={
-                      sib.price_cents < product.price_cents
-                        ? 'text-primary shrink-0 font-semibold'
-                        : 'shrink-0 font-semibold'
-                    }
-                  >
-                    {formatPrice(sib.price_cents)}
+                  <span className="shrink-0 text-right">
+                    <span className={cheaper ? 'text-primary font-semibold' : 'font-semibold'}>
+                      {formatPrice(sib.price_cents)}
+                    </span>
+                    {cheaper && <span className="text-primary block text-xs">Lower price</span>}
                   </span>
                 </Link>
               );
@@ -504,7 +603,45 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         )}
       </section>
 
-      {siblings && siblings.length > 0 && (
+      {related.length > 0 && (
+        <section id="related" className="mt-10 scroll-mt-24">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">
+              {brand?.name ? `More from ${brand.name}` : 'Related products'}
+            </h2>
+            {brand?.slug && (
+              <Link
+                href={`/brand/${brand.slug}`}
+                className="text-primary shrink-0 text-sm font-medium hover:underline"
+              >
+                View all →
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {related.map((r) => (
+              <ProductCard
+                key={r.id}
+                p={{
+                  name: r.name,
+                  brand: r.brand,
+                  priceCents: r.price_cents,
+                  imageUrl: cardImageUrl(r),
+                  strainType: r.strain_type as ProductCardData['strainType'],
+                  thcPercentage: r.thc_percentage,
+                  inStock: r.in_stock,
+                  rating: r.rating_avg,
+                  reviewCount: r.rating_count,
+                  productId: r.id,
+                  dispensarySlug: r.dispensary?.slug,
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {siblings.length > 0 && (
         <>
           <div aria-hidden className="h-20 lg:hidden" />
           <StickyCtaBar href="#stores" label="Where to buy" />
