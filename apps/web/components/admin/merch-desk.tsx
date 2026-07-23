@@ -1,0 +1,234 @@
+'use client';
+
+import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { Gift, Loader2, Package, Sparkles } from 'lucide-react';
+import { compMerchSlot, endMerchSubscription } from '@/app/admin/merch-actions';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { formatPrice } from '@/lib/format';
+
+export type MerchRow = {
+  id: string;
+  slotType: 'brand' | 'product';
+  position: number;
+  regionName: string;
+  targetName: string;
+  advertiserName: string | null;
+  isHouse: boolean;
+  priceCents: number;
+  endsAt: string | null;
+};
+
+export type RegionOption = { slug: string; name: string; state: string | null };
+
+function Row({ r }: { r: MerchRow }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+
+  return (
+    <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-4">
+      <div className="min-w-0">
+        <p className="font-medium">
+          {r.targetName}{' '}
+          <span className="text-muted text-xs font-normal">· slot #{r.position}</span>
+        </p>
+        <p className="text-muted mt-0.5 text-xs">
+          {r.regionName}
+          {r.isHouse ? ' · house (comped)' : ` · ${formatPrice(r.priceCents)}`}
+          {r.advertiserName ? ` · via ${r.advertiserName}` : ''}
+          {r.endsAt ? ` · until ${new Date(r.endsAt).toLocaleDateString()}` : ''}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Badge tone="primary">Live</Badge>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              await endMerchSubscription(r.id);
+              router.refresh();
+            })
+          }
+        >
+          End
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CompForm({ regions }: { regions: RegionOption[] }) {
+  const router = useRouter();
+  const [entity, setEntity] = useState<'brand' | 'product'>('brand');
+  const [ref, setRef] = useState('');
+  const [regionSlug, setRegionSlug] = useState('nationwide');
+  const [days, setDays] = useState(30);
+  const [busy, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // Group regions by state for the picker; nationwide floats to the top.
+  const grouped = useMemo(() => {
+    const byState = new Map<string, RegionOption[]>();
+    for (const r of regions) {
+      if (r.slug === 'nationwide') continue;
+      const key = r.state ?? '—';
+      if (!byState.has(key)) byState.set(key, []);
+      byState.get(key)!.push(r);
+    }
+    return [...byState.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [regions]);
+
+  return (
+    <div className="card space-y-3 p-5">
+      <div className="flex items-center gap-2">
+        <Gift className="text-primary h-4 w-4" />
+        <h2 className="text-lg font-semibold">Comp a featured slot</h2>
+      </div>
+      <p className="text-muted text-sm">
+        Place a brand or product into a region&apos;s featured inventory for free. Fills the next
+        open slot and goes live immediately; nationwide is the homepage-wide default region.
+      </p>
+      {error && (
+        <p className="border-danger/30 bg-danger/10 text-danger rounded-md border px-3 py-2 text-sm">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p className="border-primary/30 bg-primary-muted text-primary rounded-md border px-3 py-2 text-sm">
+          {notice}
+        </p>
+      )}
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="space-y-1.5 text-sm">
+          <span className="font-medium">Type</span>
+          <select
+            value={entity}
+            onChange={(e) => setEntity(e.target.value as 'brand' | 'product')}
+            className="border-border bg-background block w-32 rounded-md border px-3 py-2"
+          >
+            <option value="brand">Brand</option>
+            <option value="product">Product</option>
+          </select>
+        </label>
+        <label className="space-y-1.5 text-sm">
+          <span className="font-medium">{entity === 'brand' ? 'Brand slug' : 'Product id'}</span>
+          <input
+            value={ref}
+            onChange={(e) => setRef(e.target.value.trim())}
+            placeholder={entity === 'brand' ? 'raw-garden' : 'UUID'}
+            className="border-border bg-background block w-64 rounded-md border px-3 py-2"
+          />
+        </label>
+        <label className="space-y-1.5 text-sm">
+          <span className="font-medium">Region</span>
+          <select
+            value={regionSlug}
+            onChange={(e) => setRegionSlug(e.target.value)}
+            className="border-border bg-background block w-56 rounded-md border px-3 py-2"
+          >
+            <option value="nationwide">Nationwide (default)</option>
+            {grouped.map(([state, list]) => (
+              <optgroup key={state} label={state}>
+                {list.map((r) => (
+                  <option key={r.slug} value={r.slug}>
+                    {r.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
+        <label className="space-y-1.5 text-sm">
+          <span className="font-medium">Days</span>
+          <input
+            type="number"
+            min={1}
+            max={365}
+            value={days}
+            onChange={(e) =>
+              setDays(Math.min(365, Math.max(1, Math.round(Number(e.target.value) || 0))))
+            }
+            className="border-border bg-background block w-20 rounded-md border px-3 py-2"
+          />
+        </label>
+        <Button
+          disabled={busy || !ref}
+          onClick={() => {
+            setError(null);
+            setNotice(null);
+            start(async () => {
+              const res = await compMerchSlot({ entity, ref, region_slug: regionSlug, days });
+              if (res.ok) {
+                setNotice(`Featured ${entity} placed — it is live now.`);
+                setRef('');
+                router.refresh();
+              } else {
+                setError(res.error);
+              }
+            });
+          }}
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
+          Comp slot
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function Section({
+  icon: Icon,
+  title,
+  rows,
+  emptyHint,
+}: {
+  icon: typeof Sparkles;
+  title: string;
+  rows: MerchRow[];
+  emptyHint: string;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-1.5">
+        <Icon className="text-primary h-4 w-4" />
+        <h2 className="text-lg font-semibold">
+          {title} ({rows.length})
+        </h2>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-muted rounded-card border-border border border-dashed p-6 text-center text-sm">
+          {emptyHint}
+        </p>
+      ) : (
+        rows.map((r) => <Row key={r.id} r={r} />)
+      )}
+    </section>
+  );
+}
+
+export function MerchDesk({ rows, regions }: { rows: MerchRow[]; regions: RegionOption[] }) {
+  const brands = rows.filter((r) => r.slotType === 'brand');
+  const products = rows.filter((r) => r.slotType === 'product');
+
+  return (
+    <div className="space-y-8">
+      <CompForm regions={regions} />
+      <Section
+        icon={Sparkles}
+        title="Featured brands live"
+        rows={brands}
+        emptyHint="No featured brand slots live. Comp one above to merchandise a brand in a region."
+      />
+      <Section
+        icon={Package}
+        title="Featured products live"
+        rows={products}
+        emptyHint="No featured product slots live. Comp one above to merchandise a product in a region."
+      />
+    </div>
+  );
+}
