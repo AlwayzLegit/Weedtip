@@ -308,17 +308,13 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                       key={it.id}
                       className="rounded-card border-border bg-surface overflow-hidden border"
                     >
-                      {it.image_url ? (
-                        <img
-                          src={catalogImageSrc(it.id, it.image_url) ?? undefined}
-                          alt={it.name}
-                          className="bg-surface-2 h-32 w-full object-cover"
-                        />
-                      ) : (
-                        <div className="bg-surface-2 text-muted flex h-32 w-full items-center justify-center text-3xl font-bold">
-                          {it.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <MediaImage
+                        url={catalogImageSrc(it.id, it.image_url)}
+                        alt={it.name}
+                        artSeed={it.name}
+                        className="h-32"
+                        iconClassName="h-8 w-8"
+                      />
                       <div className="p-3">
                         <p className="truncate text-sm font-medium">{it.name}</p>
                         <p className="text-muted mt-0.5 text-xs capitalize">
