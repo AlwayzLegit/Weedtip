@@ -67,12 +67,11 @@ export default async function AdminMerch() {
     <div className="space-y-6">
       <div>
         <p className="eyebrow mb-1">Merchandising</p>
-        <h2 className="text-2xl font-bold">Featured brands &amp; products</h2>
+        <h2 className="text-2xl font-bold">Homepage hero, featured brands &amp; products</h2>
         <p className="text-muted mt-1 text-sm">
-          Comp a brand or product into a region&apos;s featured inventory — the same region ad-slot
-          model as dispensary spots and the hero, so every sold spot is managed in one place. Each
-          region has a fixed number of brand and product slots; a house comp fills the next open one
-          and goes live immediately.
+          Comp a hero, brand, or product into a region&apos;s inventory, and activate self-serve
+          reservations — every merchandised spot runs on the one region ad-slot model, managed here.
+          A house comp fills the next open slot and goes live immediately.
         </p>
       </div>
       <MerchDesk rows={rows} regions={regionOptions} />

@@ -35,28 +35,20 @@ function toSlide(r: HeroRow): HeroSlide {
 
 async function fetchHero(state: string | null, city: string | null): Promise<HeroRow[]> {
   const supabase = createStaticClient();
-  const args = { p_state: state ?? undefined, p_city: city ?? undefined };
-  // Hero now sells on the region ad-slot system; region fills lead, and the
-  // legacy placements-based hero serves as a fallback during the transition.
-  const [region, legacy] = await Promise.all([
-    supabase.rpc('get_region_hero', args),
-    supabase.rpc('get_hero_placements', args),
-  ]);
-  const rows = [
-    ...((region.data ?? []) as unknown as HeroRow[]),
-    ...((legacy.data ?? []) as unknown as HeroRow[]),
-  ];
-  // Most specific first (state > nationwide); region fills win ties (listed
-  // first). De-dupe by slug so a shop sold on both systems shows once. Cap 8.
-  rows.sort((a, b) => b.specificity - a.specificity);
+  // Hero sells entirely on the region ad-slot system now (get_region_hero already
+  // orders by specificity + slot position and caps at 8). De-dupe by slug defensively.
+  const { data } = await supabase.rpc('get_region_hero', {
+    p_state: state ?? undefined,
+    p_city: city ?? undefined,
+  });
   const seen = new Set<string>();
-  const merged: HeroRow[] = [];
-  for (const r of rows) {
+  const rows: HeroRow[] = [];
+  for (const r of (data ?? []) as unknown as HeroRow[]) {
     if (!r.slug || seen.has(r.slug)) continue;
     seen.add(r.slug);
-    merged.push(r);
+    rows.push(r);
   }
-  return merged.slice(0, 8);
+  return rows;
 }
 
 /**
