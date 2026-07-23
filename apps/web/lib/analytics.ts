@@ -30,7 +30,9 @@ export type AnalyticsEvent =
   | 'ad_slot_requested'
   // Ad delivery
   | 'ad_impression'
-  | 'ad_click';
+  | 'ad_click'
+  | 'map_promo_impression'
+  | 'map_promo_click';
 
 /**
  * Safe wrapper around posthog.capture: no-ops on the server and when PostHog

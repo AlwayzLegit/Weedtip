@@ -216,6 +216,29 @@ export function DispensariesBrowser({
     [pins, rankBySlug],
   );
 
+  // Sponsored shops in view feed the on-map rotating ad card (T1). Capped so a
+  // dense metro doesn't rotate through dozens; ordered as the result set is
+  // (paid-first ranking already applied server-side).
+  const promoAds = useMemo(
+    () =>
+      shops
+        .filter((s) => s.sponsored && typeof s.lat === 'number' && typeof s.lng === 'number')
+        .slice(0, 6)
+        .map((s) => ({
+          slug: s.slug,
+          name: s.name,
+          coverImageUrl: s.coverImageUrl,
+          logoUrl: s.logoUrl,
+          rating: s.rating,
+          reviewCount: s.reviewCount,
+          distanceMeters: s.distanceMeters,
+          dealBadge: s.dealBadge ?? null,
+          lat: s.lat as number,
+          lng: s.lng as number,
+        })),
+    [shops],
+  );
+
   // The bbox the current result set was searched with vs. what the map shows now.
   // Statically rendered callers (ISR city pages) pass hours/timezone instead of
   // a server-computed open flag; compute it live on mount so the badge is fresh.
@@ -952,6 +975,7 @@ export function DispensariesBrowser({
         <div className={cn('absolute inset-0', mobileView === 'list' && 'hidden lg:block')}>
           <BrowseMap
             pins={rankedPins}
+            promoAds={promoAds}
             initialBounds={initialBounds}
             hoveredSlug={hovered}
             selected={popupShop}
