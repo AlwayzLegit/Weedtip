@@ -35,6 +35,7 @@ import { ReviewList } from '@/components/dispensary/review-list';
 import { MiniMap } from '@/components/dispensary/mini-map';
 import { DispensarySectionNav } from '@/components/dispensary/section-nav';
 import { DispensaryMobileActionBar } from '@/components/dispensary/mobile-action-bar';
+import { HoursCard } from '@/components/dispensary/hours-card';
 import { PhotoGallery } from '@/components/dispensary/photo-gallery';
 import { LogoImage } from '@/components/logo-image';
 import { FavoriteButton } from '@/components/favorite-button';
@@ -440,6 +441,29 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     nowMinutes >= toMinutes(todayHours.open) &&
     nowMinutes < toMinutes(todayHours.close);
   const nextOpenLabel = isOpenNow ? null : nextOpeningLabel(hours ?? null, d.timezone);
+
+  // Pre-formatted rows for the collapsible sidebar hours card + at-a-glance.
+  const hoursRows = hours
+    ? DAY_ORDER.map((day) => {
+        const h = hours[day];
+        return {
+          label: dayLabel(day),
+          range: h ? `${formatTime(h.open)} – ${formatTime(h.close)}` : 'Closed',
+          isToday: day === todayKey,
+        };
+      })
+    : [];
+  const specialRows = upcomingSpecial.map((s) => ({
+    label:
+      new Date(`${s.date}T00:00:00`).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+      }) + (s.note ? ` · ${s.note}` : ''),
+    range: s.closed ? 'Closed' : `${formatTime(s.open!)} – ${formatTime(s.close!)}`,
+  }));
+  const todayRange = todayHours
+    ? `${formatTime(todayHours.open)} – ${formatTime(todayHours.close)}`
+    : null;
 
   const prices = (products ?? []).map((p) => p.price_cents);
   const priceRange = prices.length
@@ -1269,6 +1293,47 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               coordinates mark a delivery region, not a storefront — show the
               service area instead of a pin implying an exact address. */}
           <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+            {/* At-a-glance: status, rating, services, and the top action — stays
+                visible in the sticky sidebar while the menu scrolls. */}
+            <div className="rounded-card border-border bg-surface shadow-card border p-5">
+              <p className={`text-base font-semibold ${isOpenNow ? 'text-primary' : 'text-muted'}`}>
+                {isOpenNow && todayHours
+                  ? `Open until ${formatTime(todayHours.close)}`
+                  : `Closed${nextOpenLabel ? ` · ${nextOpenLabel}` : ' now'}`}
+              </p>
+              {avgRating > 0 && (
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <RatingStars rating={avgRating} />
+                  <span className="text-sm font-semibold">{avgRating.toFixed(1)}</span>
+                  <span className="text-muted text-sm">({reviews!.length})</span>
+                </div>
+              )}
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {d.is_pickup && (
+                  <Badge tone="outline">
+                    <Store className="h-3 w-3" /> Pickup
+                  </Badge>
+                )}
+                {d.is_delivery && (
+                  <Badge tone="outline">
+                    <Truck className="h-3 w-3" /> Delivery
+                  </Badge>
+                )}
+                {d.is_medical && <Badge tone="outline">Medical</Badge>}
+                {d.is_recreational && <Badge tone="outline">Rec 21+</Badge>}
+              </div>
+              {directionsUrl && (
+                <a
+                  href={directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border-border bg-surface-2 hover:border-primary/50 hover:text-primary mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+                >
+                  <Navigation className="h-4 w-4" /> Get directions
+                </a>
+              )}
+            </div>
+
             {d.latitude != null && d.longitude != null && !d.location_approximate && (
               <div
                 id="location"
@@ -1310,66 +1375,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               </div>
             )}
 
-            <div className="rounded-card border-border bg-surface shadow-card border p-5">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="text-muted text-sm font-semibold uppercase tracking-wide">Hours</h2>
-                {hours && (
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      isOpenNow
-                        ? 'bg-primary-muted text-primary'
-                        : 'bg-surface-2 text-muted border-border border'
-                    }`}
-                  >
-                    {isOpenNow ? 'Open now' : (nextOpenLabel ?? 'Closed now')}
-                  </span>
-                )}
-              </div>
-              {hours ? (
-                <ul className="space-y-1.5 text-sm">
-                  {DAY_ORDER.map((day) => {
-                    const h = hours[day];
-                    const isToday = day === todayKey;
-                    return (
-                      <li
-                        key={day}
-                        className={`flex justify-between ${isToday ? 'text-foreground font-medium' : ''}`}
-                      >
-                        <span className={isToday ? '' : 'text-muted'}>{dayLabel(day)}</span>
-                        <span>
-                          {h ? `${formatTime(h.open)} – ${formatTime(h.close)}` : 'Closed'}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="text-muted text-sm">Hours not listed.</p>
-              )}
-              {upcomingSpecial.length > 0 && (
-                <div className="border-border mt-3 border-t pt-3">
-                  <p className="text-muted mb-1.5 text-xs font-semibold uppercase tracking-wide">
-                    Special hours
-                  </p>
-                  <ul className="space-y-1 text-sm">
-                    {upcomingSpecial.map((s) => (
-                      <li key={s.date} className="flex justify-between gap-2">
-                        <span className="text-muted">
-                          {new Date(`${s.date}T00:00:00`).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                          {s.note ? ` · ${s.note}` : ''}
-                        </span>
-                        <span>
-                          {s.closed ? 'Closed' : `${formatTime(s.open!)} – ${formatTime(s.close!)}`}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <HoursCard
+              hasHours={!!hours}
+              isOpen={isOpenNow}
+              statusLabel={nextOpenLabel ?? 'Closed now'}
+              todayRange={todayRange}
+              rows={hoursRows}
+              specials={specialRows}
+            />
 
             <div className="rounded-card border-border bg-surface shadow-card border p-5">
               <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">

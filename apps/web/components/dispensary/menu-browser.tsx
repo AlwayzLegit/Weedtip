@@ -126,7 +126,11 @@ export function MenuBrowser({
       </div>
 
       <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 py-0.5">
-        <button type="button" onClick={() => setCategory('all')} className={tabClass(category === 'all')}>
+        <button
+          type="button"
+          onClick={() => setCategory('all')}
+          className={tabClass(category === 'all')}
+        >
           All ({items.length})
         </button>
         {saleCount > 0 && (
@@ -153,11 +157,11 @@ export function MenuBrowser({
 
       {visible.length === 0 ? (
         <div className="card text-muted mt-4 p-8 text-center text-sm">
-          Nothing matches{query ? ` “${query.trim()}”` : ''} here. Try another category or clear
-          the search.
+          Nothing matches{query ? ` “${query.trim()}”` : ''} here. Try another category or clear the
+          search.
         </div>
       ) : (
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
           {visible.map((p) => (
             <ProductCard
               key={p.id}
