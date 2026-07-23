@@ -36,6 +36,7 @@ function seededTint(seed: string): string {
  */
 export function MediaImage({
   url,
+  fallbackUrl,
   alt,
   className,
   iconClassName,
@@ -46,6 +47,12 @@ export function MediaImage({
   children,
 }: {
   url?: string | null;
+  /**
+   * Secondary image (e.g. a logo) shown contained on the tint when there's no
+   * cover photo — the `photo → logo → placeholder` chain, so a promoted card
+   * shows the brand's mark instead of the generic leaf.
+   */
+  fallbackUrl?: string | null;
   /** Accessible label / image alt text (e.g. the dispensary or product name). */
   alt?: string;
   className?: string;
@@ -64,9 +71,7 @@ export function MediaImage({
   artIcon?: ReactNode;
   children?: ReactNode;
 }) {
-  const tint = artSeed
-    ? seededTint(artSeed)
-    : 'from-primary/25 via-primary/[0.07] to-surface-2';
+  const tint = artSeed ? seededTint(artSeed) : 'from-primary/25 via-primary/[0.07] to-surface-2';
   return (
     <div
       role={!url && alt ? 'img' : undefined}
@@ -82,6 +87,18 @@ export function MediaImage({
           priority={priority}
           className="object-cover"
         />
+      ) : fallbackUrl ? (
+        /* No cover photo — show the logo contained on the tint. Reads as a
+           branded card, not a placeholder; keeps promoted shops from looking
+           the worst (audit T4). */
+        <div className="absolute inset-0 flex items-center justify-center p-6">
+          <img
+            src={fallbackUrl}
+            alt={alt ?? ''}
+            loading="lazy"
+            className="max-h-full max-w-full object-contain drop-shadow-sm"
+          />
+        </div>
       ) : artIcon ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           {artIcon}

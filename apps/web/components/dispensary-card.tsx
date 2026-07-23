@@ -69,7 +69,13 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
     >
       {d.placementId && <PlacementBeacon placementId={d.placementId} />}
       {d.adSlot && <AdSlotBeacon slot={d.adSlot} />}
-      <MediaImage url={d.coverImageUrl} alt={d.name} className="h-36" iconClassName="h-12 w-12">
+      <MediaImage
+        url={d.coverImageUrl}
+        fallbackUrl={d.logoUrl}
+        alt={d.name}
+        className="h-36"
+        iconClassName="h-12 w-12"
+      >
         <div className="absolute left-3 top-3 flex items-center gap-1.5">
           {d.rank != null && (
             <span
