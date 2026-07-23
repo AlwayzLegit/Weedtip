@@ -18,6 +18,7 @@ import {
   Percent,
   Plug,
   QrCode,
+  Search,
   Settings,
   Shield,
   ShoppingBag,
@@ -72,6 +73,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: '/admin/reviews', label: 'Reviews', icon: Star },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/seo', label: 'SEO', icon: Search },
   { href: '/admin/integrations', label: 'Integrations', icon: Plug },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
