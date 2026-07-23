@@ -1,0 +1,62 @@
+name: IndexNow submit
+
+# Pings IndexNow (Bing, Yandex, Naver, Seznam — not Google) with recently
+# changed URLs so they re-crawl quickly. Nightly incremental + on-demand full.
+# See apps/web/scripts/indexnow-submit.mjs.
+#
+# Requires repo secret SUPABASE_SERVICE_ROLE_KEY. Optional var SUPABASE_URL.
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # 09:00 UTC nightly (after logo/menu runs)
+  workflow_dispatch:
+    inputs:
+      all:
+        description: 'Submit every canonical listing (full pass), not just recent'
+        type: boolean
+        required: false
+        default: false
+      since:
+        description: 'Days of recency for the incremental pass'
+        required: false
+        default: '2'
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Node 22+: @supabase/supabase-js needs native WebSocket (Node 20 throws).
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Submit to IndexNow
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://ggpnghpcclngqkyelkes.supabase.co' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://www.weedtip.com' }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY secret is not set — add it in repo Settings → Secrets."
+            exit 1
+          fi
+          node scripts/indexnow-submit.mjs \
+            ${{ github.event.inputs.all == 'true' && '--all' || format('--since {0}', github.event.inputs.since || '2') }}
