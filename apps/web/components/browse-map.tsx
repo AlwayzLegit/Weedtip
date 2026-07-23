@@ -20,6 +20,7 @@ import { formatDistance } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { BBox } from '@/lib/us-state-bounds';
 import { LogoImage } from './logo-image';
+import { MapPromoCard, type MapPromoAd } from './map-promo-card';
 import { MediaImage } from './media-image';
 import { RatingStars } from './rating-stars';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -189,9 +190,12 @@ export function BrowseMap({
   onLoadBounds,
   onMoveEnd,
   onGeolocate,
+  promoAds = [],
 }: {
   /** Every matching shop in the viewport (clustered client-side). */
   pins: MapPinPoint[];
+  /** Sponsored shops in view — feed the rotating on-map ad card (T1). */
+  promoAds?: MapPromoAd[];
   /** [minLng, minLat, maxLng, maxLat] the map opens fitted to. */
   initialBounds: BBox;
   hoveredSlug: string | null;
@@ -506,6 +510,22 @@ export function BrowseMap({
           </div>
         </Marker>
       ))}
+
+      {/* On-map rotating sponsored ad card (T1) — flies to the pin + opens it. */}
+      <MapPromoCard
+        ads={promoAds}
+        onAdClick={(ad) => {
+          const map = mapRef.current;
+          if (map) {
+            map.flyTo({
+              center: [ad.lng, ad.lat],
+              zoom: Math.max(map.getZoom() ?? 12, 13),
+              duration: 1000,
+            });
+          }
+          onSelect(ad.slug);
+        }}
+      />
 
       {selected && typeof selected.lat === 'number' && typeof selected.lng === 'number' && (
         <Popup
