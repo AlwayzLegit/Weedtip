@@ -15,7 +15,12 @@ import {
   Store,
   Truck,
 } from 'lucide-react';
-import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours, type SpecialHour } from '@weedtip/shared';
+import {
+  AMENITY_GROUPS,
+  AMENITY_LABELS,
+  type OperatingHours,
+  type SpecialHour,
+} from '@weedtip/shared';
 import { aiEnabled } from '@/lib/ai';
 import { AMENITY_ICON } from '@/lib/amenity-icons';
 import { ShopViewTracker } from '@/components/analytics/shop-view-tracker';
@@ -28,6 +33,9 @@ import { MenuBrowser, type MenuBrowserItem } from '@/components/dispensary/menu-
 import { ReviewHistogram } from '@/components/dispensary/review-histogram';
 import { ReviewList } from '@/components/dispensary/review-list';
 import { MiniMap } from '@/components/dispensary/mini-map';
+import { DispensarySectionNav } from '@/components/dispensary/section-nav';
+import { DispensaryMobileActionBar } from '@/components/dispensary/mobile-action-bar';
+import { HoursCard } from '@/components/dispensary/hours-card';
 import { PhotoGallery } from '@/components/dispensary/photo-gallery';
 import { LogoImage } from '@/components/logo-image';
 import { FavoriteButton } from '@/components/favorite-button';
@@ -126,49 +134,49 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     { user, profile },
     { data: region },
   ] = await Promise.all([
-      supabase
-        .from('products')
-        .select(`*, category:categories(name,slug,sort_order), ${CATALOG_IMAGE_EMBED}`)
-        .eq('dispensary_id', d.id)
-        .order('name'),
-      supabase
-        .from('deals')
-        .select('*')
-        .eq('dispensary_id', d.id)
-        .eq('is_active', true)
-        .lte('start_date', nowIso)
-        .gte('end_date', nowIso)
-        .order('end_date'),
-      supabase
-        .from('reviews')
-        .select(
-          'id,rating,quality,service,atmosphere,verified,body,created_at,author_name,user_id,owner_reply,owner_reply_at,photo_urls,helpful_count',
-        )
-        .eq('dispensary_id', d.id)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('dispensary_updates')
-        .select('id,title,body,created_at')
-        .eq('dispensary_id', d.id)
-        .gt('expires_at', nowIso)
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('dispensary_promos')
-        .select('id,title,description,image_url,start_date,end_date')
-        .eq('dispensary_id', d.id)
-        .eq('is_active', true)
-        .or(`start_date.is.null,start_date.lte.${today}`)
-        .or(`end_date.is.null,end_date.gte.${today}`)
-        .order('sort_order')
-        .limit(10),
-      getAuth(),
-      supabase
-        .from('operating_regions')
-        .select('is_medical_legal,is_recreational_legal')
-        .eq('state', d.state)
-        .maybeSingle(),
-    ]);
+    supabase
+      .from('products')
+      .select(`*, category:categories(name,slug,sort_order), ${CATALOG_IMAGE_EMBED}`)
+      .eq('dispensary_id', d.id)
+      .order('name'),
+    supabase
+      .from('deals')
+      .select('*')
+      .eq('dispensary_id', d.id)
+      .eq('is_active', true)
+      .lte('start_date', nowIso)
+      .gte('end_date', nowIso)
+      .order('end_date'),
+    supabase
+      .from('reviews')
+      .select(
+        'id,rating,quality,service,atmosphere,verified,body,created_at,author_name,user_id,owner_reply,owner_reply_at,photo_urls,helpful_count',
+      )
+      .eq('dispensary_id', d.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('dispensary_updates')
+      .select('id,title,body,created_at')
+      .eq('dispensary_id', d.id)
+      .gt('expires_at', nowIso)
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('dispensary_promos')
+      .select('id,title,description,image_url,start_date,end_date')
+      .eq('dispensary_id', d.id)
+      .eq('is_active', true)
+      .or(`start_date.is.null,start_date.lte.${today}`)
+      .or(`end_date.is.null,end_date.gte.${today}`)
+      .order('sort_order')
+      .limit(10),
+    getAuth(),
+    supabase
+      .from('operating_regions')
+      .select('is_medical_legal,is_recreational_legal')
+      .eq('state', d.state)
+      .maybeSingle(),
+  ]);
   const medicalOnly = !!region && region.is_medical_legal && !region.is_recreational_legal;
 
   const avgRating = reviews?.length
@@ -183,7 +191,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       .from('review_votes')
       .select('review_id')
       .eq('user_id', user.id)
-      .in('review_id', reviews.map((r) => r.id));
+      .in(
+        'review_id',
+        reviews.map((r) => r.id),
+      );
     for (const v of votes ?? []) myVotes.add(v.review_id);
   }
 
@@ -222,9 +233,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   const { data: salePrices } = await supabase.rpc('dispensary_sale_prices', {
     p_dispensary_id: d.id,
   });
-  const saleByProduct = new Map(
-    (salePrices ?? []).map((s) => [s.product_id, s] as const),
-  );
+  const saleByProduct = new Map((salePrices ?? []).map((s) => [s.product_id, s] as const));
 
   // Paying listings don't cross-promote competitors: the nearby rail below is
   // a free-listing tradeoff, removed once the shop pays. `featured` is the
@@ -334,7 +343,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   if ((products ?? []).length === 0) {
     const { data: lineup } = await supabase
       .from('brand_products')
-      .select('id,name,strain_type,thc_percentage,description,image_url,brand:brands!inner(name,slug,logo_url)')
+      .select(
+        'id,name,strain_type,thc_percentage,description,image_url,brand:brands!inner(name,slug,logo_url)',
+      )
       .not('image_url', 'is', null)
       .order('sort_order')
       .limit(8);
@@ -358,6 +369,17 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   // Global ordering kill-switch: when off the storefront is marketing-only, so
   // the primary CTA reads "View menu" rather than "Order online".
   const orderingEnabled = (await getPlatformSettings()).orderingEnabled;
+
+  // Directions target (real storefront only — never route to a service-area
+  // centroid). Reused by the header and the sticky mobile bar.
+  const directionsUrl =
+    (d.latitude != null || d.address) && !d.location_approximate
+      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          d.latitude != null && d.longitude != null
+            ? `${d.latitude},${d.longitude}`
+            : [d.address, d.city, d.state, d.zip].filter(Boolean).join(', '),
+        )}`
+      : null;
 
   const menuItems: MenuBrowserItem[] = (products ?? []).map((p) => {
     const cat = p.category as { name: string; slug: string; sort_order: number } | null;
@@ -420,12 +442,36 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
     nowMinutes < toMinutes(todayHours.close);
   const nextOpenLabel = isOpenNow ? null : nextOpeningLabel(hours ?? null, d.timezone);
 
+  // Pre-formatted rows for the collapsible sidebar hours card + at-a-glance.
+  const hoursRows = hours
+    ? DAY_ORDER.map((day) => {
+        const h = hours[day];
+        return {
+          label: dayLabel(day),
+          range: h ? `${formatTime(h.open)} – ${formatTime(h.close)}` : 'Closed',
+          isToday: day === todayKey,
+        };
+      })
+    : [];
+  const specialRows = upcomingSpecial.map((s) => ({
+    label:
+      new Date(`${s.date}T00:00:00`).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+      }) + (s.note ? ` · ${s.note}` : ''),
+    range: s.closed ? 'Closed' : `${formatTime(s.open!)} – ${formatTime(s.close!)}`,
+  }));
+  const todayRange = todayHours
+    ? `${formatTime(todayHours.open)} – ${formatTime(todayHours.close)}`
+    : null;
+
   const prices = (products ?? []).map((p) => p.price_cents);
   const priceRange = prices.length
     ? `$${Math.round(Math.min(...prices) / 100)}–$${Math.round(Math.max(...prices) / 100)}`
     : undefined;
-  const openingHours = openingHoursSpec(hours as Record<string, { open?: string; close?: string }> | null);
-
+  const openingHours = openingHoursSpec(
+    hours as Record<string, { open?: string; close?: string }> | null,
+  );
 
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -556,7 +602,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       <MediaImage
         url={d.cover_image_url}
         alt={d.name}
-        className="h-56 sm:h-80"
+        className="h-44 sm:h-64"
         iconClassName="h-16 w-16"
       >
         <div
@@ -686,20 +732,22 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             )}
             {/* Secondary Directions (only when the primary CTA is the menu, to
                 avoid duplicating the directions action). */}
-            {menuItems.length > 0 && (d.latitude != null || d.address) && !d.location_approximate && (
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                  d.latitude != null && d.longitude != null
-                    ? `${d.latitude},${d.longitude}`
-                    : [d.address, d.city, d.state, d.zip].filter(Boolean).join(', '),
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
-              >
-                <Navigation className="h-4 w-4" /> Directions
-              </a>
-            )}
+            {menuItems.length > 0 &&
+              (d.latitude != null || d.address) &&
+              !d.location_approximate && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                    d.latitude != null && d.longitude != null
+                      ? `${d.latitude},${d.longitude}`
+                      : [d.address, d.city, d.state, d.zip].filter(Boolean).join(', '),
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  <Navigation className="h-4 w-4" /> Directions
+                </a>
+              )}
             {d.phone && (
               <a
                 href={`tel:${d.phone.replace(/[^+\d]/g, '')}`}
@@ -752,54 +800,21 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           </div>
         </div>
 
-        {/* Sticky section bar (Weedmaps-style page nav; categories live in the menu browser) */}
-        {(menuItems.length > 0 || (deals?.length ?? 0) > 0 || galleryUrls.length > 0) && (
-          <nav
-            aria-label="Page sections"
-            className="border-border/70 bg-background/85 sticky top-16 z-30 -mx-4 mt-6 border-b px-4 backdrop-blur-xl"
-          >
-            <div className="scrollbar-none flex items-center gap-1 overflow-x-auto py-2">
-              {(deals?.length ?? 0) > 0 && (
-                <a
-                  href="#deals"
-                  className="text-primary hover:bg-primary-muted shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold"
-                >
-                  Deals
-                </a>
-              )}
-              {menuItems.length > 0 && (
-                <a
-                  href="#menu"
-                  className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
-                >
-                  Menu
-                </a>
-              )}
-              {galleryUrls.length > 0 && (
-                <a
-                  href="#photos"
-                  className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
-                >
-                  Photos
-                </a>
-              )}
-              {(updates?.length ?? 0) > 0 && (
-                <a
-                  href="#updates"
-                  className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
-                >
-                  Updates
-                </a>
-              )}
-              <a
-                href="#reviews"
-                className="text-muted hover:bg-surface-2 hover:text-foreground shrink-0 rounded-full px-3 py-1.5 text-sm font-medium"
-              >
-                Reviews
-              </a>
-            </div>
-          </nav>
-        )}
+        {/* Sticky section nav (Weedmaps-style) with scroll-spy. Always shown —
+            even thin listings have About / Reviews / Location to jump between. */}
+        <DispensarySectionNav
+          sections={[
+            ...((deals?.length ?? 0) > 0 ? [{ id: 'deals', label: 'Deals' }] : []),
+            ...(menuItems.length > 0 ? [{ id: 'menu', label: 'Menu' }] : []),
+            ...(galleryUrls.length > 0 ? [{ id: 'photos', label: 'Photos' }] : []),
+            ...((updates?.length ?? 0) > 0 ? [{ id: 'updates', label: 'Updates' }] : []),
+            { id: 'about', label: 'About' },
+            { id: 'reviews', label: 'Reviews' },
+            ...(d.latitude != null && d.longitude != null && !d.location_approximate
+              ? [{ id: 'location', label: 'Location' }]
+              : []),
+          ]}
+        />
 
         {/* Deals strip */}
         {deals && deals.length > 0 && (
@@ -887,7 +902,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           {/* min-w-0: grid items default to min-width auto, so the horizontal
               carousels inside would otherwise stretch the page sideways. */}
           <div className="min-w-0 space-y-8 lg:col-span-2">
-            <section>
+            <section id="about" className="scroll-mt-32">
               <h2 className="mb-2 text-lg font-semibold">About</h2>
               <div className="text-muted text-sm leading-relaxed">
                 {d.description ? renderMarkdown(d.description) : <p>{generatedAbout(d, hours)}</p>}
@@ -976,11 +991,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                       className="rounded-card border-border bg-surface overflow-hidden border"
                     >
                       {promo.image_url && (
-                        <img
-                          src={promo.image_url}
-                          alt=""
-                          className="h-32 w-full object-cover"
-                        />
+                        <img src={promo.image_url} alt="" className="h-32 w-full object-cover" />
                       )}
                       <div className="p-4">
                         <p className="font-medium">{promo.title}</p>
@@ -1055,7 +1066,11 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             </section>
 
             {/* Storefront photos (Google-enriched gallery) with lightbox */}
-            {galleryUrls.length > 0 && <PhotoGallery photos={galleryUrls} name={d.name} />}
+            {galleryUrls.length > 0 && (
+              <div id="photos" className="scroll-mt-32">
+                <PhotoGallery photos={galleryUrls} name={d.name} />
+              </div>
+            )}
 
             {/* Updates from the shop */}
             {updates && updates.length > 0 && (
@@ -1178,7 +1193,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               <section aria-label="Nearby dispensaries">
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <h2 className="text-lg font-semibold">
-                    {d.city ? `More dispensaries near ${d.city}` : `More in ${US_STATES[d.state] ?? d.state}`}
+                    {d.city
+                      ? `More dispensaries near ${d.city}`
+                      : `More in ${US_STATES[d.state] ?? d.state}`}
                   </h2>
                   <Link
                     href={
@@ -1231,7 +1248,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         href={`/dispensary/${s.slug}`}
                         className="text-muted hover:text-primary text-sm hover:underline"
                       >
-                        {s.city ? `${s.city}, ${s.state}` : US_STATES[s.state] ?? s.state}
+                        {s.city ? `${s.city}, ${s.state}` : (US_STATES[s.state] ?? s.state)}
                         {s.address ? ` · ${s.address}` : ''}
                       </Link>
                     </li>
@@ -1276,8 +1293,52 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               coordinates mark a delivery region, not a storefront — show the
               service area instead of a pin implying an exact address. */}
           <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+            {/* At-a-glance: status, rating, services, and the top action — stays
+                visible in the sticky sidebar while the menu scrolls. */}
+            <div className="rounded-card border-border bg-surface shadow-card border p-5">
+              <p className={`text-base font-semibold ${isOpenNow ? 'text-primary' : 'text-muted'}`}>
+                {isOpenNow && todayHours
+                  ? `Open until ${formatTime(todayHours.close)}`
+                  : `Closed${nextOpenLabel ? ` · ${nextOpenLabel}` : ' now'}`}
+              </p>
+              {avgRating > 0 && (
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <RatingStars rating={avgRating} />
+                  <span className="text-sm font-semibold">{avgRating.toFixed(1)}</span>
+                  <span className="text-muted text-sm">({reviews!.length})</span>
+                </div>
+              )}
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {d.is_pickup && (
+                  <Badge tone="outline">
+                    <Store className="h-3 w-3" /> Pickup
+                  </Badge>
+                )}
+                {d.is_delivery && (
+                  <Badge tone="outline">
+                    <Truck className="h-3 w-3" /> Delivery
+                  </Badge>
+                )}
+                {d.is_medical && <Badge tone="outline">Medical</Badge>}
+                {d.is_recreational && <Badge tone="outline">Rec 21+</Badge>}
+              </div>
+              {directionsUrl && (
+                <a
+                  href={directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border-border bg-surface-2 hover:border-primary/50 hover:text-primary mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+                >
+                  <Navigation className="h-4 w-4" /> Get directions
+                </a>
+              )}
+            </div>
+
             {d.latitude != null && d.longitude != null && !d.location_approximate && (
-              <div className="rounded-card border-border bg-surface shadow-card border p-5">
+              <div
+                id="location"
+                className="rounded-card border-border bg-surface shadow-card scroll-mt-32 border p-5"
+              >
                 <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
                   Location
                 </h2>
@@ -1314,64 +1375,14 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               </div>
             )}
 
-            <div className="rounded-card border-border bg-surface shadow-card border p-5">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="text-muted text-sm font-semibold uppercase tracking-wide">Hours</h2>
-                {hours && (
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      isOpenNow
-                        ? 'bg-primary-muted text-primary'
-                        : 'bg-surface-2 text-muted border-border border'
-                    }`}
-                  >
-                    {isOpenNow ? 'Open now' : (nextOpenLabel ?? 'Closed now')}
-                  </span>
-                )}
-              </div>
-              {hours ? (
-                <ul className="space-y-1.5 text-sm">
-                  {DAY_ORDER.map((day) => {
-                    const h = hours[day];
-                    const isToday = day === todayKey;
-                    return (
-                      <li
-                        key={day}
-                        className={`flex justify-between ${isToday ? 'text-foreground font-medium' : ''}`}
-                      >
-                        <span className={isToday ? '' : 'text-muted'}>{dayLabel(day)}</span>
-                        <span>
-                          {h ? `${formatTime(h.open)} – ${formatTime(h.close)}` : 'Closed'}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="text-muted text-sm">Hours not listed.</p>
-              )}
-              {upcomingSpecial.length > 0 && (
-                <div className="border-border mt-3 border-t pt-3">
-                  <p className="text-muted mb-1.5 text-xs font-semibold uppercase tracking-wide">
-                    Special hours
-                  </p>
-                  <ul className="space-y-1 text-sm">
-                    {upcomingSpecial.map((s) => (
-                      <li key={s.date} className="flex justify-between gap-2">
-                        <span className="text-muted">
-                          {new Date(`${s.date}T00:00:00`).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                          {s.note ? ` · ${s.note}` : ''}
-                        </span>
-                        <span>{s.closed ? 'Closed' : `${formatTime(s.open!)} – ${formatTime(s.close!)}`}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <HoursCard
+              hasHours={!!hours}
+              isOpen={isOpenNow}
+              statusLabel={nextOpenLabel ?? 'Closed now'}
+              todayRange={todayRange}
+              rows={hoursRows}
+              specials={specialRows}
+            />
 
             <div className="rounded-card border-border bg-surface shadow-card border p-5">
               <h2 className="text-muted mb-3 text-sm font-semibold uppercase tracking-wide">
@@ -1409,6 +1420,24 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           </aside>
         </div>
       </div>
+
+      {/* Clearance so the last content isn't hidden behind the sticky mobile bar. */}
+      <div aria-hidden className="h-20 lg:hidden" />
+      <DispensaryMobileActionBar
+        primaryHref={menuItems.length > 0 ? '#menu' : (directionsUrl ?? '#reviews')}
+        primaryLabel={
+          menuItems.length > 0
+            ? orderingEnabled && d.accepting_orders
+              ? 'Order online'
+              : 'View menu'
+            : directionsUrl
+              ? 'Get directions'
+              : 'Write a review'
+        }
+        primaryExternal={menuItems.length === 0 && !!directionsUrl}
+        phone={d.phone ?? null}
+        directionsUrl={menuItems.length > 0 ? directionsUrl : null}
+      />
     </main>
   );
 }
