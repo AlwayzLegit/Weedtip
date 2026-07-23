@@ -308,6 +308,26 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
         return shops;
       })();
 
+  // Text link cluster of MORE dispensaries in the same city — NOT photo-gated
+  // (the visual rail above requires a cover), so photo-less listings finally
+  // gain inbound links, and large cities interlink all their shops (raises the
+  // in-link count Semrush flagged as low across the 9k listing pages). Free
+  // listings only — paid pages don't cross-promote competitors.
+  let cityLinks: { slug: string; name: string }[] = [];
+  if (!paidListing && d.city) {
+    const { data } = await supabase
+      .from('dispensaries')
+      .select('slug,name')
+      .eq('status', 'active')
+      .eq('state', d.state)
+      .eq('city', d.city)
+      .neq('id', d.id)
+      .order('rating_count', { ascending: false })
+      .limit(30);
+    const railSlugs = new Set(nearby.map((n) => n.slug));
+    cityLinks = (data ?? []).filter((s) => !railSlugs.has(s.slug));
+  }
+
   // When the shop has no published menu, merchandise the official brand
   // catalog instead of dead-ending — the page still shows real products.
   let catalogSpotlight: LineupItem[] = [];
@@ -1213,6 +1233,29 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                       >
                         {s.city ? `${s.city}, ${s.state}` : US_STATES[s.state] ?? s.state}
                         {s.address ? ` · ${s.address}` : ''}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Text link cluster: every other dispensary in this city. Not
+                photo-gated like the rail above, so photo-less listings get
+                inbound links and the city's shops fully interlink (SEO). */}
+            {cityLinks.length > 0 && (
+              <section aria-label={`All dispensaries in ${d.city}`}>
+                <h2 className="mb-3 text-lg font-semibold">
+                  More dispensaries in {d.city}, {d.state}
+                </h2>
+                <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {cityLinks.map((s) => (
+                    <li key={s.slug} className="truncate">
+                      <Link
+                        href={`/dispensary/${s.slug}`}
+                        className="text-muted hover:text-primary text-sm hover:underline"
+                      >
+                        {s.name}
                       </Link>
                     </li>
                   ))}
