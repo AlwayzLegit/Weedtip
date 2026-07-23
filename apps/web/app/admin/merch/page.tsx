@@ -15,7 +15,7 @@ export default async function AdminMerch() {
         'id,status,starts_at,ends_at,price_paid,is_house,brand_id,product_id,dispensary_id, slot:ad_slots!inner(slot_type,position,region:ad_regions(name,slug)), brand:brands(name,slug), product:products(name), dispensary:dispensaries(name,slug)',
       )
       .in('status', ['active', 'pending'])
-      .in('slot.slot_type', ['brand', 'product'])
+      .in('slot.slot_type', ['brand', 'product', 'hero'])
       .order('created_at', { ascending: false })
       .limit(300),
     supabase
@@ -27,15 +27,20 @@ export default async function AdminMerch() {
 
   const rows: MerchRow[] = (subs ?? []).flatMap((s) => {
     const slot = s.slot as {
-      slot_type: 'brand' | 'product';
+      slot_type: 'brand' | 'product' | 'hero';
       position: number;
       region: { name: string; slug: string } | null;
     } | null;
-    if (!slot || (slot.slot_type !== 'brand' && slot.slot_type !== 'product')) return [];
+    if (!slot || !['brand', 'product', 'hero'].includes(slot.slot_type)) return [];
     const brand = s.brand as { name: string; slug: string } | null;
     const product = s.product as { name: string } | null;
     const dispensary = s.dispensary as { name: string; slug: string } | null;
-    const targetName = slot.slot_type === 'brand' ? (brand?.name ?? '—') : (product?.name ?? '—');
+    const targetName =
+      slot.slot_type === 'brand'
+        ? (brand?.name ?? '—')
+        : slot.slot_type === 'product'
+          ? (product?.name ?? '—')
+          : (brand?.name ?? dispensary?.name ?? '—'); // hero: brand or shop
     return [
       {
         id: s.id,

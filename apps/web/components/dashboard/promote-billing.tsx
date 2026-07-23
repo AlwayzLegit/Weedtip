@@ -6,6 +6,7 @@ import {
   cancelPlan,
   requestPlacement,
   requestPlanChange,
+  reserveHeroSlotForShop,
   reserveProductSlot,
   type BillingRequestResult,
 } from '@/app/actions/billing';
@@ -200,10 +201,11 @@ function PlacementPurchase({
 
   const needsTarget = type === 'promoted_deal' || type === 'promoted_product';
   const targets = type === 'promoted_deal' ? deals : type === 'promoted_product' ? products : [];
-  // Featured products sell on the region system and reserve nationwide (the team
-  // targets a metro on activation), so the geo Reach selector doesn't apply.
-  const isProduct = type === 'promoted_product';
-  const effectiveScope: PlacementScope = isProduct ? 'nationwide' : scope;
+  // Featured products and the homepage hero sell on the region system and
+  // reserve nationwide (the team targets a metro on activation), so the geo
+  // Reach selector doesn't apply to them.
+  const isRegionReserve = type === 'promoted_product' || type === 'hero';
+  const effectiveScope: PlacementScope = isRegionReserve ? 'nationwide' : scope;
   const price = useMemo(
     () => placementPriceCents(type, effectiveScope, days),
     [type, effectiveScope, days],
@@ -244,7 +246,7 @@ function PlacementPurchase({
 
           <label className="space-y-1.5 text-sm">
             <span className="font-medium">Reach</span>
-            {isProduct ? (
+            {isRegionReserve ? (
               <div className="border-border bg-background text-muted flex h-[42px] items-center rounded-md border px-3 py-2 text-sm">
                 Nationwide · our team targets your market
               </div>
@@ -360,20 +362,23 @@ function PlacementPurchase({
                 days,
                 price_cents: price,
               });
-              // Featured products sell on the unified region ad-slot system now
-              // (reserved nationwide; the team can re-target to a metro). Every
-              // other placement type still runs on the legacy placements flow.
+              // Featured products and the homepage hero sell on the unified
+              // region ad-slot system now (reserved nationwide; the team can
+              // re-target to a metro). Every other placement type still runs on
+              // the legacy placements flow.
               go(() =>
                 type === 'promoted_product'
                   ? reserveProductSlot({ product_id: targetId, days })
-                  : requestPlacement({
-                      type,
-                      scope,
-                      days,
-                      target_id: needsTarget ? targetId : undefined,
-                      creative_id: creativeId || undefined,
-                      start_date: startDate || undefined,
-                    }),
+                  : type === 'hero'
+                    ? reserveHeroSlotForShop({ days, creative_id: creativeId || undefined })
+                    : requestPlacement({
+                        type,
+                        scope,
+                        days,
+                        target_id: needsTarget ? targetId : undefined,
+                        creative_id: creativeId || undefined,
+                        start_date: startDate || undefined,
+                      }),
               );
             }}
           >
