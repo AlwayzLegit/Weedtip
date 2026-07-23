@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { requestBrandPlacement, reserveBrandSlot } from '@/app/actions/billing';
+import { reserveBrandSlot, reserveHeroSlotForBrand } from '@/app/actions/billing';
 import { track } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
@@ -13,8 +13,9 @@ import {
 
 export type BrandCreativeOption = { id: string; name: string };
 
-/** Reserve a brand promotion — directory feature or a homepage hero slot, with
- *  optional geo targeting and an attached creative. */
+/** Reserve a brand promotion — a Featured Brands slot or a homepage hero slot.
+ *  Both sell on the region ad-slot system and reserve nationwide (the team can
+ *  target a metro on activation); an optional creative supplies custom art. */
 export function BrandPromote({
   brandId,
   creatives = [],
@@ -24,28 +25,14 @@ export function BrandPromote({
 }) {
   const [kind, setKind] = useState<'promoted_brand' | 'hero'>('promoted_brand');
   const [days, setDays] = useState(30);
-  const [stateCode, setStateCode] = useState('');
-  const [city, setCity] = useState('');
   const [creativeId, setCreativeId] = useState('');
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const isHero = kind === 'hero';
-  const targeted = stateCode.trim().length === 2;
-  const cityTargeted = targeted && city.trim().length > 0;
-  // Featured-brand slots sell on the region system and reserve nationwide (the
-  // team can re-target to a metro on activation); only the hero keeps the
-  // legacy geo scope selector.
-  const scope = isHero ? (cityTargeted ? 'city' : targeted ? 'state' : 'nationwide') : 'nationwide';
-  const price = useMemo(() => placementPriceCents(kind, scope, days), [kind, scope, days]);
-  const reachLabel = !isHero
-    ? 'nationwide · team targets your market'
-    : cityTargeted
-      ? `${city.trim()}, ${stateCode.toUpperCase()}`
-      : targeted
-        ? stateCode.toUpperCase()
-        : 'nationwide';
+  const price = useMemo(() => placementPriceCents(kind, 'nationwide', days), [kind, days]);
+  const reachLabel = 'nationwide · team targets your market';
 
   return (
     <div className="space-y-3">
@@ -106,32 +93,6 @@ export function BrandPromote({
             }
           />
         </label>
-        {isHero && (
-          <>
-            <label className="space-y-1.5 text-sm">
-              <span className="font-medium">State</span>
-              <input
-                value={stateCode}
-                onChange={(e) => setStateCode(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 2))}
-                placeholder="Nationwide"
-                maxLength={2}
-                className="border-border bg-background block w-28 rounded-md border px-3 py-2 uppercase"
-              />
-              <span className="text-muted block text-xs">Blank = nationwide</span>
-            </label>
-            <label className="space-y-1.5 text-sm">
-              <span className="font-medium">City (optional)</span>
-              <input
-                value={city}
-                onChange={(e) => setCity(e.target.value.slice(0, 80))}
-                placeholder={targeted ? 'All of state' : 'Set a state first'}
-                disabled={!targeted}
-                className="border-border bg-background block w-40 rounded-md border px-3 py-2 disabled:opacity-50"
-              />
-              <span className="text-muted block text-xs">Needs a state</span>
-            </label>
-          </>
-        )}
       </div>
 
       {/* Attach a custom creative (image + headline) — otherwise the ad uses the
@@ -172,26 +133,15 @@ export function BrandPromote({
             track('brand_promo_requested', {
               kind,
               days,
-              state: targeted ? stateCode.toUpperCase() : 'nationwide',
-              city: cityTargeted ? city.trim() : null,
+              scope: 'nationwide',
               has_creative: !!creativeId,
               price_cents: price,
             });
             start(async () => {
+              const payload = { brand_id: brandId, days, creative_id: creativeId || undefined };
               const res = isHero
-                ? await requestBrandPlacement({
-                    brand_id: brandId,
-                    days,
-                    state: targeted ? stateCode.toUpperCase() : undefined,
-                    city: cityTargeted ? city.trim() : undefined,
-                    creative_id: creativeId || undefined,
-                    type: 'hero',
-                  })
-                : await reserveBrandSlot({
-                    brand_id: brandId,
-                    days,
-                    creative_id: creativeId || undefined,
-                  });
+                ? await reserveHeroSlotForBrand(payload)
+                : await reserveBrandSlot(payload);
               if (res.ok) setNotice(res.message);
               else setError(res.error);
             });

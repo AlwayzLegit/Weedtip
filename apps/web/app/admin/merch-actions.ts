@@ -20,15 +20,18 @@ function refresh() {
   revalidatePath('/admin/merch');
   revalidatePath('/brands');
   revalidatePath('/products');
+  revalidatePath('/'); // hero fills render on the homepage
 }
 
 const compSchema = z.object({
-  entity: z.enum(['brand', 'product']),
-  /** brand slug, or product id (UUID) */
+  entity: z.enum(['brand', 'product', 'hero']),
+  /** brand slug, product id (UUID), or — for hero — a brand/dispensary slug. */
   ref: z.string().trim().min(1).max(120),
   /** ad-region slug; 'nationwide' is the default fallback region */
   region_slug: z.string().trim().min(1).max(120),
   days: z.number().int().min(1).max(365),
+  /** For hero slots, whether `ref` is a dispensary or a brand slug. */
+  hero_target: z.enum(['dispensary', 'brand']).optional(),
 });
 export type CompMerchInput = z.infer<typeof compSchema>;
 
@@ -60,7 +63,11 @@ export async function compMerchSlot(raw: CompMerchInput): Promise<MerchActionRes
   let dispensary_id: string | null = null;
   let product_id: string | null = null;
 
-  if (input.entity === 'brand') {
+  // Hero slots can be comped for either a brand or a dispensary (by slug).
+  const heroBrand = input.entity === 'hero' && input.hero_target === 'brand';
+  const heroShop = input.entity === 'hero' && input.hero_target !== 'brand';
+
+  if (input.entity === 'brand' || heroBrand) {
     const { data: brand } = await service
       .from('brands')
       .select('id')
@@ -68,6 +75,15 @@ export async function compMerchSlot(raw: CompMerchInput): Promise<MerchActionRes
       .maybeSingle();
     if (!brand) return { ok: false, error: 'No brand with that slug.' };
     brand_id = brand.id;
+  } else if (heroShop) {
+    const { data: shop } = await service
+      .from('dispensaries')
+      .select('id, status')
+      .eq('slug', input.ref)
+      .maybeSingle();
+    if (!shop) return { ok: false, error: 'No dispensary with that slug.' };
+    if (shop.status !== 'active') return { ok: false, error: 'That dispensary is not active.' };
+    dispensary_id = shop.id;
   } else {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       input.ref,

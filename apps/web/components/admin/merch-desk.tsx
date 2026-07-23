@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Gift, Loader2, Package, Sparkles } from 'lucide-react';
+import { Gift, Images, Loader2, Package, Sparkles } from 'lucide-react';
 import {
   activateMerchSubscription,
   compMerchSlot,
@@ -15,7 +15,7 @@ import { formatPrice } from '@/lib/format';
 export type MerchRow = {
   id: string;
   status: 'active' | 'pending';
-  slotType: 'brand' | 'product';
+  slotType: 'brand' | 'product' | 'hero';
   position: number;
   regionName: string;
   targetName: string;
@@ -88,13 +88,25 @@ function Row({ r }: { r: MerchRow }) {
 
 function CompForm({ regions }: { regions: RegionOption[] }) {
   const router = useRouter();
-  const [entity, setEntity] = useState<'brand' | 'product'>('brand');
+  const [entity, setEntity] = useState<'brand' | 'product' | 'hero'>('brand');
+  const [heroTarget, setHeroTarget] = useState<'dispensary' | 'brand'>('dispensary');
   const [ref, setRef] = useState('');
   const [regionSlug, setRegionSlug] = useState('nationwide');
   const [days, setDays] = useState(30);
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const refLabel =
+    entity === 'product'
+      ? 'Product id'
+      : entity === 'hero'
+        ? heroTarget === 'brand'
+          ? 'Brand slug'
+          : 'Dispensary slug'
+        : 'Brand slug';
+  const refPlaceholder =
+    entity === 'product' ? 'UUID' : heroTarget === 'brand' ? 'raw-garden' : 'green-cross';
 
   // Group regions by state for the picker; nationwide floats to the top.
   const grouped = useMemo(() => {
@@ -115,8 +127,8 @@ function CompForm({ regions }: { regions: RegionOption[] }) {
         <h2 className="text-lg font-semibold">Comp a featured slot</h2>
       </div>
       <p className="text-muted text-sm">
-        Place a brand or product into a region&apos;s featured inventory for free. Fills the next
-        open slot and goes live immediately; nationwide is the homepage-wide default region.
+        Place a brand, product, or homepage hero into a region&apos;s inventory for free. Fills the
+        next open slot and goes live immediately; nationwide is the homepage-wide default region.
       </p>
       {error && (
         <p className="border-danger/30 bg-danger/10 text-danger rounded-md border px-3 py-2 text-sm">
@@ -133,19 +145,33 @@ function CompForm({ regions }: { regions: RegionOption[] }) {
           <span className="font-medium">Type</span>
           <select
             value={entity}
-            onChange={(e) => setEntity(e.target.value as 'brand' | 'product')}
+            onChange={(e) => setEntity(e.target.value as 'brand' | 'product' | 'hero')}
             className="border-border bg-background block w-32 rounded-md border px-3 py-2"
           >
             <option value="brand">Brand</option>
             <option value="product">Product</option>
+            <option value="hero">Hero</option>
           </select>
         </label>
+        {entity === 'hero' && (
+          <label className="space-y-1.5 text-sm">
+            <span className="font-medium">Advertiser</span>
+            <select
+              value={heroTarget}
+              onChange={(e) => setHeroTarget(e.target.value as 'dispensary' | 'brand')}
+              className="border-border bg-background block w-32 rounded-md border px-3 py-2"
+            >
+              <option value="dispensary">Dispensary</option>
+              <option value="brand">Brand</option>
+            </select>
+          </label>
+        )}
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium">{entity === 'brand' ? 'Brand slug' : 'Product id'}</span>
+          <span className="font-medium">{refLabel}</span>
           <input
             value={ref}
             onChange={(e) => setRef(e.target.value.trim())}
-            placeholder={entity === 'brand' ? 'raw-garden' : 'UUID'}
+            placeholder={refPlaceholder}
             className="border-border bg-background block w-64 rounded-md border px-3 py-2"
           />
         </label>
@@ -187,7 +213,13 @@ function CompForm({ regions }: { regions: RegionOption[] }) {
             setError(null);
             setNotice(null);
             start(async () => {
-              const res = await compMerchSlot({ entity, ref, region_slug: regionSlug, days });
+              const res = await compMerchSlot({
+                entity,
+                ref,
+                region_slug: regionSlug,
+                days,
+                ...(entity === 'hero' ? { hero_target: heroTarget } : {}),
+              });
               if (res.ok) {
                 setNotice(`Featured ${entity} placed — it is live now.`);
                 setRef('');
@@ -238,6 +270,7 @@ function Section({
 
 export function MerchDesk({ rows, regions }: { rows: MerchRow[]; regions: RegionOption[] }) {
   const pending = rows.filter((r) => r.status === 'pending');
+  const liveHero = rows.filter((r) => r.status === 'active' && r.slotType === 'hero');
   const liveBrands = rows.filter((r) => r.status === 'active' && r.slotType === 'brand');
   const liveProducts = rows.filter((r) => r.status === 'active' && r.slotType === 'product');
 
@@ -262,6 +295,12 @@ export function MerchDesk({ rows, regions }: { rows: MerchRow[]; regions: Region
         </section>
       )}
 
+      <Section
+        icon={Images}
+        title="Homepage hero live"
+        rows={liveHero}
+        emptyHint="No hero slots live. Comp a hero above to feature a shop or brand on the homepage carousel."
+      />
       <Section
         icon={Sparkles}
         title="Featured brands live"
