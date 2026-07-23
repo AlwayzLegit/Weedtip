@@ -334,6 +334,7 @@ export type Database = {
           id: string
           is_house: boolean
           price_paid: number
+          product_id: string | null
           renewal_offered_at: string | null
           renewal_price_cents: number | null
           slot_id: string
@@ -349,6 +350,7 @@ export type Database = {
           id?: string
           is_house?: boolean
           price_paid: number
+          product_id?: string | null
           renewal_offered_at?: string | null
           renewal_price_cents?: number | null
           slot_id: string
@@ -364,6 +366,7 @@ export type Database = {
           id?: string
           is_house?: boolean
           price_paid?: number
+          product_id?: string | null
           renewal_offered_at?: string | null
           renewal_price_cents?: number | null
           slot_id?: string
@@ -376,6 +379,13 @@ export type Database = {
             columns: ["dispensary_id"]
             isOneToOne: false
             referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
@@ -3190,6 +3200,25 @@ export type Database = {
           is_house: boolean
         }[]
       }
+      get_region_featured_brands: {
+        Args: { p_region_id: string }
+        Returns: {
+          brand_id: string
+          position: number
+          is_house: boolean
+          creative_id: string | null
+        }[]
+      }
+      get_region_featured_products: {
+        Args: { p_region_id: string }
+        Returns: {
+          product_id: string
+          position: number
+          is_house: boolean
+          advertiser_dispensary_id: string | null
+          advertiser_brand_id: string | null
+        }[]
+      }
       grant_pos_addon: {
         Args: { p_dispensary_id: string; p_enabled: boolean }
         Returns: undefined
@@ -3488,7 +3517,14 @@ export type Database = {
       }
     }
     Enums: {
-      ad_slot_type: "exclusive" | "featured" | "premium" | "standard" | "hero"
+      ad_slot_type:
+        | "exclusive"
+        | "featured"
+        | "premium"
+        | "standard"
+        | "hero"
+        | "brand"
+        | "product"
       ad_sub_status: "pending" | "active" | "past_due" | "canceled"
       deal_kind:
         | "percentage"
