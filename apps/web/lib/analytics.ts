@@ -23,6 +23,7 @@ export type AnalyticsEvent =
   | 'claim_submitted'
   | 'advertise_viewed'
   | 'advertise_region_viewed'
+  | 'delivery_coverage_checked'
   | 'plan_change_requested'
   | 'placement_requested'
   | 'brand_promo_requested'

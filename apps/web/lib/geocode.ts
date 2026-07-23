@@ -10,6 +10,11 @@ export interface GeoPlace {
   state: string | null;
   /** City/place name from the feature or its context, if resolvable. */
   city: string | null;
+  /**
+   * County name (Mapbox `district`) with any trailing "County" stripped, e.g.
+   * "Los Angeles" — the granularity delivery service areas are published at.
+   */
+  county: string | null;
 }
 
 type GeocodeContext = { id: string; text: string; short_code?: string };
@@ -23,14 +28,19 @@ type GeocodeFeature = {
   properties?: { short_code?: string };
 };
 
-/** Pull the US state code + city out of a feature and its context chain. */
-function placeParts(f: GeocodeFeature): { state: string | null; city: string | null } {
+/** Pull the US state code, city, and county out of a feature + its context. */
+function placeParts(f: GeocodeFeature): {
+  state: string | null;
+  city: string | null;
+  county: string | null;
+} {
   const chain: GeocodeContext[] = [
     { id: f.id, text: f.text, short_code: f.properties?.short_code },
     ...(f.context ?? []),
   ];
   let state: string | null = null;
   let city: string | null = null;
+  let county: string | null = null;
   for (const c of chain) {
     if (c.id.startsWith('region') && c.short_code?.startsWith('US-')) {
       state = c.short_code.slice(3).toUpperCase();
@@ -38,8 +48,13 @@ function placeParts(f: GeocodeFeature): { state: string | null; city: string | n
     if (!city && (c.id.startsWith('place') || c.id.startsWith('locality'))) {
       city = c.text;
     }
+    // Mapbox `district` is the US county; drop the "County" suffix to match how
+    // service areas are stored ("Los Angeles County" → "Los Angeles").
+    if (!county && c.id.startsWith('district')) {
+      county = c.text.replace(/\s+county$/i, '').trim() || null;
+    }
   }
-  return { state, city };
+  return { state, city, county };
 }
 
 /**
@@ -70,7 +85,9 @@ export async function geocodePlaces(
       name: f.place_name.replace(/, United States$/, ''),
       center: { lat: f.center[1], lng: f.center[0] },
       bbox:
-        f.bbox && f.bbox.length === 4 ? ([f.bbox[0], f.bbox[1], f.bbox[2], f.bbox[3]] as BBox) : null,
+        f.bbox && f.bbox.length === 4
+          ? ([f.bbox[0], f.bbox[1], f.bbox[2], f.bbox[3]] as BBox)
+          : null,
       ...placeParts(f),
     }));
   } catch {
@@ -96,7 +113,9 @@ export async function reverseGeocode(lat: number, lng: number): Promise<GeoPlace
       name: f.place_name.replace(/, United States$/, ''),
       center: { lat, lng },
       bbox:
-        f.bbox && f.bbox.length === 4 ? ([f.bbox[0], f.bbox[1], f.bbox[2], f.bbox[3]] as BBox) : null,
+        f.bbox && f.bbox.length === 4
+          ? ([f.bbox[0], f.bbox[1], f.bbox[2], f.bbox[3]] as BBox)
+          : null,
       ...placeParts(f),
     };
   } catch {
