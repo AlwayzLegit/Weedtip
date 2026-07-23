@@ -875,82 +875,10 @@ export async function reserveHeroSlotForShop(
   return { ok: true, message: REQUEST_ACK };
 }
 
-// ─── Brand featured-auction bids ──────────────────────────────────────────────
-
-const brandBidSchema = z.object({
-  brand_id: z.string().uuid(),
-  region_id: z.string().uuid(),
-  bid_cents: z.number().int().min(50).max(100_000_00),
-});
-export type RequestBrandBidInput = z.infer<typeof brandBidSchema>;
-
-/**
- * Place a featured-auction bid. Verifies brand ownership + the market floor,
- * creates a PENDING bid; the admin console activates it (activate_brand_bid)
- * once billing for the 2-month term is arranged.
- */
-export async function requestBrandBid(raw: RequestBrandBidInput): Promise<BillingRequestResult> {
-  const parsed = brandBidSchema.safeParse(raw);
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
-  }
-  const input = parsed.data;
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: 'Please sign in.' };
-  if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, user.id)).success) {
-    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
-  }
-
-  const { data: brand } = await supabase
-    .from('brands')
-    .select('id, name, owner_id')
-    .eq('id', input.brand_id)
-    .maybeSingle();
-  if (!brand || brand.owner_id !== user.id) {
-    return { ok: false, error: 'You do not own this brand.' };
-  }
-
-  const { data: region } = await supabase
-    .from('brand_ad_regions')
-    .select('id, name, featured_rate_cents, is_active')
-    .eq('id', input.region_id)
-    .maybeSingle();
-  if (!region || !region.is_active) return { ok: false, error: 'That market is unavailable.' };
-  if (input.bid_cents < region.featured_rate_cents) {
-    return { ok: false, error: 'Bid is below the market floor.' };
-  }
-
-  // Clear any stale pending bid, then create a fresh one (service client: bid
-  // writes are admin-only under RLS and ownership is verified above).
-  const service = createServiceClient();
-  await service
-    .from('brand_ad_bids')
-    .delete()
-    .eq('brand_id', brand.id)
-    .eq('region_id', region.id)
-    .eq('status', 'pending');
-  const placeholderEnd = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
-  const { error: insErr } = await service.from('brand_ad_bids').insert({
-    region_id: region.id,
-    brand_id: brand.id,
-    bid_cents: input.bid_cents,
-    status: 'pending',
-    contract_end: placeholderEnd,
-  });
-  if (insErr) return { ok: false, error: 'Could not create the bid.' };
-
-  await sendBillingEmails('Featured brand bid', brand.name, user.email ?? null, {
-    Brand: brand.name,
-    Market: region.name,
-    'Bid (2-month term)': `$${(input.bid_cents / 100).toFixed(2)}`,
-  });
-  revalidatePath('/studio/bids');
-  return { ok: true, message: REQUEST_ACK };
-}
+// The brand featured-auction (requestBrandBid / brand_ad_bids) was folded into
+// the region brand-slot system — brands reserve a Featured Brands slot from the
+// studio Promote page now (reserveBrandSlot). The auction advertiser flow was
+// already mothballed; its live bid was migrated to a region slot.
 
 // Re-export the type for callers that map over placement types.
 export type { PlacementType };

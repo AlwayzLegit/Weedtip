@@ -32,24 +32,20 @@ export default async function BrandsPage({
   const supabase = await createClient();
   const { state: stateParam } = await searchParams;
 
-  const [{ data: brands }, { data: prodBrands }, { data: bidStates }, { data: lineupRows }] =
-    await Promise.all([
-      supabase
-        .from('brands')
-        .select('id,slug,name,description,logo_url,rating_avg,rating_count')
-        .order('name'),
-      supabase
-        .from('products')
-        .select('brand_id, dispensary:dispensaries!inner(status,state)')
-        .eq('dispensary.status', 'active')
-        .not('brand_id', 'is', null),
-      // States with a live winning brand bid — so paid markets are selectable
-      // even where there's no organic product coverage yet.
-      supabase.rpc('brand_featured_states'),
-      // Official lineup sizes — the count shown when a brand isn't on any
-      // dispensary menu yet (previously ~211 of 216 cards read "0 products").
-      supabase.from('brand_products').select('brand_id'),
-    ]);
+  const [{ data: brands }, { data: prodBrands }, { data: lineupRows }] = await Promise.all([
+    supabase
+      .from('brands')
+      .select('id,slug,name,description,logo_url,rating_avg,rating_count')
+      .order('name'),
+    supabase
+      .from('products')
+      .select('brand_id, dispensary:dispensaries!inner(status,state)')
+      .eq('dispensary.status', 'active')
+      .not('brand_id', 'is', null),
+    // Official lineup sizes — the count shown when a brand isn't on any
+    // dispensary menu yet (previously ~211 of 216 cards read "0 products").
+    supabase.from('brand_products').select('brand_id'),
+  ]);
 
   // Per-brand total + per-state product counts (a brand's states = the states of
   // the active dispensaries that carry it).
@@ -71,14 +67,8 @@ export default async function BrandsPage({
     stateBrandSets.get(st)!.add(p.brand_id);
   }
 
-  // A market is selectable if it has organic brand products or a winning brand
-  // bid — otherwise paid markets with no organic coverage could never render
-  // (audit #16).
-  const selectableStates = new Set<string>(stateBrandSets.keys());
-  for (const row of (bidStates as { state: string }[] | null) ?? []) {
-    if (row.state) selectableStates.add(row.state);
-  }
-  const allStates = [...selectableStates].sort();
+  // States a shopper can filter to — those with organic brand coverage.
+  const allStates = [...stateBrandSets.keys()].sort();
   const selectedState = stateParam && allStates.includes(stateParam) ? stateParam : null;
 
   const lineupCountByBrand = new Map<string, number>();
@@ -99,31 +89,8 @@ export default async function BrandsPage({
       (a, b) => b.count - a.count || b.lineupCount - a.lineupCount || a.name.localeCompare(b.name),
     );
 
-  // Featured strip = region ad-slot fills + the per-state auction winners.
-  let auctionCards: FeaturedCard[] = [];
-  if (selectedState) {
-    const { data: winners } = await supabase.rpc('region_featured_brands', {
-      p_state: selectedState,
-    });
-    const winnerIds = (winners ?? []).map((w) => w.brand_id);
-    if (winnerIds.length) {
-      const { data: wb } = await supabase
-        .from('brands')
-        .select('id,slug,name,description,logo_url')
-        .in('id', winnerIds);
-      auctionCards = (wb ?? []).map((b) => ({
-        key: `a-${b.id}`,
-        placementId: null,
-        slug: b.slug,
-        name: b.name,
-        description: b.description,
-        logo_url: b.logo_url,
-      }));
-    }
-  }
-
-  // Region ad-slot fills (the unified merchandising system) lead the strip:
-  // brands sold or comped into this view's region(s) show first.
+  // Featured strip = region ad-slot fills (the one unified merchandising system):
+  // brands sold or comped into this view's region(s).
   let regionCards: FeaturedCard[] = [];
   {
     const regionIds = await listingRegionIds(supabase, selectedState);
@@ -153,7 +120,7 @@ export default async function BrandsPage({
   }
 
   const seenFeatured = new Set<string>();
-  const featuredCards = [...regionCards, ...auctionCards].filter((c) => {
+  const featuredCards = [...regionCards].filter((c) => {
     if (seenFeatured.has(c.slug)) return false;
     seenFeatured.add(c.slug);
     return true;
