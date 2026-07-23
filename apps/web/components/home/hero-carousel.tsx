@@ -72,7 +72,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   return (
     <section aria-label="Featured partners" aria-roledescription="carousel">
       <div
-        className="rounded-2xl border-border bg-surface shadow-card relative overflow-hidden border"
+        className="border-border bg-surface shadow-card relative overflow-hidden rounded-2xl border"
         // Pause auto-advance while the user is reading (hover) or tabbing
         // through the slide's controls (focus) — WCAG 2.2.2.
         onMouseEnter={() => setPaused(true)}
@@ -96,7 +96,8 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
           className="block"
         >
           <MediaImage
-            url={s.coverUrl ?? s.logoUrl ?? null}
+            url={s.coverUrl}
+            fallbackUrl={s.logoUrl}
             alt={s.name}
             className="h-64 sm:h-80"
             iconClassName="h-16 w-16"

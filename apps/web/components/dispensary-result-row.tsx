@@ -109,6 +109,7 @@ export function DispensaryResultRow({
 
       <MediaImage
         url={d.coverImageUrl}
+        fallbackUrl={d.logoUrl}
         alt={d.name}
         className="h-[84px] w-[84px] shrink-0 rounded-lg"
         iconClassName="h-7 w-7"

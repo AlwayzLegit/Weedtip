@@ -78,11 +78,19 @@ export async function compMerchSlot(raw: CompMerchInput): Promise<MerchActionRes
   } else if (heroShop) {
     const { data: shop } = await service
       .from('dispensaries')
-      .select('id, status')
+      .select('id, status, cover_image_url, logo_url')
       .eq('slug', input.ref)
       .maybeSingle();
     if (!shop) return { ok: false, error: 'No dispensary with that slug.' };
     if (shop.status !== 'active') return { ok: false, error: 'That dispensary is not active.' };
+    // A promoted hero must carry an image — no bare-leaf placeholder in the
+    // carousel (audit T4).
+    if (!shop.cover_image_url && !shop.logo_url) {
+      return {
+        ok: false,
+        error: 'That shop has no cover photo or logo — add one before promoting it.',
+      };
+    }
     dispensary_id = shop.id;
   } else {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
