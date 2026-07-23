@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import dynamic from 'next/dynamic';
-import { List, Loader2, Map as MapIcon, RotateCw, SlidersHorizontal } from 'lucide-react';
+import { Loader2, RotateCw, SlidersHorizontal } from 'lucide-react';
 import {
   AMENITY_GROUPS,
   AMENITY_LABELS,
@@ -19,6 +19,7 @@ import { track } from '@/lib/analytics';
 import type { BrowseMapApi, BrowserShop, MapPinPoint } from './browse-map';
 import { DispensaryResultRow } from './dispensary-result-row';
 import { GeoSearch, type GeoPlace } from './geo-search';
+import { MapBottomSheet, type SheetSnap } from './map-bottom-sheet';
 import { MediaImage } from './media-image';
 import { RowQuickActions } from './row-quick-actions';
 
@@ -142,7 +143,8 @@ function toShop(r: RpcRow): BrowserShop {
  * beside a sticky full-height map of the same result set. The map viewport IS
  * the query — panning/zooming offers "Search this area", filter pills re-query
  * the server (search_dispensaries_bounds RPC), and pins ↔ cards highlight each
- * other on hover. Mobile collapses to a List/Map toggle.
+ * other on hover. Mobile is map-first: a draggable bottom sheet (peek carousel
+ * → half → full list) overlays the full-bleed map.
  *
  * `variant="page"` fills the viewport below the navbar (/dispensaries);
  * `variant="embedded"` is a fixed-height block inside a longer page (city pages).
@@ -176,7 +178,8 @@ export function DispensariesBrowser({
   const [origin, setOrigin] = useState(initialOrigin);
   const [hovered, setHovered] = useState<string | null>(null);
   const [popupShop, setPopupShop] = useState<BrowserShop | null>(null);
-  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
+  // Mobile map-first sheet: starts at the shallow "peek" (carousel over the map).
+  const [sheetSnap, setSheetSnap] = useState<SheetSnap>('peek');
   const [showMore, setShowMore] = useState(false);
   const [areaChanged, setAreaChanged] = useState(false);
   // Google Maps-style "search as I move": on by default, persisted per browser.
@@ -258,6 +261,9 @@ export function DispensariesBrowser({
   const pinsRequestId = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
+  // The mobile sheet renders its own copy of the list, so it keeps a separate
+  // card-ref map (a shared map would have both DOM trees fight over each slug).
+  const sheetCardRefs = useRef(new Map<string, HTMLDivElement>());
   const stripRef = useRef<HTMLDivElement>(null);
   const stripCardRefs = useRef(new Map<string, HTMLAnchorElement>());
   const stripScrollDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -672,6 +678,9 @@ export function DispensariesBrowser({
         return;
       }
       scrollStripTo(slug);
+      // Raise the tapped shop's card: centered in the peek carousel (above) and
+      // to the top of both list copies (desktop panel + expanded mobile sheet).
+      sheetCardRefs.current.get(slug)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       const inList = shops.find((s) => s.slug === slug);
       if (inList) {
         setPopupShop(inList);
@@ -823,6 +832,193 @@ export function DispensariesBrowser({
     </div>
   );
 
+  // The result list body — count header, states (failed / skeleton / empty /
+  // rows), and the "Show more" pager. Rendered twice (desktop floating panel +
+  // mobile sheet) with a distinct card-ref map each so the two DOM copies don't
+  // collide on slug keys.
+  const listContent = (rowRefs: MutableRefObject<Map<string, HTMLDivElement>>) => (
+    <>
+      <p className="text-muted mb-2 px-3 text-sm" aria-live="polite">
+        {loading ? (
+          <span className="inline-flex items-center gap-1.5">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching…
+          </span>
+        ) : (
+          <>
+            {total.toLocaleString()} {total === 1 ? 'dispensary' : 'dispensaries'} in this area
+            {filters.query ? ` for “${filters.query}”` : ''}
+          </>
+        )}
+      </p>
+
+      {failed ? (
+        <div className="card text-muted mx-3 p-10 text-center text-sm">
+          Couldn&apos;t load results.{' '}
+          <button
+            type="button"
+            className="text-primary font-medium hover:underline"
+            onClick={() => void runSearch(viewBounds.current, filters, {})}
+          >
+            Try again
+          </button>
+        </div>
+      ) : shops.length === 0 && loading ? (
+        // Fresh area with nothing on screen yet — skeleton rows shaped like
+        // DispensaryResultRow so the panel doesn't jump on arrival.
+        <div className="divide-border border-border divide-y border-y" aria-hidden>
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex animate-pulse gap-3 px-3 py-3">
+              <div className="min-w-0 flex-1 space-y-2 py-1">
+                <div className="bg-surface-2 h-4 w-3/4 rounded" />
+                <div className="bg-surface-2 h-3 w-1/2 rounded" />
+                <div className="bg-surface-2 h-3 w-2/3 rounded" />
+              </div>
+              <div className="bg-surface-2 h-[84px] w-[84px] shrink-0 rounded-lg" />
+            </div>
+          ))}
+        </div>
+      ) : shops.length === 0 && !loading ? (
+        <div className="card text-muted mx-3 p-10 text-center text-sm">
+          No dispensaries match here. Zoom out, move the map, or clear filters.
+        </div>
+      ) : (
+        <div
+          className={cn('divide-border border-border divide-y border-y', loading && 'opacity-60')}
+        >
+          {shops.map((s, i) => (
+            <div
+              key={s.id}
+              ref={(el) => {
+                if (el) rowRefs.current.set(s.slug, el);
+                else rowRefs.current.delete(s.slug);
+              }}
+              onMouseEnter={() => setHovered(s.slug)}
+              onMouseLeave={() => setHovered(null)}
+              className={cn(
+                'transition-colors',
+                (hovered === s.slug || popupShop?.slug === s.slug) && 'bg-surface-2',
+              )}
+            >
+              <DispensaryResultRow
+                d={{
+                  slug: s.slug,
+                  name: s.name,
+                  city: s.city,
+                  state: s.state,
+                  coverImageUrl: s.coverImageUrl,
+                  logoUrl: s.logoUrl,
+                  isDelivery: s.isDelivery,
+                  isPickup: s.isPickup,
+                  isMedical: s.isMedical,
+                  isRecreational: s.isRecreational,
+                  featured: s.featured,
+                  sponsored: s.sponsored,
+                  rank: i + 1,
+                  placementId: s.placementId,
+                  adSlot: s.adSlot,
+                  distanceMeters: s.distanceMeters,
+                  rating: s.rating,
+                  reviewCount: s.reviewCount,
+                  licensed: s.licensed,
+                  openNow: s.isOpenNow,
+                  hours: s.hours,
+                  timezone: s.timezone,
+                  dealBadge: s.dealBadge,
+                }}
+                quickActions={
+                  <RowQuickActions
+                    slug={s.slug}
+                    dispensaryId={s.id}
+                    lat={s.lat}
+                    lng={s.lng}
+                    deliveryOnly={s.isDelivery && !s.isPickup}
+                    isFavorite={favorites.has(s.id)}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                }
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!failed && shops.length < total && (
+        <div className="mt-5 flex justify-center">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() =>
+              void runSearch(searchedBounds.current, filters, {
+                append: true,
+                offset: shops.length,
+              })
+            }
+            className="border-border bg-surface hover:border-primary/50 rounded-full border px-5 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            Show more ({shops.length.toLocaleString()} of {total.toLocaleString()})
+          </button>
+        </div>
+      )}
+    </>
+  );
+
+  // Peek-state body of the mobile sheet: the swipeable card carousel whose
+  // scroll recenters the map on the centered card (Weedmaps' mobile pattern).
+  const mobileCarousel =
+    shops.length > 0 ? (
+      <div
+        ref={stripRef}
+        onScroll={handleStripScroll}
+        className="scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 pt-1"
+      >
+        {shops.slice(0, 30).map((s) => (
+          <a
+            key={s.id}
+            href={`/dispensary/${s.slug}`}
+            ref={(el) => {
+              if (el) stripCardRefs.current.set(s.slug, el);
+              else stripCardRefs.current.delete(s.slug);
+            }}
+            className={cn(
+              'bg-surface border-border shadow-card flex w-[17rem] shrink-0 snap-center items-center gap-3 rounded-xl border p-2.5',
+              hovered === s.slug && 'border-primary/70',
+            )}
+          >
+            <MediaImage
+              url={s.coverImageUrl}
+              alt={s.name}
+              className="h-16 w-16 shrink-0 rounded-lg"
+              iconClassName="h-6 w-6"
+            />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{s.name}</p>
+              <p className="text-muted truncate text-xs">
+                {s.rating > 0 ? `★ ${s.rating.toFixed(1)} · ` : s.licensed ? 'Licensed · ' : ''}
+                {s.city ?? 'Delivery only'}
+                {formatDistance(s.distanceMeters) ? ` · ${formatDistance(s.distanceMeters)}` : ''}
+              </p>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[11px]">
+                {s.isOpenNow !== null && (
+                  <span className={s.isOpenNow ? 'text-primary' : 'text-muted'}>
+                    {s.isOpenNow ? 'Open now' : 'Closed'}
+                  </span>
+                )}
+                {s.dealBadge && (
+                  <span className="bg-primary-muted text-primary rounded-full px-1.5 py-px font-semibold">
+                    {s.dealBadge}
+                  </span>
+                )}
+              </p>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p className="text-muted px-4 py-4 text-sm">
+        {loading ? 'Searching this area…' : 'No dispensaries here — pan or zoom the map.'}
+      </p>
+    );
+
   return (
     <div
       className={cn(
@@ -835,147 +1031,23 @@ export function DispensariesBrowser({
       {filtersBar}
 
       <div className="relative min-h-0 flex-1">
-        {/* Result list — mobile: full-width list view; desktop: a floating
-            panel hovering over the left edge of the full-bleed map (Weedmaps
-            pattern) so the map keeps ONE scroll/zoom surface. */}
+        {/* Result list — desktop only: a floating panel hovering over the left
+            edge of the full-bleed map (Weedmaps pattern) so the map keeps ONE
+            scroll/zoom surface. On mobile the list lives in the bottom sheet. */}
         <div
           ref={listRef}
           className={cn(
-            'min-h-0 w-full overflow-y-auto py-3',
+            'hidden overflow-y-auto py-3',
             'lg:absolute lg:bottom-4 lg:left-4 lg:top-4 lg:z-10 lg:block lg:w-[25.5rem]',
             'lg:rounded-card lg:border-border lg:bg-surface lg:shadow-card-hover lg:border',
-            mobileView === 'map' && 'hidden',
           )}
         >
-          <p className="text-muted mb-2 px-3 text-sm" aria-live="polite">
-            {loading ? (
-              <span className="inline-flex items-center gap-1.5">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching…
-              </span>
-            ) : (
-              <>
-                {total.toLocaleString()} {total === 1 ? 'dispensary' : 'dispensaries'} in this area
-                {filters.query ? ` for “${filters.query}”` : ''}
-              </>
-            )}
-          </p>
-
-          {failed ? (
-            <div className="card text-muted mx-3 p-10 text-center text-sm">
-              Couldn&apos;t load results.{' '}
-              <button
-                type="button"
-                className="text-primary font-medium hover:underline"
-                onClick={() => void runSearch(viewBounds.current, filters, {})}
-              >
-                Try again
-              </button>
-            </div>
-          ) : shops.length === 0 && loading ? (
-            // Fresh area with nothing on screen yet — skeleton rows shaped
-            // like DispensaryResultRow so the panel doesn't jump on arrival.
-            // (Searches over existing results keep the rows and dim instead.)
-            <div className="divide-border border-border divide-y border-y" aria-hidden>
-              {Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className="flex animate-pulse gap-3 px-3 py-3">
-                  <div className="min-w-0 flex-1 space-y-2 py-1">
-                    <div className="bg-surface-2 h-4 w-3/4 rounded" />
-                    <div className="bg-surface-2 h-3 w-1/2 rounded" />
-                    <div className="bg-surface-2 h-3 w-2/3 rounded" />
-                  </div>
-                  <div className="bg-surface-2 h-[84px] w-[84px] shrink-0 rounded-lg" />
-                </div>
-              ))}
-            </div>
-          ) : shops.length === 0 && !loading ? (
-            <div className="card text-muted mx-3 p-10 text-center text-sm">
-              No dispensaries match here. Zoom out, move the map, or clear filters.
-            </div>
-          ) : (
-            <div
-              className={cn(
-                'divide-border border-border divide-y border-y',
-                loading && 'opacity-60',
-              )}
-            >
-              {shops.map((s, i) => (
-                <div
-                  key={s.id}
-                  ref={(el) => {
-                    if (el) cardRefs.current.set(s.slug, el);
-                    else cardRefs.current.delete(s.slug);
-                  }}
-                  onMouseEnter={() => setHovered(s.slug)}
-                  onMouseLeave={() => setHovered(null)}
-                  className={cn(
-                    'transition-colors',
-                    (hovered === s.slug || popupShop?.slug === s.slug) && 'bg-surface-2',
-                  )}
-                >
-                  <DispensaryResultRow
-                    d={{
-                      slug: s.slug,
-                      name: s.name,
-                      city: s.city,
-                      state: s.state,
-                      coverImageUrl: s.coverImageUrl,
-                      logoUrl: s.logoUrl,
-                      isDelivery: s.isDelivery,
-                      isPickup: s.isPickup,
-                      isMedical: s.isMedical,
-                      isRecreational: s.isRecreational,
-                      featured: s.featured,
-                      sponsored: s.sponsored,
-                      rank: i + 1,
-                      placementId: s.placementId,
-                      adSlot: s.adSlot,
-                      distanceMeters: s.distanceMeters,
-                      rating: s.rating,
-                      reviewCount: s.reviewCount,
-                      licensed: s.licensed,
-                      openNow: s.isOpenNow,
-                      hours: s.hours,
-                      timezone: s.timezone,
-                      dealBadge: s.dealBadge,
-                    }}
-                    quickActions={
-                      <RowQuickActions
-                        slug={s.slug}
-                        dispensaryId={s.id}
-                        lat={s.lat}
-                        lng={s.lng}
-                        deliveryOnly={s.isDelivery && !s.isPickup}
-                        isFavorite={favorites.has(s.id)}
-                        onToggleFavorite={toggleFavorite}
-                      />
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {!failed && shops.length < total && (
-            <div className="mt-5 flex justify-center">
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() =>
-                  void runSearch(searchedBounds.current, filters, {
-                    append: true,
-                    offset: shops.length,
-                  })
-                }
-                className="border-border bg-surface hover:border-primary/50 rounded-full border px-5 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                Show more ({shops.length.toLocaleString()} of {total.toLocaleString()})
-              </button>
-            </div>
-          )}
+          {listContent(cardRefs)}
         </div>
 
-        {/* Full-bleed map — fills the whole page under the floating list. */}
-        <div className={cn('absolute inset-0', mobileView === 'list' && 'hidden lg:block')}>
+        {/* Full-bleed map — fills the whole page (mobile is map-first, with the
+            list in an overlaid bottom sheet below). */}
+        <div className="absolute inset-0">
           <BrowseMap
             pins={rankedPins}
             promoAds={promoAds}
@@ -1025,90 +1097,21 @@ export function DispensariesBrowser({
           )}
         </div>
 
-        {/* Mobile map view: swipeable card strip over the map (Weedmaps pattern) */}
-        {mobileView === 'map' && shops.length > 0 && (
-          <div className="absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-10 lg:hidden">
-            <div
-              ref={stripRef}
-              onScroll={handleStripScroll}
-              className="scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1"
-            >
-              {shops.slice(0, 30).map((s) => (
-                <a
-                  key={s.id}
-                  href={`/dispensary/${s.slug}`}
-                  ref={(el) => {
-                    if (el) stripCardRefs.current.set(s.slug, el);
-                    else stripCardRefs.current.delete(s.slug);
-                  }}
-                  className={cn(
-                    'bg-surface border-border shadow-card-hover flex w-[17rem] shrink-0 snap-center items-center gap-3 rounded-xl border p-2.5',
-                    hovered === s.slug && 'border-primary/70',
-                  )}
-                >
-                  <MediaImage
-                    url={s.coverImageUrl}
-                    alt={s.name}
-                    className="h-16 w-16 shrink-0 rounded-lg"
-                    iconClassName="h-6 w-6"
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{s.name}</p>
-                    <p className="text-muted truncate text-xs">
-                      {s.rating > 0
-                        ? `★ ${s.rating.toFixed(1)} · `
-                        : s.licensed
-                          ? 'Licensed · '
-                          : ''}
-                      {s.city ?? 'Delivery only'}
-                      {formatDistance(s.distanceMeters)
-                        ? ` · ${formatDistance(s.distanceMeters)}`
-                        : ''}
-                    </p>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px]">
-                      {s.isOpenNow !== null && (
-                        <span className={s.isOpenNow ? 'text-primary' : 'text-muted'}>
-                          {s.isOpenNow ? 'Open now' : 'Closed'}
-                        </span>
-                      )}
-                      {s.dealBadge && (
-                        <span className="bg-primary-muted text-primary rounded-full px-1.5 py-px font-semibold">
-                          {s.dealBadge}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Mobile list/map toggle */}
-        <div
-          className={cn(
-            'absolute left-1/2 z-10 -translate-x-1/2 lg:hidden',
-            mobileView === 'map' && shops.length > 0
-              ? 'bottom-[calc(7rem+env(safe-area-inset-bottom))]'
-              : 'bottom-[calc(1.25rem+env(safe-area-inset-bottom))]',
-          )}
+        {/* Mobile map-first bottom sheet: peek (carousel) → half → full (list). */}
+        <MapBottomSheet
+          snap={sheetSnap}
+          onSnapChange={setSheetSnap}
+          label={
+            loading
+              ? 'Searching this area…'
+              : `${total.toLocaleString()} ${total === 1 ? 'dispensary' : 'dispensaries'} nearby`
+          }
+          peek={mobileCarousel}
         >
-          <button
-            type="button"
-            onClick={() => setMobileView((v) => (v === 'list' ? 'map' : 'list'))}
-            className="bg-foreground text-background shadow-card-hover inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
-          >
-            {mobileView === 'list' ? (
-              <>
-                <MapIcon className="h-4 w-4" /> Map
-              </>
-            ) : (
-              <>
-                <List className="h-4 w-4" /> List
-              </>
-            )}
-          </button>
-        </div>
+          <div className="pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            {listContent(sheetCardRefs)}
+          </div>
+        </MapBottomSheet>
       </div>
     </div>
   );
