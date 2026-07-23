@@ -68,6 +68,8 @@ export interface MapPinPoint {
   lat: number;
   lng: number;
   featured: boolean;
+  /** Paid placement — draws the amber "Ad" pin (ad-disclosure, audit T3). */
+  sponsored?: boolean;
   isOpenNow: boolean | null;
   /** Featured shops carry their logo → branded logo pin. */
   logoUrl?: string | null;
@@ -133,12 +135,7 @@ const unclusteredLayer: LayerProps = {
       '#38bdf8',
       '#34d399',
     ],
-    'circle-radius': [
-      'case',
-      ['has', 'rank'],
-      9,
-      ['case', ['get', 'featured'], 7, 6],
-    ],
+    'circle-radius': ['case', ['has', 'rank'], 9, ['case', ['get', 'featured'], 7, 6]],
     'circle-stroke-width': 1.5,
     'circle-stroke-color': '#0b0b0b',
   },
@@ -225,9 +222,17 @@ export function BrowseMap({
     if (!apiRef) return;
     apiRef.current = {
       flyTo: (center, zoom) =>
-        mapRef.current?.flyTo({ center: [center.lng, center.lat], zoom: zoom ?? 12, duration: 1200 }),
+        mapRef.current?.flyTo({
+          center: [center.lng, center.lat],
+          zoom: zoom ?? 12,
+          duration: 1200,
+        }),
       fitBounds: (b) =>
-        mapRef.current?.fitBounds([b[0], b[1], b[2], b[3]], { padding: 48, maxZoom: 15, duration: 1200 }),
+        mapRef.current?.fitBounds([b[0], b[1], b[2], b[3]], {
+          padding: 48,
+          maxZoom: 15,
+          duration: 1200,
+        }),
       panTo: (center) =>
         mapRef.current?.easeTo({ center: [center.lng, center.lat], duration: 500 }),
     };
@@ -461,11 +466,24 @@ export function BrowseMap({
                   name={p.name}
                   hideWhenEmpty={false}
                   className={cn(
-                    'bg-surface h-9 w-9 shadow-md ring-2',
-                    hoveredSlug === p.slug ? 'ring-primary' : 'ring-amber-400',
+                    'bg-surface shadow-md ring-2',
+                    // Sponsored pins sit larger + amber (win the scan); organic
+                    // logo pins are neutral. Hover always highlights primary.
+                    p.sponsored ? 'h-10 w-10' : 'h-9 w-9',
+                    hoveredSlug === p.slug
+                      ? 'ring-primary'
+                      : p.sponsored
+                        ? 'ring-amber-400'
+                        : 'ring-white/70',
                   )}
                   rounded="rounded-full"
                 />
+                {/* Honest ad disclosure — a visible "Ad" chip on paid pins (T3). */}
+                {p.sponsored && (
+                  <span className="absolute -right-1.5 -top-1.5 rounded-full bg-amber-400 px-1 text-[8px] font-bold uppercase leading-[1.45] tracking-wide text-black shadow ring-1 ring-black/40">
+                    Ad
+                  </span>
+                )}
                 {p.rank != null && (
                   <span className="absolute -left-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-0.5 text-[9px] font-bold leading-none text-black shadow ring-1 ring-black/40">
                     {p.rank}
@@ -477,7 +495,11 @@ export function BrowseMap({
                 aria-hidden
                 className={cn(
                   'block h-3.5 w-3.5 rounded-full border-2 border-black/70 shadow',
-                  p.featured ? 'bg-amber-400' : p.isOpenNow === false ? 'bg-slate-500' : 'bg-primary',
+                  p.sponsored
+                    ? 'bg-amber-400'
+                    : p.isOpenNow === false
+                      ? 'bg-slate-500'
+                      : 'bg-primary',
                 )}
               />
             )}
