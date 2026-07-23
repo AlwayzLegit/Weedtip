@@ -195,6 +195,7 @@ export function DispensariesBrowser({
         lat: s.lat as number,
         lng: s.lng as number,
         featured: s.featured || !!s.sponsored,
+        sponsored: !!s.sponsored,
         isOpenNow: s.isOpenNow,
         logoUrl: s.featured || s.sponsored ? s.logoUrl : null,
         dealLabel: s.dealBadge ?? null,
@@ -303,6 +304,7 @@ export function DispensariesBrowser({
           lng: r.longitude,
           // Paid shops share the featured pin treatment (server decides logo_url).
           featured: r.featured || ((r as { paid?: boolean }).paid ?? false),
+          sponsored: (r as { paid?: boolean }).paid ?? false,
           isOpenNow: r.is_open_now,
           logoUrl: r.logo_url,
           dealLabel: r.deal_type ? dealBadge(r.deal_type, Number(r.deal_value)) : null,
@@ -327,9 +329,7 @@ export function DispensariesBrowser({
         .from('favorites')
         .select('dispensary_id')
         .eq('user_id', data.user.id)
-        .then(({ data: favs }) =>
-          setFavorites(new Set((favs ?? []).map((f) => f.dispensary_id))),
-        );
+        .then(({ data: favs }) => setFavorites(new Set((favs ?? []).map((f) => f.dispensary_id))));
     });
   }, [supabase]);
 
@@ -455,7 +455,10 @@ export function DispensariesBrowser({
         void supabase
           .from('deals')
           .select('dispensary_id,discount_type,discount_value')
-          .in('dispensary_id', rows.map((r) => r.id))
+          .in(
+            'dispensary_id',
+            rows.map((r) => r.id),
+          )
           .eq('is_active', true)
           .lte('start_date', nowIso)
           .gte('end_date', nowIso)
@@ -465,7 +468,10 @@ export function DispensariesBrowser({
             const byShop = new Map<string, string>();
             for (const dl of liveDeals) {
               if (dl.dispensary_id && !byShop.has(dl.dispensary_id)) {
-                byShop.set(dl.dispensary_id, dealBadge(dl.discount_type, Number(dl.discount_value)));
+                byShop.set(
+                  dl.dispensary_id,
+                  dealBadge(dl.discount_type, Number(dl.discount_value)),
+                );
               }
             }
             if (byShop.size === 0) return;
@@ -552,7 +558,12 @@ export function DispensariesBrowser({
   // the default order server-side.
   const handleSortChange = useCallback(
     (value: DispensarySort) => {
-      if (value === 'distance' && !origin && typeof navigator !== 'undefined' && navigator.geolocation) {
+      if (
+        value === 'distance' &&
+        !origin &&
+        typeof navigator !== 'undefined' &&
+        navigator.geolocation
+      ) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const o = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -938,12 +949,7 @@ export function DispensariesBrowser({
         </div>
 
         {/* Full-bleed map — fills the whole page under the floating list. */}
-        <div
-          className={cn(
-            'absolute inset-0',
-            mobileView === 'list' && 'hidden lg:block',
-          )}
-        >
+        <div className={cn('absolute inset-0', mobileView === 'list' && 'hidden lg:block')}>
           <BrowseMap
             pins={rankedPins}
             initialBounds={initialBounds}
@@ -1021,9 +1027,15 @@ export function DispensariesBrowser({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{s.name}</p>
                     <p className="text-muted truncate text-xs">
-                      {s.rating > 0 ? `★ ${s.rating.toFixed(1)} · ` : s.licensed ? 'Licensed · ' : ''}
+                      {s.rating > 0
+                        ? `★ ${s.rating.toFixed(1)} · `
+                        : s.licensed
+                          ? 'Licensed · '
+                          : ''}
                       {s.city ?? 'Delivery only'}
-                      {formatDistance(s.distanceMeters) ? ` · ${formatDistance(s.distanceMeters)}` : ''}
+                      {formatDistance(s.distanceMeters)
+                        ? ` · ${formatDistance(s.distanceMeters)}`
+                        : ''}
                     </p>
                     <p className="mt-0.5 flex items-center gap-1.5 text-[11px]">
                       {s.isOpenNow !== null && (
