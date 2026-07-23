@@ -1,0 +1,67 @@
+name: GSC coverage inspect
+
+# Nightly Google Search Console URL Inspection sweep → public.page_index_status.
+# Records how Google sees each page (indexed vs not, and why) so we can target
+# thin/orphan pages. Inspects the stalest 2,000 URLs/day (the API's cap) and
+# cycles the whole site over several days. See apps/web/scripts/gsc-inspect.mjs.
+#
+# Requires repo secrets:
+#   GSC_SERVICE_ACCOUNT_JSON   service-account key JSON (added as a user on the
+#                              Search Console property, Restricted/Full)
+#   SUPABASE_SERVICE_ROLE_KEY  writes page_index_status (bypasses RLS)
+# Optional repo vars: SUPABASE_URL, SITE_URL, GSC_SITE_URL.
+
+on:
+  schedule:
+    - cron: '0 7 * * *' # 07:00 UTC nightly
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max URLs to inspect (API caps at 2000/day)'
+        required: false
+        default: '2000'
+
+concurrency:
+  group: gsc-inspect
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Node 22+: @supabase/supabase-js needs native WebSocket (Node 20 throws).
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Inspect URLs
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://ggpnghpcclngqkyelkes.supabase.co' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://www.weedtip.com' }}
+          GSC_SITE_URL: ${{ vars.GSC_SITE_URL || 'sc-domain:weedtip.com' }}
+          GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY secret is not set."
+            exit 1
+          fi
+          if [ -z "$GSC_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::GSC_SERVICE_ACCOUNT_JSON secret is not set — see apps/web/scripts/SEO-INDEXING.md."
+            exit 1
+          fi
+          node scripts/gsc-inspect.mjs --limit "${{ github.event.inputs.limit || '2000' }}"
