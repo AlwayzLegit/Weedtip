@@ -375,6 +375,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "ad_subscriptions_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_subscriptions_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "ad_creatives"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ad_subscriptions_dispensary_id_fkey"
             columns: ["dispensary_id"]
             isOneToOne: false
