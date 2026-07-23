@@ -499,6 +499,212 @@ export async function requestBrandPlacement(
   return { ok: true, message: REQUEST_ACK };
 }
 
+// ─── Region merch-slot reservations (brand + product self-serve) ──────────────
+// Featured brands/products are now sold on the unified region ad-slot system
+// (ad_subscriptions), not the legacy promoted_brand/promoted_product placements.
+// A reservation is the same sales-led request→admin flow: it holds the next open
+// NATIONWIDE slot as a PENDING subscription, emails sales, and the admin
+// activates it (or re-targets it to a metro region) in the merch desk.
+
+/** Claim the next open nationwide slot of a type, or explain why none is free. */
+async function reserveNextNationwideSlot(
+  service: ReturnType<typeof createServiceClient>,
+  slotType: 'brand' | 'product',
+): Promise<{ slotId: string } | { error: string }> {
+  const { data: region } = await service
+    .from('ad_regions')
+    .select('id')
+    .eq('slug', 'nationwide')
+    .maybeSingle();
+  if (!region) return { error: 'Merchandising is not set up yet — please contact support.' };
+  const { data: slots } = await service
+    .from('ad_slots')
+    .select('id, position')
+    .eq('region_id', region.id)
+    .eq('slot_type', slotType)
+    .order('position');
+  if (!slots?.length) return { error: 'No featured slots are configured right now.' };
+  const { data: live } = await service
+    .from('ad_subscriptions')
+    .select('slot_id')
+    .in(
+      'slot_id',
+      slots.map((s) => s.id),
+    )
+    .in('status', ['pending', 'active', 'past_due']);
+  const taken = new Set((live ?? []).map((s) => s.slot_id));
+  const open = slots.find((s) => !taken.has(s.id));
+  if (!open) {
+    return { error: 'All featured slots are reserved right now — please check back soon.' };
+  }
+  return { slotId: open.id };
+}
+
+const reserveBrandSchema = z.object({
+  brand_id: z.string().uuid(),
+  days: z.number().int().min(PLACEMENT_MIN_DAYS).max(PLACEMENT_MAX_DAYS),
+  creative_id: z.string().uuid().optional(),
+});
+export type ReserveBrandSlotInput = z.infer<typeof reserveBrandSchema>;
+
+/** Reserve a featured-brand region slot (pending until the team activates it). */
+export async function reserveBrandSlot(raw: ReserveBrandSlotInput): Promise<BillingRequestResult> {
+  const parsed = reserveBrandSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
+  }
+  const input = parsed.data;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Please sign in.' };
+  if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, user.id)).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
+
+  const { data: brand } = await supabase
+    .from('brands')
+    .select('id, name, owner_id')
+    .eq('id', input.brand_id)
+    .maybeSingle();
+  if (!brand || brand.owner_id !== user.id) {
+    return { ok: false, error: 'You do not own this brand.' };
+  }
+
+  const service = createServiceClient();
+
+  // Cap open (pending) reservations per brand so held slots can't be hoarded.
+  const { count: openReqs } = await service
+    .from('ad_subscriptions')
+    .select('id', { count: 'exact', head: true })
+    .eq('brand_id', brand.id)
+    .eq('status', 'pending');
+  if ((openReqs ?? 0) >= 3) {
+    return {
+      ok: false,
+      error: 'You already have reservations awaiting our team — we’ll be in touch shortly.',
+    };
+  }
+
+  if (input.creative_id) {
+    const { data: creative } = await service
+      .from('ad_creatives')
+      .select('id')
+      .eq('id', input.creative_id)
+      .eq('brand_id', brand.id)
+      .maybeSingle();
+    if (!creative) return { ok: false, error: 'That creative is not in your library.' };
+  }
+
+  const slot = await reserveNextNationwideSlot(service, 'brand');
+  if ('error' in slot) return { ok: false, error: slot.error };
+
+  const now = new Date();
+  const ends = new Date(now.getTime() + input.days * 86_400_000);
+  const priceCents = placementPriceCents('promoted_brand', 'nationwide', input.days);
+  const { error: insErr } = await service.from('ad_subscriptions').insert({
+    slot_id: slot.slotId,
+    brand_id: brand.id,
+    creative_id: input.creative_id ?? null,
+    price_paid: priceCents,
+    status: 'pending',
+    is_house: false,
+    starts_at: now.toISOString(),
+    ends_at: ends.toISOString(),
+  });
+  if (insErr) return { ok: false, error: 'Could not create the reservation.' };
+
+  await sendBillingEmails('Featured brand', brand.name, user.email ?? null, {
+    Brand: brand.name,
+    Reach: 'Nationwide (team can target a metro)',
+    Days: input.days,
+    Price: `$${(priceCents / 100).toFixed(2)}`,
+    ...(input.creative_id ? { Creative: 'Custom creative attached' } : {}),
+  });
+  revalidatePath('/studio/promote');
+  return { ok: true, message: REQUEST_ACK };
+}
+
+const reserveProductSchema = z.object({
+  product_id: z.string().uuid(),
+  days: z.number().int().min(PLACEMENT_MIN_DAYS).max(PLACEMENT_MAX_DAYS),
+});
+export type ReserveProductSlotInput = z.infer<typeof reserveProductSchema>;
+
+/** Reserve a featured-product region slot for one of your shop's products. */
+export async function reserveProductSlot(
+  raw: ReserveProductSlotInput,
+): Promise<BillingRequestResult> {
+  const parsed = reserveProductSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
+  }
+  const input = parsed.data;
+
+  const { dispensary } = await requireDispensaryOwner();
+  if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, dispensary.id)).success) {
+    return { ok: false, error: 'Too many attempts. Please wait a moment.' };
+  }
+
+  const service = createServiceClient();
+  const { data: product } = await service
+    .from('products')
+    .select('id, name, dispensary_id')
+    .eq('id', input.product_id)
+    .maybeSingle();
+  if (!product || product.dispensary_id !== dispensary.id) {
+    return { ok: false, error: 'That product is not on your menu.' };
+  }
+
+  // Cap open (pending) product reservations for this shop.
+  const { count: openReqs } = await service
+    .from('ad_subscriptions')
+    .select('id', { count: 'exact', head: true })
+    .eq('dispensary_id', dispensary.id)
+    .not('product_id', 'is', null)
+    .eq('status', 'pending');
+  if ((openReqs ?? 0) >= 3) {
+    return {
+      ok: false,
+      error: 'You already have reservations awaiting our team — we’ll be in touch shortly.',
+    };
+  }
+
+  const slot = await reserveNextNationwideSlot(service, 'product');
+  if ('error' in slot) return { ok: false, error: slot.error };
+
+  const now = new Date();
+  const ends = new Date(now.getTime() + input.days * 86_400_000);
+  const priceCents = placementPriceCents('promoted_product', 'nationwide', input.days);
+  const { error: insErr } = await service.from('ad_subscriptions').insert({
+    slot_id: slot.slotId,
+    dispensary_id: dispensary.id,
+    product_id: product.id,
+    price_paid: priceCents,
+    status: 'pending',
+    is_house: false,
+    starts_at: now.toISOString(),
+    ends_at: ends.toISOString(),
+  });
+  if (insErr) return { ok: false, error: 'Could not create the reservation.' };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  await sendBillingEmails('Featured product', dispensary.name, user?.email ?? null, {
+    Dispensary: dispensary.name,
+    Product: product.name,
+    Reach: 'Nationwide (team can target a metro)',
+    Days: input.days,
+    Price: `$${(priceCents / 100).toFixed(2)}`,
+  });
+  revalidatePath('/dashboard/promote');
+  return { ok: true, message: REQUEST_ACK };
+}
+
 // ─── Brand featured-auction bids ──────────────────────────────────────────────
 
 const brandBidSchema = z.object({

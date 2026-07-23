@@ -6,6 +6,7 @@ import {
   cancelPlan,
   requestPlacement,
   requestPlanChange,
+  reserveProductSlot,
   type BillingRequestResult,
 } from '@/app/actions/billing';
 import { track } from '@/lib/analytics';
@@ -111,7 +112,11 @@ export function PromoteBilling({
                       variant={isPaid ? 'primary' : 'outline'}
                       disabled={pending || (isPaid && planPending)}
                       onClick={() => {
-                        if (isPaid) track('plan_change_requested', { plan: pl.name, price_cents: pl.price_cents });
+                        if (isPaid)
+                          track('plan_change_requested', {
+                            plan: pl.name,
+                            price_cents: pl.price_cents,
+                          });
                         go(() => requestPlanChange(pl.id));
                       }}
                     >
@@ -195,7 +200,14 @@ function PlacementPurchase({
 
   const needsTarget = type === 'promoted_deal' || type === 'promoted_product';
   const targets = type === 'promoted_deal' ? deals : type === 'promoted_product' ? products : [];
-  const price = useMemo(() => placementPriceCents(type, scope, days), [type, scope, days]);
+  // Featured products sell on the region system and reserve nationwide (the team
+  // targets a metro on activation), so the geo Reach selector doesn't apply.
+  const isProduct = type === 'promoted_product';
+  const effectiveScope: PlacementScope = isProduct ? 'nationwide' : scope;
+  const price = useMemo(
+    () => placementPriceCents(type, effectiveScope, days),
+    [type, effectiveScope, days],
+  );
 
   const scopeLabel = (s: PlacementScope) =>
     s === 'city' ? `${city} only` : s === 'state' ? `${state} statewide` : 'Nationwide';
@@ -232,17 +244,23 @@ function PlacementPurchase({
 
           <label className="space-y-1.5 text-sm">
             <span className="font-medium">Reach</span>
-            <select
-              className="border-border bg-background w-full rounded-md border px-3 py-2"
-              value={scope}
-              onChange={(e) => setScope(e.target.value as PlacementScope)}
-            >
-              {SCOPES.map((s) => (
-                <option key={s} value={s}>
-                  {PLACEMENT_SCOPE_LABEL[s]} — {scopeLabel(s)}
-                </option>
-              ))}
-            </select>
+            {isProduct ? (
+              <div className="border-border bg-background text-muted flex h-[42px] items-center rounded-md border px-3 py-2 text-sm">
+                Nationwide · our team targets your market
+              </div>
+            ) : (
+              <select
+                className="border-border bg-background w-full rounded-md border px-3 py-2"
+                value={scope}
+                onChange={(e) => setScope(e.target.value as PlacementScope)}
+              >
+                {SCOPES.map((s) => (
+                  <option key={s} value={s}>
+                    {PLACEMENT_SCOPE_LABEL[s]} — {scopeLabel(s)}
+                  </option>
+                ))}
+              </select>
+            )}
           </label>
 
           {needsTarget && (
@@ -326,7 +344,7 @@ function PlacementPurchase({
           </label>
         </div>
 
-        <div className="flex items-center justify-between border-t border-border pt-4">
+        <div className="border-border flex items-center justify-between border-t pt-4">
           <div>
             <p className="text-lg font-semibold">{formatPrice(price)}</p>
             <p className="text-muted text-xs">
@@ -336,16 +354,26 @@ function PlacementPurchase({
           <Button
             disabled={!canBuy}
             onClick={() => {
-              track('placement_requested', { type, scope, days, price_cents: price });
+              track('placement_requested', {
+                type,
+                scope: effectiveScope,
+                days,
+                price_cents: price,
+              });
+              // Featured products sell on the unified region ad-slot system now
+              // (reserved nationwide; the team can re-target to a metro). Every
+              // other placement type still runs on the legacy placements flow.
               go(() =>
-                requestPlacement({
-                  type,
-                  scope,
-                  days,
-                  target_id: needsTarget ? targetId : undefined,
-                  creative_id: creativeId || undefined,
-                  start_date: startDate || undefined,
-                }),
+                type === 'promoted_product'
+                  ? reserveProductSlot({ product_id: targetId, days })
+                  : requestPlacement({
+                      type,
+                      scope,
+                      days,
+                      target_id: needsTarget ? targetId : undefined,
+                      creative_id: creativeId || undefined,
+                      start_date: startDate || undefined,
+                    }),
               );
             }}
           >

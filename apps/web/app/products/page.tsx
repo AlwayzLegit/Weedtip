@@ -91,50 +91,25 @@ export default async function ProductsPage({
   };
   let sponsored: SponsoredProduct[] = [];
   if ((params.page ?? 1) === 1) {
-    const nowIso = new Date().toISOString();
-
-    // Region ad-slot product fills (the unified merchandising system) lead the
-    // rail; then legacy promoted_product placements, ordered by priority.
+    // Featured products serve entirely from the unified region ad-slot system.
     const regionIds = await listingRegionIds(supabase);
     const regionProductIds = await regionFeaturedProductIds(supabase, regionIds);
 
-    const { data: promos } = await supabase
-      .from('placements')
-      .select('id, target_id, priority')
-      .eq('type', 'promoted_product')
-      .eq('is_active', true)
-      .lte('starts_at', nowIso)
-      .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
-      .order('priority', { ascending: false });
-    const promoIds = (promos ?? []).map((p) => p.target_id).filter((id): id is string => !!id);
-    const placementOf = new Map(
-      (promos ?? []).map((p) => [p.target_id, { id: p.id, priority: p.priority }] as const),
-    );
-
-    // Region-first, then promoted, de-duped — this fixed order is preserved.
-    const orderedIds: string[] = [];
-    const seenSponsored = new Set<string>();
-    for (const id of [...regionProductIds, ...promoIds]) {
-      if (!seenSponsored.has(id)) {
-        seenSponsored.add(id);
-        orderedIds.push(id);
-      }
-    }
-
-    if (orderedIds.length > 0) {
+    if (regionProductIds.length > 0) {
       const { data: prods } = await supabase
         .from('products')
         .select(
           `id,name,brand,price_cents,image_urls,strain_type,thc_percentage,in_stock,rating_avg,rating_count,dispensary:dispensaries!inner(slug,status), ${CATALOG_IMAGE_EMBED}`,
         )
-        .in('id', orderedIds)
+        .in('id', regionProductIds)
         .eq('dispensary.status', 'active');
       const byId = new Map(
         ((prods as Omit<SponsoredProduct, 'placementId'>[]) ?? []).map((p) => [p.id, p]),
       );
-      sponsored = orderedIds.flatMap((id) => {
+      // Preserve slot order from the serving RPC.
+      sponsored = regionProductIds.flatMap((id) => {
         const p = byId.get(id);
-        return p ? [{ ...p, placementId: placementOf.get(id)?.id ?? '' }] : [];
+        return p ? [{ ...p, placementId: '' }] : [];
       });
     }
   }

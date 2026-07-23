@@ -14,7 +14,7 @@ export default async function AdminMerch() {
       .select(
         'id,status,starts_at,ends_at,price_paid,is_house,brand_id,product_id,dispensary_id, slot:ad_slots!inner(slot_type,position,region:ad_regions(name,slug)), brand:brands(name,slug), product:products(name), dispensary:dispensaries(name,slug)',
       )
-      .eq('status', 'active')
+      .in('status', ['active', 'pending'])
       .in('slot.slot_type', ['brand', 'product'])
       .order('created_at', { ascending: false })
       .limit(300),
@@ -39,6 +39,7 @@ export default async function AdminMerch() {
     return [
       {
         id: s.id,
+        status: s.status === 'pending' ? ('pending' as const) : ('active' as const),
         slotType: slot.slot_type,
         position: slot.position,
         regionName: slot.region?.name ?? 'Unknown region',

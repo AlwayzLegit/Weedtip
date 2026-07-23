@@ -15,10 +15,13 @@ export const metadata: Metadata = pageSeo({
   path: '/brands',
 });
 
-type FeaturedRow = {
-  id: string;
-  scope_state: string | null;
-  brand: { slug: string; name: string; description: string | null; logo_url: string | null };
+type FeaturedCard = {
+  key: string;
+  placementId: string | null;
+  slug: string;
+  name: string;
+  description: string | null;
+  logo_url: string | null;
 };
 
 export default async function BrandsPage({
@@ -27,40 +30,26 @@ export default async function BrandsPage({
   searchParams: Promise<{ state?: string }>;
 }) {
   const supabase = await createClient();
-  const nowIso = new Date().toISOString();
   const { state: stateParam } = await searchParams;
 
-  const [
-    { data: brands },
-    { data: prodBrands },
-    { data: featured },
-    { data: bidStates },
-    { data: lineupRows },
-  ] = await Promise.all([
-    supabase
-      .from('brands')
-      .select('id,slug,name,description,logo_url,rating_avg,rating_count')
-      .order('name'),
-    supabase
-      .from('products')
-      .select('brand_id, dispensary:dispensaries!inner(status,state)')
-      .eq('dispensary.status', 'active')
-      .not('brand_id', 'is', null),
-    supabase
-      .from('placements')
-      .select('id, priority, scope_state, brand:brands!inner(slug,name,description,logo_url)')
-      .eq('type', 'promoted_brand')
-      .eq('is_active', true)
-      .lte('starts_at', nowIso)
-      .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
-      .order('priority', { ascending: false }),
-    // States with a live winning brand bid — so paid markets are selectable
-    // even where there's no organic product coverage yet.
-    supabase.rpc('brand_featured_states'),
-    // Official lineup sizes — the count shown when a brand isn't on any
-    // dispensary menu yet (previously ~211 of 216 cards read "0 products").
-    supabase.from('brand_products').select('brand_id'),
-  ]);
+  const [{ data: brands }, { data: prodBrands }, { data: bidStates }, { data: lineupRows }] =
+    await Promise.all([
+      supabase
+        .from('brands')
+        .select('id,slug,name,description,logo_url,rating_avg,rating_count')
+        .order('name'),
+      supabase
+        .from('products')
+        .select('brand_id, dispensary:dispensaries!inner(status,state)')
+        .eq('dispensary.status', 'active')
+        .not('brand_id', 'is', null),
+      // States with a live winning brand bid — so paid markets are selectable
+      // even where there's no organic product coverage yet.
+      supabase.rpc('brand_featured_states'),
+      // Official lineup sizes — the count shown when a brand isn't on any
+      // dispensary menu yet (previously ~211 of 216 cards read "0 products").
+      supabase.from('brand_products').select('brand_id'),
+    ]);
 
   // Per-brand total + per-state product counts (a brand's states = the states of
   // the active dispensaries that carry it).
@@ -82,13 +71,10 @@ export default async function BrandsPage({
     stateBrandSets.get(st)!.add(p.brand_id);
   }
 
-  // A market is selectable if it has organic brand products, a live sponsored
-  // brand placement, or a winning brand bid — otherwise paid markets outside
-  // NY could never render (audit #16).
+  // A market is selectable if it has organic brand products or a winning brand
+  // bid — otherwise paid markets with no organic coverage could never render
+  // (audit #16).
   const selectableStates = new Set<string>(stateBrandSets.keys());
-  for (const f of (featured as FeaturedRow[] | null) ?? []) {
-    if (f.scope_state) selectableStates.add(f.scope_state);
-  }
   for (const row of (bidStates as { state: string }[] | null) ?? []) {
     if (row.state) selectableStates.add(row.state);
   }
@@ -113,19 +99,8 @@ export default async function BrandsPage({
       (a, b) => b.count - a.count || b.lineupCount - a.lineupCount || a.name.localeCompare(b.name),
     );
 
-  // Featured strip = flat-rate placements + the per-state auction winners.
-  const placementCards = ((featured as FeaturedRow[] | null) ?? [])
-    .filter((f) => !selectedState || f.scope_state == null || f.scope_state === selectedState)
-    .map((f) => ({
-      key: f.id,
-      placementId: f.id as string | null,
-      slug: f.brand.slug,
-      name: f.brand.name,
-      description: f.brand.description,
-      logo_url: f.brand.logo_url,
-    }));
-
-  let auctionCards: typeof placementCards = [];
+  // Featured strip = region ad-slot fills + the per-state auction winners.
+  let auctionCards: FeaturedCard[] = [];
   if (selectedState) {
     const { data: winners } = await supabase.rpc('region_featured_brands', {
       p_state: selectedState,
@@ -149,7 +124,7 @@ export default async function BrandsPage({
 
   // Region ad-slot fills (the unified merchandising system) lead the strip:
   // brands sold or comped into this view's region(s) show first.
-  let regionCards: typeof placementCards = [];
+  let regionCards: FeaturedCard[] = [];
   {
     const regionIds = await listingRegionIds(supabase, selectedState);
     const brandIds = await regionFeaturedBrandIds(supabase, regionIds);
@@ -178,7 +153,7 @@ export default async function BrandsPage({
   }
 
   const seenFeatured = new Set<string>();
-  const featuredCards = [...regionCards, ...placementCards, ...auctionCards].filter((c) => {
+  const featuredCards = [...regionCards, ...auctionCards].filter((c) => {
     if (seenFeatured.has(c.slug)) return false;
     seenFeatured.add(c.slug);
     return true;
