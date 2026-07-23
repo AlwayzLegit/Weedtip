@@ -626,7 +626,7 @@ export function DispensariesBrowser({
         // Debounced so a chain of pans/zooms settles into one query.
         clearTimeout(moveDebounce.current);
         if (boundsChanged(searchedBounds.current, bounds)) {
-          moveDebounce.current = setTimeout(() => void runSearch(bounds, filters, {}), 500);
+          moveDebounce.current = setTimeout(() => void runSearch(bounds, filters, {}), 400);
         }
         return;
       }
@@ -637,7 +637,10 @@ export function DispensariesBrowser({
 
   const handleGeolocate = useCallback((coords: { lat: number; lng: number }) => {
     setOrigin(coords);
-    // The locate control flies the map; re-search where it lands.
+    // Knowing where the user is, default to nearest-first (T8). The locate
+    // control flies the map; the resulting moveend re-searches the landed
+    // viewport with the new origin + distance sort.
+    setFilters((f) => (f.sort === 'distance' ? f : { ...f, sort: 'distance' }));
     autoSearchNextMove.current = true;
   }, []);
 
@@ -976,6 +979,7 @@ export function DispensariesBrowser({
           <BrowseMap
             pins={rankedPins}
             promoAds={promoAds}
+            searching={loading}
             initialBounds={initialBounds}
             hoveredSlug={hovered}
             selected={popupShop}

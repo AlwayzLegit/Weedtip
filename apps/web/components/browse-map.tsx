@@ -13,7 +13,7 @@ import Map, {
   type MapRef,
 } from 'react-map-gl';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'mapbox-gl';
-import { BadgeCheck, MapPin, Navigation, Store, Truck } from 'lucide-react';
+import { BadgeCheck, Loader2, MapPin, Navigation, Store, Truck } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import type { AdSlotMeta } from './ads/ad-slot-beacon';
 import { formatDistance } from '@/lib/format';
@@ -191,11 +191,14 @@ export function BrowseMap({
   onMoveEnd,
   onGeolocate,
   promoAds = [],
+  searching = false,
 }: {
   /** Every matching shop in the viewport (clustered client-side). */
   pins: MapPinPoint[];
   /** Sponsored shops in view — feed the rotating on-map ad card (T1). */
   promoAds?: MapPromoAd[];
+  /** A viewport search is in flight — shows the on-map "Searching…" toast (T5). */
+  searching?: boolean;
   /** [minLng, minLat, maxLng, maxLat] the map opens fitted to. */
   initialBounds: BBox;
   hoveredSlug: string | null;
@@ -406,6 +409,11 @@ export function BrowseMap({
       cursor={overInteractive ? 'pointer' : 'grab'}
     >
       <NavigationControl position="top-right" showCompass={false} />
+      {searching && (
+        <div className="border-border bg-background/90 pointer-events-none absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium shadow backdrop-blur">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching this area…
+        </div>
+      )}
       {tilesFailed && (
         <div className="bg-background/85 border-border text-muted absolute inset-x-3 top-3 z-10 rounded-lg border px-3 py-2 text-center text-xs backdrop-blur">
           Map imagery couldn&apos;t load — the Mapbox token rejected this domain. Pins still work;
