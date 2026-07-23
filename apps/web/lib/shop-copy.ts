@@ -7,6 +7,7 @@ interface ShopFacts {
   city: string | null;
   state: string;
   county?: string | null;
+  address?: string | null;
   is_pickup: boolean;
   is_delivery: boolean;
   is_medical: boolean;
@@ -15,49 +16,143 @@ interface ShopFacts {
 }
 
 /**
+ * Stable per-shop hash (FNV-1a). Used to pick deterministic-but-varied phrasing
+ * so the thousands of unclaimed listings don't share near-identical templated
+ * copy — same verified facts, different wording, stable across ISR rebuilds.
+ */
+function shopSeed(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/**
  * Directory-style About paragraph assembled from verified listing facts, used
  * when the shop hasn't written its own description (the vast majority of
  * unclaimed listings). States only what the record supports — services,
  * license, market, hours cadence — so every sentence stays true per listing.
+ * Phrasing is varied deterministically per shop (and keys on the street
+ * address when present) so near-identical listings don't read as duplicate copy.
  */
 export function generatedAbout(d: ShopFacts, hours: OperatingHours | null): string {
   const stateName = US_STATES[d.state] ?? d.state;
-  const place = d.city ? `${d.city}, ${stateName}` : stateName;
+  const seed = shopSeed(`${d.name}|${d.city ?? ''}|${d.state}`);
+  const pick = <T>(arr: T[], salt: number): T => arr[(seed >>> salt) % arr.length]!;
+
+  const type = d.is_delivery && !d.is_pickup ? 'delivery service' : 'dispensary';
+  const loc = d.city ? `in ${d.city}, ${stateName}` : `operating in ${stateName}`;
+  const locCap = d.city ? `In ${d.city}, ${stateName}` : `Operating in ${stateName}`;
 
   const audience =
     d.is_medical && d.is_recreational
-      ? 'serving both medical patients and recreational customers'
+      ? pick(
+          [
+            'serving both medical patients and recreational customers 21+',
+            'open to recreational shoppers 21+ and registered medical patients',
+            'welcoming adult-use customers and medical patients alike',
+          ],
+          2,
+        )
       : d.is_medical
-        ? 'serving medical patients'
+        ? pick(
+            [
+              'serving registered medical patients',
+              'a medical-focused shop for registered patients',
+              'dedicated to medical cannabis patients',
+            ],
+            2,
+          )
         : d.is_recreational
-          ? 'serving recreational customers 21+'
+          ? pick(
+              [
+                'serving recreational customers 21+',
+                'open to adults 21 and over',
+                'welcoming recreational shoppers 21+',
+              ],
+              2,
+            )
           : '';
 
+  const area = d.county ? `${d.county} County` : 'the local area';
   const service =
     d.is_pickup && d.is_delivery
-      ? 'with in-store pickup and local delivery'
+      ? pick(
+          [
+            'offering in-store pickup and local delivery',
+            'with both in-store pickup and delivery',
+            'for pickup at the shop or delivery to your door',
+          ],
+          5,
+        )
       : d.is_delivery && !d.is_pickup
-        ? `delivering across ${d.county ? `${d.county} County` : 'its local area'}`
-        : 'with in-store shopping';
+        ? pick(
+            [
+              `delivering across ${area}`,
+              `bringing orders to ${area}`,
+              `covering ${area} by delivery`,
+            ],
+            5,
+          )
+        : pick(['for in-store shopping', 'with in-store pickup', 'for walk-in shoppers'], 5);
 
-  const sentences: string[] = [
-    `${d.name} is a licensed cannabis ${d.is_delivery && !d.is_pickup ? 'delivery service' : 'dispensary'} ${d.city ? `in ${place}` : `operating in ${place}`}${audience ? `, ${audience}` : ''} ${service}.`.replace(/\s+/g, ' '),
-  ];
+  const audienceTail = audience ? `, ${audience}` : '';
+  // Two grammatically-distinct openers, chosen by seed, so structure varies too.
+  const opener =
+    seed % 2 === 0
+      ? `${d.name} is a licensed cannabis ${type} ${loc}, ${service}${audienceTail}.`
+      : `${locCap}, ${d.name} is a licensed cannabis ${type}${audienceTail}, ${service}.`;
+
+  const sentences: string[] = [opener.replace(/\s+/g, ' ')];
+
+  if (d.address) {
+    sentences.push(
+      pick(
+        [
+          `You'll find it at ${d.address}.`,
+          `The shop is located at ${d.address}.`,
+          `Visit in person at ${d.address}.`,
+        ],
+        9,
+      ),
+    );
+  }
 
   const openDays = hours ? DAY_ORDER.filter((day) => hours[day]) : [];
   if (openDays.length === 7) {
-    sentences.push('The shop is open seven days a week.');
+    sentences.push(
+      pick(['It’s open seven days a week.', 'The shop opens daily, seven days a week.'], 12),
+    );
   } else if (openDays.length >= 1) {
     sentences.push(
-      `The shop is open ${openDays.length} days a week (${dayLabel(openDays[0]!)}–${dayLabel(openDays[openDays.length - 1]!)}).`,
+      `The shop is open ${openDays.length} ${openDays.length === 1 ? 'day' : 'days'} a week (${dayLabel(openDays[0]!)}–${dayLabel(openDays[openDays.length - 1]!)}).`,
     );
   }
 
   if (d.license_number) {
     sentences.push(
-      `It operates under ${stateName} cannabis license #${d.license_number}, verified against the state registry.`,
+      pick(
+        [
+          `It operates under ${stateName} cannabis license #${d.license_number}, verified against the state registry.`,
+          `${d.name} holds ${stateName} cannabis license #${d.license_number}, checked against the state’s public registry.`,
+        ],
+        16,
+      ),
     );
   }
+
+  sentences.push(
+    pick(
+      [
+        'Check the listing above for current hours, services, and directions.',
+        'See the details above for hours, contact info, and directions.',
+        'Use the map above for directions, and the listing for current hours and services.',
+      ],
+      20,
+    ),
+  );
 
   return sentences.join(' ');
 }
