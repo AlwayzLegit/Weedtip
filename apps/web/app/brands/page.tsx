@@ -3,6 +3,7 @@ import { Link } from 'next-view-transitions';
 import { Sparkles } from 'lucide-react';
 import { BrandTile } from '@/components/brand/brand-tile';
 import { PlacementBeacon } from '@/components/placement-beacon';
+import { listingRegionIds, regionFeaturedBrandIds } from '@/lib/region-merch';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -35,7 +36,10 @@ export default async function BrandsPage({
     { data: bidStates },
     { data: lineupRows },
   ] = await Promise.all([
-    supabase.from('brands').select('id,slug,name,description,logo_url,rating_avg,rating_count').order('name'),
+    supabase
+      .from('brands')
+      .select('id,slug,name,description,logo_url,rating_avg,rating_count')
+      .order('name'),
     supabase
       .from('products')
       .select('brand_id, dispensary:dispensaries!inner(status,state)')
@@ -142,11 +146,42 @@ export default async function BrandsPage({
     }
   }
 
-  const seenFeatured = new Set(placementCards.map((c) => c.slug));
-  const featuredCards = [
-    ...placementCards,
-    ...auctionCards.filter((c) => !seenFeatured.has(c.slug)),
-  ];
+  // Region ad-slot fills (the unified merchandising system) lead the strip:
+  // brands sold or comped into this view's region(s) show first.
+  let regionCards: typeof placementCards = [];
+  {
+    const regionIds = await listingRegionIds(supabase, selectedState);
+    const brandIds = await regionFeaturedBrandIds(supabase, regionIds);
+    if (brandIds.length) {
+      const { data: rb } = await supabase
+        .from('brands')
+        .select('id,slug,name,description,logo_url')
+        .in('id', brandIds);
+      const byId = new Map((rb ?? []).map((b) => [b.id, b]));
+      regionCards = brandIds.flatMap((id) => {
+        const b = byId.get(id);
+        return b
+          ? [
+              {
+                key: `r-${b.id}`,
+                placementId: null as string | null,
+                slug: b.slug,
+                name: b.name,
+                description: b.description,
+                logo_url: b.logo_url,
+              },
+            ]
+          : [];
+      });
+    }
+  }
+
+  const seenFeatured = new Set<string>();
+  const featuredCards = [...regionCards, ...placementCards, ...auctionCards].filter((c) => {
+    if (seenFeatured.has(c.slug)) return false;
+    seenFeatured.add(c.slug);
+    return true;
+  });
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">

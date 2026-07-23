@@ -5,6 +5,7 @@ import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
 import { ProductCard } from '@/components/product-card';
 import { ProductFilters } from '@/components/product-filters';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
+import { listingRegionIds, regionFeaturedProductIds } from '@/lib/region-merch';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -90,6 +91,12 @@ export default async function ProductsPage({
   let sponsored: SponsoredProduct[] = [];
   if ((params.page ?? 1) === 1) {
     const nowIso = new Date().toISOString();
+
+    // Region ad-slot product fills (the unified merchandising system) lead the
+    // rail; then legacy promoted_product placements, ordered by priority.
+    const regionIds = await listingRegionIds(supabase);
+    const regionProductIds = await regionFeaturedProductIds(supabase, regionIds);
+
     const { data: promos } = await supabase
       .from('placements')
       .select('id, target_id, priority')
@@ -99,22 +106,35 @@ export default async function ProductsPage({
       .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
       .order('priority', { ascending: false });
     const promoIds = (promos ?? []).map((p) => p.target_id).filter((id): id is string => !!id);
-    if (promoIds.length > 0) {
-      const placementOf = new Map(
-        (promos ?? []).map((p) => [p.target_id, { id: p.id, priority: p.priority }] as const),
-      );
+    const placementOf = new Map(
+      (promos ?? []).map((p) => [p.target_id, { id: p.id, priority: p.priority }] as const),
+    );
+
+    // Region-first, then promoted, de-duped — this fixed order is preserved.
+    const orderedIds: string[] = [];
+    const seenSponsored = new Set<string>();
+    for (const id of [...regionProductIds, ...promoIds]) {
+      if (!seenSponsored.has(id)) {
+        seenSponsored.add(id);
+        orderedIds.push(id);
+      }
+    }
+
+    if (orderedIds.length > 0) {
       const { data: prods } = await supabase
         .from('products')
         .select(
           `id,name,brand,price_cents,image_urls,strain_type,thc_percentage,in_stock,rating_avg,rating_count,dispensary:dispensaries!inner(slug,status), ${CATALOG_IMAGE_EMBED}`,
         )
-        .in('id', promoIds)
+        .in('id', orderedIds)
         .eq('dispensary.status', 'active');
-      sponsored = ((prods as Omit<SponsoredProduct, 'placementId'>[]) ?? [])
-        .map((p) => ({ ...p, placementId: placementOf.get(p.id)?.id ?? '' }))
-        .sort(
-          (a, b) => (placementOf.get(b.id)?.priority ?? 0) - (placementOf.get(a.id)?.priority ?? 0),
-        );
+      const byId = new Map(
+        ((prods as Omit<SponsoredProduct, 'placementId'>[]) ?? []).map((p) => [p.id, p]),
+      );
+      sponsored = orderedIds.flatMap((id) => {
+        const p = byId.get(id);
+        return p ? [{ ...p, placementId: placementOf.get(id)?.id ?? '' }] : [];
+      });
     }
   }
   const sponsoredIds = new Set(sponsored.map((p) => p.id));
