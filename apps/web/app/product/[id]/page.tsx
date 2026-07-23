@@ -9,6 +9,8 @@ import { RecordRecentlyViewed } from '@/components/recently-viewed';
 import { AddToCart } from '@/components/cart/add-to-cart';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { ProductGallery } from '@/components/product-gallery';
+import { DispensarySectionNav } from '@/components/dispensary/section-nav';
+import { StickyCtaBar } from '@/components/sticky-cta-bar';
 import { ProductReviewForm } from '@/components/product-review-form';
 import { RatingStars } from '@/components/rating-stars';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -69,7 +71,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   if (!product) notFound();
 
   // Enrich a sparse listing from the brand's canonical catalog entry.
-  const catalog = product.catalog as { image_url: string | null; description: string | null } | null;
+  const catalog = product.catalog as {
+    image_url: string | null;
+    description: string | null;
+  } | null;
   const images =
     product.image_urls && product.image_urls.length > 0
       ? product.image_urls
@@ -102,7 +107,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     product.catalog_id
       ? supabase
           .from('products')
-          .select('id,price_cents,in_stock,dispensary:dispensaries!inner(slug,name,city,state,status)')
+          .select(
+            'id,price_cents,in_stock,dispensary:dispensaries!inner(slug,name,city,state,status)',
+          )
           .eq('catalog_id', product.catalog_id)
           .neq('id', id)
           .eq('dispensary.status', 'active')
@@ -333,15 +340,27 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
+      <DispensarySectionNav
+        sections={[
+          ...(description ? [{ id: 'description', label: 'Description' }] : []),
+          ...(strain &&
+          (strain.effects.length > 0 || strain.flavors.length > 0 || strain.description)
+            ? [{ id: 'strain', label: 'Strain' }]
+            : []),
+          ...(siblings && siblings.length > 0 ? [{ id: 'stores', label: 'Where to buy' }] : []),
+          { id: 'reviews', label: 'Reviews' },
+        ]}
+      />
+
       {description && (
-        <section className="mt-8">
+        <section id="description" className="mt-8 scroll-mt-24">
           <h2 className="mb-2 text-lg font-semibold">Description</h2>
           <p className="text-muted">{description}</p>
         </section>
       )}
 
       {strain && (strain.effects.length > 0 || strain.flavors.length > 0 || strain.description) && (
-        <section className="mt-8">
+        <section id="strain" className="mt-8 scroll-mt-24">
           <h2 className="mb-2 text-lg font-semibold">About this strain: {strain.name}</h2>
           {strain.description && (
             <p className="text-muted line-clamp-4 text-sm leading-relaxed">{strain.description}</p>
@@ -390,7 +409,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       )}
 
       {siblings && siblings.length > 0 && (
-        <section className="mt-8">
+        <section id="stores" className="mt-8 scroll-mt-24">
           <h2 className="mb-3 text-lg font-semibold">Also available at</h2>
           <div className="rounded-card border-border bg-surface divide-border divide-y overflow-hidden border">
             {siblings.map((sib) => {
@@ -431,7 +450,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </section>
       )}
 
-      <section className="mt-10">
+      <section id="reviews" className="mt-10 scroll-mt-24">
         <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
         {user ? (
           <div className="rounded-card border-border bg-surface mb-6 border p-4">
@@ -484,6 +503,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <p className="text-muted">No reviews yet. Be the first.</p>
         )}
       </section>
+
+      {siblings && siblings.length > 0 && (
+        <>
+          <div aria-hidden className="h-20 lg:hidden" />
+          <StickyCtaBar href="#stores" label="Where to buy" />
+        </>
+      )}
     </main>
   );
 }
