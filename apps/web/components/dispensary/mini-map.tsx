@@ -15,25 +15,30 @@ export function MiniMap({ lat, lng, name }: { lat: number; lng: number; name: st
   useEffect(() => setMounted(true), []);
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token) return null;
-  if (!mounted) return <div className="bg-surface-2 h-44 w-full animate-pulse rounded-lg" />;
+  if (!mounted) return <div className="bg-surface-2 h-52 w-full animate-pulse rounded-lg" />;
 
   return (
-    <div className="border-border h-44 w-full overflow-hidden rounded-lg border">
+    <div className="border-border h-52 w-full overflow-hidden rounded-lg border">
       <Map
         mapboxAccessToken={token}
-        initialViewState={{ latitude: lat, longitude: lng, zoom: 13.5 }}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        initialViewState={{ latitude: lat, longitude: lng, zoom: 14 }}
+        // Vibrant night map (lit roads/water) instead of the flat dark tiles —
+        // reads far better than dark-v11 while staying on-theme for the dark UI.
+        mapStyle="mapbox://styles/mapbox/navigation-night-v1"
         style={{ width: '100%', height: '100%' }}
         scrollZoom={false}
         attributionControl={false}
       >
         <Marker latitude={lat} longitude={lng} anchor="bottom">
-          <MapPin
-            className="text-primary h-7 w-7 drop-shadow"
-            fill="currentColor"
-            strokeWidth={1}
-            aria-label={`${name} location`}
-          />
+          <span className="relative flex flex-col items-center" aria-label={`${name} location`}>
+            <MapPin
+              className="text-primary h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
+              fill="currentColor"
+              strokeWidth={1.5}
+            />
+            {/* Soft ground glow so the pin reads against busy map tiles. */}
+            <span className="bg-primary/30 -mt-1 h-1.5 w-3 rounded-full blur-[2px]" aria-hidden />
+          </span>
         </Marker>
       </Map>
     </div>
