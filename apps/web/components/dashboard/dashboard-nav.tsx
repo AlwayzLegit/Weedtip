@@ -9,6 +9,7 @@ import {
   Calculator,
   Gavel,
   Globe,
+  Images,
   LayoutDashboard,
   Leaf,
   MapPin,
@@ -63,6 +64,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: '/admin/billing', label: 'Billing', icon: CreditCard },
   { href: '/admin/ads-desk', label: 'Ad desk', icon: Gavel },
   { href: '/admin/promotions', label: 'Promotions', icon: Megaphone },
+  { href: '/admin/hero', label: 'Hero carousel', icon: Images },
   { href: '/admin/claims', label: 'Claims', icon: BadgeCheck },
   { href: '/admin/categories', label: 'Categories', icon: Package },
   { href: '/admin/strains', label: 'Strains', icon: Leaf },
@@ -96,8 +98,7 @@ export function DashboardNav({
     variant === 'owner'
       ? base.filter(
           (i) =>
-            (showBrandStudio || i.href !== '/studio') &&
-            (!i.cap || memberCan(memberRole, i.cap)),
+            (showBrandStudio || i.href !== '/studio') && (!i.cap || memberCan(memberRole, i.cap)),
         )
       : base;
   const root = variant === 'owner' ? '/dashboard' : '/admin';
