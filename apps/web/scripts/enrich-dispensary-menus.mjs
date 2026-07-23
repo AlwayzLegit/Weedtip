@@ -102,7 +102,10 @@ async function dismissAgeGate(page) {
 
 /** Harvest product-like {name, priceCents, hint} from a single frame's DOM. */
 function harvestFrame() {
-  const priceRe = /\$\s?(\d{1,4}(?:\.\d{2})?)/;
+  const priceRe = /\$\s?(\d{1,4}(?:\.\d{2})?)/g;
+  // Bare strain/type words are labels, not product names — a card whose only
+  // "name" is one of these is a mis-parse (e.g. a filter chip caught a price).
+  const strainOnly = /^(hybrid|sativa|indica|cbd|hybrid[-\s]?(indica|sativa)|sativa[-\s]?hybrid|indica[-\s]?hybrid)$/i;
   const out = [];
   const seen = new Set();
   // Candidate cards: any element that contains a price and isn't huge.
@@ -110,11 +113,15 @@ function harvestFrame() {
   for (const el of all) {
     const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
     if (text.length < 4 || text.length > 240) continue;
-    const pm = text.match(priceRe);
-    if (!pm) continue;
+    const prices = [...text.matchAll(priceRe)];
+    if (!prices.length) continue;
     // Too many prices → it's a container, not a card.
-    if ((text.match(/\$/g) || []).length > 3) continue;
-    const price = parseFloat(pm[1]);
+    if (prices.length > 3) continue;
+    // Prefer a price with cents ($12.00) over a bare round number — the latter
+    // is often a loyalty/deal banner ("$200") rather than the item's price,
+    // which is what put every Cornerstone item at $200 on the first run.
+    const withCents = prices.find((m) => m[1].includes('.'));
+    const price = parseFloat((withCents || prices[0])[1]);
     if (!(price >= 1 && price <= 2000)) continue;
     // Name = the card's most prominent short text (heading/strong) or the text
     // before the price.
@@ -122,7 +129,15 @@ function harvestFrame() {
       el.querySelector('h1,h2,h3,h4,strong,[class*="name" i],[class*="title" i]')?.textContent?.trim() ||
       text.split('$')[0].trim();
     name = name.replace(/\s+/g, ' ').slice(0, 120);
-    if (name.length < 3 || /add to (cart|bag)|sold out|out of stock/i.test(name)) continue;
+    // Reject non-names: too short, no letters (a price fell through), a bare
+    // strain word, or a cart-state string.
+    if (
+      name.length < 3 ||
+      !/[a-z]/i.test(name) ||
+      strainOnly.test(name) ||
+      /add to (cart|bag)|sold out|out of stock/i.test(name)
+    )
+      continue;
     const key = name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
