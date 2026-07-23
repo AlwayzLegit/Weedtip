@@ -193,6 +193,27 @@ const CORE_ARTICLES: Article[] = [
 
 export const ARTICLES: Article[] = [...CORE_ARTICLES, ...MORE_ARTICLES, ...MORE_ARTICLES_3];
 
+/**
+ * Slugs that ship a hero image at public/learn/<slug>.webp. Not every article
+ * has one, so templates must gate on this — referencing a missing webp makes
+ * next/image request a 404 (Semrush flagged those as broken images). Add the
+ * slug here when you add the image file.
+ */
+export const ARTICLE_HERO_SLUGS = new Set<string>([
+  'can-you-fly-with-weed', 'cannabis-concentrates-guide', 'cbg-cbn-minor-cannabinoids',
+  'delta-8-vs-delta-9', 'edible-dosing-guide', 'entourage-effect',
+  'how-long-do-edibles-take-to-kick-in', 'how-long-does-weed-stay-in-your-system',
+  'how-to-order-cannabis-online', 'how-to-read-cannabis-labels', 'how-to-store-cannabis',
+  'indica-vs-sativa-vs-hybrid', 'medical-vs-recreational', 'tolerance-breaks',
+  'understanding-thc-and-cbd', 'vaping-vs-smoking', 'what-are-terpenes',
+  'what-is-live-resin', 'what-is-thca', 'what-to-bring-to-a-dispensary',
+]);
+
+/** Hero image path for an article, or null when it has no image (avoid a 404). */
+export function articleHeroUrl(slug: string): string | null {
+  return ARTICLE_HERO_SLUGS.has(slug) ? `/learn/${slug}.webp` : null;
+}
+
 export function getArticle(slug: string): Article | null {
   return ARTICLES.find((a) => a.slug === slug) ?? null;
 }

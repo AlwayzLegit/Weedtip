@@ -30,9 +30,16 @@ export async function generateMetadata({
     .maybeSingle();
   if (!data) return { title: 'Brand' };
   const title = data.name;
-  const description =
-    data.description?.slice(0, 160) ??
-    `Shop ${data.name} cannabis products and find which dispensaries carry them, with prices and reviews, on Weedtip.`;
+  // Many brands share a boilerplate description ("California cannabis flower
+  // brand."), which collides as a duplicate meta description across pages. Lead
+  // with the brand name so every brand's meta is unique even when the blurb is
+  // shared, and keep it under ~160 chars.
+  const base = data.description?.trim();
+  const description = (
+    base
+      ? `${data.name} — ${base} See which dispensaries carry ${data.name} near you, with prices and reviews, on Weedtip.`
+      : `Shop ${data.name} cannabis products and find which dispensaries carry them near you, with prices and reviews, on Weedtip.`
+  ).slice(0, 160);
   return pageSeo({ title, description, path: `/brand/${slug}` });
 }
 

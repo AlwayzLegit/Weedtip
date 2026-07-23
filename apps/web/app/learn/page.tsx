@@ -3,7 +3,7 @@ import { Link } from 'next-view-transitions';
 import { ArrowRight, BookOpen, Clock, Search } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { MediaImage } from '@/components/media-image';
-import { ARTICLES, type LearnTopic } from '@/lib/learn';
+import { ARTICLES, articleHeroUrl, type LearnTopic } from '@/lib/learn';
 import { cn } from '@/lib/utils';
 import { pageSeo } from '@/lib/seo';
 
@@ -116,7 +116,7 @@ export default async function LearnIndexPage({
           className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group mt-8 block overflow-hidden border transition-all sm:grid sm:grid-cols-5"
         >
           <MediaImage
-            url={`/learn/${featured.slug}.webp`}
+            url={articleHeroUrl(featured.slug)}
             alt={featured.title}
             artSeed={featured.title}
             artIcon={<BookOpen className="text-foreground/20 h-10 w-10" strokeWidth={1.5} />}
@@ -152,7 +152,7 @@ export default async function LearnIndexPage({
               className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group flex flex-col overflow-hidden border transition-all"
             >
               <MediaImage
-                url={`/learn/${a.slug}.webp`}
+                url={articleHeroUrl(a.slug)}
                 alt={a.title}
                 artSeed={a.title}
                 artIcon={<BookOpen className="text-foreground/20 h-8 w-8" strokeWidth={1.5} />}

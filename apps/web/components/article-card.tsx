@@ -1,5 +1,6 @@
 import { Link } from 'next-view-transitions';
 import { BookOpen, Clock } from 'lucide-react';
+import { articleHeroUrl } from '@/lib/learn';
 import { MediaImage } from './media-image';
 
 export interface ArticleCardData {
@@ -21,10 +22,10 @@ export function ArticleCard({ a }: { a: ArticleCardData }) {
       href={`/learn/${a.slug}`}
       className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover group flex h-full flex-col overflow-hidden border transition-all duration-200 hover:-translate-y-0.5"
     >
-      {/* Every article ships a generated hero at public/learn/<slug>.webp —
-          add one when adding an article. */}
+      {/* Articles with a hero at public/learn/<slug>.webp use it; the rest fall
+          back to the seeded gradient art (never a 404'd image request). */}
       <MediaImage
-        url={`/learn/${a.slug}.webp`}
+        url={articleHeroUrl(a.slug)}
         alt={a.title}
         artSeed={a.title}
         artIcon={
