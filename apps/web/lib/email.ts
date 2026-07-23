@@ -1,6 +1,6 @@
 import 'server-only';
 import { Resend } from 'resend';
-import { contactFooterLine, getPlatformSettings, PLATFORM_FALLBACK } from './settings';
+import { contactFooterLine, getPlatformSettings, PLATFORM_FALLBACK, SITE_URL } from './settings';
 
 /**
  * Transactional email via Resend (weedtip.com is a verified sending domain).
@@ -33,7 +33,12 @@ export async function applyBrandTokens(input: string): Promise<string> {
   return input
     .replaceAll('%%BRAND_NAME%%', s.brandName)
     .replaceAll('%%BRAND_COLOR%%', s.brandColor)
-    .replaceAll('%%BRAND_FOOTER%%', contactFooterLine(s));
+    .replaceAll('%%BRAND_FOOTER%%', contactFooterLine(s))
+    .replaceAll('%%BRAND_TAGLINE%%', s.tagline ?? '')
+    .replaceAll('%%BRAND_LEGAL%%', s.legalName)
+    .replaceAll('%%BRAND_SUPPORT_EMAIL%%', s.supportEmail)
+    .replaceAll('%%BRAND_SITE_URL%%', SITE_URL)
+    .replaceAll('%%BRAND_YEAR%%', String(new Date().getFullYear()));
 }
 
 export interface SendEmailInput {
@@ -46,7 +51,13 @@ export interface SendEmailInput {
 }
 
 /** Fire one email. Returns false (never throws) when unconfigured or failed. */
-export async function sendEmail({ to, subject, html, replyTo, from }: SendEmailInput): Promise<boolean> {
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  replyTo,
+  from,
+}: SendEmailInput): Promise<boolean> {
   if (!resend) {
     console.warn(`[email] RESEND_API_KEY not set — skipped "${subject}" → ${String(to)}`);
     return false;
@@ -75,22 +86,84 @@ export async function sendEmail({ to, subject, html, replyTo, from }: SendEmailI
   }
 }
 
-/** Shared shell so every email reads on-brand without a template engine. */
-export function emailShell(title: string, bodyHtml: string): string {
+/**
+ * Shared shell so every email reads on-brand without a template engine. Uses a
+ * table-based layout with inline styles (the only thing that renders reliably
+ * across Gmail/Outlook/Apple Mail), a branded header (wordmark + tagline), an
+ * accent-topped content card, and a complete footer (quick links, contact
+ * details, legal + copyright). Brand facts come from %%BRAND_*%% tokens that
+ * sendEmail resolves from platform_settings at dispatch.
+ *
+ * `preheader` is the hidden inbox-preview snippet; it defaults to the title.
+ */
+export function emailShell(title: string, bodyHtml: string, preheader?: string): string {
+  const preview = (preheader ?? title)
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   return `<!doctype html>
-<html>
-  <body style="margin:0;padding:0;background:#f4f6f4;font-family:Arial,Helvetica,sans-serif;color:#1c2420;">
-    <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
-      <p style="font-size:20px;font-weight:bold;color:%%BRAND_COLOR%%;margin:0 0 16px;">%%BRAND_NAME%%</p>
-      <div style="background:#ffffff;border:1px solid #e2e8e2;border-radius:12px;padding:24px;">
-        <h1 style="font-size:18px;margin:0 0 12px;">${title}</h1>
-        ${bodyHtml}
-      </div>
-      <p style="font-size:11px;color:#6b7a6f;margin:16px 0 0;">
-        %%BRAND_FOOTER%%<br/>
-        You're receiving this because of activity on your %%BRAND_NAME%% account.
-      </p>
-    </div>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light only" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>%%BRAND_NAME%%</title>
+  </head>
+  <body style="margin:0;padding:0;background:#eef2ee;-webkit-text-size-adjust:100%;">
+    <span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;mso-hide:all;">${preview}</span>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2ee;">
+      <tr>
+        <td align="center" style="padding:24px 12px;">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:100%;font-family:Arial,Helvetica,sans-serif;color:#1c2420;">
+            <!-- Header -->
+            <tr>
+              <td style="padding:0 6px 16px;">
+                <a href="%%BRAND_SITE_URL%%" style="text-decoration:none;color:%%BRAND_COLOR%%;">
+                  <span style="font-size:22px;font-weight:bold;letter-spacing:-0.3px;color:%%BRAND_COLOR%%;">%%BRAND_NAME%%</span>
+                </a>
+                <div style="font-size:12px;color:#6b7a6f;margin-top:3px;">%%BRAND_TAGLINE%%</div>
+              </td>
+            </tr>
+            <!-- Content card -->
+            <tr>
+              <td style="background:#ffffff;border:1px solid #e2e8e2;border-top:3px solid %%BRAND_COLOR%%;border-radius:14px;padding:28px;">
+                <h1 style="font-size:19px;line-height:1.3;margin:0 0 14px;color:#12190f;">${title}</h1>
+                <div style="font-size:15px;line-height:1.55;color:#2b352d;">${bodyHtml}</div>
+              </td>
+            </tr>
+            <!-- Footer -->
+            <tr>
+              <td style="padding:20px 8px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="font-size:12px;color:#6b7a6f;line-height:1.6;padding-bottom:10px;">
+                      <a href="%%BRAND_SITE_URL%%/dispensaries" style="color:%%BRAND_COLOR%%;text-decoration:none;">Find dispensaries</a>
+                      &nbsp;&middot;&nbsp;
+                      <a href="mailto:%%BRAND_SUPPORT_EMAIL%%" style="color:%%BRAND_COLOR%%;text-decoration:none;">Contact support</a>
+                      &nbsp;&middot;&nbsp;
+                      <a href="%%BRAND_SITE_URL%%/privacy" style="color:%%BRAND_COLOR%%;text-decoration:none;">Privacy</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:11px;color:#8a978c;line-height:1.7;padding-bottom:10px;">
+                      %%BRAND_FOOTER%%<br/>
+                      Questions? Email <a href="mailto:%%BRAND_SUPPORT_EMAIL%%" style="color:#6b7a6f;">%%BRAND_SUPPORT_EMAIL%%</a>.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:11px;color:#9aa89c;line-height:1.7;border-top:1px solid #e2e8e2;padding-top:12px;">
+                      &copy; %%BRAND_YEAR%% %%BRAND_LEGAL%%. Must be 21+. Cannabis products have intoxicating effects and have not been evaluated by the FDA. This message is not medical or legal advice.<br/>
+                      You&rsquo;re receiving this because of activity on your %%BRAND_NAME%% account.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>`;
 }
