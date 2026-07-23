@@ -138,3 +138,34 @@ export async function endMerchSubscription(subscriptionId: string): Promise<void
     .eq('id', subscriptionId);
   refresh();
 }
+
+/**
+ * Activate a pending self-serve reservation: flip it live and restart the term
+ * from now, preserving the reserved length (ends − starts). The advertiser's
+ * requested slot is kept; re-target to a metro by ending it and comping there.
+ */
+export async function activateMerchSubscription(subscriptionId: string): Promise<void> {
+  await requireAdmin();
+  const service = createServiceClient();
+  const { data: sub } = await service
+    .from('ad_subscriptions')
+    .select('id, starts_at, ends_at, status')
+    .eq('id', subscriptionId)
+    .maybeSingle();
+  if (!sub || sub.status !== 'pending') return;
+
+  const reservedMs =
+    sub.starts_at && sub.ends_at
+      ? new Date(sub.ends_at).getTime() - new Date(sub.starts_at).getTime()
+      : 30 * 86_400_000;
+  const now = new Date();
+  await service
+    .from('ad_subscriptions')
+    .update({
+      status: 'active',
+      starts_at: now.toISOString(),
+      ends_at: new Date(now.getTime() + Math.max(86_400_000, reservedMs)).toISOString(),
+    })
+    .eq('id', subscriptionId);
+  refresh();
+}

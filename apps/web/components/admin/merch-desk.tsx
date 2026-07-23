@@ -3,13 +3,18 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Gift, Loader2, Package, Sparkles } from 'lucide-react';
-import { compMerchSlot, endMerchSubscription } from '@/app/admin/merch-actions';
+import {
+  activateMerchSubscription,
+  compMerchSlot,
+  endMerchSubscription,
+} from '@/app/admin/merch-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
 
 export type MerchRow = {
   id: string;
+  status: 'active' | 'pending';
   slotType: 'brand' | 'product';
   position: number;
   regionName: string;
@@ -25,6 +30,12 @@ export type RegionOption = { slug: string; name: string; state: string | null };
 function Row({ r }: { r: MerchRow }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const isPending = r.status === 'pending';
+  const run = (fn: () => Promise<unknown>) =>
+    start(async () => {
+      await fn();
+      router.refresh();
+    });
 
   return (
     <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-4">
@@ -41,20 +52,35 @@ function Row({ r }: { r: MerchRow }) {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Badge tone="primary">Live</Badge>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={pending}
-          onClick={() =>
-            start(async () => {
-              await endMerchSubscription(r.id);
-              router.refresh();
-            })
-          }
-        >
-          End
-        </Button>
+        <Badge tone={isPending ? 'outline' : 'primary'}>{isPending ? 'Pending' : 'Live'}</Badge>
+        {isPending ? (
+          <>
+            <Button
+              size="sm"
+              disabled={pending}
+              onClick={() => run(() => activateMerchSubscription(r.id))}
+            >
+              Activate
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() => run(() => endMerchSubscription(r.id))}
+            >
+              Reject
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
+            onClick={() => run(() => endMerchSubscription(r.id))}
+          >
+            End
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -211,22 +237,41 @@ function Section({
 }
 
 export function MerchDesk({ rows, regions }: { rows: MerchRow[]; regions: RegionOption[] }) {
-  const brands = rows.filter((r) => r.slotType === 'brand');
-  const products = rows.filter((r) => r.slotType === 'product');
+  const pending = rows.filter((r) => r.status === 'pending');
+  const liveBrands = rows.filter((r) => r.status === 'active' && r.slotType === 'brand');
+  const liveProducts = rows.filter((r) => r.status === 'active' && r.slotType === 'product');
 
   return (
     <div className="space-y-8">
       <CompForm regions={regions} />
+
+      {pending.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-1.5">
+            <Gift className="text-primary h-4 w-4" />
+            <h2 className="text-lg font-semibold">Reservation requests ({pending.length})</h2>
+          </div>
+          <p className="text-muted text-sm">
+            Self-serve reservations awaiting review. Activate to go live nationwide, or Reject to
+            free the slot. To run one in a specific metro instead, Reject it and comp the target
+            into that region above.
+          </p>
+          {pending.map((r) => (
+            <Row key={r.id} r={r} />
+          ))}
+        </section>
+      )}
+
       <Section
         icon={Sparkles}
         title="Featured brands live"
-        rows={brands}
+        rows={liveBrands}
         emptyHint="No featured brand slots live. Comp one above to merchandise a brand in a region."
       />
       <Section
         icon={Package}
         title="Featured products live"
-        rows={products}
+        rows={liveProducts}
         emptyHint="No featured product slots live. Comp one above to merchandise a product in a region."
       />
     </div>

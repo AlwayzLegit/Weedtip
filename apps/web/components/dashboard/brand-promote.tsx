@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { requestBrandPlacement } from '@/app/actions/billing';
+import { requestBrandPlacement, reserveBrandSlot } from '@/app/actions/billing';
 import { track } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/format';
@@ -31,15 +31,21 @@ export function BrandPromote({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const isHero = kind === 'hero';
   const targeted = stateCode.trim().length === 2;
   const cityTargeted = targeted && city.trim().length > 0;
-  const scope = cityTargeted ? 'city' : targeted ? 'state' : 'nationwide';
-  const price = useMemo(() => placementPriceCents(kind, scope, days), [kind, days, scope]);
-  const reachLabel = cityTargeted
-    ? `${city.trim()}, ${stateCode.toUpperCase()}`
-    : targeted
-      ? stateCode.toUpperCase()
-      : 'nationwide';
+  // Featured-brand slots sell on the region system and reserve nationwide (the
+  // team can re-target to a metro on activation); only the hero keeps the
+  // legacy geo scope selector.
+  const scope = isHero ? (cityTargeted ? 'city' : targeted ? 'state' : 'nationwide') : 'nationwide';
+  const price = useMemo(() => placementPriceCents(kind, scope, days), [kind, scope, days]);
+  const reachLabel = !isHero
+    ? 'nationwide · team targets your market'
+    : cityTargeted
+      ? `${city.trim()}, ${stateCode.toUpperCase()}`
+      : targeted
+        ? stateCode.toUpperCase()
+        : 'nationwide';
 
   return (
     <div className="space-y-3">
@@ -79,7 +85,7 @@ export function BrandPromote({
       <p className="text-muted text-sm">
         {kind === 'hero'
           ? 'Claim a slot in the homepage hero carousel — your brand rotates alongside dispensaries, nationwide or targeted to a state or city. Reserving is free; our team confirms billing before it goes live, and it expires automatically.'
-          : 'Feature your brand on the Brands directory — nationwide or targeted to a state or city. Reserving is free; our team confirms billing before it goes live, and it expires automatically.'}
+          : 'Reserve a Featured Brands slot on the Brands directory. Reserved nationwide — our team can target it to your market on activation. Reserving is free; we confirm billing before it goes live, and it expires automatically.'}
       </p>
       <div className="flex flex-wrap items-end gap-4">
         <label className="space-y-1.5 text-sm">
@@ -100,28 +106,32 @@ export function BrandPromote({
             }
           />
         </label>
-        <label className="space-y-1.5 text-sm">
-          <span className="font-medium">State</span>
-          <input
-            value={stateCode}
-            onChange={(e) => setStateCode(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 2))}
-            placeholder="Nationwide"
-            maxLength={2}
-            className="border-border bg-background block w-28 rounded-md border px-3 py-2 uppercase"
-          />
-          <span className="text-muted block text-xs">Blank = nationwide</span>
-        </label>
-        <label className="space-y-1.5 text-sm">
-          <span className="font-medium">City (optional)</span>
-          <input
-            value={city}
-            onChange={(e) => setCity(e.target.value.slice(0, 80))}
-            placeholder={targeted ? 'All of state' : 'Set a state first'}
-            disabled={!targeted}
-            className="border-border bg-background block w-40 rounded-md border px-3 py-2 disabled:opacity-50"
-          />
-          <span className="text-muted block text-xs">Needs a state</span>
-        </label>
+        {isHero && (
+          <>
+            <label className="space-y-1.5 text-sm">
+              <span className="font-medium">State</span>
+              <input
+                value={stateCode}
+                onChange={(e) => setStateCode(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 2))}
+                placeholder="Nationwide"
+                maxLength={2}
+                className="border-border bg-background block w-28 rounded-md border px-3 py-2 uppercase"
+              />
+              <span className="text-muted block text-xs">Blank = nationwide</span>
+            </label>
+            <label className="space-y-1.5 text-sm">
+              <span className="font-medium">City (optional)</span>
+              <input
+                value={city}
+                onChange={(e) => setCity(e.target.value.slice(0, 80))}
+                placeholder={targeted ? 'All of state' : 'Set a state first'}
+                disabled={!targeted}
+                className="border-border bg-background block w-40 rounded-md border px-3 py-2 disabled:opacity-50"
+              />
+              <span className="text-muted block text-xs">Needs a state</span>
+            </label>
+          </>
+        )}
       </div>
 
       {/* Attach a custom creative (image + headline) — otherwise the ad uses the
@@ -168,20 +178,26 @@ export function BrandPromote({
               price_cents: price,
             });
             start(async () => {
-              const res = await requestBrandPlacement({
-                brand_id: brandId,
-                days,
-                state: targeted ? stateCode.toUpperCase() : undefined,
-                city: cityTargeted ? city.trim() : undefined,
-                creative_id: creativeId || undefined,
-                type: kind,
-              });
+              const res = isHero
+                ? await requestBrandPlacement({
+                    brand_id: brandId,
+                    days,
+                    state: targeted ? stateCode.toUpperCase() : undefined,
+                    city: cityTargeted ? city.trim() : undefined,
+                    creative_id: creativeId || undefined,
+                    type: 'hero',
+                  })
+                : await reserveBrandSlot({
+                    brand_id: brandId,
+                    days,
+                    creative_id: creativeId || undefined,
+                  });
               if (res.ok) setNotice(res.message);
               else setError(res.error);
             });
           }}
         >
-          {kind === 'hero' ? 'Claim hero slot' : 'Promote brand'}
+          {kind === 'hero' ? 'Claim hero slot' : 'Reserve featured slot'}
         </Button>
       </div>
     </div>
