@@ -65,7 +65,10 @@ export async function searchDispensariesBounds(
  */
 export async function mapPinsBounds(
   supabase: Client,
-  params: Omit<DispensaryBoundsSearchParams, 'sort' | 'limit' | 'offset' | 'origin_lat' | 'origin_lng'> & {
+  params: Omit<
+    DispensaryBoundsSearchParams,
+    'sort' | 'limit' | 'offset' | 'origin_lat' | 'origin_lng'
+  > & {
     limit?: number;
   },
 ) {
@@ -98,6 +101,22 @@ export async function searchProducts(supabase: Client, params: ProductSearchPara
     in_stock_only: params.in_stock_only,
     result_limit: params.page_size,
     result_offset: params.page * params.page_size,
+  });
+}
+
+/**
+ * "Who delivers to my address?" — delivery-only listings publish only a
+ * service-area county, so coverage is matched at the county level. Callers
+ * derive (state, county) from the geocoder and pass it straight through; the
+ * RPC normalizes a trailing "County" and matches case-insensitively.
+ */
+export async function deliveriesServingCounty(
+  supabase: Client,
+  params: { state: string; county: string },
+) {
+  return supabase.rpc('deliveries_serving_county', {
+    p_state: params.state,
+    p_county: params.county,
   });
 }
 

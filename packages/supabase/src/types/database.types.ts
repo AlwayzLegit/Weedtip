@@ -1183,6 +1183,9 @@ export type Database = {
           county: string | null
           cover_image_url: string | null
           created_at: string
+          delivery_eta_minutes: number | null
+          delivery_fee_cents: number | null
+          delivery_minimum_cents: number | null
           dcc_email: string | null
           dcc_phone: string | null
           description: string | null
@@ -1244,6 +1247,9 @@ export type Database = {
           county?: string | null
           cover_image_url?: string | null
           created_at?: string
+          delivery_eta_minutes?: number | null
+          delivery_fee_cents?: number | null
+          delivery_minimum_cents?: number | null
           dcc_email?: string | null
           dcc_phone?: string | null
           description?: string | null
@@ -1305,6 +1311,9 @@ export type Database = {
           county?: string | null
           cover_image_url?: string | null
           created_at?: string
+          delivery_eta_minutes?: number | null
+          delivery_fee_cents?: number | null
+          delivery_minimum_cents?: number | null
           dcc_email?: string | null
           dcc_phone?: string | null
           description?: string | null
@@ -3141,6 +3150,27 @@ export type Database = {
           p_payment_method?: string
         }
         Returns: string
+      }
+      deliveries_serving_county: {
+        Args: { p_county: string; p_state: string }
+        Returns: {
+          id: string
+          slug: string
+          name: string
+          county: string | null
+          state: string
+          cover_image_url: string | null
+          logo_url: string | null
+          is_medical: boolean
+          is_recreational: boolean
+          rating_avg: number
+          rating_count: number
+          licensed: boolean
+          featured: boolean
+          delivery_minimum_cents: number | null
+          delivery_fee_cents: number | null
+          delivery_eta_minutes: number | null
+        }[]
       }
       dispensary_follower_count: {
         Args: { p_dispensary_id: string }

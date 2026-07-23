@@ -7,6 +7,7 @@ import {
   dispensarySortSchema,
 } from '@weedtip/shared';
 import { searchDispensariesBounds } from '@weedtip/supabase/queries';
+import { DeliverToInput } from '@/components/deliver-to-input';
 import { type BrowseFilters, DispensariesBrowser } from '@/components/dispensaries-browser';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -170,6 +171,8 @@ export default async function DeliveriesPage({
       )}
 
       <div className="mx-auto max-w-7xl px-4">
+        <DeliverToInput className="mt-8 max-w-3xl" />
+
         <section className="mt-10 max-w-3xl">
           <h2 className="mb-2 text-lg font-semibold">Cannabis delivery near you</h2>
           <p className="text-muted text-sm leading-relaxed">
