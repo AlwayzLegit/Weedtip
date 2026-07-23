@@ -3205,6 +3205,23 @@ export type Database = {
           specificity: number
         }[]
       }
+      get_region_hero: {
+        Args: { p_state?: string; p_city?: string }
+        Returns: {
+          placement_id: string
+          kind: string
+          slug: string
+          name: string
+          city: string | null
+          state: string | null
+          cover_url: string | null
+          logo_url: string | null
+          headline: string | null
+          rating: number | null
+          review_count: number | null
+          specificity: number
+        }[]
+      }
       get_region_placements: {
         Args: { p_region_id: string }
         Returns: {
