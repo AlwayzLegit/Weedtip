@@ -3,8 +3,7 @@
 import { useActionState, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { ImagePlus, Trash2 } from 'lucide-react';
-import { deleteAdCreative, saveAdCreative } from '@/app/dashboard/actions';
-import { EMPTY_FORM_STATE } from '@/lib/forms';
+import { EMPTY_FORM_STATE, type FormState } from '@/lib/forms';
 import { FormMessage } from '../auth/form-message';
 import { SubmitButton } from '../auth/submit-button';
 import { Button } from '../ui/button';
@@ -24,13 +23,26 @@ export type AdCreative = {
 /**
  * Creative library (spec ⑥): reusable ad creatives — image + headline + body —
  * that placements attach to. Ads render the creative on the public surfaces
- * instead of the raw shop cover.
+ * instead of the raw shop cover / brand logo.
+ *
+ * Owner-agnostic: the caller passes the save/delete server actions and any
+ * hidden fields (e.g. `brand_id`) so the same UI serves shops and brands.
  */
-export function CreativeLibrary({ creatives }: { creatives: AdCreative[] }) {
+export function CreativeLibrary({
+  creatives,
+  saveAction,
+  deleteAction,
+  hiddenFields,
+}: {
+  creatives: AdCreative[];
+  saveAction: (prev: FormState, fd: FormData) => Promise<FormState>;
+  deleteAction: (id: string) => Promise<void>;
+  hiddenFields?: Record<string, string>;
+}) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [state, action] = useActionState(saveAdCreative, EMPTY_FORM_STATE);
+  const [state, action] = useActionState(saveAction, EMPTY_FORM_STATE);
 
   return (
     <section className="space-y-4">
@@ -52,21 +64,36 @@ export function CreativeLibrary({ creatives }: { creatives: AdCreative[] }) {
           action={action}
           className="border-border bg-surface rounded-card space-y-4 border p-4"
         >
+          {Object.entries(hiddenFields ?? {}).map(([k, v]) => (
+            <input key={k} type="hidden" name={k} value={v} />
+          ))}
           <FormMessage
             state={{
               error: state.status === 'error' ? state.message : undefined,
               message: state.status === 'success' ? state.message : undefined,
             }}
           />
-          <Field label="Creative name" htmlFor="creative-name" hint="Internal label, e.g. “Summer sale 16:9”.">
+          <Field
+            label="Creative name"
+            htmlFor="creative-name"
+            hint="Internal label, e.g. “Summer sale 16:9”."
+          >
             <Input id="creative-name" name="name" maxLength={80} />
           </Field>
           <ImagePicker name="image_url" label="Ad image" />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Headline (optional)" htmlFor="creative-headline" hint="Up to 80 characters.">
+            <Field
+              label="Headline (optional)"
+              htmlFor="creative-headline"
+              hint="Up to 80 characters."
+            >
               <Input id="creative-headline" name="headline" maxLength={80} />
             </Field>
-            <Field label="Body copy (optional)" htmlFor="creative-body" hint="Up to 140 characters.">
+            <Field
+              label="Body copy (optional)"
+              htmlFor="creative-body"
+              hint="Up to 140 characters."
+            >
               <Input id="creative-body" name="body" maxLength={140} />
             </Field>
           </div>
@@ -83,7 +110,10 @@ export function CreativeLibrary({ creatives }: { creatives: AdCreative[] }) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {creatives.map((c) => (
-            <div key={c.id} className="border-border bg-surface rounded-card overflow-hidden border">
+            <div
+              key={c.id}
+              className="border-border bg-surface rounded-card overflow-hidden border"
+            >
               <MediaImage url={c.image_url} alt={c.name} className="h-28" iconClassName="h-8 w-8" />
               <div className="flex items-start justify-between gap-2 p-3">
                 <div className="min-w-0">
@@ -96,7 +126,7 @@ export function CreativeLibrary({ creatives }: { creatives: AdCreative[] }) {
                   disabled={pending}
                   onClick={() =>
                     startTransition(async () => {
-                      await deleteAdCreative(c.id);
+                      await deleteAction(c.id);
                       router.refresh();
                     })
                   }

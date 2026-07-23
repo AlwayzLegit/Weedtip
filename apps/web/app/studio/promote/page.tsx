@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
 import { BrandPromote } from '@/components/dashboard/brand-promote';
+import { CreativeLibrary, type AdCreative } from '@/components/dashboard/creative-library';
 import { getBrandOwnerContext } from '@/lib/brand-owner';
 import { formatPrice } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { deleteBrandAdCreative, saveBrandAdCreative } from './actions';
 
 export const metadata: Metadata = { title: 'Promote · Studio' };
 
@@ -23,10 +26,22 @@ export default async function StudioPromote() {
   const supabase = await createClient();
   const { data: promos } = await supabase
     .from('placements')
-    .select('id,brand_id,is_active,starts_at,ends_at,price_cents,scope_state')
-    .eq('type', 'promoted_brand')
+    .select('id,brand_id,type,is_active,starts_at,ends_at,price_cents,scope_state,scope_city')
     .in('brand_id', ids)
     .order('created_at', { ascending: false });
+
+  // Brand creatives — the user owns these brands (getBrandOwnerContext), so a
+  // service read is safe; ad_creatives is otherwise admin-only under RLS.
+  const service = createServiceClient();
+  const creativeRows = ids.length
+    ? ((
+        await service
+          .from('ad_creatives')
+          .select('id, brand_id, name, image_url, headline, body')
+          .in('brand_id', ids)
+          .order('created_at', { ascending: false })
+      ).data ?? [])
+    : [];
 
   type Promo = NonNullable<typeof promos>[number];
   const byBrand = new Map<string, Promo[]>();
@@ -36,18 +51,33 @@ export default async function StudioPromote() {
     list.push(p);
     byBrand.set(p.brand_id, list);
   }
+  const creativesByBrand = new Map<string, AdCreative[]>();
+  for (const c of creativeRows ?? []) {
+    if (!c.brand_id) continue;
+    const list = creativesByBrand.get(c.brand_id) ?? [];
+    list.push({
+      id: c.id,
+      name: c.name,
+      image_url: c.image_url,
+      headline: c.headline,
+      body: c.body,
+    });
+    creativesByBrand.set(c.brand_id, list);
+  }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold sm:text-3xl">Promote</h1>
         <p className="text-muted mt-1 text-sm">
-          Feature your brand on the Brands directory — nationwide or targeted to a state.
+          Feature your brand on the Brands directory or claim a homepage hero slot — nationwide or
+          targeted to a state or city, with your own ad creative.
         </p>
       </div>
 
       {brands.map((b) => {
         const live = (byBrand.get(b.id) ?? []).filter(isLive);
+        const creatives = creativesByBrand.get(b.id) ?? [];
         return (
           <section key={b.id} className="card space-y-4 p-6">
             <h2 className="text-lg font-semibold">{b.name}</h2>
@@ -56,14 +86,29 @@ export default async function StudioPromote() {
                 <Badge tone="primary">Live</Badge>
                 {live.map((p) => (
                   <span key={p.id} className="text-muted">
-                    {formatPrice(p.price_cents)}
-                    {p.scope_state ? ` · ${p.scope_state}` : ' · nationwide'}
+                    {p.type === 'hero' ? 'Hero' : 'Promoted'} · {formatPrice(p.price_cents)}
+                    {p.scope_city
+                      ? ` · ${p.scope_city}, ${p.scope_state}`
+                      : p.scope_state
+                        ? ` · ${p.scope_state}`
+                        : ' · nationwide'}
                     {p.ends_at ? ` · until ${new Date(p.ends_at).toLocaleDateString()}` : ''}
                   </span>
                 ))}
               </div>
             )}
-            <BrandPromote brandId={b.id} />
+            <BrandPromote
+              brandId={b.id}
+              creatives={creatives.map((c) => ({ id: c.id, name: c.name }))}
+            />
+            <div className="border-border border-t pt-4">
+              <CreativeLibrary
+                creatives={creatives}
+                saveAction={saveBrandAdCreative}
+                deleteAction={deleteBrandAdCreative}
+                hiddenFields={{ brand_id: b.id }}
+              />
+            </div>
           </section>
         );
       })}
