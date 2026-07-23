@@ -34,6 +34,7 @@ import { ReviewHistogram } from '@/components/dispensary/review-histogram';
 import { ReviewList } from '@/components/dispensary/review-list';
 import { MiniMap } from '@/components/dispensary/mini-map';
 import { DispensarySectionNav } from '@/components/dispensary/section-nav';
+import { DispensaryMobileActionBar } from '@/components/dispensary/mobile-action-bar';
 import { PhotoGallery } from '@/components/dispensary/photo-gallery';
 import { LogoImage } from '@/components/logo-image';
 import { FavoriteButton } from '@/components/favorite-button';
@@ -368,6 +369,17 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   // the primary CTA reads "View menu" rather than "Order online".
   const orderingEnabled = (await getPlatformSettings()).orderingEnabled;
 
+  // Directions target (real storefront only — never route to a service-area
+  // centroid). Reused by the header and the sticky mobile bar.
+  const directionsUrl =
+    (d.latitude != null || d.address) && !d.location_approximate
+      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          d.latitude != null && d.longitude != null
+            ? `${d.latitude},${d.longitude}`
+            : [d.address, d.city, d.state, d.zip].filter(Boolean).join(', '),
+        )}`
+      : null;
+
   const menuItems: MenuBrowserItem[] = (products ?? []).map((p) => {
     const cat = p.category as { name: string; slug: string; sort_order: number } | null;
     const sale = saleByProduct.get(p.id);
@@ -566,7 +578,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
       <MediaImage
         url={d.cover_image_url}
         alt={d.name}
-        className="h-56 sm:h-80"
+        className="h-44 sm:h-64"
         iconClassName="h-16 w-16"
       >
         <div
@@ -1395,6 +1407,24 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
           </aside>
         </div>
       </div>
+
+      {/* Clearance so the last content isn't hidden behind the sticky mobile bar. */}
+      <div aria-hidden className="h-20 lg:hidden" />
+      <DispensaryMobileActionBar
+        primaryHref={menuItems.length > 0 ? '#menu' : (directionsUrl ?? '#reviews')}
+        primaryLabel={
+          menuItems.length > 0
+            ? orderingEnabled && d.accepting_orders
+              ? 'Order online'
+              : 'View menu'
+            : directionsUrl
+              ? 'Get directions'
+              : 'Write a review'
+        }
+        primaryExternal={menuItems.length === 0 && !!directionsUrl}
+        phone={d.phone ?? null}
+        directionsUrl={menuItems.length > 0 ? directionsUrl : null}
+      />
     </main>
   );
 }
