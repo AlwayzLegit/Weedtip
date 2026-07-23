@@ -2,12 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import {
-  billingRequestAckEmail,
-  billingRequestEmail,
-  SALES_INBOX,
-  sendEmail,
-} from '@/lib/email';
+import { billingRequestAckEmail, billingRequestEmail, SALES_INBOX, sendEmail } from '@/lib/email';
 import { notifyAdmins } from '@/lib/notify';
 import { requireDispensaryOwner } from '@/lib/owner';
 import {
@@ -177,7 +172,8 @@ export async function requestBrandPlanChange(
     .select('id, name, owner_id')
     .eq('id', brandId)
     .maybeSingle();
-  if (!brand || brand.owner_id !== user.id) return { ok: false, error: 'You do not own this brand.' };
+  if (!brand || brand.owner_id !== user.id)
+    return { ok: false, error: 'You do not own this brand.' };
 
   if (!(await rateLimit('billing', { limit: 5, window: '60 s' }, brand.id)).success) {
     return { ok: false, error: 'Too many attempts. Please wait a moment.' };
@@ -298,7 +294,8 @@ export type RequestPlacementInput = z.infer<typeof placementSchema>;
  */
 export async function requestPlacement(raw: RequestPlacementInput): Promise<BillingRequestResult> {
   const parsed = placementSchema.safeParse(raw);
-  if (!parsed.success) return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
+  if (!parsed.success)
+    return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid request.' };
   const input = parsed.data;
 
   if ((input.type === 'promoted_deal' || input.type === 'promoted_product') && !input.target_id) {
@@ -381,18 +378,13 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
   });
   if (insErr) return { ok: false, error: 'Could not create the placement request.' };
 
-  await sendBillingEmails(
-    PLACEMENT_TYPE_LABEL[input.type],
-    dispensary.name,
-    user?.email ?? null,
-    {
-      Dispensary: dispensary.name,
-      Placement: PLACEMENT_TYPE_LABEL[input.type],
-      Reach: input.scope,
-      Days: input.days,
-      Price: `$${(priceCents / 100).toFixed(2)}`,
-    },
-  );
+  await sendBillingEmails(PLACEMENT_TYPE_LABEL[input.type], dispensary.name, user?.email ?? null, {
+    Dispensary: dispensary.name,
+    Placement: PLACEMENT_TYPE_LABEL[input.type],
+    Reach: input.scope,
+    Days: input.days,
+    Price: `$${(priceCents / 100).toFixed(2)}`,
+  });
   revalidatePath('/dashboard/promote');
   return { ok: true, message: REQUEST_ACK };
 }
@@ -408,6 +400,11 @@ const brandPlacementSchema = z.object({
     .length(2)
     .transform((s) => s.toUpperCase())
     .optional(),
+  /** Optional city targeting — only valid alongside a state (city > state > nationwide). */
+  city: z.string().trim().min(1).max(80).optional(),
+  /** Optional creative from the brand's library — its art/headline render on the
+   *  ad surface instead of the plain brand logo. */
+  creative_id: z.string().uuid().optional(),
   /** 'promoted_brand' features the brand on the Brands directory; 'hero' buys a
    *  homepage carousel slot (brands rank alongside dispensaries). */
   type: z.enum(['promoted_brand', 'hero']).default('promoted_brand'),
@@ -455,9 +452,26 @@ export async function requestBrandPlacement(
     };
   }
 
-  const scope = input.state ? 'state' : 'nationwide';
+  // City targeting needs a state (the hero serving keys city match on state).
+  if (input.city && !input.state) {
+    return { ok: false, error: 'Pick a state to target a specific city.' };
+  }
+
+  // An attached creative must belong to THIS brand's library.
+  if (input.creative_id) {
+    const service = createServiceClient();
+    const { data: creative } = await service
+      .from('ad_creatives')
+      .select('id')
+      .eq('id', input.creative_id)
+      .eq('brand_id', brand.id)
+      .maybeSingle();
+    if (!creative) return { ok: false, error: 'That creative is not in your library.' };
+  }
+
+  const scope = input.city ? 'city' : input.state ? 'state' : 'nationwide';
   const priceCents = placementPriceCents(input.type, scope, input.days);
-  const where = input.state ? input.state : 'Nationwide';
+  const where = input.city ? `${input.city}, ${input.state}` : (input.state ?? 'Nationwide');
   const label = input.type === 'hero' ? 'Homepage hero' : 'Promoted brand';
 
   const service = createServiceClient();
@@ -465,6 +479,8 @@ export async function requestBrandPlacement(
     brand_id: brand.id,
     type: input.type,
     scope_state: input.state ?? null,
+    scope_city: input.city ?? null,
+    creative_id: input.creative_id ?? null,
     is_active: false,
     status: 'pending',
     price_cents: priceCents,
@@ -477,6 +493,7 @@ export async function requestBrandPlacement(
     Reach: where,
     Days: input.days,
     Price: `$${(priceCents / 100).toFixed(2)}`,
+    ...(input.creative_id ? { Creative: 'Custom creative attached' } : {}),
   });
   revalidatePath('/studio/promote');
   return { ok: true, message: REQUEST_ACK };

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { deleteAdCreative, saveAdCreative } from '@/app/dashboard/actions';
 import { RenewalOfferCard } from '@/components/ads/renewal-offer-card';
 import { CreativeLibrary } from '@/components/dashboard/creative-library';
 import { EmbedSnippet } from '@/components/dashboard/embed-snippet';
@@ -77,7 +78,9 @@ export default async function PromotePage() {
   // reserved spot is invisible everywhere until billing activates it.
   const { data: adSlotSubs } = await supabase
     .from('ad_subscriptions')
-    .select('id, status, price_paid, is_house, ends_at, slot:ad_slots(slot_type, region:ad_regions(name))')
+    .select(
+      'id, status, price_paid, is_house, ends_at, slot:ad_slots(slot_type, region:ad_regions(name))',
+    )
     .eq('dispensary_id', dispensary.id)
     .in('status', ['pending', 'active', 'past_due'])
     .order('created_at', { ascending: false });
@@ -100,7 +103,9 @@ export default async function PromotePage() {
   // First-right renewal offers on this shop's expiring ad slots.
   const { data: renewalSubs } = await supabase
     .from('ad_subscriptions')
-    .select('id, price_paid, ends_at, renewal_price_cents, slot:ad_slots(slot_type, region:ad_regions(name))')
+    .select(
+      'id, price_paid, ends_at, renewal_price_cents, slot:ad_slots(slot_type, region:ad_regions(name))',
+    )
     .eq('dispensary_id', dispensary.id)
     .eq('status', 'active')
     .not('renewal_price_cents', 'is', null);
@@ -195,9 +200,15 @@ export default async function PromotePage() {
                 </p>
               </div>
               <Badge
-                tone={h.status === 'active' ? 'primary' : h.status === 'pending' ? 'outline' : 'muted'}
+                tone={
+                  h.status === 'active' ? 'primary' : h.status === 'pending' ? 'outline' : 'muted'
+                }
               >
-                {h.status === 'pending' ? 'Reserved' : h.status === 'past_due' ? 'Past due' : 'Live'}
+                {h.status === 'pending'
+                  ? 'Reserved'
+                  : h.status === 'past_due'
+                    ? 'Past due'
+                    : 'Live'}
               </Badge>
             </div>
           ))}
@@ -322,7 +333,11 @@ export default async function PromotePage() {
       />
 
       {/* Creative library (spec ⑥) */}
-      <CreativeLibrary creatives={creatives ?? []} />
+      <CreativeLibrary
+        creatives={creatives ?? []}
+        saveAction={saveAdCreative}
+        deleteAction={deleteAdCreative}
+      />
 
       {/* Embeddable menu widget */}
       <section className="space-y-3">
