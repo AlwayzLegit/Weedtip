@@ -65,9 +65,10 @@ export async function extendRenewal(subscriptionId: string): Promise<void> {
     .maybeSingle();
   if (!sub?.renewal_price_cents) return;
 
-  const base = sub.ends_at && new Date(sub.ends_at).getTime() > Date.now()
-    ? new Date(sub.ends_at)
-    : new Date();
+  const base =
+    sub.ends_at && new Date(sub.ends_at).getTime() > Date.now()
+      ? new Date(sub.ends_at)
+      : new Date();
   const { error: extendErr } = await service
     .from('ad_subscriptions')
     .update({
@@ -88,7 +89,7 @@ export async function extendRenewal(subscriptionId: string): Promise<void> {
     slot_type: 'exclusive' | 'featured' | 'premium';
     region_id: string;
   } | null;
-  if (slot) {
+  if (slot && sub.dispensary_id) {
     await service
       .from('ad_requests')
       .update({ status: 'resolved' })
@@ -136,7 +137,10 @@ export async function houseFillRegion(regionId: string): Promise<void> {
   const { data: liveSubs } = await service
     .from('ad_subscriptions')
     .select('slot_id')
-    .in('slot_id', slots.map((s) => s.id))
+    .in(
+      'slot_id',
+      slots.map((s) => s.id),
+    )
     .in('status', ['pending', 'active', 'past_due']);
   const taken = new Set((liveSubs ?? []).map((s) => s.slot_id));
   const open = slots.filter((s) => !taken.has(s.id));

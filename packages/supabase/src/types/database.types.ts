@@ -326,8 +326,10 @@ export type Database = {
       }
       ad_subscriptions: {
         Row: {
+          brand_id: string | null
           created_at: string
-          dispensary_id: string
+          creative_id: string | null
+          dispensary_id: string | null
           ends_at: string | null
           id: string
           is_house: boolean
@@ -339,8 +341,10 @@ export type Database = {
           status: Database["public"]["Enums"]["ad_sub_status"]
         }
         Insert: {
+          brand_id?: string | null
           created_at?: string
-          dispensary_id: string
+          creative_id?: string | null
+          dispensary_id?: string | null
           ends_at?: string | null
           id?: string
           is_house?: boolean
@@ -352,8 +356,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["ad_sub_status"]
         }
         Update: {
+          brand_id?: string | null
           created_at?: string
-          dispensary_id?: string
+          creative_id?: string | null
+          dispensary_id?: string | null
           ends_at?: string | null
           id?: string
           is_house?: boolean
@@ -3482,7 +3488,7 @@ export type Database = {
       }
     }
     Enums: {
-      ad_slot_type: "exclusive" | "featured" | "premium" | "standard"
+      ad_slot_type: "exclusive" | "featured" | "premium" | "standard" | "hero"
       ad_sub_status: "pending" | "active" | "past_due" | "canceled"
       deal_kind:
         | "percentage"
