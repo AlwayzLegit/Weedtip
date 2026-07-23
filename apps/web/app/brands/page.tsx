@@ -277,23 +277,34 @@ export default async function BrandsPage({
       ) : (
         // Weedmaps-style tile grid: artwork-forward square logo tiles.
         <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
-          {ranked.map((b) => (
-            <BrandTile
-              key={b.slug}
-              slug={b.slug}
-              name={b.name}
-              logoUrl={b.logo_url}
-              rating={b.rating_avg}
-              ratingCount={b.rating_count}
-              sub={
-                b.count > 0
-                  ? `${b.count} ${b.count === 1 ? 'product' : 'products'} in stores${selectedState ? ` in ${selectedState}` : ''}`
-                  : b.lineupCount > 0
-                    ? `${b.lineupCount} in lineup`
-                    : 'New brand'
-              }
-            />
-          ))}
+          {ranked.map((b) => {
+            // Data-backed status chip (Weedmaps' tile badge): well-reviewed
+            // brands read "Top rated"; broadly-stocked ones "Popular".
+            const badge =
+              b.rating_count >= 3 && b.rating_avg >= 4.5
+                ? 'Top rated'
+                : b.count >= 20
+                  ? 'Popular'
+                  : null;
+            return (
+              <BrandTile
+                key={b.slug}
+                slug={b.slug}
+                name={b.name}
+                logoUrl={b.logo_url}
+                rating={b.rating_avg}
+                ratingCount={b.rating_count}
+                badge={badge}
+                sub={
+                  b.count > 0
+                    ? `${b.count} ${b.count === 1 ? 'product' : 'products'} in stores${selectedState ? ` in ${selectedState}` : ''}`
+                    : b.lineupCount > 0
+                      ? `${b.lineupCount} in lineup`
+                      : 'New brand'
+                }
+              />
+            );
+          })}
         </div>
       )}
     </main>
