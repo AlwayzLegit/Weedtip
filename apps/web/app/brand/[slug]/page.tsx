@@ -9,6 +9,8 @@ import { BadgeCheck } from 'lucide-react';
 import { LogoImage } from '@/components/logo-image';
 import { MediaImage } from '@/components/media-image';
 import { ProductCard } from '@/components/product-card';
+import { DispensarySectionNav } from '@/components/dispensary/section-nav';
+import { StickyCtaBar } from '@/components/sticky-cta-bar';
 import { RatingStars } from '@/components/rating-stars';
 import { getAuth } from '@/lib/auth';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
@@ -216,38 +218,45 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                 </span>
               )}
             </div>
-          {brand.rating_count > 0 && (
-            <a href="#reviews" className="mt-1.5 inline-flex items-center gap-1.5 hover:underline">
-              <span className="text-sm font-semibold">{brand.rating_avg.toFixed(1)}</span>
-              <RatingStars rating={brand.rating_avg} />
-              <span className="text-muted text-sm">
-                ({brand.rating_count} review{brand.rating_count === 1 ? '' : 's'})
-              </span>
-            </a>
-          )}
-          <p className="text-muted mt-2 max-w-2xl text-sm">
-            {brand.description ??
-              `Official ${brand.name} lineup — ${lineup?.length ?? 0} product${(lineup?.length ?? 0) === 1 ? '' : 's'} on Weedtip. Follow the brand to catch new drops and find shops that carry it.`}
-          </p>
-          {brand.website && /^https?:\/\//i.test(brand.website) && (
-            <a
-              href={brand.website}
-              target="_blank"
-              rel="nofollow noopener noreferrer"
-              className="text-primary mt-2 inline-block text-sm hover:underline"
-            >
-              Visit website →
-            </a>
-          )}
-          {(user || canClaim) && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {user && (
-                <BrandFollowButton brandId={brand.id} slug={brand.slug} isFollowing={isFollowing} />
-              )}
-              {canClaim && <ClaimBrandButton brandId={brand.id} />}
-            </div>
-          )}
-        </div>
+            {brand.rating_count > 0 && (
+              <a
+                href="#reviews"
+                className="mt-1.5 inline-flex items-center gap-1.5 hover:underline"
+              >
+                <span className="text-sm font-semibold">{brand.rating_avg.toFixed(1)}</span>
+                <RatingStars rating={brand.rating_avg} />
+                <span className="text-muted text-sm">
+                  ({brand.rating_count} review{brand.rating_count === 1 ? '' : 's'})
+                </span>
+              </a>
+            )}
+            <p className="text-muted mt-2 max-w-2xl text-sm">
+              {brand.description ??
+                `Official ${brand.name} lineup — ${lineup?.length ?? 0} product${(lineup?.length ?? 0) === 1 ? '' : 's'} on Weedtip. Follow the brand to catch new drops and find shops that carry it.`}
+            </p>
+            {brand.website && /^https?:\/\//i.test(brand.website) && (
+              <a
+                href={brand.website}
+                target="_blank"
+                rel="nofollow noopener noreferrer"
+                className="text-primary mt-2 inline-block text-sm hover:underline"
+              >
+                Visit website →
+              </a>
+            )}
+            {(user || canClaim) && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {user && (
+                  <BrandFollowButton
+                    brandId={brand.id}
+                    slug={brand.slug}
+                    isFollowing={isFollowing}
+                  />
+                )}
+                {canClaim && <ClaimBrandButton brandId={brand.id} />}
+              </div>
+            )}
+          </div>
           <div className="flex gap-6 sm:flex-col sm:gap-3 sm:pt-4">
             {stats.map((s) => (
               <Stat key={s.label} value={s.value} label={s.label} />
@@ -256,8 +265,17 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         </div>
       </div>
 
+      <DispensarySectionNav
+        sections={[
+          ...(brandUpdates && brandUpdates.length > 0 ? [{ id: 'updates', label: 'Updates' }] : []),
+          ...(lineup && lineup.length > 0 ? [{ id: 'lineup', label: 'Products' }] : []),
+          { id: 'stores', label: 'Where to buy' },
+          { id: 'reviews', label: 'Reviews' },
+        ]}
+      />
+
       {brandUpdates && brandUpdates.length > 0 && (
-        <section className="mt-8">
+        <section id="updates" className="mt-8 scroll-mt-24">
           <h2 className="mb-3 text-lg font-semibold">Latest updates</h2>
           <div className="space-y-3">
             {brandUpdates.map((u) => (
@@ -274,7 +292,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       )}
 
       {lineup && lineup.length > 0 && (
-        <section className="mt-8">
+        <section id="lineup" className="mt-8 scroll-mt-24">
           <h2 className="mb-3 text-lg font-semibold">Official lineup</h2>
           <div className="space-y-6">
             {[...lineupByCategory.entries()].map(([category, items]) => (
@@ -339,13 +357,13 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         </section>
       )}
 
-      <section className="mt-8">
+      <section id="stores" className="mt-8 scroll-mt-24">
         <h2 className="mb-3 text-lg font-semibold">Available at dispensaries</h2>
         {list.length === 0 ? (
           <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-5">
             <p className="text-muted text-sm">
-              No menus list {brand.name} yet — ask for it at your local shop, or follow the
-              brand to hear when it lands.
+              No menus list {brand.name} yet — ask for it at your local shop, or follow the brand to
+              hear when it lands.
             </p>
             <Link
               href="/dispensaries"
@@ -403,7 +421,9 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           />
         ) : (
           <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-4">
-            <p className="text-muted text-sm">Tried {brand.name}? Rate the brand for other shoppers.</p>
+            <p className="text-muted text-sm">
+              Tried {brand.name}? Rate the brand for other shoppers.
+            </p>
             <Link
               href={`/sign-in?next=/brand/${brand.slug}`}
               className="border-primary text-primary hover:bg-primary-muted shrink-0 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
@@ -435,7 +455,10 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         <section className="mt-10">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">More brands to explore</h2>
-            <Link href="/brands" className="text-primary shrink-0 text-sm font-medium hover:underline">
+            <Link
+              href="/brands"
+              className="text-primary shrink-0 text-sm font-medium hover:underline"
+            >
               View all →
             </Link>
           </div>
@@ -456,6 +479,9 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           </div>
         </section>
       )}
+
+      <div aria-hidden className="h-20 lg:hidden" />
+      <StickyCtaBar href="#stores" label="Find dispensaries" />
     </main>
   );
 }
