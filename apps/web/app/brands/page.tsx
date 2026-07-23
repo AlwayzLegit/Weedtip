@@ -3,6 +3,7 @@ import { Link } from 'next-view-transitions';
 import { Sparkles } from 'lucide-react';
 import { BrandTile } from '@/components/brand/brand-tile';
 import { PlacementBeacon } from '@/components/placement-beacon';
+import { SponsoredBadge } from '@/components/sponsored-badge';
 import { listingRegionIds, regionFeaturedBrandIds } from '@/lib/region-merch';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
@@ -240,9 +241,10 @@ export default async function BrandsPage({
               <Link
                 key={c.key}
                 href={`/brand/${c.slug}`}
-                className="rounded-card border-primary/40 bg-primary-muted/30 shadow-card hover:border-primary hover:shadow-card-hover relative flex items-start gap-4 border p-5 transition-all duration-200 hover:-translate-y-0.5"
+                className="rounded-card border-primary/40 bg-primary-muted/30 shadow-card hover:border-primary hover:shadow-card-hover ring-primary/10 relative flex items-start gap-4 border p-5 ring-1 transition-all duration-200 hover:-translate-y-0.5"
               >
                 {c.placementId && <PlacementBeacon placementId={c.placementId} />}
+                <SponsoredBadge className="absolute right-3 top-3" />
                 {c.logo_url ? (
                   <img
                     src={c.logo_url}
