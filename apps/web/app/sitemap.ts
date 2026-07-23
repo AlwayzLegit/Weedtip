@@ -282,6 +282,10 @@ async function dispensarySitemap(chunk: number): Promise<MetadataRoute.Sitemap> 
           .from('dispensaries')
           .select('slug, updated_at')
           .eq('status', 'active')
+          // Only canonical listings: re-imported duplicates point their canonical
+          // at a primary (canonical_slug set), so listing them here would put
+          // non-canonical URLs in the sitemap.
+          .is('canonical_slug', null)
           .order('slug')
           .range(f, t),
       chunk,
