@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      page_index_status: {
+        Row: {
+          checked_at: string
+          coverage_state: string | null
+          google_canonical: string | null
+          in_sitemap: boolean | null
+          indexing_state: string | null
+          last_crawl_time: string | null
+          page_fetch_state: string | null
+          referring_urls: number | null
+          robots_txt_state: string | null
+          url: string
+          user_canonical: string | null
+          verdict: string | null
+        }
+        Insert: {
+          checked_at?: string
+          coverage_state?: string | null
+          google_canonical?: string | null
+          in_sitemap?: boolean | null
+          indexing_state?: string | null
+          last_crawl_time?: string | null
+          page_fetch_state?: string | null
+          referring_urls?: number | null
+          robots_txt_state?: string | null
+          url: string
+          user_canonical?: string | null
+          verdict?: string | null
+        }
+        Update: {
+          checked_at?: string
+          coverage_state?: string | null
+          google_canonical?: string | null
+          in_sitemap?: boolean | null
+          indexing_state?: string | null
+          last_crawl_time?: string | null
+          page_fetch_state?: string | null
+          referring_urls?: number | null
+          robots_txt_state?: string | null
+          url?: string
+          user_canonical?: string | null
+          verdict?: string | null
+        }
+        Relationships: []
+      }
       ad_events: {
         Row: {
           created_at: string
@@ -2880,6 +2925,13 @@ export type Database = {
       }
     }
     Functions: {
+      seo_coverage_summary: {
+        Args: never
+        Returns: {
+          coverage_state: string
+          n: number
+        }[]
+      }
       activate_brand_bid: {
         Args: { p_bid_id: string }
         Returns: undefined
