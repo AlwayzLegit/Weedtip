@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Sparkles } from 'lucide-react';
 import { productSearchSchema, type StrainType } from '@weedtip/shared';
 import { searchProducts } from '@weedtip/supabase/queries';
 import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
@@ -226,29 +227,36 @@ export default async function ProductsPage({
       </p>
 
       {sponsored.length > 0 && (
-        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {sponsored.map((p) => (
-            <ProductCard
-              key={p.id}
-              p={{
-                name: p.name,
-                brand: p.brand,
-                priceCents: saleMap.get(p.id) ?? p.price_cents,
-                originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
-                imageUrl: cardImageUrl(p),
-                strainType: p.strain_type,
-                thcPercentage: p.thc_percentage,
-                inStock: p.in_stock,
-                rating: p.rating_avg,
-                reviewCount: p.rating_count,
-                productId: p.id,
-                dispensarySlug: p.dispensary?.slug,
-                sponsored: true,
-                placementId: p.placementId || undefined,
-              }}
-            />
-          ))}
-        </div>
+        <section className="mb-6">
+          <div className="mb-3 flex items-center gap-1.5">
+            <Sparkles className="text-primary h-4 w-4" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide">Featured products</h2>
+            <span className="text-muted text-xs">· Sponsored</span>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {sponsored.map((p) => (
+              <ProductCard
+                key={p.id}
+                p={{
+                  name: p.name,
+                  brand: p.brand,
+                  priceCents: saleMap.get(p.id) ?? p.price_cents,
+                  originalPriceCents: saleMap.has(p.id) ? p.price_cents : null,
+                  imageUrl: cardImageUrl(p),
+                  strainType: p.strain_type,
+                  thcPercentage: p.thc_percentage,
+                  inStock: p.in_stock,
+                  rating: p.rating_avg,
+                  reviewCount: p.rating_count,
+                  productId: p.id,
+                  dispensarySlug: p.dispensary?.slug,
+                  sponsored: true,
+                  placementId: p.placementId || undefined,
+                }}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {organic.length === 0 && sponsored.length === 0 ? (

@@ -7,6 +7,7 @@ import { MediaImage } from './media-image';
 import { PlacementBeacon } from './placement-beacon';
 import { ProductQuickAdd } from './product-quick-add';
 import { RatingStars } from './rating-stars';
+import { SponsoredBadge } from './sponsored-badge';
 import { Badge } from './ui/badge';
 
 /** Below this many units in stock we nudge shoppers with a "Low stock" flag. */
@@ -66,14 +67,24 @@ export function ProductCard({ p }: { p: ProductCardData }) {
     ? Math.round(((p.originalPriceCents! - p.priceCents) / p.originalPriceCents!) * 100)
     : 0;
   const lowStock =
-    p.inStock && typeof p.stockQty === 'number' && p.stockQty > 0 && p.stockQty <= LOW_STOCK_THRESHOLD;
+    p.inStock &&
+    typeof p.stockQty === 'number' &&
+    p.stockQty > 0 &&
+    p.stockQty <= LOW_STOCK_THRESHOLD;
   const imageUrl =
     p.imageUrl ??
     (p.categorySlug && CATEGORY_ART.has(p.categorySlug)
       ? `/art/category-${p.categorySlug}.webp`
       : null);
   const body = (
-    <div className="rounded-card border-border bg-surface shadow-card hover:border-primary/50 hover:shadow-card-hover h-full overflow-hidden border transition-all duration-200 hover:-translate-y-0.5">
+    <div
+      className={cn(
+        'rounded-card shadow-card hover:shadow-card-hover h-full overflow-hidden border transition-all duration-200 hover:-translate-y-0.5',
+        p.sponsored
+          ? 'border-primary/40 bg-primary-muted/15 ring-primary/10 ring-1'
+          : 'border-border bg-surface hover:border-primary/50',
+      )}
+    >
       <MediaImage
         url={imageUrl}
         alt={p.name}
@@ -82,9 +93,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
         iconClassName="h-10 w-10"
       >
         {p.sponsored ? (
-          <Badge tone="primary" className="absolute left-2 top-2">
-            Sponsored
-          </Badge>
+          <SponsoredBadge className="absolute left-2 top-2" />
         ) : onSale ? (
           <Badge tone="primary" className="absolute left-2 top-2">
             {discountPct > 0 ? `−${discountPct}%` : 'Sale'}
@@ -117,9 +126,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
           {(typeof p.thcPercentage === 'number' || typeof p.cbdPercentage === 'number') && (
             <span className="text-muted text-xs">
               {typeof p.thcPercentage === 'number' && `${p.thcPercentage}% THC`}
-              {typeof p.thcPercentage === 'number' &&
-                typeof p.cbdPercentage === 'number' &&
-                ' · '}
+              {typeof p.thcPercentage === 'number' && typeof p.cbdPercentage === 'number' && ' · '}
               {typeof p.cbdPercentage === 'number' && `${p.cbdPercentage}% CBD`}
             </span>
           )}
