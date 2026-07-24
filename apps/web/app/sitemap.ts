@@ -87,6 +87,7 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { path: '', priority: 1, freq: 'daily' as const },
     { path: '/dispensaries', priority: 0.9, freq: 'daily' as const },
+    { path: '/dispensaries/locations', priority: 0.7, freq: 'weekly' as const },
     { path: '/deliveries', priority: 0.8, freq: 'daily' as const },
     { path: '/products', priority: 0.8, freq: 'daily' as const },
     { path: '/strains', priority: 0.6, freq: 'weekly' as const },
@@ -108,11 +109,7 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const supabase = await createClient();
     const dispensaryRows = await fetchAll<{ city: string | null; state: string }>((f, t) =>
-      supabase
-        .from('dispensaries')
-        .select('city, state')
-        .eq('status', 'active')
-        .range(f, t),
+      supabase.from('dispensaries').select('city, state').eq('status', 'active').range(f, t),
     );
     const productRows = await fetchAll<{
       category: { slug: string } | null;

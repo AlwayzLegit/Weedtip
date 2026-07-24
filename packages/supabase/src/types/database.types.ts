@@ -3501,6 +3501,13 @@ export type Database = {
           subtitle: string
         }[]
       }
+      state_listing_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          state: string
+          count: number
+        }[]
+      }
       search_products: {
         Args: {
           filter_category_slug?: string
