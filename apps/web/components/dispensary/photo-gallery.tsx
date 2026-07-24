@@ -35,7 +35,7 @@ export function PhotoGallery({ photos, name }: { photos: string[]; name: string 
   return (
     <section id="photos" className="scroll-mt-32">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Photos</h2>
+        <h2 className="text-lg font-semibold">Storefront photos</h2>
         <button
           onClick={() => setOpen(0)}
           className="text-primary inline-flex items-center gap-1.5 text-sm font-medium hover:underline"

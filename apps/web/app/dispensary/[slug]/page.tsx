@@ -631,7 +631,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               {d.is_delivery && !d.is_pickup ? (
                 <>
                   <Truck className="h-4 w-4" /> Delivery only
-                  {d.county ? ` · serves ${d.county} County, ${d.state}` : ` · ${d.state}`}
+                  {d.county
+                    ? ` · serves ${d.county} County, ${US_STATES[d.state] ?? d.state}`
+                    : ` · ${US_STATES[d.state] ?? d.state}`}
                 </>
               ) : (
                 <>
@@ -663,7 +665,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 <a href="#reviews" className="flex items-center gap-1.5 hover:underline">
                   <RatingStars rating={avgRating} />
                   <span className="text-sm font-semibold">{avgRating.toFixed(1)}</span>
-                  <span className="text-muted text-sm">({reviews!.length} reviews)</span>
+                  <span className="text-muted text-sm">
+                    ({d.rating_count} {d.rating_count === 1 ? 'review' : 'reviews'})
+                  </span>
                 </a>
               )}
               {avgRating >= 4.5 && reviews && reviews.length >= 10 && (
@@ -781,7 +785,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               href="#reviews"
               className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
             >
-              <PenLine className="h-4 w-4" /> Add review
+              <PenLine className="h-4 w-4" /> Write a review
             </a>
             <ShareButton
               title={`${d.name} · Weedtip`}
@@ -991,7 +995,12 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                       className="rounded-card border-border bg-surface overflow-hidden border"
                     >
                       {promo.image_url && (
-                        <img src={promo.image_url} alt="" className="h-32 w-full object-cover" />
+                        <img
+                          src={promo.image_url}
+                          alt={promo.title}
+                          loading="lazy"
+                          className="h-32 w-full object-cover"
+                        />
                       )}
                       <div className="p-4">
                         <p className="font-medium">{promo.title}</p>
@@ -1065,12 +1074,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               )}
             </section>
 
-            {/* Storefront photos (Google-enriched gallery) with lightbox */}
-            {galleryUrls.length > 0 && (
-              <div id="photos" className="scroll-mt-32">
-                <PhotoGallery photos={galleryUrls} name={d.name} />
-              </div>
-            )}
+            {/* Storefront photos (Google-enriched gallery) with lightbox.
+                PhotoGallery renders its own <section id="photos" scroll-mt-32>,
+                so no wrapper id here (avoids a duplicate #photos anchor). */}
+            {galleryUrls.length > 0 && <PhotoGallery photos={galleryUrls} name={d.name} />}
 
             {/* Updates from the shop */}
             {updates && updates.length > 0 && (
@@ -1118,7 +1125,8 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   average={avgRating}
                 />
               )}
-              {d.rating_count > 0 &&
+              {reviews &&
+                reviews.length > 0 &&
                 (d.rating_quality > 0 || d.rating_service > 0 || d.rating_atmosphere > 0) && (
                   <div className="rounded-card border-border bg-surface mb-4 grid grid-cols-3 gap-2 border p-4 text-center">
                     {(
@@ -1183,7 +1191,10 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   }))}
                 />
               ) : (
-                <p className="text-muted">No reviews yet. Be the first.</p>
+                <div className="border-border text-muted rounded-card border border-dashed p-8 text-center text-sm">
+                  No reviews yet
+                  {user && !isOwner ? ' — be the first to share your experience.' : '.'}
+                </div>
               )}
             </section>
 

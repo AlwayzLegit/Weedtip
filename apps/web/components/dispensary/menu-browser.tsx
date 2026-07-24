@@ -93,7 +93,7 @@ export function MenuBrowser({
 
   const tabClass = (active: boolean) =>
     cn(
-      'shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+      'shrink-0 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors',
       active
         ? 'border-primary bg-primary-muted text-primary'
         : 'border-border text-muted hover:text-foreground',
@@ -109,14 +109,14 @@ export function MenuBrowser({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Search ${dispensary.name}'s menu…`}
             aria-label="Search this menu"
-            className="border-border bg-surface focus:border-primary h-9 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors"
+            className="border-border bg-surface focus:border-primary focus-visible:ring-primary/40 h-10 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors focus-visible:ring-2"
           />
         </div>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
           aria-label="Sort menu"
-          className="border-border bg-surface h-9 rounded-full border px-3 text-sm"
+          className="border-border bg-surface h-10 rounded-full border px-3 text-sm"
         >
           <option value="featured">Sort: Featured</option>
           <option value="price-asc">Price: low to high</option>
@@ -156,7 +156,7 @@ export function MenuBrowser({
       </div>
 
       {visible.length === 0 ? (
-        <div className="card text-muted mt-4 p-8 text-center text-sm">
+        <div className="border-border text-muted rounded-card mt-4 border border-dashed p-8 text-center text-sm">
           Nothing matches{query ? ` “${query.trim()}”` : ''} here. Try another category or clear the
           search.
         </div>
