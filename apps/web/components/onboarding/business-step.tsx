@@ -21,6 +21,9 @@ export function BusinessStep({ initialQuery }: { initialQuery?: string }) {
   const [q, setQ] = useState(initialQuery ?? '');
   const [hits, setHits] = useState<BusinessHit[] | null>(null);
   const [loading, setLoading] = useState(false);
+  // A failed fetch must not read as "your shop isn't listed" — that steers
+  // owners into creating a duplicate listing via "Add my business".
+  const [failed, setFailed] = useState(false);
   const seq = useRef(0);
 
   useEffect(() => {
@@ -28,6 +31,7 @@ export function BusinessStep({ initialQuery }: { initialQuery?: string }) {
     if (term.length < 2) {
       setHits(null);
       setLoading(false);
+      setFailed(false);
       return;
     }
     const ctrl = new AbortController();
@@ -40,10 +44,16 @@ export function BusinessStep({ initialQuery }: { initialQuery?: string }) {
         .then((r) => r.json())
         .then((d: { results: BusinessHit[] }) => {
           // Ignore a slow response that lost the race to a newer keystroke.
-          if (mine === seq.current) setHits(d.results ?? []);
+          if (mine === seq.current) {
+            setHits(d.results ?? []);
+            setFailed(false);
+          }
         })
         .catch(() => {
-          if (mine === seq.current) setHits([]);
+          if (mine === seq.current) {
+            setHits([]);
+            setFailed(true);
+          }
         })
         .finally(() => {
           if (mine === seq.current) setLoading(false);
@@ -63,7 +73,7 @@ export function BusinessStep({ initialQuery }: { initialQuery?: string }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by shop name or city…"
-          className="pl-9"
+          className="pl-9 pr-9"
           autoFocus
           aria-label="Search for your dispensary"
         />
@@ -112,9 +122,21 @@ export function BusinessStep({ initialQuery }: { initialQuery?: string }) {
         </ul>
       )}
 
+      {hits && hits.some((h) => h.claimed) && (
+        <p className="text-muted text-xs">
+          Shop shows as claimed but it&apos;s yours?{' '}
+          <a href="mailto:support@weedtip.com" className="text-primary hover:underline">
+            Email support
+          </a>
+          .
+        </p>
+      )}
+
       {hits && hits.length === 0 && !loading && (
         <p className="text-muted rounded-card border-border border border-dashed p-6 text-center text-sm">
-          Nothing matching &ldquo;{q.trim()}&rdquo;. Try just the shop name, or the city.
+          {failed
+            ? 'Search didn’t load — check your connection and try again.'
+            : `Nothing matching “${q.trim()}”. Try just the shop name, or the city.`}
         </p>
       )}
 

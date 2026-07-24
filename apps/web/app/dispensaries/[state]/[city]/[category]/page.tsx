@@ -5,6 +5,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
+import { EmptyState } from '@/components/ui/empty-state';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
@@ -123,8 +124,12 @@ export default async function CategoryInCityPage({
       </p>
 
       {products.length === 0 ? (
-        <div className="rounded-card border-border bg-surface text-muted mt-6 border p-10 text-center">
-          No {label} listed in {cityName} yet. Check back soon.
+        <div className="mt-6">
+          <EmptyState
+            title={`No ${label} listed in ${cityName} yet`}
+            description="Check back soon — menus update as dispensaries add products."
+            action={{ label: `All dispensaries in ${cityName}`, href: base }}
+          />
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

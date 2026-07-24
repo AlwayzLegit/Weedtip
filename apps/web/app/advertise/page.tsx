@@ -135,7 +135,7 @@ export default async function AdvertisePage({
           <Link
             href="/advertise"
             className={
-              'focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ' +
+              'focus-visible:ring-primary rounded-full border px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ' +
               (!selectedShop && !showAll
                 ? 'border-primary bg-primary-muted text-primary'
                 : 'border-border bg-surface text-muted hover:text-foreground')
@@ -148,7 +148,7 @@ export default async function AdvertisePage({
               key={s.slug}
               href={`/advertise?shop=${s.slug}`}
               className={
-                'focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ' +
+                'focus-visible:ring-primary rounded-full border px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 ' +
                 (selectedShop?.slug === s.slug
                   ? 'border-primary bg-primary-muted text-primary'
                   : 'border-border bg-surface text-muted hover:text-foreground')

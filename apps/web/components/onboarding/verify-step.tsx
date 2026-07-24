@@ -13,6 +13,7 @@ import { LogoImage } from '../logo-image';
 import { SubmitButton } from '../auth/submit-button';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 
 /**
@@ -77,41 +78,53 @@ export function VerifyStep({ target, rejected }: { target: ClaimTarget; rejected
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <select
-            name="claimant_role"
-            required
-            defaultValue=""
-            className="border-border bg-surface-2 text-foreground h-11 w-full rounded-lg border px-3.5 text-sm"
-            aria-label="Your role at this business"
-          >
-            <option value="" disabled>
-              Your role here…
-            </option>
-            <option value="owner">Owner</option>
-            <option value="manager">Manager</option>
-            <option value="authorized_rep">Authorized representative</option>
-          </select>
-          <Input
-            name="business_email"
-            type="email"
-            placeholder="you@yourshop.com"
-            required
-            maxLength={254}
-            aria-label="Business email"
-          />
-          <Input
-            name="business_phone"
-            placeholder="Business phone (optional)"
-            maxLength={30}
-            aria-label="Business phone"
-          />
-          <Input
-            name="license_number"
-            placeholder="State license #"
-            required
-            maxLength={120}
-            aria-label="State license number"
-          />
+          <div>
+            <Label htmlFor="claimant_role">Your role</Label>
+            <select
+              id="claimant_role"
+              name="claimant_role"
+              required
+              defaultValue=""
+              className="border-border bg-surface-2 text-foreground h-11 w-full rounded-lg border px-3.5 text-sm"
+            >
+              <option value="" disabled>
+                Your role here…
+              </option>
+              <option value="owner">Owner</option>
+              <option value="manager">Manager</option>
+              <option value="authorized_rep">Authorized representative</option>
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="business_email">Business email</Label>
+            <Input
+              id="business_email"
+              name="business_email"
+              type="email"
+              placeholder="you@yourshop.com"
+              required
+              maxLength={254}
+            />
+          </div>
+          <div>
+            <Label htmlFor="business_phone">Business phone (optional)</Label>
+            <Input
+              id="business_phone"
+              name="business_phone"
+              placeholder="(555) 555-0134"
+              maxLength={30}
+            />
+          </div>
+          <div>
+            <Label htmlFor="license_number">State license #</Label>
+            <Input
+              id="license_number"
+              name="license_number"
+              placeholder="e.g. C10-0000042-LIC"
+              required
+              maxLength={120}
+            />
+          </div>
         </div>
 
         <div className="rounded-card border-border bg-surface-2 flex items-start gap-2.5 border p-3">

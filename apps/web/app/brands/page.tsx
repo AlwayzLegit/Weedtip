@@ -143,8 +143,8 @@ export default async function BrandsPage({
             href="/brands"
             className={
               selectedState
-                ? 'border-border text-muted hover:text-foreground rounded-full border px-3 py-1 text-sm'
-                : 'border-primary bg-primary-muted text-primary rounded-full border px-3 py-1 text-sm font-medium'
+                ? 'border-border text-muted hover:text-foreground focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2'
+                : 'border-primary bg-primary-muted text-primary focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2'
             }
           >
             All states
@@ -157,8 +157,8 @@ export default async function BrandsPage({
                 href={`/brands?state=${st}`}
                 className={
                   selectedState === st
-                    ? 'border-primary bg-primary-muted text-primary rounded-full border px-3 py-1 text-sm font-medium'
-                    : 'border-border text-muted hover:text-foreground rounded-full border px-3 py-1 text-sm'
+                    ? 'border-primary bg-primary-muted text-primary focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2'
+                    : 'border-border text-muted hover:text-foreground focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2'
                 }
               >
                 {st}
@@ -198,7 +198,8 @@ export default async function BrandsPage({
                     {c.name.charAt(0).toUpperCase()}
                   </span>
                 )}
-                <div className="min-w-0">
+                {/* pr-16 keeps the name's first line clear of the Sponsored badge. */}
+                <div className="min-w-0 pr-16">
                   <h3 className="font-semibold">{c.name}</h3>
                   {c.description && (
                     <p className="text-muted mt-1 line-clamp-2 text-sm">{c.description}</p>

@@ -22,9 +22,9 @@ export default async function DashboardProducts() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Products</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link href="/dashboard/products/sync">
             <Button size="sm" variant="outline">
               <RefreshCw className="h-4 w-4" /> Menu sync
@@ -54,7 +54,7 @@ export default async function DashboardProducts() {
           </Link>
         </div>
       ) : (
-        <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
+        <div className="rounded-card border-border bg-surface shadow-card overflow-x-auto border">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-muted text-left text-xs uppercase tracking-wide">
               <tr>

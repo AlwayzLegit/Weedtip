@@ -57,7 +57,7 @@ export function RenewalOfferCard({ offer }: { offer: RenewalOffer }) {
           {result?.message ?? 'Renewal requested — our team is extending your term.'}
         </p>
       ) : (
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <Button
             size="sm"
             disabled={pending}

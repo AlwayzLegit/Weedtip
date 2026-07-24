@@ -245,6 +245,11 @@ export default async function HomePage() {
             Browse menus, deals, and reviews from licensed dispensaries — order for pickup or
             delivery.
           </p>
+          <Link href="/dispensaries" className="mt-4 inline-block">
+            <Button size="md">
+              Find dispensaries near me <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </section>
 

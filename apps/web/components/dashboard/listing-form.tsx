@@ -1,7 +1,12 @@
 'use client';
 
 import { useActionState } from 'react';
-import { AMENITY_GROUPS, AMENITY_LABELS, type OperatingHours, type SpecialHour } from '@weedtip/shared';
+import {
+  AMENITY_GROUPS,
+  AMENITY_LABELS,
+  type OperatingHours,
+  type SpecialHour,
+} from '@weedtip/shared';
 import type { Tables } from '@weedtip/supabase/types';
 import { upsertDispensary } from '@/app/dashboard/actions';
 import { EMPTY_FORM_STATE } from '@/lib/forms';
@@ -35,9 +40,7 @@ export function ListingForm({
       <FormMessage state={{ error: state.status === 'error' ? state.message : undefined }} />
 
       {!canComplete && (
-        <UpgradeBanner
-          message="Your free listing covers the basics — name, logo, cover photo, phone, hours, and address. Upgrade to Basic to add a description, website, photo gallery, amenities, video, and special hours."
-        />
+        <UpgradeBanner message="Your free listing covers the basics — name, logo, cover photo, phone, hours, and address. Upgrade to Basic to add a description, website, photo gallery, amenities, video, and special hours." />
       )}
 
       <section className="grid gap-4 sm:grid-cols-2">
@@ -214,33 +217,33 @@ export function ListingForm({
       </fieldset>
 
       {canComplete && (
-      <fieldset className="rounded-card border-border border p-4">
-        <legend className="px-1 text-sm font-medium">Features &amp; amenities</legend>
-        <p className="text-muted mb-3 text-xs">
-          Highlight ownership, accessibility, payments, discounts, and amenities — these power the
-          finder filters.
-        </p>
-        <div className="space-y-4">
-          {AMENITY_GROUPS.map((group) => (
-            <div key={group.label}>
-              <p className="text-muted mb-2 text-xs font-semibold uppercase tracking-wide">
-                {group.label}
-              </p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {group.items.map((a) => (
-                  <Checkbox
-                    key={a}
-                    name="amenities"
-                    value={a}
-                    label={AMENITY_LABELS[a]}
-                    defaultChecked={amenities.has(a)}
-                  />
-                ))}
+        <fieldset className="rounded-card border-border border p-4">
+          <legend className="px-1 text-sm font-medium">Features &amp; amenities</legend>
+          <p className="text-muted mb-3 text-xs">
+            Highlight ownership, accessibility, payments, discounts, and amenities — these power the
+            finder filters.
+          </p>
+          <div className="space-y-4">
+            {AMENITY_GROUPS.map((group) => (
+              <div key={group.label}>
+                <p className="text-muted mb-2 text-xs font-semibold uppercase tracking-wide">
+                  {group.label}
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {group.items.map((a) => (
+                    <Checkbox
+                      key={a}
+                      name="amenities"
+                      value={a}
+                      label={AMENITY_LABELS[a]}
+                      defaultChecked={amenities.has(a)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </fieldset>
+            ))}
+          </div>
+        </fieldset>
       )}
 
       <fieldset className="rounded-card border-border border p-4">
@@ -270,38 +273,43 @@ export function ListingForm({
       </fieldset>
 
       {canComplete && (
-      <>
-      <SpecialHoursEditor defaultValue={(d?.special_hours as SpecialHour[] | null) ?? []} />
+        <>
+          <SpecialHoursEditor defaultValue={(d?.special_hours as SpecialHour[] | null) ?? []} />
 
-      <fieldset className="rounded-card border-border border p-4">
-        <legend className="px-1 text-sm font-medium">Pickup profile</legend>
-        <p className="text-muted mb-3 text-xs">
-          Set expectations for pickup orders — shown on your listing and after a shopper checks out.
-        </p>
-        <div className="space-y-4">
-          <Checkbox
-            name="require_id"
-            label="Require a valid ID at pickup"
-            defaultChecked={d?.require_id ?? false}
-          />
-          <Field
-            label="Post-order message"
-            htmlFor="post_order_message"
-            error={fe.post_order_message}
-            hint="Shown to the shopper on their order confirmation (e.g. parking, entrance, wait time). Max 250 characters."
-          >
-            <Textarea
-              id="post_order_message"
-              name="post_order_message"
-              defaultValue={d?.post_order_message ?? ''}
-              rows={2}
-              maxLength={250}
-            />
-          </Field>
-        </div>
-      </fieldset>
-      </>
+          <fieldset className="rounded-card border-border border p-4">
+            <legend className="px-1 text-sm font-medium">Pickup profile</legend>
+            <p className="text-muted mb-3 text-xs">
+              Set expectations for pickup orders — shown on your listing and after a shopper checks
+              out.
+            </p>
+            <div className="space-y-4">
+              <Checkbox
+                name="require_id"
+                label="Require a valid ID at pickup"
+                defaultChecked={d?.require_id ?? false}
+              />
+              <Field
+                label="Post-order message"
+                htmlFor="post_order_message"
+                error={fe.post_order_message}
+                hint="Shown to the shopper on their order confirmation (e.g. parking, entrance, wait time). Max 250 characters."
+              >
+                <Textarea
+                  id="post_order_message"
+                  name="post_order_message"
+                  defaultValue={d?.post_order_message ?? ''}
+                  rows={2}
+                  maxLength={250}
+                />
+              </Field>
+            </div>
+          </fieldset>
+        </>
       )}
+
+      {/* Repeated near Save — the top copy is many screens away on mobile when a
+          non-field error comes back. */}
+      <FormMessage state={{ error: state.status === 'error' ? state.message : undefined }} />
 
       <div className="flex items-center gap-3">
         <SubmitButton size="lg">{d ? 'Save changes' : 'Create listing'}</SubmitButton>

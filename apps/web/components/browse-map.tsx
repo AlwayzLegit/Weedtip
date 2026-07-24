@@ -96,16 +96,18 @@ export interface BrowseMapApi {
   panTo: (center: { lat: number; lng: number }) => void;
 }
 
+// Brand-green cluster bubbles, darkening with density, with a white ring so
+// they float above the light basemap (Google-Maps-style solid markers).
 const clusterLayer: LayerProps = {
   id: 'clusters',
   type: 'circle',
   filter: ['has', 'point_count'],
   paint: {
-    'circle-color': ['step', ['get', 'point_count'], '#34d399', 25, '#10b981', 100, '#059669'],
+    'circle-color': ['step', ['get', 'point_count'], '#059669', 25, '#047857', 100, '#065f46'],
     'circle-radius': ['step', ['get', 'point_count'], 16, 25, 22, 100, 30],
-    'circle-opacity': 0.85,
-    'circle-stroke-width': 1,
-    'circle-stroke-color': '#0b0b0b',
+    'circle-opacity': 0.95,
+    'circle-stroke-width': 2,
+    'circle-stroke-color': '#ffffff',
   },
 };
 
@@ -118,7 +120,7 @@ const clusterCountLayer: LayerProps = {
     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
     'text-size': 12,
   },
-  paint: { 'text-color': '#04231a' },
+  paint: { 'text-color': '#ffffff' },
 };
 
 // Closed shops fade to slate; featured stay amber; delivery services are sky
@@ -129,19 +131,21 @@ const unclusteredLayer: LayerProps = {
   type: 'circle',
   filter: ['!', ['has', 'point_count']],
   paint: {
+    // Deeper tones than the old dark-theme mints, so pins hold their own on
+    // the light basemap; the white ring lifts them off the tiles.
     'circle-color': [
       'case',
       ['get', 'featured'],
-      '#fbbf24',
+      '#f59e0b',
       ['==', ['get', 'open'], false],
-      '#64748b',
+      '#94a3b8',
       ['==', ['get', 'delivery'], true],
-      '#38bdf8',
-      '#34d399',
+      '#0284c7',
+      '#059669',
     ],
     'circle-radius': ['case', ['has', 'rank'], 9, ['case', ['get', 'featured'], 7, 6]],
-    'circle-stroke-width': 1.5,
-    'circle-stroke-color': '#0b0b0b',
+    'circle-stroke-width': 2,
+    'circle-stroke-color': '#ffffff',
   },
 };
 
@@ -157,7 +161,7 @@ const pinRankLayer: LayerProps = {
     'text-allow-overlap': true,
     'text-ignore-placement': true,
   },
-  paint: { 'text-color': '#04231a' },
+  paint: { 'text-color': '#ffffff' },
 };
 
 // Shop names appear under pins once zoomed in enough to read the streets.
@@ -293,10 +297,10 @@ export function BrowseMap({
       ],
       paint: {
         'circle-radius': 11,
-        'circle-color': '#34d399',
-        'circle-opacity': 0.35,
+        'circle-color': '#059669',
+        'circle-opacity': 0.25,
         'circle-stroke-width': 2,
-        'circle-stroke-color': '#34d399',
+        'circle-stroke-color': '#047857',
       },
     }),
     [hoveredSlug],
@@ -514,7 +518,7 @@ export function BrowseMap({
               <span
                 aria-hidden
                 className={cn(
-                  'block h-3.5 w-3.5 rounded-full border-2 border-black/70 shadow',
+                  'block h-3.5 w-3.5 rounded-full border-2 border-white shadow-md',
                   p.sponsored
                     ? 'bg-amber-400'
                     : p.isOpenNow === false

@@ -52,7 +52,7 @@ export function RankedShopList({
                 url={s.cover_image_url ?? s.logo_url}
                 alt={s.name}
                 artSeed={s.slug}
-                className="hidden h-20 w-28 shrink-0 rounded-lg sm:block"
+                className="h-16 w-20 shrink-0 rounded-lg sm:h-20 sm:w-28"
                 iconClassName="h-7 w-7"
               />
               <div className="min-w-0 flex-1">
@@ -104,7 +104,9 @@ export function RankedShopList({
                       <Truck className="h-3 w-3" /> Delivery
                     </span>
                   )}
-                  <span className="ml-auto tabular-nums">Score {score.toFixed(2)}</span>
+                  <span className="ml-auto hidden tabular-nums sm:inline">
+                    Score {score.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </Link>

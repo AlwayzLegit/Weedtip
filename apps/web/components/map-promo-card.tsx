@@ -88,7 +88,7 @@ export function MapPromoCard({
           type="button"
           aria-label="Dismiss ad"
           onClick={() => setDismissed(true)}
-          className="bg-background/70 hover:bg-background focus-visible:ring-primary absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full backdrop-blur transition-colors focus-visible:outline-none focus-visible:ring-2"
+          className="bg-background/70 hover:bg-background focus-visible:ring-primary absolute right-1.5 top-1.5 z-10 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur transition-colors focus-visible:outline-none focus-visible:ring-2"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -143,7 +143,7 @@ export function MapPromoCard({
               type="button"
               aria-label="Previous ad"
               onClick={() => go(-1)}
-              className="glass flex h-6 w-6 items-center justify-center rounded-full"
+              className="glass flex h-8 w-8 items-center justify-center rounded-full"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
@@ -151,7 +151,7 @@ export function MapPromoCard({
               type="button"
               aria-label="Next ad"
               onClick={() => go(1)}
-              className="glass flex h-6 w-6 items-center justify-center rounded-full"
+              className="glass flex h-8 w-8 items-center justify-center rounded-full"
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>

@@ -25,6 +25,8 @@ export function BrandPromote({
 }) {
   const [kind, setKind] = useState<'promoted_brand' | 'hero'>('promoted_brand');
   const [days, setDays] = useState(30);
+  // Raw text while typing — clamping per keystroke turns "clear, type 30" into 130→90.
+  const [daysRaw, setDaysRaw] = useState('30');
   const [creativeId, setCreativeId] = useState('');
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function BrandPromote({
             type="button"
             onClick={() => setKind(k)}
             className={
-              'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ' +
+              'rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ' +
               (kind === k
                 ? 'border-primary bg-primary-muted text-primary'
                 : 'border-border text-muted hover:text-foreground')
@@ -82,15 +84,16 @@ export function BrandPromote({
             min={PLACEMENT_MIN_DAYS}
             max={PLACEMENT_MAX_DAYS}
             className="border-border bg-background block w-28 rounded-md border px-3 py-2"
-            value={days}
-            onChange={(e) =>
-              setDays(
-                Math.min(
-                  PLACEMENT_MAX_DAYS,
-                  Math.max(PLACEMENT_MIN_DAYS, Math.round(Number(e.target.value) || 0)),
-                ),
-              )
-            }
+            value={daysRaw}
+            onChange={(e) => setDaysRaw(e.target.value)}
+            onBlur={() => {
+              const n = Math.min(
+                PLACEMENT_MAX_DAYS,
+                Math.max(PLACEMENT_MIN_DAYS, Math.round(Number(daysRaw) || 0)),
+              );
+              setDays(n);
+              setDaysRaw(String(n));
+            }}
           />
         </label>
       </div>
@@ -126,7 +129,8 @@ export function BrandPromote({
           </p>
         </div>
         <Button
-          disabled={pending}
+          // A completed reservation must not be double-submittable; errors keep the button live for retry.
+          disabled={pending || !!notice}
           onClick={() => {
             setError(null);
             setNotice(null);

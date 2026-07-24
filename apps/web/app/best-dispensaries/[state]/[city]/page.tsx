@@ -95,7 +95,7 @@ export default async function BestDispensariesPage({
       <div className="border-primary/25 bg-primary-subtle text-primary mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold">
         <Award className="h-3.5 w-3.5" /> Weedtip rankings · {year}
       </div>
-      <h1 className="mt-3 text-3xl font-bold tracking-tight">
+      <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
         The {ranked.length} best dispensaries in {cityName}, {st}
       </h1>
       <p className="text-muted mt-2 max-w-2xl leading-relaxed">

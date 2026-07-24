@@ -25,7 +25,7 @@ const PHOTO_SLUGS = new Set([
  */
 export function CategoryTiles({ categories }: { categories: CategoryTile[] }) {
   return (
-    <div className="grid grid-cols-4 gap-3 sm:gap-4 lg:grid-cols-8">
+    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 lg:grid-cols-8">
       {categories.map((c) => (
         <Link
           key={c.slug}
@@ -37,7 +37,7 @@ export function CategoryTiles({ categories }: { categories: CategoryTile[] }) {
               src={`/art/category-${c.slug}.webp`}
               alt=""
               fill
-              sizes="(max-width: 640px) 25vw, 160px"
+              sizes="(max-width: 640px) 33vw, 160px"
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           )}

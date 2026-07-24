@@ -146,18 +146,18 @@ export default async function StateDispensariesPage({
           No active dispensaries are listed in {stateName} yet.
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
           {cities.map(([city, n]) => (
             <Link
               key={city}
               href={`/dispensaries/${state.toLowerCase()}/${citySlug(city)}`}
-              className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group flex items-center justify-between border p-4 transition-all"
+              className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group flex items-center justify-between gap-2 border p-4 transition-all"
             >
-              <span className="flex items-center gap-2 font-medium">
-                <MapPin className="text-muted group-hover:text-primary h-4 w-4" />
-                {city}
+              <span className="flex min-w-0 items-center gap-2 font-medium">
+                <MapPin className="text-muted group-hover:text-primary h-4 w-4 shrink-0" />
+                <span className="truncate">{city}</span>
               </span>
-              <span className="text-muted text-sm">
+              <span className="text-muted shrink-0 text-sm">
                 {n} {n === 1 ? 'shop' : 'shops'}
               </span>
             </Link>

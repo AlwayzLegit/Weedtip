@@ -249,7 +249,12 @@ export function MarketFeed({
             ))}
           </ScrollCarousel>
         ) : (
-          <p className="text-muted">No dispensaries yet. Check back soon.</p>
+          <p className="text-muted">
+            No dispensaries here yet.{' '}
+            <Link href="/dispensaries" className="text-primary font-medium hover:underline">
+              Browse all dispensaries
+            </Link>
+          </p>
         )}
       </section>
 
@@ -271,7 +276,7 @@ export function MarketFeed({
               </Button>
             </Link>
           </div>
-          <ScrollCarousel itemClassName="w-80" ariaLabel="Deals near you">
+          <ScrollCarousel itemClassName="w-72 sm:w-80" ariaLabel="Deals near you">
             {deals.map((d) => (
               <DealCard key={d.id} deal={d} />
             ))}

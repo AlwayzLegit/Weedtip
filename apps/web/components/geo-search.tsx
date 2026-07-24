@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MapPin, Search } from 'lucide-react';
+import { Loader2, MapPin, Search } from 'lucide-react';
 import { geocodePlaces, type GeoPlace } from '@/lib/geocode';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +29,7 @@ export function GeoSearch({
   const [suggestions, setSuggestions] = useState<GeoPlace[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+  const [pending, setPending] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const requestId = useRef(0);
@@ -79,10 +80,15 @@ export function GeoSearch({
   const submitRaw = async () => {
     const q = draft.trim();
     if (q.length >= 3) {
-      const places = await geocodePlaces(q, { limit: 1 });
-      if (places[0]) {
-        pick(places[0]);
-        return;
+      setPending(true);
+      try {
+        const places = await geocodePlaces(q, { limit: 1 });
+        if (places[0]) {
+          pick(places[0]);
+          return;
+        }
+      } finally {
+        setPending(false);
       }
     }
     submitText();
@@ -106,7 +112,11 @@ export function GeoSearch({
           else void submitRaw();
         }}
       >
-        <Search className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+        {pending ? (
+          <Loader2 className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+        ) : (
+          <Search className="text-muted pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+        )}
         <input
           value={draft}
           onChange={(e) => change(e.target.value)}

@@ -39,7 +39,9 @@ async function loadRegion(slug: string) {
   const supabase = createStaticClient();
   const { data: region } = await supabase
     .from('ad_regions')
-    .select('id, slug, name, tier, exclusive_price_min, exclusive_price_max, is_active, market:ad_markets(name, state)')
+    .select(
+      'id, slug, name, tier, exclusive_price_min, exclusive_price_max, is_active, market:ad_markets(name, state)',
+    )
     .eq('slug', slug)
     .maybeSingle();
   if (!region || !region.is_active) return null;
@@ -119,7 +121,10 @@ export default async function AdvertiseRegionPage({
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <ViewTracker event="advertise_region_viewed" properties={{ region_slug: region.slug, tier: region.tier }} />
+      <ViewTracker
+        event="advertise_region_viewed"
+        properties={{ region_slug: region.slug, tier: region.tier }}
+      />
       <Link
         href="/advertise"
         className="text-muted hover:text-foreground inline-flex items-center gap-1 text-sm"
@@ -140,7 +145,12 @@ export default async function AdvertiseRegionPage({
 
       <p className="text-muted mt-2 max-w-2xl">
         Your placement serves in <span className="text-foreground font-medium">every zone</span> of
-        this region — {zones.map((z) => z.name).join(', ')}.
+        this region —{' '}
+        {zones
+          .slice(0, 10)
+          .map((z) => z.name)
+          .join(', ')}
+        {zones.length > 10 ? ` +${zones.length - 10} more` : ''}.
       </p>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -159,7 +169,7 @@ export default async function AdvertiseRegionPage({
           <p className="mt-2 text-2xl font-bold">
             {region.exclusive_price_min ? formatPrice(region.exclusive_price_min) : '—'}
             <span className="text-muted text-sm font-normal">
-              –{region.exclusive_price_max ? formatPrice(region.exclusive_price_max) : ''}/mo
+              {region.exclusive_price_max ? `–${formatPrice(region.exclusive_price_max)}` : ''}/mo
             </span>
           </p>
           <ul className="text-muted mt-3 space-y-1 text-sm">
@@ -168,11 +178,15 @@ export default async function AdvertiseRegionPage({
             <li>· Only one per region — total ownership</li>
           </ul>
           {availability?.exclusiveOpen ? (
-            <a href={contactHref} className="mt-4 block">
-              <span className="border-primary text-primary hover:bg-primary-muted inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors">
-                <Mail className="h-4 w-4" /> Contact to reserve
-              </span>
-            </a>
+            <>
+              <a href={contactHref} className="mt-4 block">
+                <span className="border-primary text-primary hover:bg-primary-muted inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors">
+                  <Mail className="h-4 w-4" /> Contact to reserve
+                </span>
+              </a>
+              {/* Copyable fallback — mailto: silently no-ops on devices without a mail client. */}
+              <p className="text-muted mt-1.5 text-center text-xs">or email {adsEmail}</p>
+            </>
           ) : (
             <div className="mt-4">
               <RequestAvailabilityButton regionId={region.id} slotType="exclusive" />
@@ -259,8 +273,8 @@ export default async function AdvertiseRegionPage({
             ) : (
               premium.list_price > premium.launch_price && (
                 <p className="text-muted text-xs">
-                  Launch price — regularly <s>{formatPrice(premium.list_price)}/mo</s>. Locks in
-                  for you; the next spot costs more.
+                  Launch price — regularly <s>{formatPrice(premium.list_price)}/mo</s>. Locks in for
+                  you; the next spot costs more.
                 </p>
               )
             ))}
@@ -299,9 +313,9 @@ export default async function AdvertiseRegionPage({
 
       <p className="text-muted mt-6 text-xs">
         Reserve with one click — no card needed; our team sets up monthly invoicing within 1
-        business day. Cancel anytime — your slot re-opens for the next buyer. All
-        sponsored placements are clearly labeled. Advertising services are provided to licensed
-        retailers only.
+        business day. Cancel anytime — your slot re-opens for the next buyer. All sponsored
+        placements are clearly labeled. Advertising services are provided to licensed retailers
+        only.
       </p>
     </main>
   );

@@ -73,7 +73,7 @@ export function PhotoGallery({ photos, name }: { photos: string[]; name: string 
           <button
             onClick={() => setOpen(null)}
             aria-label="Close"
-            className="absolute right-4 top-4 rounded-full p-2 text-white/80 hover:text-white"
+            className="absolute right-4 top-4 rounded-full bg-black/50 p-2 text-white/80 hover:text-white"
           >
             <X className="h-6 w-6" />
           </button>
@@ -84,7 +84,7 @@ export function PhotoGallery({ photos, name }: { photos: string[]; name: string 
                 go(-1);
               }}
               aria-label="Previous photo"
-              className="absolute left-2 rounded-full p-2 text-white/80 hover:text-white sm:left-6"
+              className="absolute left-2 rounded-full bg-black/50 p-2 text-white/80 hover:text-white sm:left-6"
             >
               <ChevronLeft className="h-8 w-8" />
             </button>
@@ -102,7 +102,7 @@ export function PhotoGallery({ photos, name }: { photos: string[]; name: string 
                 go(1);
               }}
               aria-label="Next photo"
-              className="absolute right-2 rounded-full p-2 text-white/80 hover:text-white sm:right-6"
+              className="absolute right-2 rounded-full bg-black/50 p-2 text-white/80 hover:text-white sm:right-6"
             >
               <ChevronRight className="h-8 w-8" />
             </button>

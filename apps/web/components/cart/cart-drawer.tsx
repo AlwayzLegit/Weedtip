@@ -13,8 +13,16 @@ import { useCart } from './cart-provider';
  * never collects payment (pay at the store / to the delivery partner).
  */
 export function CartDrawer() {
-  const { cart, subtotalCents, count, drawerOpen, closeDrawer, setQuantity, removeItem, orderingEnabled } =
-    useCart();
+  const {
+    cart,
+    subtotalCents,
+    count,
+    drawerOpen,
+    closeDrawer,
+    setQuantity,
+    removeItem,
+    orderingEnabled,
+  } = useCart();
 
   // Close on Escape, and lock body scroll while open.
   useEffect(() => {
@@ -70,22 +78,22 @@ export function CartDrawer() {
                       <button
                         onClick={() => setQuantity(it.productId, it.quantity - 1)}
                         aria-label="Decrease quantity"
-                        className="border-border hover:border-primary/50 flex h-6 w-6 items-center justify-center rounded border"
+                        className="border-border hover:border-primary/50 flex h-8 w-8 items-center justify-center rounded border"
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className="h-4 w-4" />
                       </button>
                       <span className="w-6 text-center text-sm tabular-nums">{it.quantity}</span>
                       <button
                         onClick={() => setQuantity(it.productId, it.quantity + 1)}
                         aria-label="Increase quantity"
-                        className="border-border hover:border-primary/50 flex h-6 w-6 items-center justify-center rounded border"
+                        className="border-border hover:border-primary/50 flex h-8 w-8 items-center justify-center rounded border"
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => removeItem(it.productId)}
                         aria-label="Remove item"
-                        className="text-muted hover:text-danger ml-1"
+                        className="text-muted hover:text-danger -my-2 ml-1 p-2"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>

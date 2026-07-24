@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { Link } from 'next-view-transitions';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
 import { ProductCard } from '@/components/product-card';
@@ -41,14 +42,18 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
     .maybeSingle();
   if (!category) notFound();
 
-  const { data: productData } = await supabase
+  const { data: productData, count: productCount } = await supabase
     .from('products')
-    .select(`*, dispensary:dispensaries!inner(slug,status), ${CATALOG_IMAGE_EMBED}`)
+    .select(`*, dispensary:dispensaries!inner(slug,status), ${CATALOG_IMAGE_EMBED}`, {
+      count: 'exact',
+    })
     .eq('category_id', category.id)
     .eq('dispensary.status', 'active')
     .order('rating_avg', { ascending: false })
-    .order('price_cents');
+    .order('price_cents')
+    .limit(48);
   const products = productData ?? [];
+  const totalProducts = productCount ?? products.length;
 
   // Active storefront sale prices for the listed products.
   const saleMap = new Map<string, number>();
@@ -93,7 +98,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   const faqs = [
     {
       question: `What cannabis ${label} can I buy on Weedtip?`,
-      answer: `Weedtip lists ${products.length} ${label} ${products.length === 1 ? 'product' : 'products'} from licensed dispensary menus, plus ${lineupCount ?? 0} from official brand catalogs, with THC/CBD, brands, and reviews.`,
+      answer: `Weedtip lists ${totalProducts} ${label} ${totalProducts === 1 ? 'product' : 'products'} from licensed dispensary menus, plus ${lineupCount ?? 0} from official brand catalogs, with THC/CBD, brands, and reviews.`,
     },
     {
       question: `How do I find ${label} near me?`,
@@ -118,8 +123,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       <p className="eyebrow mb-1">Category</p>
       <h1 className="text-2xl font-bold sm:text-3xl">Cannabis {category.name}</h1>
       <p className="text-muted mt-1 text-sm">
-        {products.length} {products.length === 1 ? 'product' : 'products'} from licensed
-        dispensaries.
+        {totalProducts} {totalProducts === 1 ? 'product' : 'products'} from licensed dispensaries.
       </p>
 
       {products.length === 0 ? (
@@ -150,6 +154,15 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         </div>
       )}
 
+      {products.length > 0 && (
+        <Link
+          href={`/products?category=${category.slug}`}
+          className="text-primary mt-4 inline-block text-sm font-medium hover:underline"
+        >
+          Filter all {category.name.toLowerCase()} →
+        </Link>
+      )}
+
       {lineup.length > 0 && (
         <section className="mt-12">
           <h2 className="text-lg font-semibold">From brand catalogs</h2>
@@ -169,8 +182,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
         <h2 className="mb-2 text-lg font-semibold">About cannabis {label} on Weedtip</h2>
         <p className="text-muted text-sm leading-relaxed">
           Compare cannabis {label} from licensed dispensaries near you. Browse by price, potency,
-          and brand, and read reviews to find the right shop near you. Always bring a valid 21+
-          ID and check your local regulations before you visit.
+          and brand, and read reviews to find the right shop near you. Always bring a valid 21+ ID
+          and check your local regulations before you visit.
         </p>
       </section>
 

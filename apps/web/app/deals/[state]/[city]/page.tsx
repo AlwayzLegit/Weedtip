@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
+import { Link } from 'next-view-transitions';
 import { Tag } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DealCard } from '@/components/deal-card';
@@ -13,7 +14,8 @@ import { fetchAll } from '@/lib/supabase/fetch-all';
 // Public, anon-only page — serve cached HTML and refresh every 15 min (ISR).
 export const revalidate = 900;
 
-const DEAL_SELECT = '*, dispensary:dispensaries!inner(slug,name,city,state,status)';
+const DEAL_SELECT =
+  '*, dispensary:dispensaries!inner(slug,name,city,state,status,rating_avg,rating_count)';
 
 type DealRow = {
   id: string;
@@ -22,7 +24,14 @@ type DealRow = {
   code: string | null;
   discount_type: string;
   discount_value: number;
-  dispensary: { slug: string; name: string; city: string; state: string } | null;
+  dispensary: {
+    slug: string;
+    name: string;
+    city: string;
+    state: string;
+    rating_avg: number | null;
+    rating_count: number | null;
+  } | null;
 };
 
 const loadCityDeals = cache(async function loadCityDeals(state: string, city: string) {
@@ -111,7 +120,7 @@ export default async function CityDealsPage({
           { name: cityName, href: `/deals/${state.toLowerCase()}/${city.toLowerCase()}` },
         ]}
       />
-      <h1 className="text-2xl font-bold">
+      <h1 className="text-2xl font-bold sm:text-3xl">
         Cannabis deals in {cityName}, {state.toUpperCase()}
       </h1>
       <p className="text-muted mt-1 text-sm">
@@ -123,6 +132,12 @@ export default async function CityDealsPage({
           <Tag className="text-muted mx-auto h-8 w-8" />
           <p className="mt-2 font-medium">No active deals in {cityName} right now</p>
           <p className="text-muted mt-1 text-sm">Check back soon for fresh offers.</p>
+          <Link
+            href={`/dispensaries/${state.toLowerCase()}/${city.toLowerCase()}`}
+            className="border-primary text-primary hover:bg-primary-muted focus-visible:ring-primary mt-4 inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+          >
+            Browse {cityName} dispensaries
+          </Link>
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -140,6 +155,8 @@ export default async function CityDealsPage({
                   dispensaryName: deal.dispensary.name,
                   city: deal.dispensary.city,
                   state: deal.dispensary.state,
+                  ratingAvg: deal.dispensary.rating_avg,
+                  ratingCount: deal.dispensary.rating_count,
                 }}
               />
             ) : null,

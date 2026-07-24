@@ -52,8 +52,8 @@ function Stat({
 }) {
   return (
     <div className="card sheen p-5">
-      <div className="flex items-center gap-2">
-        <p className="text-2xl font-bold tracking-tight">{value}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-xl font-bold tracking-tight sm:text-2xl">{value}</p>
         {delta !== undefined && <Delta value={delta} />}
       </div>
       <p className="text-muted mt-0.5 text-sm">{label}</p>
@@ -355,7 +355,8 @@ export default async function AnalyticsPage({
           {windowRevenue === 0 ? (
             <p className="text-muted py-8 text-center text-sm">No revenue in this window yet.</p>
           ) : (
-            <div className="flex h-40 items-end gap-1">
+            // gap-px on mobile: at 90 days, 89 x 4px of gap alone would exceed a 360px card.
+            <div className="flex h-40 items-end gap-px sm:gap-1">
               {days.map((d) => (
                 <div key={d.key} className="group flex flex-1 flex-col items-center justify-end">
                   <div

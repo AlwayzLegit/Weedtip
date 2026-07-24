@@ -88,27 +88,41 @@ export function CartProvider({
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
-  const addItem = useCallback<CartContextValue['addItem']>((dispensary, item, qty = 1) => {
-    setDrawerOpen(true); // surface the "added to bag" drawer
-    setCart((prev) => {
-      // Different dispensary → start a fresh cart.
-      if (!prev || prev.dispensaryId !== dispensary.id) {
-        return {
-          dispensaryId: dispensary.id,
-          dispensarySlug: dispensary.slug,
-          dispensaryName: dispensary.name,
-          items: [{ ...item, quantity: qty }],
-        };
+  const addItem = useCallback<CartContextValue['addItem']>(
+    (dispensary, item, qty = 1) => {
+      // Different dispensary → confirm before discarding the existing bag.
+      if (
+        cart &&
+        cart.dispensaryId !== dispensary.id &&
+        cart.items.length > 0 &&
+        !confirm(
+          `Start a new bag from ${dispensary.name}? Your bag from ${cart.dispensaryName} will be cleared.`,
+        )
+      ) {
+        return;
       }
-      const existing = prev.items.find((i) => i.productId === item.productId);
-      const items = existing
-        ? prev.items.map((i) =>
-            i.productId === item.productId ? { ...i, quantity: i.quantity + qty } : i,
-          )
-        : [...prev.items, { ...item, quantity: qty }];
-      return { ...prev, items };
-    });
-  }, []);
+      setDrawerOpen(true); // surface the "added to bag" drawer
+      setCart((prev) => {
+        // Different dispensary → start a fresh cart.
+        if (!prev || prev.dispensaryId !== dispensary.id) {
+          return {
+            dispensaryId: dispensary.id,
+            dispensarySlug: dispensary.slug,
+            dispensaryName: dispensary.name,
+            items: [{ ...item, quantity: qty }],
+          };
+        }
+        const existing = prev.items.find((i) => i.productId === item.productId);
+        const items = existing
+          ? prev.items.map((i) =>
+              i.productId === item.productId ? { ...i, quantity: i.quantity + qty } : i,
+            )
+          : [...prev.items, { ...item, quantity: qty }];
+        return { ...prev, items };
+      });
+    },
+    [cart],
+  );
 
   const setQuantity = useCallback<CartContextValue['setQuantity']>((productId, quantity) => {
     setCart((prev) => {

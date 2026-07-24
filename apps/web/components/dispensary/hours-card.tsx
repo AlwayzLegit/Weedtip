@@ -53,7 +53,7 @@ export function HoursCard({
             type="button"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
-            className="hover:text-primary flex w-full items-center justify-between gap-2 text-sm transition-colors"
+            className="hover:text-primary -my-2 flex w-full items-center justify-between gap-2 py-2 text-sm transition-colors"
           >
             <span className="font-medium">
               Today <span className="text-muted font-normal">· {todayRange ?? 'Closed'}</span>

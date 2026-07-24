@@ -1,14 +1,15 @@
 'use client';
 
-import { useActionState, useState, useTransition } from 'react';
+import { useActionState, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ImagePlus, Trash2 } from 'lucide-react';
+import { ImagePlus } from 'lucide-react';
 import { EMPTY_FORM_STATE, type FormState } from '@/lib/forms';
 import { FormMessage } from '../auth/form-message';
 import { SubmitButton } from '../auth/submit-button';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { MediaImage } from '../media-image';
+import { DeleteButton } from './delete-button';
 import { ImagePicker } from './image-picker';
 import { Field } from './field';
 
@@ -41,7 +42,6 @@ export function CreativeLibrary({
 }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
-  const [pending, startTransition] = useTransition();
   const [state, action] = useActionState(saveAction, EMPTY_FORM_STATE);
 
   return (
@@ -120,20 +120,13 @@ export function CreativeLibrary({
                   <p className="truncate text-sm font-semibold">{c.name}</p>
                   {c.headline && <p className="text-muted truncate text-xs">{c.headline}</p>}
                 </div>
-                <button
-                  type="button"
-                  aria-label={`Delete ${c.name}`}
-                  disabled={pending}
-                  onClick={() =>
-                    startTransition(async () => {
-                      await deleteAction(c.id);
-                      router.refresh();
-                    })
-                  }
-                  className="text-muted hover:text-danger shrink-0 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <DeleteButton
+                  action={async () => {
+                    await deleteAction(c.id);
+                    router.refresh();
+                  }}
+                  confirmText={`Delete “${c.name}”?`}
+                />
               </div>
             </div>
           ))}

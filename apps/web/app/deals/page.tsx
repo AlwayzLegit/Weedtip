@@ -203,7 +203,7 @@ export default async function DealsPage({
             key={label}
             href={value ? `/deals?fulfillment=${value}` : '/deals'}
             className={cn(
-              'focus-visible:ring-primary rounded-full border px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2',
+              'focus-visible:ring-primary rounded-full border px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 sm:py-1.5',
               mode === value
                 ? 'border-primary bg-primary-muted text-primary'
                 : 'border-border text-muted hover:text-foreground',

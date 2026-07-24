@@ -80,7 +80,11 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
         onFocusCapture={() => setPaused(true)}
         onBlurCapture={() => setPaused(false)}
         // Mobile hides the arrow buttons, so swiping is the manual nav there.
-        onTouchStart={(e) => setTouchX(e.touches[0]?.clientX ?? null)}
+        // Touching also pauses auto-advance so a reader isn't yanked mid-swipe.
+        onTouchStart={(e) => {
+          setPaused(true);
+          setTouchX(e.touches[0]?.clientX ?? null);
+        }}
         onTouchEnd={(e) => {
           const start = touchX;
           setTouchX(null);
@@ -177,7 +181,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                   aria-current={idx === i}
                   onClick={() => go(idx)}
                   // Generous hit area around a small visual dot (thumb-friendly).
-                  className="group flex h-8 items-center px-2.5"
+                  className="group flex h-11 items-center px-3"
                 >
                   <span
                     className={cn(

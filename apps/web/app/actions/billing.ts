@@ -349,9 +349,13 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
     };
   }
 
-  const scope_state = input.scope === 'nationwide' ? null : dispensary.state;
-  const scope_city = input.scope === 'city' ? dispensary.city : null;
-  const priceCents = placementPriceCents(input.type, input.scope, input.days);
+  // Dispensary placements serve against LIMITED regional inventory — a shop
+  // promotes in its own market only. Statewide/nationwide reach is not a
+  // product here (brand campaigns have their own flow), so any client-sent
+  // scope is ignored in favor of the shop's own city.
+  const scope_state = dispensary.state;
+  const scope_city = dispensary.city;
+  const priceCents = placementPriceCents(input.type, 'city', input.days);
 
   // An attached creative must belong to this shop's library.
   if (input.creative_id) {
@@ -387,7 +391,7 @@ export async function requestPlacement(raw: RequestPlacementInput): Promise<Bill
   await sendBillingEmails(PLACEMENT_TYPE_LABEL[input.type], dispensary.name, user?.email ?? null, {
     Dispensary: dispensary.name,
     Placement: PLACEMENT_TYPE_LABEL[input.type],
-    Reach: input.scope,
+    Reach: scope_city ? `${scope_city}, ${scope_state}` : scope_state,
     Days: input.days,
     Price: `$${(priceCents / 100).toFixed(2)}`,
   });

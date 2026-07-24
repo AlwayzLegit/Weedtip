@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <Logo />
         </Link>
       </div>
-      <div className="card sheen animate-slide-up p-8">{children}</div>
+      <div className="card sheen animate-slide-up p-5 sm:p-8">{children}</div>
       <p className="text-muted-foreground mx-auto mt-6 max-w-xs text-center text-xs">
         21+ only. By continuing you agree to Weedtip&apos;s Terms and Privacy Policy.
       </p>

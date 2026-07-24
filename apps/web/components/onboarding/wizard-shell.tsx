@@ -53,7 +53,12 @@ export function WizardShell({
                 )}
               >
                 {done && <Check className="h-3 w-3 shrink-0" aria-hidden />}
-                <span className="truncate">{STEP_LABELS[s]}</span>
+                {/* At 360px each column is ~60px, truncating every label to
+                    ellipses — so on mobile only the active label shows; the
+                    colored bars still communicate progress. */}
+                <span className={cn('truncate', !active && 'hidden sm:inline')}>
+                  {STEP_LABELS[s]}
+                </span>
               </span>
               <span className="sr-only">
                 {active ? 'Current step' : done ? 'Completed' : 'Upcoming'}

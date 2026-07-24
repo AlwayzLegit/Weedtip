@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
+import { Link } from 'next-view-transitions';
 import {
   AMENITIES,
   type Amenity,
@@ -157,10 +158,22 @@ export default async function DeliveriesPage({
   return (
     <main>
       <JsonLd data={itemListJsonLd(initialShops.map((r) => `/dispensary/${r.slug}`))} />
+      <div className="mx-auto max-w-7xl px-4">
+        <DeliverToInput className="my-4 max-w-3xl" />
+      </div>
       {error ? (
-        <p className="text-danger mx-auto max-w-7xl px-4 py-16 text-center">
-          Couldn&apos;t load delivery services. Please try again.
-        </p>
+        <div className="mx-auto max-w-7xl px-4 py-16 text-center">
+          <p className="text-danger">Couldn&apos;t load delivery services. Please try again.</p>
+          <p className="mt-3 text-sm">
+            <Link href="/deliveries" className="text-primary font-medium hover:underline">
+              Retry
+            </Link>
+            <span className="text-muted mx-2">·</span>
+            <Link href="/dispensaries" className="text-primary font-medium hover:underline">
+              Browse all dispensaries
+            </Link>
+          </p>
+        </div>
       ) : (
         <DispensariesBrowser
           heading={regionName ? `Delivery ${regionName}` : 'Cannabis delivery'}
@@ -176,8 +189,6 @@ export default async function DeliveriesPage({
       )}
 
       <div className="mx-auto max-w-7xl px-4">
-        <DeliverToInput className="mt-8 max-w-3xl" />
-
         <section className="mt-10 max-w-3xl">
           <h2 className="mb-2 text-lg font-semibold">Cannabis delivery near you</h2>
           <p className="text-muted text-sm leading-relaxed">

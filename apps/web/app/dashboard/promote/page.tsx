@@ -340,7 +340,7 @@ export default async function PromotePage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Your placements</h2>
         {totals.impressions > 0 && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="card p-4">
               <p className="text-xl font-bold">{totals.impressions.toLocaleString()}</p>
               <p className="text-muted text-xs">Ad impressions</p>

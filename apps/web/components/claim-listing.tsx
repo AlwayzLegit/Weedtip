@@ -14,7 +14,7 @@ import { Textarea } from './ui/textarea';
 
 /**
  * Tier cards for the claim funnel. Copy mirrors the plans ladder (Free $0 /
- * Basic $29 / Growth $99 — sales-led, no card at claim time); kept as local
+ * Weedtip Pro $39 — sales-led, no card at claim time); kept as local
  * literals so this client component doesn't need server plan data.
  */
 const CLAIM_TIERS = [
@@ -144,12 +144,7 @@ export function ClaimListing({
               maxLength={254}
             />
             <Input name="business_phone" placeholder="Business phone (optional)" maxLength={30} />
-            <Input
-              name="license_number"
-              placeholder="State license #"
-              maxLength={120}
-              required
-            />
+            <Input name="license_number" placeholder="State license #" maxLength={120} required />
           </div>
           <p className="text-muted text-xs">
             Entering the license number exactly as issued verifies your claim against the state
@@ -166,7 +161,7 @@ export function ClaimListing({
           <div>
             <p className="mb-1.5 text-sm font-medium">Choose your starting plan</p>
             <input type="hidden" name="plan_preference" value={tier} />
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2">
               {CLAIM_TIERS.map((t) => (
                 <button
                   key={t.value}
@@ -182,12 +177,17 @@ export function ClaimListing({
                 >
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="text-sm font-semibold">{t.name}</span>
-                    <span className={cn('text-xs font-medium', tier === t.value ? 'text-primary' : 'text-muted')}>
+                    <span
+                      className={cn(
+                        'text-xs font-medium',
+                        tier === t.value ? 'text-primary' : 'text-muted',
+                      )}
+                    >
                       {t.price}
                     </span>
                   </span>
                   <span className="text-muted mt-0.5 block text-xs">{t.blurb}</span>
-                  <ul className="text-muted mt-1.5 space-y-0.5 text-[11px]">
+                  <ul className="text-muted mt-1.5 space-y-0.5 text-xs">
                     {t.bullets.map((b) => (
                       <li key={b}>· {b}</li>
                     ))}

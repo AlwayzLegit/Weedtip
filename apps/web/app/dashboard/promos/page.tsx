@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Megaphone } from 'lucide-react';
 import { deletePromo } from '@/app/actions/promos';
 import { DeleteButton } from '@/components/dashboard/delete-button';
 import { UpgradeBanner } from '@/components/dashboard/upgrade-wall';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { requireMemberCapability } from '@/lib/owner';
 import { getOwnerFeature } from '@/lib/features';
 import { createClient } from '@/lib/supabase/server';
@@ -53,9 +55,12 @@ export default async function DashboardPromos() {
       )}
 
       {!promos || promos.length === 0 ? (
-        <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
-          No in-store promos yet.
-        </div>
+        <EmptyState
+          icon={Megaphone}
+          title="No in-store promos yet"
+          description="Post an offer shoppers claim in person — it shows on your storefront alongside your menu."
+          action={{ href: '/dashboard/promos/new', label: 'Add promo' }}
+        />
       ) : (
         <div className="space-y-3">
           {promos.map((p) => (

@@ -49,6 +49,14 @@ export default function ClaimPage() {
         you manage the menu, hours, photos, deals, and orders yourself.
       </p>
 
+      <div className="mt-4">
+        <Link href="/get-started">
+          <Button size="lg">
+            <Store className="h-4 w-4" /> Start now
+          </Button>
+        </Link>
+      </div>
+
       <ol className="mt-8 space-y-4">
         {STEPS.map((s, i) => (
           <li
