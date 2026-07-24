@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { Check } from 'lucide-react';
+import { Check, MapPin } from 'lucide-react';
 import {
   cancelPlan,
   requestPlacement,
@@ -27,6 +27,16 @@ import {
 type Plan = { id: string; name: string; price_cents: number; features: string[] };
 type Target = { id: string; label: string };
 
+/** The ad region a paid plan's included Featured placement will cover. */
+export type PlanCoverage = {
+  regionName: string;
+  regionSlug: string;
+  /** Neighborhoods/zones inside the region. */
+  zoneNames: string[];
+  /** Featured slots still open in the region (null when unknown). */
+  featuredOpen: number | null;
+};
+
 export function PromoteBilling({
   plans,
   currentPlanName,
@@ -37,6 +47,7 @@ export function PromoteBilling({
   products,
   creatives = [],
   section = 'all',
+  coverage = null,
 }: {
   plans: Plan[];
   currentPlanName: string;
@@ -50,6 +61,8 @@ export function PromoteBilling({
   creatives?: Target[];
   /** Render just the plan picker, just the placement form, or both. */
   section?: 'all' | 'plans' | 'placements';
+  /** Region the paid plan's Featured placement covers — shown before upgrading. */
+  coverage?: PlanCoverage | null;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +122,30 @@ export function PromoteBilling({
                       </li>
                     ))}
                   </ul>
+
+                  {/* Answer "what area does this cover?" before they commit. */}
+                  {isPaid && coverage && (
+                    <div className="border-primary/25 bg-primary-subtle mt-3 rounded-lg border p-3">
+                      <p className="text-primary flex items-center gap-1.5 text-xs font-semibold">
+                        <MapPin className="h-3.5 w-3.5" /> Covers {coverage.regionName}
+                      </p>
+                      {coverage.zoneNames.length > 0 && (
+                        <p className="text-muted mt-1 text-[11px] leading-relaxed">
+                          {coverage.zoneNames.slice(0, 8).join(' · ')}
+                          {coverage.zoneNames.length > 8
+                            ? ` · +${coverage.zoneNames.length - 8} more`
+                            : ''}
+                        </p>
+                      )}
+                      <p className="text-muted mt-1 text-[11px]">
+                        {coverage.featuredOpen === null
+                          ? 'Your Featured spot covers every zone in this region.'
+                          : coverage.featuredOpen > 0
+                            ? `${coverage.featuredOpen} of 3 Featured spots open here — yours covers every zone in the region.`
+                            : 'Featured is full here right now — you go to the front of the waitlist.'}
+                      </p>
+                    </div>
+                  )}
                   {!current && (
                     <div className="mt-4">
                       <Button
@@ -133,7 +170,9 @@ export function PromoteBilling({
                       </Button>
                       {isPaid && (
                         <p className="text-muted mt-1.5 text-center text-[11px]">
-                          No card needed — our team sets up billing with you.
+                          {coverage
+                            ? `Covers ${coverage.regionName} · no card needed — our team sets up billing with you.`
+                            : 'No card needed — our team sets up billing with you.'}
                         </p>
                       )}
                     </div>

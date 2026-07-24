@@ -155,6 +155,24 @@ export default async function PromotePage() {
   const availability = geo ? ((await getSlotAvailability()).get(geo.regionId) ?? null) : null;
   const featuredHold = slotHolds.find((h) => h.slotType === 'featured') ?? null;
 
+  // The neighborhoods/zones inside the shop's region — so the plan card can
+  // answer "what area does this actually cover?" before they commit.
+  let zoneNames: string[] = [];
+  if (geo) {
+    const { data: zoneRows } = await supabase.rpc('ad_region_zone_names');
+    zoneNames =
+      (zoneRows ?? []).find((z: { region_id: string }) => z.region_id === geo.regionId)
+        ?.zone_names ?? [];
+  }
+  const coverage = geo
+    ? {
+        regionName: geo.regionName,
+        regionSlug: geo.regionSlug,
+        zoneNames,
+        featuredOpen: availability?.featuredOpen ?? null,
+      }
+    : null;
+
   const plan = sub?.plan as { name: string; price_cents: number } | null;
   const live = (placements ?? []).filter(isLive);
   const statsByPlacement = new Map((stats ?? []).map((s) => [s.placement_id, s] as const));
@@ -191,6 +209,7 @@ export default async function PromotePage() {
       {/* 1) Plan — the first decision, at the top. */}
       <PromoteBilling
         section="plans"
+        coverage={coverage}
         plans={(plans ?? []).map((pl) => ({
           id: pl.id,
           name: pl.name,
