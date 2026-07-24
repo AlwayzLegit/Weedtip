@@ -1,4 +1,5 @@
 import { displayRating, type RatedShopFields } from './google-rating';
+import { hoursSet } from './listing-completeness';
 
 /**
  * Transparent, defensible ranking for "Best of" directory pages.
@@ -73,7 +74,7 @@ export function completeness(s: Rankable): number {
   const total = 3;
   if (s.cover_image_url) filled += 1;
   if (s.license_number) filled += 1;
-  if (s.hours != null) filled += 1;
+  if (hoursSet(s.hours)) filled += 1;
   return filled / total;
 }
 

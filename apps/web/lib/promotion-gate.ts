@@ -1,4 +1,5 @@
 import 'server-only';
+import { hoursSet } from './listing-completeness';
 import { createClient } from './supabase/server';
 
 export type PromotionGate = {
@@ -30,7 +31,7 @@ export async function promotionGate(dispensaryId: string): Promise<PromotionGate
   const missing: string[] = [];
   if (!d?.logo_url) missing.push('Add your logo');
   if (!d?.cover_image_url) missing.push('Add a cover photo');
-  if (!d?.hours) missing.push('Set your hours');
+  if (!hoursSet(d?.hours)) missing.push('Set your hours');
   if ((products ?? 0) < 3) missing.push('List at least 3 menu items');
   return { unlocked: missing.length === 0, missing };
 }

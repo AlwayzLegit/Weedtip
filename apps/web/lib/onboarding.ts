@@ -1,4 +1,5 @@
 import type { Database } from '@weedtip/supabase/types';
+import { hoursSet } from './listing-completeness';
 
 type Dispensary = Database['public']['Tables']['dispensaries']['Row'];
 
@@ -9,15 +10,21 @@ export interface SetupStep {
   done: boolean;
   href: string;
   cta: string;
+  /**
+   * Pro-gated for THIS owner. Locked steps render with an upgrade chip and are
+   * excluded from the progress denominator — a free owner must be able to reach
+   * 100% with what the free plan actually lets them edit, otherwise the
+   * checklist reads as permanently unfinished instead of as an upsell.
+   */
+  locked?: boolean;
 }
 
-/** A dispensary counts as "has hours" once at least one day has an open time. */
-function hoursSet(hours: Dispensary['hours']): boolean {
-  if (!hours || typeof hours !== 'object') return false;
-  return Object.values(hours as Record<string, unknown>).some(
-    (h) => !!h && typeof h === 'object' && !!(h as { open?: string }).open,
-  );
-}
+/** The entitlements that decide which checklist steps this owner can act on. */
+export type SetupEntitlements = {
+  completeProfile: boolean;
+  deals: boolean;
+  bulkImport: boolean;
+};
 
 /**
  * The guided-setup checklist for a claimed listing. Order is roughly the
@@ -27,6 +34,7 @@ function hoursSet(hours: Dispensary['hours']): boolean {
 export function setupSteps(
   d: Dispensary,
   counts: { products: number; deals: number },
+  entitlements: SetupEntitlements = { completeProfile: true, deals: true, bulkImport: true },
 ): SetupStep[] {
   return [
     {
@@ -60,6 +68,7 @@ export function setupSteps(
       done: !!d.description && d.description.trim().length >= 20,
       href: '/dashboard/listing',
       cta: 'Add description',
+      locked: !entitlements.completeProfile,
     },
     {
       key: 'amenities',
@@ -68,14 +77,19 @@ export function setupSteps(
       done: Array.isArray(d.amenities) && d.amenities.length > 0,
       href: '/dashboard/listing',
       cta: 'Add amenities',
+      locked: !entitlements.completeProfile,
     },
     {
       key: 'menu',
       label: 'Add your menu',
-      hint: 'Import a CSV or connect your POS — a full menu is what shoppers come for.',
+      // Manual product entry is free; CSV/POS import is Pro. Point the CTA at
+      // whichever door is actually open for this owner.
+      hint: entitlements.bulkImport
+        ? 'Import a CSV or connect your POS — a full menu is what shoppers come for.'
+        : 'Add your products one by one — a full menu is what shoppers come for.',
       done: counts.products > 0,
-      href: '/dashboard/products/import',
-      cta: 'Import menu',
+      href: entitlements.bulkImport ? '/dashboard/products/import' : '/dashboard/products/new',
+      cta: entitlements.bulkImport ? 'Import menu' : 'Add products',
     },
     {
       key: 'deal',
@@ -84,11 +98,19 @@ export function setupSteps(
       done: counts.deals > 0,
       href: '/dashboard/deals/new',
       cta: 'Create deal',
+      locked: !entitlements.deals,
     },
   ];
 }
 
+/**
+ * Progress over the steps this owner can actually complete. Locked steps don't
+ * count against the percentage (they're the upsell, not the homework), but a
+ * locked step an admin already finished still shows as done in the list.
+ */
 export function setupProgress(steps: SetupStep[]): { done: number; total: number; pct: number } {
-  const done = steps.filter((s) => s.done).length;
-  return { done, total: steps.length, pct: Math.round((done / steps.length) * 100) };
+  const actionable = steps.filter((s) => !s.locked);
+  const done = actionable.filter((s) => s.done).length;
+  const total = actionable.length;
+  return { done, total, pct: total === 0 ? 100 : Math.round((done / total) * 100) };
 }

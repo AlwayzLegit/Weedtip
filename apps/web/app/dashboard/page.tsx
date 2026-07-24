@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ExternalLink, Megaphone } from 'lucide-react';
 import { getSlotAvailability, resolveGeo } from '@/lib/ad-serving';
 import { formatPrice as fmtPrice } from '@/lib/format';
+import { canUseFeature } from '@/lib/features';
 import { promotionGate } from '@/lib/promotion-gate';
 import { SetupChecklist } from '@/components/dashboard/setup-checklist';
 import { Badge } from '@/components/ui/badge';
@@ -117,10 +118,18 @@ export default async function DashboardOverview() {
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : '—';
 
-  const steps = setupSteps(dispensary, {
-    products: productCount ?? 0,
-    deals: dealCount ?? 0,
-  });
+  // Which checklist steps this owner can actually act on — Pro-gated steps
+  // render as an upsell instead of silently capping the progress bar.
+  const [completeProfile, canDeals, bulkImport] = await Promise.all([
+    canUseFeature(dispensary.id, 'complete_profile'),
+    canUseFeature(dispensary.id, 'deals'),
+    canUseFeature(dispensary.id, 'bulk_import'),
+  ]);
+  const steps = setupSteps(
+    dispensary,
+    { products: productCount ?? 0, deals: dealCount ?? 0 },
+    { completeProfile, deals: canDeals, bulkImport },
+  );
 
   // The shop's ad region: open spots + today's step price + the tiered-setup
   // unlock state — owners should SEE their market's inventory from day one.
