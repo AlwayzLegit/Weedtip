@@ -17,6 +17,7 @@ import { PaymentLogos } from './payment-logos';
 //     the public entry point.
 const DISCOVER = [
   { href: '/dispensaries', label: 'Dispensaries' },
+  { href: '/best-dispensaries', label: 'Best dispensaries' },
   { href: '/deliveries', label: 'Deliveries' },
   { href: '/deals', label: 'Nearby deals' },
   { href: '/brands', label: 'Brands' },
