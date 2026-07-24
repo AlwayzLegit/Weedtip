@@ -34,7 +34,7 @@ export function HoursCard({
         <h2 className="text-muted text-sm font-semibold uppercase tracking-wide">Hours</h2>
         {hasHours && (
           <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+            className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${
               isOpen
                 ? 'bg-primary-muted text-primary'
                 : 'bg-surface-2 text-muted border-border border'
