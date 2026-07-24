@@ -2,6 +2,7 @@ import { Link } from 'next-view-transitions';
 import { BadgeCheck, MapPin, Tag, Truck, Store } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { formatDistance } from '@/lib/format';
+import type { RatingSource } from '@/lib/google-rating';
 import { Badge } from './ui/badge';
 import { LogoImage } from './logo-image';
 import { MediaImage } from './media-image';
@@ -34,6 +35,11 @@ export interface DispensaryCardData {
   distanceMeters?: number | null;
   rating?: number | null;
   reviewCount?: number;
+  /**
+   * Where the shown rating came from. Google ratings are labeled as Google's —
+   * a shop with no Weedtip reviews must never look like it has them.
+   */
+  ratingSource?: RatingSource;
   /** State cannabis license on file — the strongest trust signal we can show. */
   licensed?: boolean;
   /** Server-computed open state (search RPCs); omit (or null) when unknown. */
@@ -135,6 +141,7 @@ export function DispensaryCard({ d }: { d: DispensaryCardData }) {
               <span className="text-muted text-xs">
                 {d.rating.toFixed(1)}
                 {d.reviewCount ? ` (${d.reviewCount})` : ''}
+                {d.ratingSource === 'google' && ' on Google'}
               </span>
               {topRated && (
                 <Badge tone="primary" className="ml-0.5">

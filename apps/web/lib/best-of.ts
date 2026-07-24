@@ -1,5 +1,6 @@
 import { cache } from 'react';
-import { rankDispensaries, marketMean } from '@/lib/ranking';
+import { displayRating } from '@/lib/google-rating';
+import { rankDispensaries, marketMean, rankingRating } from '@/lib/ranking';
 import { citySlug, US_STATES } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
@@ -25,6 +26,10 @@ export type BestOfShop = {
   featured: boolean;
   rating_avg: number;
   rating_count: number;
+  google_rating: number | null;
+  google_rating_count: number | null;
+  google_rating_at: string | null;
+  google_maps_uri: string | null;
   hours: unknown;
   timezone: string | null;
   license_number: string | null;
@@ -36,12 +41,15 @@ export type BestOfResult = {
   ranked: BestOfShop[];
   mean: number;
   ratedCount: number;
+  /** How many of the ranked shops are scored on Weedtip vs Google ratings —
+   *  the page states its own mix rather than claiming one blanket source. */
+  sources: { weedtip: number; google: number };
   /** Total shops in scope for this city (all shops, or delivery-only shops). */
   totalInScope: number;
 };
 
 const SELECT =
-  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number';
+  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,google_rating,google_rating_count,google_rating_at,google_maps_uri,hours,timezone,license_number';
 
 /**
  * Shared loader for the "Best of" ranked pages (dispensaries + delivery). The
@@ -74,16 +82,30 @@ export const loadBestOf = cache(async function loadBestOf(
   if (inScope.length === 0) return null;
 
   // Only rated shops can be credibly "the best" — an unreviewed shop isn't
-  // evidence of quality. Gate the page on a real field of contenders.
-  const rated = inScope.filter((s) => s.rating_count > 0);
+  // evidence of quality. A shop counts as rated when it has Weedtip reviews OR
+  // a fresh Google rating (see lib/google-rating.ts); ranking and the on-page
+  // copy both name whichever source is actually used.
+  const rated = inScope.filter((s) => rankingRating(s) !== null);
   if (rated.length < MIN_RATED) return null;
+
+  const ranked = rankDispensaries(rated).slice(0, TOP_N);
+  const sources = ranked.reduce(
+    (acc, s) => {
+      const shown = displayRating(s);
+      if (shown?.source === 'google') acc.google += 1;
+      else if (shown?.source === 'weedtip') acc.weedtip += 1;
+      return acc;
+    },
+    { weedtip: 0, google: 0 },
+  );
 
   return {
     stateName,
     cityName,
-    ranked: rankDispensaries(rated).slice(0, TOP_N),
+    ranked,
     mean: marketMean(rated),
     ratedCount: rated.length,
+    sources,
     totalInScope: inScope.length,
   };
 });
@@ -109,12 +131,18 @@ export const loadBestOfMarkets = cache(async function loadBestOfMarkets(): Promi
   const rows = await fetchAll<{
     city: string | null;
     state: string;
+    rating_avg: number;
     rating_count: number;
+    google_rating: number | null;
+    google_rating_count: number | null;
+    google_rating_at: string | null;
     is_delivery: boolean;
   }>((from, to) =>
     supabase
       .from('dispensaries')
-      .select('city, state, rating_count, is_delivery')
+      .select(
+        'city, state, rating_avg, rating_count, google_rating, google_rating_count, google_rating_at, is_delivery',
+      )
       .eq('status', 'active')
       .range(from, to),
   );
@@ -132,7 +160,9 @@ export const loadBestOfMarkets = cache(async function loadBestOfMarkets(): Promi
       rated: 0,
       deliveryRated: 0,
     };
-    if (r.rating_count > 0) {
+    // Same "is this shop rated?" rule as the pages: Weedtip reviews, or a
+    // Google rating still inside the caching window.
+    if (rankingRating({ ...r, rating_avg: r.rating_avg ?? 0, rating_count: r.rating_count ?? 0 })) {
       cur.rated += 1;
       if (r.is_delivery) cur.deliveryRated += 1;
     }

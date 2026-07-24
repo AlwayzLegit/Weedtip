@@ -5,6 +5,7 @@ import { Link } from 'next-view-transitions';
 import { ArrowRight, MapPin } from 'lucide-react';
 import type { OperatingHours } from '@weedtip/shared';
 import { dealBadge } from '@/lib/format';
+import { cardRatingProps, GOOGLE_RATING_COLUMNS } from '@/lib/google-rating';
 import { createClient } from '@/lib/supabase/client';
 import { US_STATES } from '@/lib/seo';
 import { DealCard, type DealCardData } from '../deal-card';
@@ -16,8 +17,7 @@ import { ScrollCarousel } from './scroll-carousel';
 export type FeedShop = DispensaryCardData;
 export type FeedDeal = DealCardData & { id: string };
 
-const SHOP_FIELDS =
-  'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number';
+const SHOP_FIELDS = `slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number,${GOOGLE_RATING_COLUMNS}`;
 
 type ShopRow = {
   slug: string;
@@ -33,6 +33,10 @@ type ShopRow = {
   featured: boolean;
   rating_avg: number;
   rating_count: number;
+  google_rating: number | null;
+  google_rating_count: number | null;
+  google_rating_at: string | null;
+  google_maps_uri: string | null;
   hours: unknown;
   timezone: string | null;
   license_number: string | null;
@@ -50,8 +54,7 @@ const toShop = (r: ShopRow): FeedShop => ({
   isMedical: r.is_medical,
   isRecreational: r.is_recreational,
   featured: r.featured,
-  rating: r.rating_avg,
-  reviewCount: r.rating_count,
+  ...cardRatingProps(r),
   hours: (r.hours ?? null) as OperatingHours | null,
   timezone: r.timezone,
   licensed: !!r.license_number,
@@ -131,9 +134,7 @@ export function MarketFeed({
       // with the nationwide set so the band never looks half-stocked.
       const cityShops = ((cityRes.data ?? []) as ShopRow[]).map(toShop);
       const citySlugs = new Set(cityShops.map((s) => s.slug));
-      const stateShops = (shopRes.data ?? [])
-        .map(toShop)
-        .filter((s) => !citySlugs.has(s.slug));
+      const stateShops = (shopRes.data ?? []).map(toShop).filter((s) => !citySlugs.has(s.slug));
       const scopedShops = [...cityShops, ...stateShops].slice(0, 12);
       const scopedSlugs = new Set(scopedShops.map((s) => s.slug));
       setShops(
@@ -199,9 +200,10 @@ export function MarketFeed({
   const stateName = scoped ? US_STATES[market] : null;
   // "Pasadena, CA" beats "California" when the IP city is known and rows for
   // it actually lead the rail.
-  const placeName = scoped && city && shops.some((s) => s.city?.toLowerCase() === city.toLowerCase())
-    ? `${city}, ${market}`
-    : stateName;
+  const placeName =
+    scoped && city && shops.some((s) => s.city?.toLowerCase() === city.toLowerCase())
+      ? `${city}, ${market}`
+      : stateName;
   const st = market?.toLowerCase();
 
   // Card-family deal badge: a shop's soonest-ending live deal, e.g. "20% off".

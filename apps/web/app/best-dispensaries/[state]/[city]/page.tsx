@@ -7,6 +7,7 @@ import { RankedShopList } from '@/components/best-of/ranked-shop-list';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { loadBestOf } from '@/lib/best-of';
+import { displayRating, sourceMixPhrase } from '@/lib/google-rating';
 import { breadcrumbJsonLd, pageSeo, rankedItemListJsonLd } from '@/lib/seo';
 
 // Public, anon-only page — cached HTML, refreshed hourly (ISR).
@@ -22,7 +23,7 @@ export async function generateMetadata({
   if (!found) return { title: 'Best dispensaries' };
   const st = state.toUpperCase();
   const title = `The ${found.ranked.length} best dispensaries in ${found.cityName}, ${st}`;
-  const description = `The top-rated cannabis dispensaries in ${found.cityName}, ${found.stateName}, ranked by verified customer reviews — see who leads ${found.cityName} and why, on Weedtip.`;
+  const description = `The top-rated cannabis dispensaries in ${found.cityName}, ${found.stateName}, ranked by ${sourceMixPhrase(found.sources)} — see who leads ${found.cityName} and why, on Weedtip.`;
   return pageSeo({
     title,
     description,
@@ -40,25 +41,28 @@ export default async function BestDispensariesPage({
   if (!found) notFound();
   // Sibling ranking exists only where the delivery field is deep enough.
   const delivery = await loadBestOf(state, city, true);
-  const { stateName, cityName, ranked, mean, ratedCount, totalInScope } = found;
+  const { stateName, cityName, ranked, mean, ratedCount, sources, totalInScope } = found;
   const st = state.toUpperCase();
   const stateLower = state.toLowerCase();
   const cityLower = city.toLowerCase();
   const year = new Date().getFullYear();
   const top = ranked[0]!;
+  // Every ranked shop has a displayable rating by construction (loadBestOf filters on it).
+  const topRating = displayRating(top)!;
+  const mix = sourceMixPhrase(sources);
 
   const faqs = [
     {
       question: `What is the best dispensary in ${cityName}?`,
-      answer: `Ranked by verified customer reviews, ${top.name} is the top-rated cannabis dispensary in ${cityName}, ${stateName} — ${top.rating_avg.toFixed(1)} stars across ${top.rating_count} ${top.rating_count === 1 ? 'review' : 'reviews'}. See the full ranking above for the runners-up.`,
+      answer: `${top.name} is the top-ranked cannabis dispensary in ${cityName}, ${stateName} — ${topRating.rating.toFixed(1)} stars across ${topRating.count} ${topRating.count === 1 ? 'rating' : 'ratings'} on ${topRating.source === 'google' ? 'Google' : 'Weedtip'}. See the full ranking above for the runners-up.`,
     },
     {
       question: `How are the best dispensaries in ${cityName} ranked?`,
-      answer: `We rank by a confidence-weighted average of each dispensary's customer ratings, so a shop needs both a high score and enough reviews to lead — one or two five-star reviews won't outrank a consistently well-reviewed store. Ties break toward review volume and profile completeness. Weedtip doesn't sell ranking positions.`,
+      answer: `We rank by a confidence-weighted average of ${mix}, so a shop needs both a high score and enough ratings to lead — one or two five-star ratings won't outrank a consistently well-rated store. Where a shop has been reviewed on Weedtip we use those reviews; otherwise we use its Google rating, shown and linked as Google's. Ties break toward rating volume and profile completeness. Weedtip doesn't sell ranking positions.`,
     },
     {
       question: `How many dispensaries are in ${cityName}?`,
-      answer: `Weedtip lists ${totalInScope} licensed ${totalInScope === 1 ? 'dispensary' : 'dispensaries'} in ${cityName}, ${stateName}, of which ${ratedCount} have customer reviews. Browse the complete directory for hours, menus, and deals.`,
+      answer: `Weedtip lists ${totalInScope} licensed ${totalInScope === 1 ? 'dispensary' : 'dispensaries'} in ${cityName}, ${stateName}, of which ${ratedCount} have a customer rating. Browse the complete directory for hours, menus, and deals.`,
     },
   ];
 
@@ -96,8 +100,8 @@ export default async function BestDispensariesPage({
       </h1>
       <p className="text-muted mt-2 max-w-2xl leading-relaxed">
         The highest-rated licensed cannabis dispensaries in {cityName}, ranked by a
-        confidence-weighted average of {ratedCount} {ratedCount === 1 ? 'shop' : 'shops'}&apos;
-        verified customer reviews — so consistency, not a lone five-star, decides the order.{' '}
+        confidence-weighted average of {ratedCount} {ratedCount === 1 ? 'shop' : 'shops'}&apos;{' '}
+        {mix} — so consistency, not a lone five-star, decides the order.{' '}
         <Link
           href={`/dispensaries/${stateLower}/${cityLower}`}
           className="text-primary focus-visible:ring-primary rounded font-medium hover:underline focus-visible:outline-none focus-visible:ring-2"
@@ -122,12 +126,21 @@ export default async function BestDispensariesPage({
           <Award className="text-primary h-4 w-4" /> How we rank
         </h2>
         <p className="text-muted mt-2 text-sm leading-relaxed">
-          Each dispensary&apos;s score is a confidence-weighted (Bayesian) average of its verified
-          customer ratings: a store with hundreds of consistent reviews outranks one with a single
-          perfect score, because one review isn&apos;t proof of being the best in {cityName}. When
-          scores tie, we favor the shop with more reviews and a more complete profile. Rankings
-          update as new reviews come in, and <strong>positions are never sold</strong> — sponsored
-          placements are labeled everywhere they appear.
+          Each dispensary&apos;s score is a confidence-weighted (Bayesian) average of its customer
+          ratings: a store with hundreds of consistent ratings outranks one with a single perfect
+          score, because one rating isn&apos;t proof of being the best in {cityName}. When scores
+          tie, we favor the shop with more ratings and a more complete profile.
+        </p>
+        <p className="text-muted mt-2 text-sm leading-relaxed">
+          Where a shop has reviews written on Weedtip, we rank on those. Where it doesn&apos;t, we
+          fall back to its Google rating — labeled &ldquo;on Google&rdquo; and linked to the Google
+          listing it came from, never presented as ours. Of the {ranked.length} shops here,{' '}
+          {sources.weedtip} {sources.weedtip === 1 ? 'is' : 'are'} scored on Weedtip reviews and{' '}
+          {sources.google} on Google.
+        </p>
+        <p className="text-muted mt-2 text-sm leading-relaxed">
+          Rankings update as new ratings come in, and <strong>positions are never sold</strong> —
+          sponsored placements are labeled everywhere they appear.
         </p>
       </section>
 

@@ -16,6 +16,7 @@ import { StrainCard } from '@/components/strain-card';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/ui/reveal';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
+import { cardRatingProps, GOOGLE_RATING_COLUMNS } from '@/lib/google-rating';
 import { ARTICLES } from '@/lib/learn';
 import { citySlug, US_STATES } from '@/lib/seo';
 import { createStaticClient } from '@/lib/supabase/static';
@@ -68,7 +69,7 @@ export default async function HomePage() {
     supabase
       .from('dispensaries')
       .select(
-        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number',
+        `slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number,${GOOGLE_RATING_COLUMNS}`,
       )
       .eq('status', 'active')
       // Photo-backed only: these seed the hero carousel + featured rail, both
@@ -107,7 +108,7 @@ export default async function HomePage() {
     supabase
       .from('dispensaries')
       .select(
-        'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number',
+        `slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,license_number,${GOOGLE_RATING_COLUMNS}`,
       )
       .eq('status', 'active')
       .eq('is_delivery', true)
@@ -159,8 +160,7 @@ export default async function HomePage() {
     isMedical: d.is_medical,
     isRecreational: d.is_recreational,
     featured: d.featured,
-    rating: d.rating_avg,
-    reviewCount: d.rating_count,
+    ...cardRatingProps(d),
     hours: (d.hours ?? null) as OperatingHours | null,
     timezone: d.timezone,
     licensed: !!d.license_number,

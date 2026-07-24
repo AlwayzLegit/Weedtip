@@ -5,7 +5,8 @@ import { MediaImage } from '@/components/media-image';
 import { OpenNowChip } from '@/components/open-now-chip';
 import { RatingStars } from '@/components/rating-stars';
 import { Badge } from '@/components/ui/badge';
-import { bayesianScore, type Rankable } from '@/lib/ranking';
+import { bayesianScore, rankingRating, type Rankable } from '@/lib/ranking';
+import { displayRating } from '@/lib/google-rating';
 import type { BestOfShop } from '@/lib/best-of';
 
 /**
@@ -26,7 +27,9 @@ export function RankedShopList({
   return (
     <ol className="mt-8 space-y-4">
       {shops.map((s, i) => {
-        const score = bayesianScore(s.rating_avg, s.rating_count, mean);
+        const shown = displayRating(s);
+        const ranked = rankingRating(s);
+        const score = ranked ? bayesianScore(ranked.rating, ranked.count, mean) : 0;
         return (
           <li key={s.id}>
             <Link
@@ -70,11 +73,19 @@ export function RankedShopList({
                   )}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                  <RatingStars rating={s.rating_avg} />
-                  <span className="font-semibold">{s.rating_avg.toFixed(1)}</span>
-                  <span className="text-muted">
-                    ({s.rating_count} {s.rating_count === 1 ? 'review' : 'reviews'})
-                  </span>
+                  {shown && (
+                    <>
+                      <RatingStars rating={shown.rating} />
+                      <span className="font-semibold">{shown.rating.toFixed(1)}</span>
+                      <span className="text-muted">
+                        ({shown.count.toLocaleString()} {shown.count === 1 ? 'review' : 'reviews'})
+                      </span>
+                      {/* Provenance travels with the number, always. */}
+                      <span className="text-muted text-xs">
+                        {shown.source === 'google' ? 'on Google' : 'on Weedtip'}
+                      </span>
+                    </>
+                  )}
                   <OpenNowChip hours={s.hours as OperatingHours | null} timezone={s.timezone} />
                 </div>
                 <div className="text-muted mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">

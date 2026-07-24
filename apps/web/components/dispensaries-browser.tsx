@@ -12,6 +12,7 @@ import {
 } from '@weedtip/shared';
 import { mapPinsBounds, searchDispensariesBounds } from '@weedtip/supabase/queries';
 import { dealBadge, formatDistance, isOpenNow } from '@/lib/format';
+import { browserRatingProps, GOOGLE_RATING_COLUMNS, ratingSourceOf } from '@/lib/google-rating';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
@@ -105,6 +106,10 @@ type RpcRow = {
   featured: boolean;
   rating_avg: number;
   rating_count: number;
+  /** Effective rating: Weedtip reviews when present, else a fresh Google rating. */
+  display_rating: number | null;
+  display_rating_count: number | null;
+  rating_source: string | null;
   licensed: boolean;
   distance_meters: number;
   is_open_now: boolean;
@@ -129,8 +134,11 @@ function toShop(r: RpcRow): BrowserShop {
     // Paying subscribers/placements get the Sponsored treatment (merchandised
     // ranking). `?? 0` keeps this safe until the ranking migration is applied.
     sponsored: (r.paid_tier ?? 0) > 0,
-    rating: r.rating_avg,
-    reviewCount: r.rating_count,
+    // The RPC applies the same source precedence lib/google-rating.ts does,
+    // so the card can show and label whichever rating actually exists.
+    rating: r.display_rating ?? 0,
+    reviewCount: r.display_rating_count ?? 0,
+    ratingSource: ratingSourceOf(r.rating_source),
     licensed: r.licensed,
     lat: r.latitude,
     lng: r.longitude,
@@ -737,7 +745,7 @@ export function DispensariesBrowser({
         const { data } = await supabase
           .from('dispensaries')
           .select(
-            'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone,license_number',
+            `id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone,license_number,${GOOGLE_RATING_COLUMNS}`,
           )
           .eq('slug', slug)
           .eq('status', 'active')
@@ -757,8 +765,7 @@ export function DispensariesBrowser({
           isMedical: data.is_medical,
           isRecreational: data.is_recreational,
           featured: data.featured,
-          rating: data.rating_avg,
-          reviewCount: data.rating_count,
+          ...browserRatingProps(data),
           licensed: !!data.license_number,
           lat: data.latitude,
           lng: data.longitude,
@@ -1004,6 +1011,7 @@ export function DispensariesBrowser({
                   distanceMeters: s.distanceMeters,
                   rating: s.rating,
                   reviewCount: s.reviewCount,
+                  ratingSource: s.ratingSource,
                   licensed: s.licensed,
                   openNow: s.isOpenNow,
                   hours: s.hours,
@@ -1078,7 +1086,11 @@ export function DispensariesBrowser({
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{s.name}</p>
               <p className="text-muted truncate text-xs">
-                {s.rating > 0 ? `★ ${s.rating.toFixed(1)} · ` : s.licensed ? 'Licensed · ' : ''}
+                {s.rating > 0
+                  ? `★ ${s.rating.toFixed(1)}${s.ratingSource === 'google' ? ' (Google)' : ''} · `
+                  : s.licensed
+                    ? 'Licensed · '
+                    : ''}
                 {s.city || 'Delivery only'}
                 {formatDistance(s.distanceMeters) ? ` · ${formatDistance(s.distanceMeters)}` : ''}
               </p>

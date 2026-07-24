@@ -9,6 +9,7 @@ import {
 import { searchDispensariesBounds } from '@weedtip/supabase/queries';
 import { type BrowseFilters, DispensariesBrowser } from '@/components/dispensaries-browser';
 import { JsonLd } from '@/components/seo/json-ld';
+import { ratingSourceOf } from '@/lib/google-rating';
 import { itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 import { bboxAround, STATE_BOUNDS, US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
@@ -129,8 +130,11 @@ export default async function DispensariesPage({
     featured: r.featured,
     // Safe until the merchandised-ranking migration lands (column absent → 0).
     sponsored: ((r as { paid_tier?: number }).paid_tier ?? 0) > 0,
-    rating: r.rating_avg,
-    reviewCount: r.rating_count,
+    // Weedtip reviews where they exist, a fresh Google rating otherwise —
+    // the RPC decides, the card labels which (see lib/google-rating.ts).
+    rating: r.display_rating ?? 0,
+    reviewCount: r.display_rating_count ?? 0,
+    ratingSource: ratingSourceOf(r.rating_source),
     licensed: r.licensed,
     lat: r.latitude,
     lng: r.longitude,

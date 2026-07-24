@@ -29,6 +29,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ClaimListing } from '@/components/claim-listing';
 import { LineupCard, type LineupItem } from '@/components/brand/lineup-card';
 import { DispensaryCard } from '@/components/dispensary-card';
+import { GoogleRatingChip } from '@/components/google-rating-chip';
 import { MenuBrowser, type MenuBrowserItem } from '@/components/dispensary/menu-browser';
 import { ReviewHistogram } from '@/components/dispensary/review-histogram';
 import { ReviewList } from '@/components/dispensary/review-list';
@@ -48,6 +49,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { DAY_ORDER, dayLabel, dealBadge, formatTime, nextOpeningLabel } from '@/lib/format';
 import { getAuth } from '@/lib/auth';
+import { cardRatingProps, displayRating, GOOGLE_RATING_COLUMNS } from '@/lib/google-rating';
 import { CATALOG_IMAGE_EMBED, cardImageUrl, catalogImageSrc } from '@/lib/catalog';
 import { renderMarkdown, stripMarkdown } from '@/lib/markdown';
 import { FaqSection } from '@/components/seo/faq-section';
@@ -182,6 +184,11 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   const avgRating = reviews?.length
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
     : 0;
+  // Most listings have no Weedtip reviews yet. Rather than show nothing, fall
+  // back to the imported Google rating — always labeled as Google's and linked
+  // to the listing it came from, never blended into our own score.
+  const googleRating =
+    avgRating > 0 ? null : displayRating({ ...d, rating_avg: null, rating_count: null });
   const myReview = user ? (reviews ?? []).find((r) => r.user_id === user.id) : undefined;
 
   // Which reviews has the viewer already marked helpful?
@@ -277,8 +284,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
   // fill — always photo-backed so the rail merchandises well. Also the main
   // internal-linking surface between the 9k+ listing pages. Skipped entirely
   // for paying listings.
-  const NEARBY_FIELDS =
-    'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone';
+  const NEARBY_FIELDS = `slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,${GOOGLE_RATING_COLUMNS}`;
   const nearby = paidListing
     ? []
     : await (async () => {
@@ -661,7 +667,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   <BadgeCheck className="h-3.5 w-3.5" /> Licensed
                 </Badge>
               ) : null}
-              {avgRating > 0 && (
+              {avgRating > 0 ? (
                 <a href="#reviews" className="flex items-center gap-1.5 hover:underline">
                   <RatingStars rating={avgRating} />
                   <span className="text-sm font-semibold">{avgRating.toFixed(1)}</span>
@@ -669,7 +675,9 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                     ({d.rating_count} {d.rating_count === 1 ? 'review' : 'reviews'})
                   </span>
                 </a>
-              )}
+              ) : googleRating ? (
+                <GoogleRatingChip rating={googleRating} />
+              ) : null}
               {avgRating >= 4.5 && reviews && reviews.length >= 10 && (
                 <Badge tone="primary">Top Rated</Badge>
               )}
@@ -1194,6 +1202,12 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                 <div className="border-border text-muted rounded-card border border-dashed p-8 text-center text-sm">
                   No reviews yet
                   {user && !isOwner ? ' — be the first to share your experience.' : '.'}
+                  {googleRating && (
+                    <span className="mt-3 flex flex-col items-center gap-1.5">
+                      <span>Meanwhile, here&apos;s how Google visitors rate {d.name}:</span>
+                      <GoogleRatingChip rating={googleRating} />
+                    </span>
+                  )}
                 </div>
               )}
             </section>
@@ -1235,8 +1249,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         isMedical: s.is_medical,
                         isRecreational: s.is_recreational,
                         featured: s.featured,
-                        rating: s.rating_avg,
-                        reviewCount: s.rating_count,
+                        ...cardRatingProps(s),
                         hours: (s.hours ?? null) as OperatingHours | null,
                         timezone: s.timezone,
                       }}

@@ -3417,8 +3417,11 @@ export type Database = {
         Returns: {
           city: string
           cover_image_url: string
+          display_rating: number
+          display_rating_count: number
           distance_meters: number
           featured: boolean
+          google_maps_uri: string
           id: string
           is_delivery: boolean
           is_medical: boolean
@@ -3433,6 +3436,7 @@ export type Database = {
           paid_tier: number
           rating_avg: number
           rating_count: number
+          rating_source: string
           slug: string
           state: string
           total_count: number
