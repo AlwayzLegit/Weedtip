@@ -44,8 +44,14 @@ export default async function DashboardProducts() {
       </div>
 
       {!products || products.length === 0 ? (
-        <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
-          No products yet. Add your first one.
+        <div className="rounded-card border-border bg-surface text-muted border border-dashed p-10 text-center">
+          <p className="text-foreground font-medium">No products yet</p>
+          <p className="mt-1 text-sm">Add your first one to start building your menu.</p>
+          <Link href="/dashboard/products/new" className="mt-4 inline-block">
+            <Button size="sm">
+              <Plus className="h-4 w-4" /> Add product
+            </Button>
+          </Link>
         </div>
       ) : (
         <div className="rounded-card border-border bg-surface shadow-card overflow-hidden border">
