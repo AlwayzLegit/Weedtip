@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { PRODUCT_CATEGORIES } from '@weedtip/shared';
 import { ARTICLES } from '@/lib/learn';
 import { citySlug } from '@/lib/seo';
+import { TERPENES } from '@/lib/terpenes';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
@@ -92,6 +93,12 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/deliveries', priority: 0.8, freq: 'daily' as const },
     { path: '/products', priority: 0.8, freq: 'daily' as const },
     { path: '/strains', priority: 0.6, freq: 'weekly' as const },
+    { path: '/terpenes', priority: 0.6, freq: 'weekly' as const },
+    ...TERPENES.map((t) => ({
+      path: `/terpene/${t.slug}`,
+      priority: 0.5,
+      freq: 'monthly' as const,
+    })),
     { path: '/brands', priority: 0.6, freq: 'weekly' as const },
     { path: '/deals', priority: 0.7, freq: 'daily' as const },
     { path: '/learn', priority: 0.6, freq: 'weekly' as const },
