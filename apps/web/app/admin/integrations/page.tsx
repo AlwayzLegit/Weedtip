@@ -3,6 +3,8 @@ import { AlertTriangle, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { GoogleEnrichConsole } from '@/components/admin/google-enrich-console';
 import { PhotoBackfillConsole } from '@/components/admin/photo-backfill-console';
+import { RatingBackfillConsole } from '@/components/admin/rating-backfill-console';
+import { GOOGLE_RATING_TTL_DAYS } from '@/lib/google-rating';
 import { integrationStatuses } from '@/lib/integration-status';
 import { createClient } from '@/lib/supabase/server';
 
@@ -33,15 +35,26 @@ export default async function AdminIntegrations() {
     .is('google_photo_names', null)
     .eq('status', 'active');
 
+  // Matched listings whose Google rating is missing or past the caching window.
+  const staleBefore = new Date(
+    Date.now() - GOOGLE_RATING_TTL_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const { count: ratingRemaining } = await supabase
+    .from('dispensaries')
+    .select('id', { count: 'exact', head: true })
+    .not('google_place_id', 'is', null)
+    .or(`google_rating_at.is.null,google_rating_at.lt.${staleBefore}`)
+    .eq('status', 'active');
+
   return (
     <div className="space-y-6">
       <div>
         <p className="eyebrow mb-1">System</p>
         <h2 className="text-2xl font-bold">Integrations</h2>
         <p className="text-muted mt-1 text-sm">
-          What&apos;s wired in <strong>this</strong> environment. Shows whether each integration&apos;s
-          env vars are present — never their values. Set vars in your host (e.g. Vercel) and redeploy,
-          then refresh here to confirm.
+          What&apos;s wired in <strong>this</strong> environment. Shows whether each
+          integration&apos;s env vars are present — never their values. Set vars in your host (e.g.
+          Vercel) and redeploy, then refresh here to confirm.
         </p>
       </div>
 
@@ -57,6 +70,7 @@ export default async function AdminIntegrations() {
 
       <GoogleEnrichConsole initialRemaining={enrichRemaining ?? 0} />
       <PhotoBackfillConsole initialRemaining={photoRemaining ?? 0} />
+      <RatingBackfillConsole initialRemaining={ratingRemaining ?? 0} />
 
       <div className="rounded-card border-border bg-surface divide-border divide-y border">
         {statuses.map((s) => (
