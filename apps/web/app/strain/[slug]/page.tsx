@@ -11,8 +11,10 @@ import { StrainFavoriteButton } from '@/components/strain/strain-favorite-button
 import { Badge } from '@/components/ui/badge';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { JsonLd } from '@/components/seo/json-ld';
+import { FaqSection } from '@/components/seo/faq-section';
 import { pageSeo, strainJsonLd } from '@/lib/seo';
 import { strainArtUrl } from '@/lib/strain-art';
+import { strainFaqs, strainIntro } from '@/lib/strain-copy';
 import { createStaticClient } from '@/lib/supabase/static';
 
 // Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
@@ -130,6 +132,20 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
     saved = !!fav;
   }
 
+  // Per-strain prose + FAQ (thickens pages that lack an editorial description;
+  // paired with FAQPage schema for content depth — SEO cause B).
+  const typeLabel = TYPE_LABEL[strain.type] ?? strain.type;
+  const copyInput = {
+    name: strain.name,
+    typeLabel,
+    effects: strain.effects ?? [],
+    flavors: strain.flavors ?? [],
+    thcLow: strain.thc_low,
+    thcHigh: strain.thc_high,
+  };
+  const intro = strainIntro(copyInput);
+  const faqs = strainFaqs(copyInput);
+
   // Calming ↔ energizing lean, derived from the strain family (Leafly-style meter).
   const energizing = strain.type === 'sativa' ? 78 : strain.type === 'indica' ? 22 : 50;
   const hasGrow =
@@ -154,7 +170,12 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
       />
       <ViewTracker
         event="strain_viewed"
-        properties={{ strain_id: strain.id, slug: strain.slug, name: strain.name, type: strain.type }}
+        properties={{
+          strain_id: strain.id,
+          slug: strain.slug,
+          name: strain.name,
+          type: strain.type,
+        }}
       />
       <RecordRecentlyViewed
         item={{
@@ -241,13 +262,18 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
             </div>
             <div className="bg-surface-2 relative mt-1 h-2 rounded-full">
               <span
-                className="bg-primary absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-background"
+                className="bg-primary ring-background absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2"
                 style={{ left: `${energizing}%` }}
               />
             </div>
           </div>
 
-          {strain.description && <p className="text-muted mt-4 text-sm">{strain.description}</p>}
+          <div className="mt-4 space-y-3">
+            {strain.description && (
+              <p className="text-muted text-sm leading-relaxed">{strain.description}</p>
+            )}
+            <p className="text-muted text-sm leading-relaxed">{intro}</p>
+          </div>
         </div>
       </div>
 
@@ -468,6 +494,8 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
           </div>
         </section>
       )}
+
+      <FaqSection items={faqs} heading={`${strain.name} — frequently asked questions`} />
 
       {/* Strain pages ↔ Learn hub interlinking (helps both rank). */}
       <section className="mt-10">
