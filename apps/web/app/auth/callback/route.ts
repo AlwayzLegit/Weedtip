@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
       // Only pick a default landing when they didn't arrive with a real target.
       if (next === '/') {
-        dest = profile.role === 'dispensary_owner' ? '/claim' : '/welcome';
+        dest = profile.role === 'dispensary_owner' ? '/get-started' : '/welcome';
       }
     }
   }

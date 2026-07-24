@@ -33,20 +33,54 @@ function Stat({
 
 export default async function DashboardOverview() {
   // Resolves the owner + their dispensary, redirecting non-owners cleanly.
-  const { dispensary } = await getOwnerContext();
+  const { userId, dispensary } = await getOwnerContext();
   const supabase = await createClient();
 
   if (!dispensary) {
+    // An owner with a claim under review is NOT starting from zero, and telling
+    // them to "create your listing" is how the old empty state sent claimants
+    // off to file a duplicate. Check for a live claim before saying anything.
+    const { data: claim } = await supabase
+      .from('ownership_requests')
+      .select('status, dispensary:dispensaries(name, slug)')
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const pendingShop = claim?.dispensary as { name: string; slug: string } | null | undefined;
+
     return (
       <div className="card p-10 text-center">
-        <h1 className="text-xl font-bold">Welcome to Weedtip</h1>
+        <h1 className="text-xl font-bold">
+          {pendingShop ? 'Your claim is being reviewed' : 'Welcome to Weedtip'}
+        </h1>
         <p className="text-muted mx-auto mt-2 max-w-md">
-          You don&apos;t have a dispensary listing yet. Listings start in{' '}
-          <Badge tone="muted">pending</Badge> and go live once approved by an admin.
+          {pendingShop ? (
+            <>
+              We&apos;re verifying your claim on <strong>{pendingShop.name}</strong> against the
+              state license record. Most clear the same day — you&apos;ll get an email either way,
+              and the listing appears here the moment it does.
+            </>
+          ) : (
+            <>
+              You don&apos;t have a dispensary listing yet. Listings start in{' '}
+              <Badge tone="muted">pending</Badge> and go live once approved by an admin.
+            </>
+          )}
         </p>
-        <Link href="/dashboard/listing" className="mt-6 inline-block">
-          <Button size="lg">Create your listing</Button>
-        </Link>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <Link href="/get-started">
+            <Button size="lg">{pendingShop ? 'See claim status' : 'Get started'}</Button>
+          </Link>
+          {pendingShop && (
+            <Link href={`/dispensary/${pendingShop.slug}`}>
+              <Button size="lg" variant="outline">
+                View the listing
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
     );
   }

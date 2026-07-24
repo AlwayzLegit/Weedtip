@@ -442,6 +442,27 @@ export default async function HomePage() {
           </section>
           </Reveal>
         )}
+
+        {/* Owner acquisition. The directory's whole supply side depends on shop
+            owners finding their way in, and until now the only route in was a
+            footer link — so this is the one place the homepage speaks to them. */}
+        <Reveal>
+          <section className="rounded-card border-border bg-surface-2 flex flex-wrap items-center justify-between gap-4 border p-6">
+            <div className="min-w-0 max-w-xl">
+              <p className="eyebrow mb-1">Dispensary & brand owners</p>
+              <h2 className="text-xl font-bold tracking-tight">Your shop is already listed</h2>
+              <p className="text-muted mt-1.5 text-sm leading-relaxed">
+                Claim it to manage your menu, hours, photos, and deals — free, verified against your
+                state license, and no commission on anything you sell.
+              </p>
+            </div>
+            <Link href="/get-started" className="shrink-0">
+              <Button size="lg">
+                Claim your listing <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </section>
+        </Reveal>
       </div>
     </main>
   );
