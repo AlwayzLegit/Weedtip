@@ -50,6 +50,14 @@ const LIMIT = process.env.LIMIT ? Number(process.env.LIMIT) : Infinity;
 const TTL_DAYS = 30;
 const BATCH = 60;
 const CONCURRENCY = 8;
+// Stay under Places' GetPlaceRequest per-minute quota (600/min on default
+// projects — the 2026-07 full run hit it at unthrottled 8-way concurrency and
+// needed manual re-run loops). Requests are paced to this budget, and a 429
+// backs off one quota window and retries once before leaving the row queued.
+const PACE_PER_MIN = process.env.PACE_PER_MIN ? Number(process.env.PACE_PER_MIN) : 550;
+const QUOTA_BACKOFF_MS = 65_000;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -82,12 +90,24 @@ const tally = { processed: 0, rated: 0, unrated: 0, failed: 0 };
 
 async function processOne(row) {
   try {
-    const res = await fetch(`https://places.googleapis.com/v1/places/${row.google_place_id}`, {
+    let res = await fetch(`https://places.googleapis.com/v1/places/${row.google_place_id}`, {
       headers: {
         'X-Goog-Api-Key': PLACES_KEY,
         'X-Goog-FieldMask': 'rating,userRatingCount,googleMapsUri',
       },
     });
+
+    if (res.status === 429) {
+      // Quota window exhausted — wait it out once; a second 429 stays queued.
+      console.error(`  429 from Places — backing off ${QUOTA_BACKOFF_MS / 1000}s…`);
+      await sleep(QUOTA_BACKOFF_MS);
+      res = await fetch(`https://places.googleapis.com/v1/places/${row.google_place_id}`, {
+        headers: {
+          'X-Goog-Api-Key': PLACES_KEY,
+          'X-Goog-FieldMask': 'rating,userRatingCount,googleMapsUri',
+        },
+      });
+    }
 
     if (!res.ok) {
       // A dead place_id would retry forever — stamp it so it waits out the TTL.
@@ -156,8 +176,12 @@ while (!stopping && left > 0 && tally.processed < LIMIT) {
   const batch = rows ?? [];
   if (batch.length === 0) break;
 
+  const chunkBudgetMs = Math.ceil((CONCURRENCY / PACE_PER_MIN) * 60_000);
   for (let i = 0; i < batch.length; i += CONCURRENCY) {
+    const chunkStart = Date.now();
     await Promise.all(batch.slice(i, i + CONCURRENCY).map(processOne));
+    const wait = chunkBudgetMs - (Date.now() - chunkStart);
+    if (wait > 0) await sleep(wait);
   }
   tally.processed += batch.length;
 
