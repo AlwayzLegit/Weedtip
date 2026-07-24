@@ -6,8 +6,11 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
+import { activeStateCounts } from '@/lib/locations';
+import { US_STATE_NEIGHBORS } from '@/lib/state-adjacency';
 import { createStaticClient } from '@/lib/supabase/static';
 import { fetchAll } from '@/lib/supabase/fetch-all';
+import { RatingStars } from '@/components/rating-stars';
 
 // Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
 export const revalidate = 3600;
@@ -61,6 +64,27 @@ export default async function StateDispensariesPage({
   // Biggest markets first, then alphabetical.
   const cities = [...byCity.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
+  // Top-rated shops link the state hub straight down to leaf dispensary pages
+  // (not just to city hubs) — more inbound links for the pages that need them.
+  const { data: topShopsRaw } = await supabase
+    .from('dispensaries')
+    .select('slug,name,city,rating_avg,rating_count,license_number')
+    .eq('status', 'active')
+    .eq('state', code)
+    .order('rating_count', { ascending: false })
+    .order('rating_avg', { ascending: false })
+    .limit(12);
+  const topShops = (topShopsRaw ?? []).filter((s) => (s.rating_count ?? 0) > 0);
+
+  // Neighboring states that also have listings — lateral hub cross-links.
+  const counts = await activeStateCounts();
+  const countByCode = new Map(counts.map((c) => [c.code, c.count]));
+  const neighbors = (US_STATE_NEIGHBORS[code] ?? [])
+    .map((n) => ({ code: n, name: US_STATES[n], count: countByCode.get(n) ?? 0 }))
+    .filter(
+      (n): n is { code: string; name: string; count: number } => Boolean(n.name) && n.count > 0,
+    );
+
   const faqs = [
     {
       question: `How many cannabis dispensaries are in ${stateName}?`,
@@ -97,8 +121,13 @@ export default async function StateDispensariesPage({
       <h1 className="text-2xl font-bold">Cannabis dispensaries in {stateName}</h1>
       <p className="text-muted mt-1 text-sm">
         {total.toLocaleString()} {total === 1 ? 'dispensary' : 'dispensaries'}
-        {cities.length > 0 && <> across {cities.length} {cities.length === 1 ? 'city' : 'cities'}</>}.
-        Choose a city to see its shops.
+        {cities.length > 0 && (
+          <>
+            {' '}
+            across {cities.length} {cities.length === 1 ? 'city' : 'cities'}
+          </>
+        )}
+        . Choose a city to see its shops.
       </p>
 
       {total === 0 ? (
@@ -128,8 +157,8 @@ export default async function StateDispensariesPage({
       {deliveryOnly > 0 && (
         <p className="text-muted mt-6 flex items-center gap-2 text-sm">
           <Truck className="h-4 w-4" />
-          {deliveryOnly} delivery-only {deliveryOnly === 1 ? 'service' : 'services'} in {stateName} —
-          see the{' '}
+          {deliveryOnly} delivery-only {deliveryOnly === 1 ? 'service' : 'services'} in {stateName}{' '}
+          — see the{' '}
           <Link href="/deliveries" className="text-primary hover:underline">
             delivery directory
           </Link>
@@ -137,14 +166,57 @@ export default async function StateDispensariesPage({
         </p>
       )}
 
+      {topShops.length > 0 && (
+        <section className="mt-12">
+          <h2 className="mb-4 text-lg font-semibold">Top-rated dispensaries in {stateName}</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {topShops.map((s) => (
+              <Link
+                key={s.slug}
+                href={`/dispensary/${s.slug}`}
+                className="rounded-card border-border bg-surface hover:border-primary/50 hover:shadow-card-hover group flex items-center justify-between gap-3 border p-4 transition-all"
+              >
+                <span className="min-w-0">
+                  <span className="group-hover:text-primary block truncate font-medium">
+                    {s.name}
+                  </span>
+                  {s.city && <span className="text-muted block truncate text-sm">{s.city}</span>}
+                </span>
+                <span className="text-muted flex shrink-0 items-center gap-1 text-sm">
+                  <RatingStars rating={s.rating_avg} size={13} />
+                  {s.rating_avg.toFixed(1)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="mt-12 max-w-3xl">
         <h2 className="mb-2 text-lg font-semibold">About cannabis dispensaries in {stateName}</h2>
         <p className="text-muted text-sm leading-relaxed">
           {stateName} is home to licensed cannabis dispensaries on Weedtip. Browse menus, compare
-          prices and deals, and read reviews to find the right shop near you. Always bring a
-          valid 21+ ID, and check your local regulations before you visit.
+          prices and deals, and read reviews to find the right shop near you. Always bring a valid
+          21+ ID, and check your local regulations before you visit.
         </p>
       </section>
+
+      {neighbors.length > 0 && (
+        <section className="mt-10">
+          <h2 className="mb-3 text-lg font-semibold">Explore nearby states</h2>
+          <nav className="flex flex-wrap gap-2">
+            {neighbors.map((n) => (
+              <Link
+                key={n.code}
+                href={`/dispensaries/${n.code.toLowerCase()}`}
+                className="border-border bg-surface hover:border-primary/50 text-muted hover:text-foreground rounded-full border px-3 py-1.5 text-sm transition-colors"
+              >
+                {n.name} <span className="text-muted/70">({n.count.toLocaleString()})</span>
+              </Link>
+            ))}
+          </nav>
+        </section>
+      )}
 
       <FaqSection items={faqs} />
     </main>
