@@ -54,7 +54,9 @@ export default async function StrainsPage({
         <div>
           <p className="eyebrow mb-1">Discover</p>
           <h1 className="text-2xl font-bold sm:text-3xl">Strains</h1>
-          <p className="text-muted mt-1">Explore effects, flavors, and where to find each strain.</p>
+          <p className="text-muted mt-1">
+            Explore effects, flavors, and where to find each strain.
+          </p>
         </div>
         <form className="relative w-full sm:w-64">
           {activeType && <input type="hidden" name="type" value={activeType} />}
@@ -67,7 +69,7 @@ export default async function StrainsPage({
         <Link
           href={typeHref()}
           className={cn(
-            'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+            'focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2',
             !activeType
               ? 'border-primary bg-primary-muted text-primary'
               : 'border-border text-muted hover:text-foreground',
@@ -80,7 +82,7 @@ export default async function StrainsPage({
             key={t}
             href={typeHref(t)}
             className={cn(
-              'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+              'focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2',
               activeType === t
                 ? 'border-primary bg-primary-muted text-primary'
                 : 'border-border text-muted hover:text-foreground',
@@ -97,7 +99,22 @@ export default async function StrainsPage({
       </p>
 
       {!strains || strains.length === 0 ? (
-        <div className="card text-muted p-10 text-center">No strains found.</div>
+        <div className="rounded-card border-border bg-surface text-muted border border-dashed p-10 text-center">
+          <p className="text-foreground font-medium">No strains found</p>
+          <p className="mt-1 text-sm">
+            {search
+              ? `Nothing matches "${search}"${activeType ? ` in ${TYPE_LABEL[activeType]}` : ''}.`
+              : 'No strains in this filter yet.'}
+          </p>
+          {(search || activeType) && (
+            <Link
+              href="/strains"
+              className="border-primary text-primary hover:bg-primary-muted focus-visible:ring-primary mt-4 inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+            >
+              Browse all strains
+            </Link>
+          )}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {strains.map((s) => (

@@ -518,8 +518,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <section id="stores" className="mt-8 scroll-mt-24">
           <h2 className="mb-1 text-lg font-semibold">Where to buy</h2>
           <p className="text-muted mb-3 text-sm">
-            {siblings.length + 1} shop{siblings.length === 0 ? '' : 's'} carry this — compare price
-            and open hours.
+            {siblings.length + 1} shops carry this — compare price and open hours.
           </p>
           <div className="rounded-card border-border bg-surface divide-border divide-y overflow-hidden border">
             {siblings.map((sib) => {
@@ -555,7 +554,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       )}
 
       <section id="reviews" className="mt-10 scroll-mt-24">
-        <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
+        <h2 className="mb-3 text-lg font-semibold">
+          Reviews{reviews && reviews.length > 0 ? ` (${reviews.length})` : ''}
+        </h2>
         {user ? (
           <div className="rounded-card border-border bg-surface mb-6 border p-4">
             <p className="mb-3 text-sm font-medium">
@@ -604,7 +605,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             ))}
           </div>
         ) : (
-          <p className="text-muted">No reviews yet. Be the first.</p>
+          <div className="rounded-card border-border bg-surface text-muted border border-dashed p-6 text-center text-sm">
+            <p className="text-foreground font-medium">No reviews yet</p>
+            <p className="mt-1">
+              {user ? 'Be the first to review this product.' : 'Sign in above to be the first.'}
+            </p>
+          </div>
         )}
       </section>
 

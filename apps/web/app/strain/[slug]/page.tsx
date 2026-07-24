@@ -416,7 +416,13 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
       )}
 
       <section className="mt-10">
-        <h2 className="mb-3 text-lg font-semibold">Where to buy</h2>
+        <h2 className="mb-1 text-lg font-semibold">Where to buy</h2>
+        {products && products.length > 0 && (
+          <p className="text-muted mb-3 text-sm">
+            {products.length} listing{products.length === 1 ? '' : 's'} carrying {strain.name} at
+            active dispensaries.
+          </p>
+        )}
         {!products || products.length === 0 ? (
           <div className="rounded-card border-border bg-surface flex flex-wrap items-center justify-between gap-3 border p-5">
             <p className="text-muted text-sm">
@@ -510,7 +516,7 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
             <Link
               key={l.href}
               href={l.href}
-              className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors"
+              className="border-border bg-surface hover:border-primary/50 hover:text-primary focus-visible:ring-primary inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
             >
               {l.label}
             </Link>
