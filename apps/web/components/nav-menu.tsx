@@ -90,7 +90,13 @@ export function NavMenu({
     };
   }, []);
 
-  const roleLabel = isAdmin ? 'Admin' : isOwner ? 'Owner' : isBrandOwner ? 'Brand owner' : 'Shopper';
+  const roleLabel = isAdmin
+    ? 'Admin'
+    : isOwner
+      ? 'Owner'
+      : isBrandOwner
+        ? 'Brand owner'
+        : 'Shopper';
   const roleTone: 'primary' | 'outline' | 'muted' = isAdmin
     ? 'primary'
     : isOwner || isBrandOwner
@@ -168,7 +174,7 @@ export function NavMenu({
   // the "create an account" path, so the header doesn't need two buttons.
   const signedOutButtons = (
     <Link href="/sign-in">
-      <Button size="sm">Sign in</Button>
+      <Button size="md">Sign in</Button>
     </Link>
   );
 
@@ -270,32 +276,32 @@ export function NavMenu({
                 ))}
               </div>
 
-            <div className="border-border border-t pt-4">
-              {email ? (
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between px-1 pb-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {displayName ?? 'Your account'}
-                      </p>
-                      <p className="text-muted truncate text-xs">{email}</p>
+              <div className="border-border border-t pt-4">
+                {email ? (
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between px-1 pb-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {displayName ?? 'Your account'}
+                        </p>
+                        <p className="text-muted truncate text-xs">{email}</p>
+                      </div>
+                      <Badge tone={roleTone}>{roleLabel}</Badge>
                     </div>
-                    <Badge tone={roleTone}>{roleLabel}</Badge>
+                    {accountItems}
+                    <form action={signOut}>
+                      <button
+                        type="submit"
+                        className="text-muted hover:bg-surface-2 hover:text-foreground flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" /> Sign out
+                      </button>
+                    </form>
                   </div>
-                  {accountItems}
-                  <form action={signOut}>
-                    <button
-                      type="submit"
-                      className="text-muted hover:bg-surface-2 hover:text-foreground flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-                    >
-                      <LogOut className="h-4 w-4" /> Sign out
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                signedOutButtons
-              )}
-            </div>
+                ) : (
+                  signedOutButtons
+                )}
+              </div>
             </nav>
           </div>
         </>

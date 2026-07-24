@@ -15,7 +15,7 @@ export function EmptyState({
   action?: { href: string; label: string };
 }) {
   return (
-    <div className="rounded-card border-border bg-surface border p-10 text-center">
+    <div className="rounded-card border-border bg-surface border p-6 text-center sm:p-10">
       {Icon && (
         <div className="bg-surface-2 text-muted mx-auto flex h-12 w-12 items-center justify-center rounded-full">
           <Icon className="h-6 w-6" />

@@ -32,10 +32,10 @@ export default async function AdminBrands({
   return (
     <div className="space-y-4">
       {pending && pending.length > 0 && (
-        <div className="rounded-card border-amber-500/40 bg-amber-500/5 space-y-3 border p-4">
+        <div className="rounded-card space-y-3 border border-amber-500/40 bg-amber-500/5 p-4">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             Pending review
-            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-400">
+            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-700">
               {pending.length}
             </span>
           </h3>

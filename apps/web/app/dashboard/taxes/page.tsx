@@ -27,7 +27,7 @@ export default async function DashboardTaxes() {
       ) : (
         <UpgradeWall
           feature="Tax configuration"
-          description="Bill exact sales and excise taxes on orders and POS sales instead of an estimated rate. Upgrade to Growth to configure your taxes."
+          description="Bill exact sales and excise taxes on orders and POS sales instead of an estimated rate. Upgrade to Weedtip Pro to configure your taxes."
         />
       )}
     </div>

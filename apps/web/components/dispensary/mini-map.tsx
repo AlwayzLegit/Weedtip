@@ -22,9 +22,8 @@ export function MiniMap({ lat, lng, name }: { lat: number; lng: number; name: st
       <Map
         mapboxAccessToken={token}
         initialViewState={{ latitude: lat, longitude: lng, zoom: 14 }}
-        // Vibrant night map (lit roads/water) instead of the flat dark tiles —
-        // reads far better than dark-v11 while staying on-theme for the dark UI.
-        mapStyle="mapbox://styles/mapbox/navigation-night-v1"
+        // Daylight navigation tiles — on-theme for the light pastel UI.
+        mapStyle="mapbox://styles/mapbox/navigation-day-v1"
         style={{ width: '100%', height: '100%' }}
         scrollZoom={false}
         attributionControl={false}

@@ -35,7 +35,7 @@ export default async function EditDealPage({ params }: { params: Promise<{ id: s
       ) : (
         <UpgradeWall
           feature="Deals"
-          description="Editing and publishing deals is part of Growth. Upgrade to manage this deal — your listing stays free at 0% commission."
+          description="Editing and publishing deals is part of Weedtip Pro. Upgrade to manage this deal — your listing stays free at 0% commission."
         />
       )}
     </div>

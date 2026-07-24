@@ -292,7 +292,9 @@ export default async function AnalyticsPage({
             {RANGES.map((r) => (
               <Link
                 key={r.key}
-                href={r.key === '30d' ? '/dashboard/analytics' : `/dashboard/analytics?range=${r.key}`}
+                href={
+                  r.key === '30d' ? '/dashboard/analytics' : `/dashboard/analytics?range=${r.key}`
+                }
                 className={`px-3 py-1.5 font-medium ${r.key === range.key ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
               >
                 {r.label}
@@ -337,7 +339,9 @@ export default async function AnalyticsPage({
         <Stat
           label="Platform fees"
           value={formatPrice(platformFees)}
-          sub={feeBps ? `${(feeBps / 100).toFixed(feeBps % 100 ? 2 : 0)}% commission` : 'commission'}
+          sub={
+            feeBps ? `${(feeBps / 100).toFixed(feeBps % 100 ? 2 : 0)}% commission` : 'commission'
+          }
         />
         <Stat label="Net revenue" value={formatPrice(netRevenue)} sub="after platform fees" />
       </div>
@@ -396,13 +400,13 @@ export default async function AnalyticsPage({
         <div className="rounded-card border-border bg-surface-2 flex flex-wrap items-center justify-between gap-3 border p-4">
           <p className="text-muted flex items-center gap-2 text-sm">
             <Lock className="h-4 w-4 shrink-0" />
-            Top brands, sales-by-category, and deeper breakdowns are a Growth feature.
+            Top brands, sales-by-category, and deeper breakdowns are a Weedtip Pro feature.
           </p>
           <Link
             href="/dashboard/promote"
             className="text-primary shrink-0 text-sm font-medium hover:underline"
           >
-            Upgrade to Growth →
+            Upgrade to Weedtip Pro →
           </Link>
         </div>
       )}
@@ -416,7 +420,9 @@ export default async function AnalyticsPage({
             ) : (
               STATUS_ORDER.filter((s) => byStatus[s]).map((s) => (
                 <div key={s} className="flex items-center justify-between px-4 py-3 text-sm">
-                  <Badge tone={s === 'completed' || s === 'cancelled' ? 'muted' : 'primary'}>{s}</Badge>
+                  <Badge tone={s === 'completed' || s === 'cancelled' ? 'muted' : 'primary'}>
+                    {s}
+                  </Badge>
                   <span className="font-medium">{byStatus[s]}</span>
                 </div>
               ))
@@ -433,7 +439,8 @@ export default async function AnalyticsPage({
                 {dispensary.rating_count > 0 ? dispensary.rating_avg.toFixed(1) : '—'}
               </p>
               <p className="text-muted text-sm">
-                {dispensary.rating_count} review{dispensary.rating_count === 1 ? '' : 's'} (all-time)
+                {dispensary.rating_count} review{dispensary.rating_count === 1 ? '' : 's'}{' '}
+                (all-time)
               </p>
             </div>
           </div>

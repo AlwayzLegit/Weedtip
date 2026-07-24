@@ -65,7 +65,7 @@ export default async function LearnIndexPage({
           defaultValue={q ?? ''}
           placeholder="Search guides…"
           aria-label="Search guides"
-          className="border-border bg-surface focus:border-primary h-10 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors"
+          className="border-border bg-surface focus:border-primary h-10 w-full rounded-full border pl-9 pr-3 text-base outline-none transition-colors sm:text-sm"
         />
         {activeTopic && <input type="hidden" name="topic" value={activeTopic} />}
       </form>

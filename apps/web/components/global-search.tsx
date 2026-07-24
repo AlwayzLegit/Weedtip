@@ -161,7 +161,7 @@ export function GlobalSearch({ className }: { className?: string }) {
           aria-controls={showDropdown && itemCount > 0 ? 'global-search-listbox' : undefined}
           aria-autocomplete="list"
           aria-activedescendant={activeId}
-          className="border-border bg-surface focus-visible:ring-primary/40 focus-visible:border-primary/60 h-10 w-full rounded-full border pl-9 pr-14 text-sm outline-none transition-colors focus-visible:ring-2"
+          className="border-border bg-surface focus-visible:ring-primary/40 focus-visible:border-primary/60 h-10 w-full rounded-full border pl-9 pr-14 text-base outline-none transition-colors focus-visible:ring-2 sm:text-sm"
         />
         {/* Discoverability hint for the ⌘K palette (hidden while typing). */}
         {!query && (
@@ -174,9 +174,15 @@ export function GlobalSearch({ className }: { className?: string }) {
       {showDropdown && (
         <div className="border-border bg-surface shadow-card-hover absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-2xl border">
           {itemCount === 0 ? (
-            <p className="text-muted px-4 py-6 text-center text-sm">No matches yet — keep typing.</p>
+            <p className="text-muted px-4 py-6 text-center text-sm">
+              No matches yet — keep typing.
+            </p>
           ) : (
-            <ul id="global-search-listbox" role="listbox" className="max-h-[70vh] overflow-y-auto py-1">
+            <ul
+              id="global-search-listbox"
+              role="listbox"
+              className="max-h-[70vh] overflow-y-auto py-1"
+            >
               {places.map((p, i) => (
                 <li key={p.id} role="option" id={`gs-opt-${i}`} aria-selected={i === highlighted}>
                   <button
@@ -239,14 +245,20 @@ export function GlobalSearch({ className }: { className?: string }) {
                           <span className="text-muted block truncate text-xs">{r.subtitle}</span>
                         )}
                       </span>
-                      <span className="text-muted text-[10px] uppercase tracking-wide">{r.kind}</span>
+                      <span className="text-muted text-[10px] uppercase tracking-wide">
+                        {r.kind}
+                      </span>
                     </button>
                   </li>
                 );
               })}
               {/* Final option: keyboard-reachable SERP escape (arrow past the
                   last suggestion, like the ⌘K palette). */}
-              <li role="option" id={`gs-opt-${itemCount}`} aria-selected={highlighted === itemCount}>
+              <li
+                role="option"
+                id={`gs-opt-${itemCount}`}
+                aria-selected={highlighted === itemCount}
+              >
                 <button
                   type="button"
                   tabIndex={-1}
@@ -273,7 +285,9 @@ export function GlobalSearch({ className }: { className?: string }) {
           )}
           {/* Result-count announcement for screen readers. */}
           <p aria-live="polite" className="sr-only">
-            {itemCount > 0 ? `${itemCount} suggestion${itemCount === 1 ? '' : 's'}` : 'No matches yet'}
+            {itemCount > 0
+              ? `${itemCount} suggestion${itemCount === 1 ? '' : 's'}`
+              : 'No matches yet'}
           </p>
         </div>
       )}

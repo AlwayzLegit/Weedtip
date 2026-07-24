@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Team' };
 
-/** Owner-only team management. Team members are a Growth feature. */
+/** Owner-only team management. Team members are a Weedtip Pro feature. */
 export default async function DashboardTeam() {
   const { dispensary } = await requireDispensaryOwner();
   const canTeam = await getOwnerFeature('team');
@@ -23,10 +23,12 @@ export default async function DashboardTeam() {
         </p>
       </div>
 
-      {canTeam ? <TeamInner dispensaryId={dispensary.id} /> : (
+      {canTeam ? (
+        <TeamInner dispensaryId={dispensary.id} />
+      ) : (
         <UpgradeWall
           feature="Team members"
-          description="Add managers and staff to help run your shop. Upgrade to Growth to invite your team."
+          description="Add managers and staff to help run your shop. Upgrade to Weedtip Pro to invite your team."
         />
       )}
     </div>

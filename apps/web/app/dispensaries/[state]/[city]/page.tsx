@@ -448,7 +448,10 @@ export default async function CityDispensariesPage({
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {shops.filter((s) => s.rating_count > 0).length >= 3 && (
+        {/* Same qualification rule as loadBestOf: Weedtip reviews OR a fresh
+            Google rating — gating on first-party counts alone hid this link in
+            nearly every market. */}
+        {shops.filter((s) => displayRating(s) !== null).length >= 3 && (
           <Link
             href={`/best-dispensaries/${state.toLowerCase()}/${city.toLowerCase()}`}
             className="border-primary/25 bg-primary-subtle text-primary hover:border-primary/50 focus-visible:ring-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
@@ -456,7 +459,7 @@ export default async function CityDispensariesPage({
             <Award className="h-4 w-4" /> Best dispensaries in {cityName}, ranked →
           </Link>
         )}
-        {shops.filter((s) => s.rating_count > 0 && s.is_delivery).length >= 3 && (
+        {shops.filter((s) => displayRating(s) !== null && s.is_delivery).length >= 3 && (
           <Link
             href={`/best-delivery/${state.toLowerCase()}/${city.toLowerCase()}`}
             className="border-border bg-surface text-muted hover:border-primary/50 hover:text-primary focus-visible:ring-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"

@@ -103,8 +103,7 @@ export default async function AdminClaims() {
                     const strength = signals === 0 ? 'weak' : strong ? 'strong' : 'moderate';
                     const strengthClass = {
                       strong: 'border-primary/30 bg-primary-muted text-primary',
-                      moderate:
-                        'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
+                      moderate: 'border-amber-500/30 bg-amber-500/10 text-amber-700',
                       weak: 'border-danger/40 bg-danger/10 text-danger',
                     }[strength];
                     return (
@@ -132,9 +131,7 @@ export default async function AdminClaims() {
                               'not provided'
                             )}
                             {r.license_number &&
-                              (r.license_match
-                                ? ' — matches state record'
-                                : ' — no match on file')}
+                              (r.license_match ? ' — matches state record' : ' — no match on file')}
                           </li>
                           <li>
                             <span className={r.email_domain_match ? 'text-primary' : 'text-muted'}>

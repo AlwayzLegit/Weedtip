@@ -5,6 +5,7 @@ import { MapPin, Truck } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { FaqSection } from '@/components/seo/faq-section';
 import { JsonLd } from '@/components/seo/json-ld';
+import { displayRating, GOOGLE_RATING_COLUMNS } from '@/lib/google-rating';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { activeStateCounts } from '@/lib/locations';
 import { US_STATE_NEIGHBORS } from '@/lib/state-adjacency';
@@ -66,15 +67,25 @@ export default async function StateDispensariesPage({
 
   // Top-rated shops link the state hub straight down to leaf dispensary pages
   // (not just to city hubs) — more inbound links for the pages that need them.
+  // "Rated" follows the sitewide rule (displayRating): Weedtip reviews first,
+  // fresh Google ratings as the fallback — first-party counts alone are near
+  // zero everywhere, which used to make this whole section vanish.
   const { data: topShopsRaw } = await supabase
     .from('dispensaries')
-    .select('slug,name,city,rating_avg,rating_count,license_number')
+    .select(`slug,name,city,rating_avg,rating_count,license_number,${GOOGLE_RATING_COLUMNS}`)
     .eq('status', 'active')
     .eq('state', code)
     .order('rating_count', { ascending: false })
-    .order('rating_avg', { ascending: false })
-    .limit(12);
-  const topShops = (topShopsRaw ?? []).filter((s) => (s.rating_count ?? 0) > 0);
+    .order('google_rating_count', { ascending: false, nullsFirst: false })
+    .limit(60);
+  const topShops = (topShopsRaw ?? [])
+    .map((s) => ({ ...s, shown: displayRating(s) }))
+    .filter(
+      (s): s is typeof s & { shown: NonNullable<ReturnType<typeof displayRating>> } =>
+        s.shown !== null,
+    )
+    .sort((a, b) => b.shown.count - a.shown.count || b.shown.rating - a.shown.rating)
+    .slice(0, 12);
 
   // Neighboring states that also have listings — lateral hub cross-links.
   const counts = await activeStateCounts();
@@ -183,8 +194,10 @@ export default async function StateDispensariesPage({
                   {s.city && <span className="text-muted block truncate text-sm">{s.city}</span>}
                 </span>
                 <span className="text-muted flex shrink-0 items-center gap-1 text-sm">
-                  <RatingStars rating={s.rating_avg} size={13} />
-                  {s.rating_avg.toFixed(1)}
+                  <RatingStars rating={s.shown.rating} size={13} />
+                  {s.shown.rating.toFixed(1)}
+                  {/* Provenance: a Google-sourced number is always named as Google's. */}
+                  {s.shown.source === 'google' && <span className="text-xs">on Google</span>}
                 </span>
               </Link>
             ))}

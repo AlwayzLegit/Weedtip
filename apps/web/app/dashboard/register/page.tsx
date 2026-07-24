@@ -36,17 +36,17 @@ export default async function RegisterPage({
         )}
         <div className="card flex flex-col items-center gap-3 p-12 text-center">
           <Calculator className="text-primary h-8 w-8" />
-          <p className="text-lg font-semibold">POS comes with the Growth plan</p>
+          <p className="text-lg font-semibold">POS comes with Weedtip Pro</p>
           <p className="text-muted max-w-md text-sm">
             Ring up in-store sales right from your dashboard — sales post to your orders and
             analytics with no platform commission, and draw down inventory. The register isn&apos;t
-            enabled for {dispensary.name} yet: it&apos;s included with Growth ($99/mo).
+            enabled for {dispensary.name} yet: it&apos;s included with Weedtip Pro ($39/mo).
           </p>
           <Link
             href="/dashboard/promote"
             className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center rounded-lg px-6 text-sm font-medium transition-colors"
           >
-            Upgrade to Growth →
+            Upgrade to Weedtip Pro →
           </Link>
         </div>
       </div>
@@ -181,7 +181,9 @@ export default async function RegisterPage({
         </div>
         <div className="card flex items-center gap-3 p-4">
           <AlertTriangle
-            className={lowStock && lowStock.length > 0 ? 'text-danger h-5 w-5' : 'text-muted h-5 w-5'}
+            className={
+              lowStock && lowStock.length > 0 ? 'text-danger h-5 w-5' : 'text-muted h-5 w-5'
+            }
           />
           <div>
             <p className="text-xl font-bold">{lowStock?.length ?? 0}</p>

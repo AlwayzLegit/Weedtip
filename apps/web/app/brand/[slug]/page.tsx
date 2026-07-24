@@ -244,7 +244,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                 Visit website →
               </a>
             )}
-            {(user || canClaim) && (
+            {(user || !brand.owner_id) && (
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 {user && (
                   <BrandFollowButton
@@ -254,6 +254,17 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                   />
                 )}
                 {canClaim && <ClaimBrandButton brandId={brand.id} />}
+                {/* A logged-out brand owner finding their unclaimed page is the
+                    claim funnel's most common first touch — show the entry point
+                    and return them here after sign-in. */}
+                {!user && !brand.owner_id && (
+                  <Link
+                    href={`/sign-in?next=${encodeURIComponent(`/brand/${brand.slug}`)}`}
+                    className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+                  >
+                    Claim this brand
+                  </Link>
+                )}
               </div>
             )}
           </div>

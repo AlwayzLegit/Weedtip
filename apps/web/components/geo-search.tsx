@@ -129,7 +129,7 @@ export function GeoSearch({
           aria-controls={showList ? 'geo-search-listbox' : undefined}
           aria-autocomplete="list"
           aria-activedescendant={activeId}
-          className="border-border bg-surface focus:border-primary h-9 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors"
+          className="border-border bg-surface focus:border-primary h-9 w-full rounded-full border pl-9 pr-3 text-base outline-none transition-colors sm:text-sm"
         />
       </form>
 

@@ -234,7 +234,7 @@ export function MarketFeed({
           {/* Location changes live in the header's market picker — one
               location control for the session, not a second one per rail. */}
           <Link href={scoped && st ? `/dispensaries?state=${market}` : '/dispensaries'}>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="h-11 sm:h-9">
               View all <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
@@ -266,7 +266,7 @@ export function MarketFeed({
               </h2>
             </div>
             <Link href={scoped && st ? `/deals/${st}` : '/deals'} className="shrink-0">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="h-11 sm:h-9">
                 View all <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>

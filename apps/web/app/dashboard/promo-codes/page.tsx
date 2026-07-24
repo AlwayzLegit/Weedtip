@@ -31,7 +31,11 @@ function discountLabel(d: Tables<'deals'>): string {
 }
 
 function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: '2-digit',
+  });
 }
 
 const AUDIENCE_LABEL: Record<string, string> = {
@@ -91,7 +95,11 @@ export default async function PromoCodesPage({
       cell: (d) => <span className="font-medium">{d.title}</span>,
       className: 'max-w-[16rem] truncate',
     },
-    { key: 'discount', header: 'Discount', cell: (d) => <span className="text-muted">{discountLabel(d)}</span> },
+    {
+      key: 'discount',
+      header: 'Discount',
+      cell: (d) => <span className="text-muted">{discountLabel(d)}</span>,
+    },
     {
       key: 'audience',
       header: 'Audience',
@@ -180,7 +188,7 @@ export default async function PromoCodesPage({
       </div>
 
       {!isPaid && (
-        <UpgradeBanner message="Promo codes are a Growth feature. You can review existing codes, but publishing new ones needs an upgrade." />
+        <UpgradeBanner message="Promo codes are a Weedtip Pro feature. You can review existing codes, but publishing new ones needs an upgrade." />
       )}
 
       {rows.length === 0 ? (

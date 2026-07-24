@@ -79,40 +79,40 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const settings = await getPlatformSettings();
   return (
     <ViewTransitions>
-      <html lang="en" className={`${manrope.variable} dark`}>
-      <body className="bg-background text-foreground flex min-h-screen flex-col font-sans antialiased">
-        {/* Sitewide brand + sitelinks-searchbox signals on every page. */}
-        <JsonLd
-          data={organizationJsonLd({
-            brandName: settings.brandName,
-            phoneE164: settings.phoneE164,
-            addressLocality: settings.addressLocality,
-            addressRegion: settings.addressRegion,
-            postalCode: settings.postalCode,
-            country: settings.country,
-            supportEmail: settings.supportEmail,
-          })}
-        />
-        <JsonLd data={websiteJsonLd()} />
-        <a
-          href="#main-content"
-          className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:px-4 focus:py-2"
-        >
-          Skip to content
-        </a>
-        <PostHogProvider>
-          <CartProvider orderingEnabled={settings.orderingEnabled}>
-            <Navbar />
-            <div id="main-content" className="flex-1">
-              {children}
-            </div>
-            <Footer />
-            <CommandPalette />
-            <CartDrawer />
-          </CartProvider>
-          <AgeGate />
-        </PostHogProvider>
-      </body>
+      <html lang="en" className={manrope.variable}>
+        <body className="bg-background text-foreground flex min-h-screen flex-col font-sans antialiased">
+          {/* Sitewide brand + sitelinks-searchbox signals on every page. */}
+          <JsonLd
+            data={organizationJsonLd({
+              brandName: settings.brandName,
+              phoneE164: settings.phoneE164,
+              addressLocality: settings.addressLocality,
+              addressRegion: settings.addressRegion,
+              postalCode: settings.postalCode,
+              country: settings.country,
+              supportEmail: settings.supportEmail,
+            })}
+          />
+          <JsonLd data={websiteJsonLd()} />
+          <a
+            href="#main-content"
+            className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:px-4 focus:py-2"
+          >
+            Skip to content
+          </a>
+          <PostHogProvider>
+            <CartProvider orderingEnabled={settings.orderingEnabled}>
+              <Navbar />
+              <div id="main-content" className="flex-1">
+                {children}
+              </div>
+              <Footer />
+              <CommandPalette />
+              <CartDrawer />
+            </CartProvider>
+            <AgeGate />
+          </PostHogProvider>
+        </body>
       </html>
     </ViewTransitions>
   );

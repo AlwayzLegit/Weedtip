@@ -109,14 +109,14 @@ export function MenuBrowser({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Search ${dispensary.name}'s menu…`}
             aria-label="Search this menu"
-            className="border-border bg-surface focus:border-primary focus-visible:ring-primary/40 h-10 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors focus-visible:ring-2"
+            className="border-border bg-surface focus:border-primary focus-visible:ring-primary/40 h-10 w-full rounded-full border pl-9 pr-3 text-base outline-none transition-colors focus-visible:ring-2 sm:text-sm"
           />
         </div>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
           aria-label="Sort menu"
-          className="border-border bg-surface h-10 rounded-full border px-3 text-sm"
+          className="border-border bg-surface h-10 rounded-full border px-3 text-base sm:text-sm"
         >
           <option value="featured">Sort: Featured</option>
           <option value="price-asc">Price: low to high</option>
