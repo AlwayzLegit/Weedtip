@@ -344,7 +344,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
               <Link
                 key={s}
                 href={`/dispensary/${s}`}
-                className="border-border bg-surface hover:border-primary/50 rounded-full border px-3 py-1.5 text-sm transition-colors"
+                className="border-border bg-surface hover:border-primary/50 focus-visible:ring-primary rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2"
               >
                 {name}
               </Link>
@@ -429,6 +429,13 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           </div>
         )}
 
+        {(brandReviews ?? []).length === 0 && (
+          <div className="rounded-card border-border bg-surface text-muted mt-4 border border-dashed p-6 text-center text-sm">
+            <p className="text-foreground font-medium">No reviews yet</p>
+            <p className="mt-1">Be the first to rate {brand.name}.</p>
+          </div>
+        )}
+
         {(brandReviews ?? []).length > 0 && (
           <div className="mt-4 space-y-3">
             {(brandReviews ?? []).map((r) => (
@@ -468,7 +475,9 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                 <LogoImage src={b.logo_url} name={b.name} className="h-10 w-10 shrink-0" />
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold">{b.name}</span>
-                  <span className="text-muted block text-xs">{b.products} products</span>
+                  <span className="text-muted block text-xs">
+                    {b.products} product{b.products === 1 ? '' : 's'}
+                  </span>
                 </span>
               </Link>
             ))}
