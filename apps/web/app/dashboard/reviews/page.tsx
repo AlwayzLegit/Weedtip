@@ -37,7 +37,9 @@ export default async function DashboardReviews({
 
   // Filters (needs-response / replied + by star rating).
   const filter = sp.filter === 'needs_response' || sp.filter === 'replied' ? sp.filter : 'all';
-  const ratingFilter = ['1', '2', '3', '4', '5'].includes(sp.rating ?? '') ? Number(sp.rating) : null;
+  const ratingFilter = ['1', '2', '3', '4', '5'].includes(sp.rating ?? '')
+    ? Number(sp.rating)
+    : null;
   const reviews = everything.filter((r) => {
     if (filter === 'needs_response' && r.owner_reply) return false;
     if (filter === 'replied' && !r.owner_reply) return false;
@@ -48,7 +50,7 @@ export default async function DashboardReviews({
   const qs = (next: { filter?: string; rating?: string }) => {
     const params = new URLSearchParams();
     const f = next.filter ?? filter;
-    const rt = next.rating ?? (ratingFilter?.toString() ?? '');
+    const rt = next.rating ?? ratingFilter?.toString() ?? '';
     if (f && f !== 'all') params.set('filter', f);
     if (rt) params.set('rating', rt);
     const s = params.toString();
@@ -76,8 +78,8 @@ export default async function DashboardReviews({
       </div>
 
       <p className="text-muted text-sm">
-        Respond publicly to reviews of {dispensary.name}. Your response appears beneath the review on
-        your listing.
+        Respond publicly to reviews of {dispensary.name}. Your response appears beneath the review
+        on your listing.
       </p>
 
       {ai && (
@@ -91,7 +93,8 @@ export default async function DashboardReviews({
                 <>
                   <p className="text-muted mt-1 text-sm">{dispensary.reviews_summary}</p>
                   <p className="text-muted mt-1 text-xs">
-                    Based on {dispensary.reviews_summary_count ?? 0} reviews
+                    Based on {dispensary.reviews_summary_count ?? 0}{' '}
+                    {(dispensary.reviews_summary_count ?? 0) === 1 ? 'review' : 'reviews'}
                     {dispensary.reviews_summary_at
                       ? ` · updated ${new Date(dispensary.reviews_summary_at).toLocaleDateString()}`
                       : ''}
@@ -118,7 +121,7 @@ export default async function DashboardReviews({
               <Link
                 key={f.key}
                 href={qs({ filter: f.key })}
-                className={`px-3 py-1.5 font-medium ${filter === f.key ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+                className={`focus-visible:ring-primary px-3 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${filter === f.key ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
               >
                 {f.label}
               </Link>
@@ -127,7 +130,7 @@ export default async function DashboardReviews({
           <div className="border-border bg-surface flex overflow-hidden rounded-lg border text-sm">
             <Link
               href={qs({ rating: '' })}
-              className={`px-3 py-1.5 font-medium ${ratingFilter === null ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+              className={`focus-visible:ring-primary px-3 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${ratingFilter === null ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
             >
               All ★
             </Link>
@@ -135,7 +138,7 @@ export default async function DashboardReviews({
               <Link
                 key={n}
                 href={qs({ rating: String(n) })}
-                className={`px-3 py-1.5 font-medium ${ratingFilter === n ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+                className={`focus-visible:ring-primary px-3 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${ratingFilter === n ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
               >
                 {n}★
               </Link>
@@ -145,12 +148,21 @@ export default async function DashboardReviews({
       )}
 
       {total === 0 ? (
-        <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
-          No reviews yet.
+        <div className="rounded-card border-border bg-surface text-muted border border-dashed p-10 text-center text-sm">
+          <p className="text-foreground font-medium">No reviews yet</p>
+          <p className="mt-1">
+            Reviews of {dispensary.name} will appear here as shoppers leave them.
+          </p>
         </div>
       ) : reviews.length === 0 ? (
-        <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
-          No reviews match this filter.
+        <div className="rounded-card border-border bg-surface text-muted border border-dashed p-10 text-center text-sm">
+          <p className="text-foreground font-medium">No reviews match this filter</p>
+          <Link
+            href="/dashboard/reviews"
+            className="border-primary text-primary hover:bg-primary-muted focus-visible:ring-primary mt-4 inline-flex items-center rounded-lg border px-4 py-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+          >
+            Clear filters
+          </Link>
         </div>
       ) : (
         <div className="space-y-4">

@@ -69,7 +69,7 @@ export function SetupChecklist({ steps }: { steps: SetupStep[] }) {
             {!s.done && (
               <Link
                 href={s.href}
-                className="text-primary shrink-0 text-sm font-medium hover:underline"
+                className="text-primary focus-visible:ring-primary shrink-0 rounded text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2"
               >
                 {s.cta}
               </Link>

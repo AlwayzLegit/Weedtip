@@ -23,7 +23,9 @@ function kindLabel(d: Tables<'deals'>): string {
     case 'fixed_amount':
       return `$${d.discount_value} off`;
     case 'price_target':
-      return d.target_price_cents != null ? `${formatPrice(d.target_price_cents)} price` : 'Set price';
+      return d.target_price_cents != null
+        ? `${formatPrice(d.target_price_cents)} price`
+        : 'Set price';
     case 'spend_threshold':
       return `Spend ${formatPrice(d.min_subtotal_cents ?? 0)} → ${d.discount_value}% off order`;
     case 'bogo':
@@ -37,11 +39,13 @@ function kindLabel(d: Tables<'deals'>): string {
 function mechanism(d: Tables<'deals'>): { label: string; tone: 'primary' | 'muted' | 'outline' } {
   if (d.kind === 'spend_threshold') return { label: 'Auto · order', tone: 'primary' };
   if (d.auto_apply) {
+    const catN = d.target_category_ids.length;
+    const prodN = d.target_product_ids.length;
     const scope =
       d.target_scope === 'category'
-        ? `${d.target_category_ids.length} categories`
+        ? `${catN} categor${catN === 1 ? 'y' : 'ies'}`
         : d.target_scope === 'products'
-          ? `${d.target_product_ids.length} products`
+          ? `${prodN} product${prodN === 1 ? '' : 's'}`
           : 'entire menu';
     return { label: `Auto · ${scope}`, tone: 'primary' };
   }
@@ -88,8 +92,16 @@ export default async function DashboardDeals() {
       )}
 
       {!deals || deals.length === 0 ? (
-        <div className="card text-muted p-10 text-center">
-          No specials yet. Create a storefront sale, promo code, or spend &amp; save offer.
+        <div className="rounded-card border-border bg-surface text-muted border border-dashed p-10 text-center">
+          <p className="text-foreground font-medium">No specials yet</p>
+          <p className="mt-1 text-sm">
+            Create a storefront sale, promo code, or spend &amp; save offer.
+          </p>
+          <Link href="/dashboard/deals/new" className="mt-4 inline-block">
+            <Button size="sm">
+              <Plus className="h-4 w-4" /> Create special
+            </Button>
+          </Link>
         </div>
       ) : (
         <div className="space-y-3">
@@ -113,26 +125,26 @@ export default async function DashboardDeals() {
                     />
                   )}
                   <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium">{deal.title}</p>
-                    <Badge tone={live ? 'primary' : 'muted'}>{live ? 'Live' : 'Inactive'}</Badge>
-                    {deal.featured && <Badge tone="outline">Featured</Badge>}
-                  </div>
-                  <p className="text-muted mt-1 text-sm">
-                    {kindLabel(deal)} · {new Date(deal.start_date).toLocaleDateString()} –{' '}
-                    {new Date(deal.end_date).toLocaleDateString()}
-                  </p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    <Badge tone={m.tone}>{m.label}</Badge>
-                    {deal.code && (
-                      <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono text-xs font-medium">
-                        {deal.code}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">{deal.title}</p>
+                      <Badge tone={live ? 'primary' : 'muted'}>{live ? 'Live' : 'Inactive'}</Badge>
+                      {deal.featured && <Badge tone="outline">Featured</Badge>}
+                    </div>
+                    <p className="text-muted mt-1 text-sm">
+                      {kindLabel(deal)} · {new Date(deal.start_date).toLocaleDateString()} –{' '}
+                      {new Date(deal.end_date).toLocaleDateString()}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                      <Badge tone={m.tone}>{m.label}</Badge>
+                      {deal.code && (
+                        <span className="border-primary/40 text-primary rounded border border-dashed px-1.5 py-0.5 font-mono text-xs font-medium">
+                          {deal.code}
+                        </span>
+                      )}
+                      <span className="text-muted text-xs">
+                        {reds} redemption{reds === 1 ? '' : 's'}
                       </span>
-                    )}
-                    <span className="text-muted text-xs">
-                      {reds} redemption{reds === 1 ? '' : 's'}
-                    </span>
-                  </div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

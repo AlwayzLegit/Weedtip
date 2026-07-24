@@ -113,7 +113,7 @@ export function DashboardNav({
             href={href}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+              'focus-visible:ring-primary flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2',
               active
                 ? 'bg-primary-muted text-primary ring-primary/20 ring-1 ring-inset'
                 : 'text-muted hover:bg-surface-2 hover:text-foreground',

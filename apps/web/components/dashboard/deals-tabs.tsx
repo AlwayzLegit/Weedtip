@@ -17,7 +17,7 @@ export function DealsTabs({ active }: { active: 'list' | 'schedule' }) {
           href={href}
           aria-current={active === key ? 'page' : undefined}
           className={cn(
-            'flex items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium transition-colors',
+            'focus-visible:ring-primary flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2',
             active === key
               ? 'bg-surface text-foreground shadow-sm'
               : 'text-muted hover:text-foreground',

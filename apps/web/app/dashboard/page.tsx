@@ -14,7 +14,15 @@ import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
-function Stat({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number | string;
+  accent?: boolean;
+}) {
   return (
     <div className="card sheen p-5">
       <p className={`text-2xl font-bold tracking-tight ${accent ? 'text-primary' : ''}`}>{value}</p>
@@ -184,7 +192,10 @@ export default async function DashboardOverview() {
       <div className="card p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Recent orders</h2>
-          <Link href="/dashboard/orders" className="text-primary text-sm hover:underline">
+          <Link
+            href="/dashboard/orders"
+            className="text-primary focus-visible:ring-primary rounded text-sm hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2"
+          >
             View all
           </Link>
         </div>
@@ -197,7 +208,11 @@ export default async function DashboardOverview() {
                 <span className="text-muted">{new Date(o.created_at).toLocaleDateString()}</span>
                 <span className="flex items-center gap-3">
                   <span className="font-medium">{formatPrice(o.total_cents)}</span>
-                  <Badge tone={o.status === 'completed' || o.status === 'cancelled' ? 'muted' : 'primary'}>
+                  <Badge
+                    tone={
+                      o.status === 'completed' || o.status === 'cancelled' ? 'muted' : 'primary'
+                    }
+                  >
                     {o.status}
                   </Badge>
                 </span>
