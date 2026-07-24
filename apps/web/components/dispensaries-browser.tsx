@@ -263,6 +263,10 @@ export function DispensariesBrowser({
   const searchedBounds = useRef<BBox>(initialBounds);
   const viewBounds = useRef<BBox>(initialBounds);
   const autoSearchNextMove = useRef(false);
+  // Set when the next auto-search is anchored to a user location (locate button
+  // or a picked place) — an empty result then widens to the nearest matches
+  // instead of dead-ending at "0 results" for someone in a sparse area.
+  const widenNextAuto = useRef(false);
   const moveDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const requestId = useRef(0);
   const pinsRequestId = useRef(0);
@@ -430,6 +434,8 @@ export function DispensariesBrowser({
         origin?: { lat: number; lng: number } | null;
         /** Set on the automatic nationwide retry after a zero-result text search. */
         widened?: boolean;
+        /** Location-anchored search (locate/place): widen to nearest if empty. */
+        widenIfEmpty?: boolean;
       },
     ) {
       const id = ++requestId.current;
@@ -463,14 +469,17 @@ export function DispensariesBrowser({
         return;
       }
       const rows = (data ?? []).map(toShop);
-      // A text search that misses in the current viewport retries nationwide
-      // (Weedmaps behavior) — the shop the user typed is usually just outside
-      // the visible area, and "0 results" for a real shop reads as broken.
+      // A search that misses in the current viewport retries nationwide
+      // (Weedmaps behavior) — for a text query the shop is usually just outside
+      // the visible area, and for a located user in a sparse area "0 results"
+      // reads as broken when the nearest shop is simply a town or two over.
+      // The widened pass keeps the origin + distance sort, so it surfaces the
+      // nearest matches rather than a blank list.
       if (
         !opts.append &&
         !opts.widened &&
         rows.length === 0 &&
-        (nextFilters.query ?? '').trim() &&
+        ((nextFilters.query ?? '').trim() || opts.widenIfEmpty) &&
         boundsChanged(bounds, US_BOUNDS)
       ) {
         void run(US_BOUNDS, nextFilters, { ...opts, widened: true });
@@ -656,7 +665,9 @@ export function DispensariesBrowser({
       syncViewportToUrl(bounds);
       if (autoSearchNextMove.current) {
         autoSearchNextMove.current = false;
-        void runSearch(bounds, filters, {});
+        const widenIfEmpty = widenNextAuto.current;
+        widenNextAuto.current = false;
+        void runSearch(bounds, filters, { widenIfEmpty });
         return;
       }
       if (autoSearch) {
@@ -679,11 +690,15 @@ export function DispensariesBrowser({
     // viewport with the new origin + distance sort.
     setFilters((f) => (f.sort === 'distance' ? f : { ...f, sort: 'distance' }));
     autoSearchNextMove.current = true;
+    // Sparse area? Don't dead-end at zero — widen to the nearest shops.
+    widenNextAuto.current = true;
   }, []);
 
   // Geocoder pick: fly the map to the place; the resulting moveend re-searches.
   const handlePlace = useCallback((place: GeoPlace) => {
     autoSearchNextMove.current = true;
+    // A picked place with nothing nearby widens to the nearest matches too.
+    widenNextAuto.current = true;
     if (place.bbox) mapApi.current?.fitBounds(place.bbox);
     else mapApi.current?.flyTo(place.center, 12);
   }, []);
