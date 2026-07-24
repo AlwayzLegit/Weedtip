@@ -159,6 +159,7 @@ export function DispensariesBrowser({
   heading,
   variant = 'page',
   syncUrl = false,
+  noun = { one: 'dispensary', many: 'dispensaries' },
 }: {
   initialShops: BrowserShop[];
   initialTotal: number;
@@ -168,6 +169,8 @@ export function DispensariesBrowser({
   heading?: string;
   variant?: 'page' | 'embedded';
   syncUrl?: boolean;
+  /** What one result is called — e.g. delivery pages pass "delivery service". */
+  noun?: { one: string; many: string };
 }) {
   const supabase = useMemo(() => createClient(), []);
 
@@ -183,6 +186,9 @@ export function DispensariesBrowser({
   const [sheetSnap, setSheetSnap] = useState<SheetSnap>('peek');
   const [showMore, setShowMore] = useState(false);
   const [areaChanged, setAreaChanged] = useState(false);
+  // A text search that missed nearby was retried nationwide — the result set is
+  // no longer "in this area", so the header says so instead of silently lying.
+  const [widened, setWidened] = useState(false);
   // Google Maps-style "search as I move": on by default, persisted per browser.
   const [autoSearch, setAutoSearch] = useState(true);
   // Row-level Save: the signed-in user's favorite set, loaded once. null user
@@ -472,6 +478,7 @@ export function DispensariesBrowser({
       }
       setTotal(data?.[0]?.total_count ?? (opts.append ? total : 0));
       setShops((prev) => (opts.append ? [...prev, ...rows] : rows));
+      if (!opts.append) setWidened(!!opts.widened && rows.length > 0);
       // The widened pass found matches elsewhere — bring them into view.
       if (opts.widened && rows.length > 0) {
         const pts = rows.filter((r) => typeof r.lat === 'number' && typeof r.lng === 'number');
@@ -763,7 +770,7 @@ export function DispensariesBrowser({
 
   const pillClass = (active: boolean) =>
     cn(
-      'shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+      'focus-visible:ring-primary shrink-0 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2',
       active
         ? 'border-primary bg-primary-muted text-primary'
         : 'border-border text-muted hover:text-foreground',
@@ -873,6 +880,17 @@ export function DispensariesBrowser({
   // rows), and the "Show more" pager. Rendered twice (desktop floating panel +
   // mobile sheet) with a distinct card-ref map each so the two DOM copies don't
   // collide on slug keys.
+  const hasActiveFilters =
+    !!filters.query ||
+    filters.openNow ||
+    filters.deals ||
+    filters.pickup ||
+    filters.delivery ||
+    filters.medical ||
+    filters.recreational ||
+    filters.amenities.length > 0 ||
+    filters.sort !== 'default';
+
   const listContent = (rowRefs: MutableRefObject<Map<string, HTMLDivElement>>) => (
     <>
       <p className="text-muted mb-2 px-3 text-sm" aria-live="polite">
@@ -880,9 +898,15 @@ export function DispensariesBrowser({
           <span className="inline-flex items-center gap-1.5">
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching…
           </span>
+        ) : widened ? (
+          <>
+            No matches nearby — showing {total.toLocaleString()}{' '}
+            {total === 1 ? noun.one : noun.many} across the US
+            {filters.query ? ` for “${filters.query}”` : ''}
+          </>
         ) : (
           <>
-            {total.toLocaleString()} {total === 1 ? 'dispensary' : 'dispensaries'} in this area
+            {total.toLocaleString()} {total === 1 ? noun.one : noun.many} in this area
             {filters.query ? ` for “${filters.query}”` : ''}
           </>
         )}
@@ -915,8 +939,17 @@ export function DispensariesBrowser({
           ))}
         </div>
       ) : shops.length === 0 && !loading ? (
-        <div className="card text-muted mx-3 p-10 text-center text-sm">
-          No dispensaries match here. Zoom out, move the map, or clear filters.
+        <div className="card text-muted mx-3 p-8 text-center text-sm">
+          <p>No {noun.many} match here. Try zooming out or moving the map.</p>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => applyFilters(EMPTY_FILTERS)}
+              className="text-primary focus-visible:ring-primary mt-3 rounded-full font-medium hover:underline focus-visible:outline-none focus-visible:ring-2"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       ) : (
         <div
@@ -1017,7 +1050,7 @@ export function DispensariesBrowser({
               else stripCardRefs.current.delete(s.slug);
             }}
             className={cn(
-              'bg-surface border-border shadow-card flex w-[17rem] shrink-0 snap-center items-center gap-3 rounded-xl border p-2.5',
+              'bg-surface border-border shadow-card focus-visible:ring-primary flex w-[17rem] shrink-0 snap-center items-center gap-3 rounded-xl border p-2.5 focus-visible:outline-none focus-visible:ring-2',
               hovered === s.slug && 'border-primary/70',
             )}
           >
@@ -1031,7 +1064,7 @@ export function DispensariesBrowser({
               <p className="truncate text-sm font-semibold">{s.name}</p>
               <p className="text-muted truncate text-xs">
                 {s.rating > 0 ? `★ ${s.rating.toFixed(1)} · ` : s.licensed ? 'Licensed · ' : ''}
-                {s.city ?? 'Delivery only'}
+                {s.city || 'Delivery only'}
                 {formatDistance(s.distanceMeters) ? ` · ${formatDistance(s.distanceMeters)}` : ''}
               </p>
               <p className="mt-0.5 flex items-center gap-1.5 text-[11px]">
@@ -1052,7 +1085,7 @@ export function DispensariesBrowser({
       </div>
     ) : (
       <p className="text-muted px-4 py-4 text-sm">
-        {loading ? 'Searching this area…' : 'No dispensaries here — pan or zoom the map.'}
+        {loading ? 'Searching this area…' : `No ${noun.many} here — pan or zoom the map.`}
       </p>
     );
 
@@ -1089,10 +1122,13 @@ export function DispensariesBrowser({
         {/* Full-bleed map — fills the whole page (mobile is map-first, with the
             list in an overlaid bottom sheet below). */}
         <div className="absolute inset-0">
+          {/* Auto mode: the map's own toast owns the in-flight state. Manual
+              mode the "Search this area" button shows its own spinner, so we
+              suppress the map toast (searching) to avoid two indicators colliding. */}
           <BrowseMap
             pins={rankedPins}
             promoAds={promoAds}
-            searching={loading}
+            searching={loading && autoSearch}
             initialBounds={initialBounds}
             hoveredSlug={hovered}
             selected={popupShop}
@@ -1130,12 +1166,6 @@ export function DispensariesBrowser({
             />
             Search as map moves
           </label>
-
-          {loading && autoSearch && (
-            <span className="bg-surface/90 border-border text-muted absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium backdrop-blur">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Updating…
-            </span>
-          )}
         </div>
 
         {/* Mobile map-first bottom sheet: peek (carousel) → half → full (list). */}
@@ -1145,7 +1175,7 @@ export function DispensariesBrowser({
           label={
             loading
               ? 'Searching this area…'
-              : `${total.toLocaleString()} ${total === 1 ? 'dispensary' : 'dispensaries'} nearby`
+              : `${total.toLocaleString()} ${total === 1 ? noun.one : noun.many} nearby`
           }
           peek={mobileCarousel}
         >

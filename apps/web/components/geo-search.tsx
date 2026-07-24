@@ -126,7 +126,7 @@ export function GeoSearch({
           aria-label="Search by place or dispensary name"
           role="combobox"
           aria-expanded={showList}
-          aria-controls="geo-search-listbox"
+          aria-controls={showList ? 'geo-search-listbox' : undefined}
           aria-autocomplete="list"
           aria-activedescendant={activeId}
           className="border-border bg-surface focus:border-primary h-9 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors"
