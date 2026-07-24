@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
+
 /**
  * Root-level error boundary. Replaces the whole document (including <html>/<body>)
  * when an error escapes the root layout, so it can't use app styles — keep it
@@ -12,6 +15,11 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    // Root-layout crashes are the worst class of client failure — capture them.
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <html lang="en">
       <body
@@ -28,9 +36,7 @@ export default function GlobalError({
         }}
       >
         <div style={{ maxWidth: 440, padding: 24, textAlign: 'center' }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 8px' }}>
-            Something went wrong
-          </h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 8px' }}>Something went wrong</h1>
           <p style={{ color: '#57635C', margin: '0 0 20px', lineHeight: 1.5 }}>
             An unexpected error occurred. Try again, and if it keeps happening please come back
             shortly.

@@ -1066,7 +1066,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                         </Link>
                       </div>
                       <p className="text-muted mb-3 text-sm">
-                        Official brand lineups you can ask for at licensed shops like this one.
+                        Popular products you can ask for at licensed shops like this one.
                       </p>
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                         {catalogSpotlight.map((item) => (

@@ -304,7 +304,18 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
 
       {lineup && lineup.length > 0 && (
         <section id="lineup" className="mt-8 scroll-mt-24">
-          <h2 className="mb-3 text-lg font-semibold">Official lineup</h2>
+          {/* "Official" only when the brand actually manages this catalog —
+              unclaimed brands carry seeded/representative products, and calling
+              those official is false attribution of real trademarks. */}
+          <h2 className="mb-3 text-lg font-semibold">
+            {brand.owner_id ? 'Official lineup' : 'Popular products'}
+          </h2>
+          {!brand.owner_id && (
+            <p className="text-muted -mt-1 mb-3 text-sm">
+              Representative products in {brand.name}&apos;s categories — this catalog hasn&apos;t
+              been verified by the brand yet.
+            </p>
+          )}
           <div className="space-y-6">
             {[...lineupByCategory.entries()].map(([category, items]) => (
               <div key={category}>

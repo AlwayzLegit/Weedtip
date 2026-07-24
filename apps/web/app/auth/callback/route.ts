@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   // Only honor internal, single-slash paths to prevent open redirects.
   const nextParam = searchParams.get('next');
-  const next = typeof nextParam === 'string' && /^\/(?!\/)/.test(nextParam) ? nextParam : '/';
+  // Reject "\\" too: browsers treat /\evil.com as protocol-relative.
+  const next = typeof nextParam === 'string' && /^\/(?![/\\])/.test(nextParam) ? nextParam : '/';
 
   if (!code) {
     return NextResponse.redirect(`${origin}/sign-in?error=auth_callback_failed`);

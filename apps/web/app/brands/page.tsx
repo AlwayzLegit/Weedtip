@@ -242,7 +242,7 @@ export default async function BrandsPage({
                   b.count > 0
                     ? `${b.count} ${b.count === 1 ? 'product' : 'products'} in stores${selectedState ? ` in ${selectedState}` : ''}`
                     : b.lineupCount > 0
-                      ? `${b.lineupCount} in lineup`
+                      ? `${b.lineupCount} products tracked`
                       : 'New brand'
                 }
               />

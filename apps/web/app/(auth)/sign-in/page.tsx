@@ -11,7 +11,7 @@ export default async function SignInPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  const safeNext = typeof next === 'string' && /^\/(?!\/)/.test(next) ? next : undefined;
+  const safeNext = typeof next === 'string' && /^\/(?![/\\])/.test(next) ? next : undefined;
 
   const { user } = await getAuth();
   if (user) redirect(safeNext ?? '/');

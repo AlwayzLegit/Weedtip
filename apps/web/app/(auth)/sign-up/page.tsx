@@ -11,7 +11,7 @@ export default async function SignUpPage({
   searchParams: Promise<{ role?: string; next?: string }>;
 }) {
   const { role, next } = await searchParams;
-  const safeNext = typeof next === 'string' && /^\/(?!\/)/.test(next) ? next : undefined;
+  const safeNext = typeof next === 'string' && /^\/(?![/\\])/.test(next) ? next : undefined;
   const defaultRole =
     role === 'dispensary_owner' ? 'dispensary_owner' : role === 'brand' ? 'brand' : 'consumer';
 
