@@ -108,8 +108,16 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const supabase = await createClient();
-    const dispensaryRows = await fetchAll<{ city: string | null; state: string }>((f, t) =>
-      supabase.from('dispensaries').select('city, state').eq('status', 'active').range(f, t),
+    const dispensaryRows = await fetchAll<{
+      city: string | null;
+      state: string;
+      rating_count: number;
+    }>((f, t) =>
+      supabase
+        .from('dispensaries')
+        .select('city, state, rating_count')
+        .eq('status', 'active')
+        .range(f, t),
     );
     const productRows = await fetchAll<{
       category: { slug: string } | null;
@@ -155,11 +163,21 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
     // Local SEO landing pages: distinct states and state+city combinations.
     const stateSet = new Set<string>();
     const citySet = new Set<string>();
+    // "Best of" pages only exist for cities with enough rated shops (≥3) — mirror
+    // the page's own gate so the sitemap never lists a URL that 404s.
+    const ratedByCity = new Map<string, number>();
     for (const d of dispensaryRows) {
       const st = d.state.toLowerCase();
       stateSet.add(st);
-      if (d.city) citySet.add(`${st}/${citySlug(d.city)}`);
+      if (d.city) {
+        const loc = `${st}/${citySlug(d.city)}`;
+        citySet.add(loc);
+        if (d.rating_count > 0) ratedByCity.set(loc, (ratedByCity.get(loc) ?? 0) + 1);
+      }
     }
+    const bestOfCitySet = new Set(
+      [...ratedByCity.entries()].filter(([, n]) => n >= 3).map(([loc]) => loc),
+    );
 
     const locationRoutes: MetadataRoute.Sitemap = [
       ...[...stateSet].map((st) => ({
@@ -200,6 +218,13 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
           }),
         ),
       ),
+      // "Best of" ranked city pages — high-intent, evergreen landing pages.
+      ...[...bestOfCitySet].map((loc) => ({
+        url: `${SITE_URL}/best-dispensaries/${loc}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      })),
     ];
 
     return [...staticRoutes, ...locationRoutes];
