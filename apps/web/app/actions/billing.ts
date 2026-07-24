@@ -12,6 +12,7 @@ import {
   PLACEMENT_TYPE_LABEL,
   type PlacementType,
 } from '@/lib/placement-pricing';
+import { releasePlanFeaturedSlot } from '@/lib/plan-placement';
 import { promotionGate } from '@/lib/promotion-gate';
 import { rateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
@@ -109,6 +110,9 @@ export async function requestPlanChange(planId: string): Promise<BillingRequestR
     );
     if (error) return { ok: false, error: 'Could not change your plan.' };
     await service.rpc('grant_pos_addon', { p_dispensary_id: dispensary.id, p_enabled: false });
+    // The bundled Featured placement ends with the plan (a slot they bought
+    // a-la-carte is theirs and is left alone).
+    await releasePlanFeaturedSlot(dispensary.id);
     revalidatePath('/dashboard/promote');
     return { ok: true, message: 'You are on the Free plan.' };
   }
@@ -260,6 +264,8 @@ export async function cancelPlan(): Promise<BillingRequestResult> {
     .eq('dispensary_id', dispensary.id);
   if (error) return { ok: false, error: 'Could not cancel your plan.' };
   await service.rpc('grant_pos_addon', { p_dispensary_id: dispensary.id, p_enabled: false });
+  // The bundled Featured placement ends with the plan; a-la-carte slots stay.
+  await releasePlanFeaturedSlot(dispensary.id);
 
   await sendEmail({
     to: SALES_INBOX,

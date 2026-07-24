@@ -83,7 +83,7 @@ export default async function PromotePage() {
   const { data: adSlotSubs } = await supabase
     .from('ad_subscriptions')
     .select(
-      'id, status, price_paid, is_house, ends_at, slot:ad_slots(slot_type, region:ad_regions(name))',
+      'id, status, price_paid, is_house, plan_included, ends_at, slot:ad_slots(slot_type, region:ad_regions(name))',
     )
     .eq('dispensary_id', dispensary.id)
     .in('status', ['pending', 'active', 'past_due'])
@@ -96,6 +96,7 @@ export default async function PromotePage() {
         id: r.id,
         status: r.status,
         isHouse: r.is_house,
+        planIncluded: r.plan_included,
         priceCents: r.price_paid,
         endsAt: r.ends_at,
         slotType: slot.slot_type,
@@ -308,13 +309,15 @@ export default async function PromotePage() {
                   {h.slotType} spot — {h.regionName}
                 </p>
                 <p className="text-muted mt-0.5 text-xs">
-                  {h.isHouse
-                    ? 'Comped by Weedtip while the region ramps up — free, labeled "Featured".'
-                    : h.status === 'pending'
-                      ? `Reserved at ${formatPrice(h.priceCents)}/mo — our team is setting up billing (within 1 business day).`
-                      : h.status === 'past_due'
-                        ? `${formatPrice(h.priceCents)}/mo — payment past due; contact us to keep the spot.`
-                        : `Live at ${formatPrice(h.priceCents)}/mo${h.endsAt ? ` · current term ends ${new Date(h.endsAt).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' })}` : ''}.`}
+                  {h.planIncluded
+                    ? `Included with ${PAID_PLAN_NAME} — no extra charge, labeled "Featured".`
+                    : h.isHouse
+                      ? 'Comped by Weedtip while the region ramps up — free, labeled "Featured".'
+                      : h.status === 'pending'
+                        ? `Reserved at ${formatPrice(h.priceCents)}/mo — our team is setting up billing (within 1 business day).`
+                        : h.status === 'past_due'
+                          ? `${formatPrice(h.priceCents)}/mo — payment past due; contact us to keep the spot.`
+                          : `Live at ${formatPrice(h.priceCents)}/mo${h.endsAt ? ` · current term ends ${new Date(h.endsAt).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' })}` : ''}.`}
                 </p>
               </div>
               <Badge

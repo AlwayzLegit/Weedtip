@@ -70,6 +70,7 @@ export default async function AdminShopLookup({
     id: string;
     status: string;
     isHouse: boolean;
+    planIncluded: boolean;
     priceCents: number;
     slotType: string;
     regionName: string;
@@ -148,7 +149,9 @@ export default async function AdminShopLookup({
     // This shop's own ad slots, wherever they are.
     const { data: slotRows } = await supabase
       .from('ad_subscriptions')
-      .select('id,status,price_paid,is_house,slot:ad_slots(slot_type,region:ad_regions(name))')
+      .select(
+        'id,status,price_paid,is_house,plan_included,slot:ad_slots(slot_type,region:ad_regions(name))',
+      )
       .eq('dispensary_id', shop.id)
       .in('status', ['pending', 'active', 'past_due']);
     ownSlots = (slotRows ?? []).flatMap((r) => {
@@ -159,6 +162,7 @@ export default async function AdminShopLookup({
           id: r.id,
           status: r.status,
           isHouse: r.is_house,
+          planIncluded: r.plan_included,
           priceCents: r.price_paid,
           slotType: slot.slot_type,
           regionName: slot.region?.name ?? '—',
@@ -332,7 +336,9 @@ export default async function AdminShopLookup({
                     <span className="font-medium capitalize">{s.slotType}</span>
                     <span className="text-muted">— {s.regionName}</span>
                     <Badge tone={s.status === 'active' ? 'primary' : 'muted'}>{s.status}</Badge>
-                    {s.isHouse ? (
+                    {s.planIncluded ? (
+                      <Badge tone="outline">Included with Pro</Badge>
+                    ) : s.isHouse ? (
                       <Badge tone="outline">House</Badge>
                     ) : (
                       <span className="text-muted text-xs">{formatPrice(s.priceCents)}/mo</span>
