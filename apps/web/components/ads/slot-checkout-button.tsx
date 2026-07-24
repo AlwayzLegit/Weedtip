@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { track } from '@/lib/analytics';
 import { Button } from '../ui/button';
@@ -26,6 +27,7 @@ export function SlotCheckoutButton({
   const [pending, setPending] = useState(false);
   const [reserved, setReserved] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
 
   async function reserve() {
     setPending(true);
@@ -44,6 +46,9 @@ export function SlotCheckoutButton({
       if (res.ok && body.ok) {
         track('ad_slot_requested', { region_id: regionId, slot_type: slotType });
         setReserved(body.message ?? 'Slot reserved — our team will contact you to set up billing.');
+        // Re-render the server card so availability and the stepped price
+        // reflect the reservation instead of contradicting it.
+        router.refresh();
         setPending(false);
         return;
       }
@@ -77,7 +82,9 @@ export function SlotCheckoutButton({
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}
         {disabled ? 'Sold out' : label}
       </Button>
-      <p className="text-muted text-center text-[11px]">No card needed — we set up billing with you.</p>
+      <p className="text-muted text-center text-[11px]">
+        No card needed — we set up billing with you.
+      </p>
       {message && <p className="text-danger text-xs">{message}</p>}
     </div>
   );

@@ -92,7 +92,7 @@ export default async function BestOfHubPage() {
                       {m.hasDelivery && (
                         <Link
                           href={`/best-delivery/${m.state.toLowerCase()}/${m.citySlug}`}
-                          className="rounded-card border-border bg-surface text-muted hover:border-primary/50 hover:text-primary focus-visible:ring-primary flex shrink-0 items-center border px-3 transition-colors focus-visible:outline-none focus-visible:ring-2"
+                          className="rounded-card border-border bg-surface text-muted hover:border-primary/50 hover:text-primary focus-visible:ring-primary flex shrink-0 items-center border px-3.5 transition-colors focus-visible:outline-none focus-visible:ring-2"
                           aria-label={`Best delivery in ${m.city}`}
                           title={`Best delivery in ${m.city}`}
                         >

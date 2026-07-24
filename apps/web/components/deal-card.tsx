@@ -1,4 +1,5 @@
 import { Link } from 'next-view-transitions';
+import { Star } from 'lucide-react';
 import { dealBadge } from '@/lib/format';
 import { Badge } from './ui/badge';
 
@@ -12,6 +13,8 @@ export interface DealCardData {
   dispensaryName: string;
   city: string;
   state: string;
+  ratingAvg?: number | null;
+  ratingCount?: number | null;
 }
 
 export function DealCard({ deal }: { deal: DealCardData }) {
@@ -32,8 +35,17 @@ export function DealCard({ deal }: { deal: DealCardData }) {
             </span>
           </p>
         )}
-        <p className="text-muted mt-2 text-xs">
-          {deal.dispensaryName} · {deal.city}, {deal.state}
+        <p className="text-muted mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+          <span>
+            {deal.dispensaryName} · {deal.city}, {deal.state}
+          </span>
+          {deal.ratingAvg != null && deal.ratingAvg > 0 && (
+            <span className="inline-flex items-center gap-0.5">
+              <Star className="text-primary h-3 w-3 fill-current" />
+              {deal.ratingAvg.toFixed(1)}
+              {deal.ratingCount ? ` (${deal.ratingCount})` : ''}
+            </span>
+          )}
         </p>
       </div>
       <Badge tone="primary" className="shrink-0">

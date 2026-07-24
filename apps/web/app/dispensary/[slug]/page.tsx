@@ -760,10 +760,12 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
                   <Navigation className="h-4 w-4" /> Directions
                 </a>
               )}
+            {/* Call/Email hidden on mobile: the sticky action bar and Contact
+                card cover them there, keeping the pill row to one-two rows. */}
             {d.phone && (
               <a
                 href={`tel:${d.phone.replace(/[^+\d]/g, '')}`}
-                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+                className="border-border bg-surface hover:border-primary/50 hover:text-primary hidden items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors sm:inline-flex"
               >
                 <Phone className="h-4 w-4" /> Call
               </a>
@@ -771,7 +773,7 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
             {d.email && (
               <a
                 href={`mailto:${d.email}`}
-                className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+                className="border-border bg-surface hover:border-primary/50 hover:text-primary hidden items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors sm:inline-flex"
               >
                 <Mail className="h-4 w-4" /> Email
               </a>
@@ -1420,12 +1422,18 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               <ul className="space-y-2 text-sm">
                 {d.phone && (
                   <li className="flex items-center gap-2">
-                    <Phone className="text-muted h-4 w-4" /> {d.phone}
+                    <Phone className="text-muted h-4 w-4" />{' '}
+                    <a href={`tel:${d.phone.replace(/[^+\d]/g, '')}`} className="hover:underline">
+                      {d.phone}
+                    </a>
                   </li>
                 )}
                 {d.email && (
                   <li className="flex items-center gap-2">
-                    <Mail className="text-muted h-4 w-4" /> {d.email}
+                    <Mail className="text-muted h-4 w-4" />{' '}
+                    <a href={`mailto:${d.email}`} className="hover:underline">
+                      {d.email}
+                    </a>
                   </li>
                 )}
                 {paidListing && d.website && (

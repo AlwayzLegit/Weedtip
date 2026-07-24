@@ -151,7 +151,11 @@ export function CartView({
     setPromoError(null);
     const res = await previewPromo(cart.dispensaryId, promoInput, subtotalCents);
     if (res.ok) {
-      setPromo({ code: promoInput.trim().toUpperCase(), discountCents: res.discountCents, title: res.title });
+      setPromo({
+        code: promoInput.trim().toUpperCase(),
+        discountCents: res.discountCents,
+        title: res.title,
+      });
     } else {
       setPromo(null);
       setPromoError(res.error);
@@ -234,9 +238,9 @@ export function CartView({
         {cart.items.map((item) => (
           <div
             key={item.productId}
-            className="rounded-card border-border bg-surface shadow-card flex items-center gap-4 border p-4"
+            className="rounded-card border-border bg-surface shadow-card flex flex-wrap items-center gap-4 border p-4"
           >
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 basis-full sm:basis-auto">
               <p className="truncate font-medium">{item.name}</p>
               <p className="text-muted text-sm">{formatPrice(item.priceCents)} each</p>
             </div>
@@ -261,12 +265,12 @@ export function CartView({
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-            <span className="w-20 text-right font-medium">
+            <span className="w-16 text-right font-medium sm:w-20">
               {formatPrice(item.priceCents * item.quantity)}
             </span>
             <button
               onClick={() => removeItem(item.productId)}
-              className="text-muted hover:text-danger"
+              className="text-muted hover:text-danger -m-2 p-2"
               aria-label="Remove item"
             >
               <Trash2 className="h-4 w-4" />

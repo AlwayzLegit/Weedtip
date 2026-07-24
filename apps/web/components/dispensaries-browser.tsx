@@ -849,7 +849,7 @@ export function DispensariesBrowser({
       </div>
 
       {showMore && (
-        <div className="mt-3 space-y-3">
+        <div className="mt-3 max-h-[45vh] space-y-3 overflow-y-auto overscroll-contain">
           {filters.amenities.length > 0 && (
             <button
               type="button"
@@ -1113,6 +1113,15 @@ export function DispensariesBrowser({
     ) : (
       <p className="text-muted px-4 py-4 text-sm">
         {loading ? 'Searching this area…' : `No ${noun.many} here — pan or zoom the map.`}
+        {!loading && hasActiveFilters && (
+          <button
+            type="button"
+            onClick={() => applyFilters(EMPTY_FILTERS)}
+            className="text-primary ml-1 font-medium hover:underline"
+          >
+            Clear filters
+          </button>
+        )}
       </p>
     );
 
@@ -1171,7 +1180,7 @@ export function DispensariesBrowser({
             <button
               type="button"
               onClick={() => void runSearch(viewBounds.current, filters, {})}
-              className="bg-surface border-border text-foreground shadow-card-hover hover:border-primary/60 absolute left-1/2 top-3 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors"
+              className="bg-surface border-border text-foreground shadow-card-hover hover:border-primary/60 absolute left-1/2 top-14 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors lg:top-3"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1202,7 +1211,9 @@ export function DispensariesBrowser({
           label={
             loading
               ? 'Searching this area…'
-              : `${total.toLocaleString()} ${total === 1 ? noun.one : noun.many} nearby`
+              : widened
+                ? `${total.toLocaleString()} ${total === 1 ? noun.one : noun.many} across the US`
+                : `${total.toLocaleString()} ${total === 1 ? noun.one : noun.many} nearby`
           }
           peek={mobileCarousel}
         >

@@ -268,7 +268,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
               </div>
             )}
           </div>
-          <div className="flex gap-6 sm:flex-col sm:gap-3 sm:pt-4">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 sm:flex-col sm:gap-3 sm:pt-4">
             {stats.map((s) => (
               <Stat key={s.label} value={s.value} label={s.label} />
             ))}

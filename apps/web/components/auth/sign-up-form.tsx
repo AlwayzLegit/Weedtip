@@ -27,6 +27,10 @@ export function SignUpForm({
   const role = persona === 'brand' ? 'consumer' : persona;
   const nextValue = persona === 'brand' ? '/for-brands' : next;
 
+  // Latest birth date that still makes the user 21 — native date pickers open
+  // at a valid year and block ineligible dates before the server ever sees them.
+  const dobMax = new Date(Date.now() - 21 * 365.25 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+
   return (
     <form action={action} className="space-y-4">
       {/* OAuth still can't carry the dispensary_owner role through the profile
@@ -54,7 +58,7 @@ export function SignUpForm({
             type="button"
             onClick={() => setPersona(opt.value)}
             className={cn(
-              'rounded-lg border px-2 py-2 text-center text-sm font-medium transition-colors',
+              'min-h-11 rounded-lg border px-1.5 py-2 text-center text-sm font-medium leading-tight transition-colors',
               persona === opt.value
                 ? 'border-primary bg-primary-muted text-primary'
                 : 'border-border text-muted hover:text-foreground',
@@ -86,7 +90,7 @@ export function SignUpForm({
       </div>
       <div>
         <Label htmlFor="date_of_birth">Date of birth</Label>
-        <Input id="date_of_birth" name="date_of_birth" type="date" required />
+        <Input id="date_of_birth" name="date_of_birth" type="date" max={dobMax} required />
         <p className="text-muted mt-1 text-xs">You must be 21 or older.</p>
       </div>
 

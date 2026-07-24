@@ -43,7 +43,7 @@ export function ProductQuickAdd({
         setAdded(true);
         setTimeout(() => setAdded(false), 1200);
       }}
-      className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/50 absolute right-2 top-28 z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2"
+      className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/50 absolute right-2 top-[104px] z-10 flex h-11 w-11 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2"
     >
       {added ? <Check className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
     </button>

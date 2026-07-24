@@ -83,7 +83,7 @@ function OrderCard({ o }: { o: Order }) {
         <OrderStatusControl orderId={o.id} status={o.status} orderType={o.order_type} />
         <Link
           href={`/dashboard/orders/${o.id}`}
-          className="text-primary shrink-0 text-xs font-medium hover:underline"
+          className="text-primary -my-2 -mr-2 shrink-0 px-2 py-2 text-xs font-medium hover:underline"
         >
           Details →
         </Link>
@@ -132,8 +132,21 @@ export default async function DashboardOrders() {
       )}
 
       {all.length === 0 ? (
-        <div className="rounded-card border-border bg-surface text-muted border p-10 text-center">
-          No orders yet.
+        <div className="rounded-card border-border bg-surface border p-10 text-center">
+          <p className="text-foreground font-medium">No orders yet</p>
+          <p className="text-muted mt-1 text-sm">
+            Build out your menu and share your page to bring in your first order.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <Link href="/dashboard/products/new">
+              <Button size="sm">Add products</Button>
+            </Link>
+            <Link href={`/dispensary/${dispensary.slug}`}>
+              <Button size="sm" variant="outline">
+                View public page
+              </Button>
+            </Link>
+          </div>
         </div>
       ) : (
         <>

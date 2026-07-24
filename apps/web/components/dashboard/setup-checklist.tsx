@@ -94,14 +94,14 @@ export function SetupChecklist({ steps }: { steps: SetupStep[] }) {
               (s.locked ? (
                 <Link
                   href="/dashboard/promote"
-                  className="text-primary focus-visible:ring-primary shrink-0 rounded text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2"
+                  className="text-primary focus-visible:ring-primary -my-2.5 shrink-0 rounded px-1 py-2.5 text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2"
                 >
                   Upgrade
                 </Link>
               ) : (
                 <Link
                   href={s.href}
-                  className="text-primary focus-visible:ring-primary shrink-0 rounded text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2"
+                  className="text-primary focus-visible:ring-primary -my-2.5 shrink-0 rounded px-1 py-2.5 text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2"
                 >
                   {s.cta}
                 </Link>

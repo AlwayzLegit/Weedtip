@@ -5,7 +5,6 @@ import { ArrowRight, BookOpen, ChevronDown, Clock, Leaf, MapPin } from 'lucide-r
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { MediaImage } from '@/components/media-image';
 import { JsonLd } from '@/components/seo/json-ld';
-import { Button } from '@/components/ui/button';
 import { ARTICLES, articleHeroUrl, getArticle, relatedArticles } from '@/lib/learn';
 import { absoluteUrl, DEFAULT_OG_IMAGE, pageSeo } from '@/lib/seo';
 import { SITE_NAME } from '@/lib/site';
@@ -31,7 +30,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = getArticle(slug);
   if (!article) return { title: 'Learn' };
-  return pageSeo({ title: article.title, description: article.description, path: `/learn/${slug}` });
+  return pageSeo({
+    title: article.title,
+    description: article.description,
+    path: `/learn/${slug}`,
+  });
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -50,7 +53,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     description: article.description,
     datePublished: article.datePublished,
     dateModified: article.dateModified,
-    image: hero ? [absoluteUrl(hero), absoluteUrl(DEFAULT_OG_IMAGE)] : [absoluteUrl(DEFAULT_OG_IMAGE)],
+    image: hero
+      ? [absoluteUrl(hero), absoluteUrl(DEFAULT_OG_IMAGE)]
+      : [absoluteUrl(DEFAULT_OG_IMAGE)],
     mainEntityOfPage: absoluteUrl(`/learn/${slug}`),
     author: { '@type': 'Organization', name: SITE_NAME },
     publisher: {
@@ -92,7 +97,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <article>
         <Link
           href={`/learn?topic=${article.topic}`}
-          className="border-primary/30 bg-primary-muted text-primary inline-flex h-7 items-center rounded-full border px-3 text-xs font-semibold"
+          className="border-primary/30 bg-primary-muted text-primary inline-flex h-9 items-center rounded-full border px-3 text-xs font-semibold"
         >
           {article.topic}
         </Link>
@@ -207,10 +212,11 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             Compare menus, deals, and reviews at licensed dispensaries near you.
           </p>
         </div>
-        <Link href="/dispensaries" className="shrink-0">
-          <Button>
-            <MapPin className="h-4 w-4" /> Find dispensaries
-          </Button>
+        <Link
+          href="/dispensaries"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+        >
+          <MapPin className="h-4 w-4" /> Find dispensaries
         </Link>
       </div>
 

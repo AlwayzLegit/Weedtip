@@ -398,7 +398,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           )}
 
           {product.in_stock && dispensary && ordersEnabled && (
-            <div className="mt-5 max-w-sm">
+            <div id="add" className="mt-5 max-w-sm scroll-mt-24">
               <AddToCart
                 showQuantity
                 dispensary={{ id: dispensary.id, slug: dispensary.slug, name: dispensary.name }}
@@ -415,7 +415,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               we just point the shopper at the store instead of a dead cart. */}
           {product.in_stock && dispensary && !ordersEnabled && (
             <p className="text-muted mt-5 max-w-sm text-sm">
-              This shop doesn’t take orders through Weedtip yet — contact them directly to buy.
+              This shop doesn’t take orders through Weedtip yet — contact them directly to buy.{' '}
+              <Link
+                href={`/dispensary/${dispensary.slug}`}
+                className="text-primary font-medium hover:underline"
+              >
+                View store info &amp; hours →
+              </Link>
             </p>
           )}
 
@@ -652,12 +658,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </section>
       )}
 
-      {siblings.length > 0 && (
+      {product.in_stock && dispensary && ordersEnabled ? (
+        <>
+          <div aria-hidden className="h-20 lg:hidden" />
+          <StickyCtaBar href="#add" label="Add to bag" />
+        </>
+      ) : siblings.length > 0 ? (
         <>
           <div aria-hidden className="h-20 lg:hidden" />
           <StickyCtaBar href="#stores" label="Where to buy" />
         </>
-      )}
+      ) : null}
     </main>
   );
 }

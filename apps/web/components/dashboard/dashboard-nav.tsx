@@ -105,7 +105,8 @@ export function DashboardNav({
   const root = variant === 'owner' ? '/dashboard' : '/admin';
 
   return (
-    <nav className="flex gap-1.5 overflow-x-auto lg:flex-col lg:gap-1">
+    // On mobile the strip bleeds edge-to-edge so a cut-off item peeks as a scroll affordance.
+    <nav className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1.5 lg:mx-0 lg:flex-col lg:gap-1 lg:px-0 lg:pb-0">
       {items.map(({ href, label, icon: Icon }) => {
         const active = href === root ? pathname === root : pathname.startsWith(href);
         return (
@@ -114,7 +115,7 @@ export function DashboardNav({
             href={href}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'focus-visible:ring-primary flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2',
+              'focus-visible:ring-primary flex min-h-11 shrink-0 items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 lg:min-h-0 lg:py-2',
               active
                 ? 'bg-primary-muted text-primary ring-primary/20 ring-1 ring-inset'
                 : 'text-muted hover:bg-surface-2 hover:text-foreground',

@@ -18,9 +18,7 @@ import {
   placementPriceCents,
   PLACEMENT_MAX_DAYS,
   PLACEMENT_MIN_DAYS,
-  PLACEMENT_SCOPE_LABEL,
   PLACEMENT_TYPE_LABEL,
-  type PlacementScope,
   type PlacementType,
 } from '@/lib/placement-pricing';
 
@@ -205,6 +203,8 @@ export function PromoteBilling({
           deals={deals}
           products={products}
           creatives={creatives}
+          error={error}
+          notice={notice}
         />
       )}
     </div>
@@ -219,7 +219,6 @@ const PLACEMENT_TYPES: DispensaryPlacementType[] = [
   'promoted_deal',
   'promoted_product',
 ];
-const SCOPES: PlacementScope[] = ['city', 'state', 'nationwide'];
 
 function PlacementPurchase({
   pending,
@@ -229,6 +228,8 @@ function PlacementPurchase({
   deals,
   products,
   creatives,
+  error,
+  notice,
 }: {
   pending: boolean;
   go: (action: () => Promise<BillingRequestResult>) => void;
@@ -237,9 +238,11 @@ function PlacementPurchase({
   deals: Target[];
   products: Target[];
   creatives: Target[];
+  /** Repeated next to the buy button — the top-of-page copy is off-screen on mobile. */
+  error: string | null;
+  notice: string | null;
 }) {
   const [type, setType] = useState<DispensaryPlacementType>('featured');
-  const [scope, setScope] = useState<PlacementScope>('city');
   const [days, setDays] = useState(30);
   const [targetId, setTargetId] = useState('');
   const [creativeId, setCreativeId] = useState('');
@@ -247,18 +250,11 @@ function PlacementPurchase({
 
   const needsTarget = type === 'promoted_deal' || type === 'promoted_product';
   const targets = type === 'promoted_deal' ? deals : type === 'promoted_product' ? products : [];
-  // Featured products and the homepage hero sell on the region system and
-  // reserve nationwide (the team targets a metro on activation), so the geo
-  // Reach selector doesn't apply to them.
-  const isRegionReserve = type === 'promoted_product' || type === 'hero';
-  const effectiveScope: PlacementScope = isRegionReserve ? 'nationwide' : scope;
-  const price = useMemo(
-    () => placementPriceCents(type, effectiveScope, days),
-    [type, effectiveScope, days],
-  );
-
-  const scopeLabel = (s: PlacementScope) =>
-    s === 'city' ? `${city} only` : s === 'state' ? `${state} statewide` : 'Nationwide';
+  // Every dispensary placement is region-restricted: spots are limited scarce
+  // inventory and a shop promotes in its own market only, so there is no reach
+  // selector and pricing is always the local rate. (Hero/product reserves go
+  // through the slot system; the ad desk targets them to this shop's metro.)
+  const price = useMemo(() => placementPriceCents(type, 'city', days), [type, days]);
 
   const canBuy = !pending && days >= PLACEMENT_MIN_DAYS && (!needsTarget || !!targetId);
 
@@ -266,9 +262,9 @@ function PlacementPurchase({
     <section className="space-y-3">
       <h2 className="text-lg font-semibold">Promote your shop</h2>
       <p className="text-muted text-sm">
-        Promote your shop, deals, or products. Price scales with reach and duration; reserving is
-        free — our team confirms billing before anything goes live, and the placement expires
-        automatically.
+        Promote your shop, deals, or products in your market. Spots are limited per region and
+        priced by duration; reserving is free — our team confirms billing before anything goes live,
+        and the placement expires automatically.
       </p>
       <div className="rounded-card border-border bg-surface space-y-4 border p-5">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -290,26 +286,13 @@ function PlacementPurchase({
             </select>
           </label>
 
-          <label className="space-y-1.5 text-sm">
-            <span className="font-medium">Reach</span>
-            {isRegionReserve ? (
-              <div className="border-border bg-background text-muted flex h-[42px] items-center rounded-md border px-3 py-2 text-sm">
-                Nationwide · our team targets your market
-              </div>
-            ) : (
-              <select
-                className="border-border bg-background w-full rounded-md border px-3 py-2"
-                value={scope}
-                onChange={(e) => setScope(e.target.value as PlacementScope)}
-              >
-                {SCOPES.map((s) => (
-                  <option key={s} value={s}>
-                    {PLACEMENT_SCOPE_LABEL[s]} — {scopeLabel(s)}
-                  </option>
-                ))}
-              </select>
-            )}
-          </label>
+          <div className="space-y-1.5 text-sm">
+            <span className="font-medium">Where it shows</span>
+            <div className="border-border bg-background flex h-[42px] items-center gap-1.5 rounded-md border px-3 py-2 text-sm">
+              <MapPin className="text-primary h-4 w-4 shrink-0" />
+              <span className="truncate">{city ? `${city}, ${state}` : state} — your market</span>
+            </div>
+          </div>
 
           {needsTarget && (
             <label className="space-y-1.5 text-sm sm:col-span-2">
@@ -392,6 +375,17 @@ function PlacementPurchase({
           </label>
         </div>
 
+        {error && (
+          <p className="rounded-card border-danger/30 bg-danger/10 text-danger border px-4 py-2 text-sm">
+            {error}
+          </p>
+        )}
+        {notice && (
+          <p className="rounded-card border-primary/30 bg-primary-muted text-primary border px-4 py-2 text-sm">
+            {notice}
+          </p>
+        )}
+
         <div className="border-border flex items-center justify-between border-t pt-4">
           <div>
             <p className="text-lg font-semibold">{formatPrice(price)}</p>
@@ -404,7 +398,7 @@ function PlacementPurchase({
             onClick={() => {
               track('placement_requested', {
                 type,
-                scope: effectiveScope,
+                scope: 'city',
                 days,
                 price_cents: price,
               });
@@ -419,7 +413,7 @@ function PlacementPurchase({
                     ? reserveHeroSlotForShop({ days, creative_id: creativeId || undefined })
                     : requestPlacement({
                         type,
-                        scope,
+                        scope: 'city',
                         days,
                         target_id: needsTarget ? targetId : undefined,
                         creative_id: creativeId || undefined,

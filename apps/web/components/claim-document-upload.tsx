@@ -91,7 +91,7 @@ export function ClaimDocumentUpload({ name }: { name: string }) {
                 setFileName('');
               }}
               aria-label="Remove document"
-              className="hover:text-danger"
+              className="hover:text-danger -m-2 p-2"
             >
               <X className="h-3.5 w-3.5" />
             </button>

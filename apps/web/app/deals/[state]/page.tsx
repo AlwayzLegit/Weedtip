@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
+import { Link } from 'next-view-transitions';
 import { Tag } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DealCard } from '@/components/deal-card';
@@ -12,7 +13,8 @@ import { createStaticClient } from '@/lib/supabase/static';
 // Public, anon-only page — serve cached HTML and refresh every 15 min (ISR).
 export const revalidate = 900;
 
-const DEAL_SELECT = '*, dispensary:dispensaries!inner(slug,name,city,state,status)';
+const DEAL_SELECT =
+  '*, dispensary:dispensaries!inner(slug,name,city,state,status,rating_avg,rating_count)';
 
 type DealRow = {
   id: string;
@@ -21,10 +23,19 @@ type DealRow = {
   code: string | null;
   discount_type: string;
   discount_value: number;
-  dispensary: { slug: string; name: string; city: string; state: string } | null;
+  dispensary: {
+    slug: string;
+    name: string;
+    city: string;
+    state: string;
+    rating_avg: number | null;
+    rating_count: number | null;
+  } | null;
 };
 
-const activeDealsInState = cache(async function activeDealsInState(code: string): Promise<DealRow[]> {
+const activeDealsInState = cache(async function activeDealsInState(
+  code: string,
+): Promise<DealRow[]> {
   const supabase = createStaticClient();
   const nowIso = new Date().toISOString();
   const { data } = await supabase
@@ -55,11 +66,7 @@ export async function generateMetadata({
   return deals.length === 0 ? { ...meta, robots: { index: false, follow: true } } : meta;
 }
 
-export default async function StateDealsPage({
-  params,
-}: {
-  params: Promise<{ state: string }>;
-}) {
+export default async function StateDealsPage({ params }: { params: Promise<{ state: string }> }) {
   const { state } = await params;
   const code = state.toUpperCase();
   const stateName = US_STATES[code];
@@ -96,7 +103,7 @@ export default async function StateDealsPage({
           { name: stateName, href: `/deals/${state.toLowerCase()}` },
         ]}
       />
-      <h1 className="text-2xl font-bold">Cannabis deals in {stateName}</h1>
+      <h1 className="text-2xl font-bold sm:text-3xl">Cannabis deals in {stateName}</h1>
       <p className="text-muted mt-1 text-sm">
         {deals.length} active {deals.length === 1 ? 'deal' : 'deals'} from licensed dispensaries.
       </p>
@@ -106,6 +113,12 @@ export default async function StateDealsPage({
           <Tag className="text-muted mx-auto h-8 w-8" />
           <p className="mt-2 font-medium">No active deals in {stateName} right now</p>
           <p className="text-muted mt-1 text-sm">Check back soon for fresh offers.</p>
+          <Link
+            href={`/dispensaries/${state.toLowerCase()}`}
+            className="border-primary text-primary hover:bg-primary-muted focus-visible:ring-primary mt-4 inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+          >
+            Browse {stateName} dispensaries
+          </Link>
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -123,6 +136,8 @@ export default async function StateDealsPage({
                   dispensaryName: deal.dispensary.name,
                   city: deal.dispensary.city,
                   state: deal.dispensary.state,
+                  ratingAvg: deal.dispensary.rating_avg,
+                  ratingCount: deal.dispensary.rating_count,
                 }}
               />
             ) : null,

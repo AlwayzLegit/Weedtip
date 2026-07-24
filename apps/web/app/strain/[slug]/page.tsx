@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { ProductCard } from '@/components/product-card';
 import { StrainCard } from '@/components/strain-card';
 import { StrainFavoriteButton } from '@/components/strain/strain-favorite-button';
+import { StickyCtaBar } from '@/components/sticky-cta-bar';
 import { Badge } from '@/components/ui/badge';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -215,7 +216,7 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
               />
             </div>
           </div>
-          <h1 className="mt-2 text-3xl font-bold">{strain.name}</h1>
+          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{strain.name}</h1>
 
           <div className="mt-3 flex flex-wrap gap-2">
             {strain.thc_low != null && strain.thc_high != null && (
@@ -413,7 +414,7 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
         </section>
       )}
 
-      <section className="mt-10">
+      <section id="where-to-buy" className="mt-10 scroll-mt-24">
         <h2 className="mb-1 text-lg font-semibold">Where to buy</h2>
         {products && products.length > 0 && (
           <p className="text-muted mb-3 text-sm">
@@ -521,6 +522,9 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
           ))}
         </div>
       </section>
+
+      <div aria-hidden className="h-20 lg:hidden" />
+      <StickyCtaBar href="#where-to-buy" label="Where to buy" />
     </main>
   );
 }

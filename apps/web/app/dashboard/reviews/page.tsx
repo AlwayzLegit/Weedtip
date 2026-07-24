@@ -115,22 +115,22 @@ export default async function DashboardReviews({
       )}
 
       {total > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="border-border bg-surface flex overflow-hidden rounded-lg border text-sm">
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="border-border bg-surface flex shrink-0 overflow-hidden rounded-lg border text-sm">
             {FILTERS.map((f) => (
               <Link
                 key={f.key}
                 href={qs({ filter: f.key })}
-                className={`focus-visible:ring-primary px-3 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${filter === f.key ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+                className={`focus-visible:ring-primary whitespace-nowrap px-3 py-2 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${filter === f.key ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
               >
                 {f.label}
               </Link>
             ))}
           </div>
-          <div className="border-border bg-surface flex overflow-hidden rounded-lg border text-sm">
+          <div className="border-border bg-surface flex shrink-0 overflow-hidden rounded-lg border text-sm">
             <Link
               href={qs({ rating: '' })}
-              className={`focus-visible:ring-primary px-3 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${ratingFilter === null ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+              className={`focus-visible:ring-primary whitespace-nowrap px-3 py-2 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${ratingFilter === null ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
             >
               All ★
             </Link>
@@ -138,7 +138,7 @@ export default async function DashboardReviews({
               <Link
                 key={n}
                 href={qs({ rating: String(n) })}
-                className={`focus-visible:ring-primary px-3 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${ratingFilter === n ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
+                className={`focus-visible:ring-primary whitespace-nowrap px-3 py-2 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${ratingFilter === n ? 'bg-primary-muted text-primary' : 'text-muted hover:text-foreground'}`}
               >
                 {n}★
               </Link>

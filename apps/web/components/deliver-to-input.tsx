@@ -144,13 +144,21 @@ export function DeliverToInput({ className }: { className?: string }) {
         {result.kind === 'ok' && (
           <div className="mt-4">
             {result.shops.length === 0 ? (
-              <p className="text-muted text-sm">
-                No delivery services list{' '}
-                <strong>
-                  {result.county} County, {result.state}
-                </strong>{' '}
-                yet. New listings are added regularly — check back soon.
-              </p>
+              <>
+                <p className="text-muted text-sm">
+                  No delivery services list{' '}
+                  <strong>
+                    {result.county} County, {result.state}
+                  </strong>{' '}
+                  yet. New listings are added regularly — check back soon.
+                </p>
+                <Link
+                  href="/dispensaries?is_pickup=true"
+                  className="text-primary mt-2 inline-block text-sm font-medium hover:underline"
+                >
+                  Browse pickup dispensaries near you →
+                </Link>
+              </>
             ) : (
               <>
                 <p className="mb-3 text-sm font-medium">
