@@ -1,12 +1,16 @@
 import type { Metadata } from 'next';
+import { Link } from 'next-view-transitions';
+import { MapPin, Sparkles, Star } from 'lucide-react';
 import { deleteAdCreative, saveAdCreative } from '@/app/dashboard/actions';
 import { RenewalOfferCard } from '@/components/ads/renewal-offer-card';
 import { CreativeLibrary } from '@/components/dashboard/creative-library';
 import { EmbedSnippet } from '@/components/dashboard/embed-snippet';
 import { PromoteBilling } from '@/components/dashboard/promote-billing';
 import { Badge } from '@/components/ui/badge';
+import { getSlotAvailability, resolveGeo } from '@/lib/ad-serving';
 import { formatPrice } from '@/lib/format';
 import { requireOwnerDispensary } from '@/lib/owner';
+import { getDispensaryTier, PAID_PLAN_NAME, PAID_PLAN_PRICE } from '@/lib/plan';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
 
@@ -135,6 +139,22 @@ export default async function PromotePage() {
     ];
   });
 
+  // Resolve the shop's ad region + open inventory, so the page can show what the
+  // plan's included Featured placement actually covers (ads-bundling surface).
+  const tier = await getDispensaryTier(dispensary.id);
+  const isPaid = tier === 'paid';
+  const { data: coords } = await supabase
+    .from('dispensaries')
+    .select('latitude, longitude')
+    .eq('id', dispensary.id)
+    .maybeSingle();
+  const geo =
+    coords?.latitude != null && coords?.longitude != null
+      ? await resolveGeo(coords.longitude, coords.latitude)
+      : null;
+  const availability = geo ? ((await getSlotAvailability()).get(geo.regionId) ?? null) : null;
+  const featuredHold = slotHolds.find((h) => h.slotType === 'featured') ?? null;
+
   const plan = sub?.plan as { name: string; price_cents: number } | null;
   const live = (placements ?? []).filter(isLive);
   const statsByPlacement = new Map((stats ?? []).map((s) => [s.placement_id, s] as const));
@@ -155,9 +175,9 @@ export default async function PromotePage() {
         <div>
           <h1 className="text-2xl font-bold">Promote {dispensary.name}</h1>
           <p className="text-muted mt-1 text-sm">
-            Upgrade your plan or reserve placements to put your shop in front of more customers.
-            Reserving is free — our team confirms billing before anything is charged, and placements
-            expire automatically.
+            Your plan and every way to get in front of more customers, in one place. Reserving is
+            free — our team confirms billing before anything is charged, and placements expire
+            automatically.
           </p>
         </div>
         <a
@@ -167,6 +187,85 @@ export default async function PromotePage() {
           Marketing spend report →
         </a>
       </div>
+
+      {/* 1) Plan — the first decision, at the top. */}
+      <PromoteBilling
+        section="plans"
+        plans={(plans ?? []).map((pl) => ({
+          id: pl.id,
+          name: pl.name,
+          price_cents: pl.price_cents,
+          features: Array.isArray(pl.features) ? (pl.features as string[]) : [],
+        }))}
+        currentPlanName={sub?.status === 'active' ? (plan?.name ?? 'Free') : 'Free'}
+        planPending={sub?.status === 'pending'}
+        city={dispensary.city ?? ''}
+        state={dispensary.state}
+        deals={[]}
+        products={[]}
+      />
+
+      {/* 2) What Weedtip Pro's included Featured placement covers, for this shop's region. */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Featured placement in your region</h2>
+        {!geo ? (
+          <div className="rounded-card border-border bg-surface text-muted border p-5 text-sm">
+            {dispensary.city ? `${dispensary.city}, ${dispensary.state}` : dispensary.state} isn’t a
+            Weedtip ad region yet — we’ll open promotion here as the market grows.
+          </div>
+        ) : (
+          <div className="rounded-card border-primary/25 bg-primary-subtle border p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 font-semibold">
+                  <MapPin className="text-primary h-4 w-4" /> {geo.regionName}
+                </p>
+                {isPaid ? (
+                  featuredHold ? (
+                    <p className="text-muted mt-1 text-sm">
+                      Your {PAID_PLAN_NAME} Featured spot is{' '}
+                      {featuredHold.status === 'active'
+                        ? 'live'
+                        : 'being set up (within 1 business day)'}{' '}
+                      in {geo.regionName}.
+                    </p>
+                  ) : (
+                    <p className="text-muted mt-1 text-sm">
+                      {PAID_PLAN_NAME} includes a Featured spot here.{' '}
+                      {availability && availability.featuredOpen > 0
+                        ? 'A spot is open — reserve it below and our team activates it within 1 business day.'
+                        : 'The region is full right now; you’re first in line for the next opening.'}
+                    </p>
+                  )
+                ) : (
+                  <p className="text-muted mt-1 text-sm">
+                    Upgrade to {PAID_PLAN_NAME} (${PAID_PLAN_PRICE}/mo) to get a Featured spot in{' '}
+                    {geo.regionName} — plus every listing tool.
+                  </p>
+                )}
+                {availability && (
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                    <span className="border-border bg-surface inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5">
+                      <Star className="text-primary h-3 w-3" /> {availability.featuredOpen} of 3
+                      Featured open
+                    </span>
+                    <span className="border-border bg-surface inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5">
+                      {availability.premiumOpen} of 10 Premium open
+                    </span>
+                  </div>
+                )}
+              </div>
+              <Link
+                href={`/advertise/${geo.regionSlug}`}
+                className="border-primary text-primary hover:bg-primary-muted focus-visible:ring-primary shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+              >
+                <Sparkles className="mr-1 inline h-4 w-4" />
+                See {geo.regionName} placements →
+              </Link>
+            </div>
+          </div>
+        )}
+      </section>
 
       {renewalOffers.length > 0 && (
         <section className="space-y-3">
@@ -214,22 +313,6 @@ export default async function PromotePage() {
           ))}
         </section>
       )}
-
-      {/* Current plan */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Your plan</h2>
-        <div className="rounded-card border-border bg-surface flex items-center justify-between border p-5">
-          <div>
-            <p className="font-medium">{plan?.name ?? 'Free'}</p>
-            <p className="text-muted text-sm">
-              {plan && plan.price_cents > 0 ? `${formatPrice(plan.price_cents)}/mo` : 'No cost'}
-            </p>
-          </div>
-          <Badge tone={sub?.status === 'active' || !sub ? 'primary' : 'muted'}>
-            {sub?.status ?? 'active'}
-          </Badge>
-        </div>
-      </section>
 
       {/* Placements + insights (spec ⑥: scheduler view + performance) */}
       <section className="space-y-3">
@@ -315,14 +398,10 @@ export default async function PromotePage() {
         )}
       </section>
 
-      {/* Plans + self-serve placement requests */}
+      {/* Reserve an additional / à-la-carte placement (deals, products, wider reach). */}
       <PromoteBilling
-        plans={(plans ?? []).map((pl) => ({
-          id: pl.id,
-          name: pl.name,
-          price_cents: pl.price_cents,
-          features: Array.isArray(pl.features) ? (pl.features as string[]) : [],
-        }))}
+        section="placements"
+        plans={[]}
         currentPlanName={sub?.status === 'active' ? (plan?.name ?? 'Free') : 'Free'}
         planPending={sub?.status === 'pending'}
         city={dispensary.city ?? ''}
