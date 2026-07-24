@@ -36,6 +36,7 @@ export function PromoteBilling({
   deals,
   products,
   creatives = [],
+  section = 'all',
 }: {
   plans: Plan[];
   currentPlanName: string;
@@ -47,6 +48,8 @@ export function PromoteBilling({
   products: Target[];
   /** Creative library entries attachable to the placement (spec ⑥). */
   creatives?: Target[];
+  /** Render just the plan picker, just the placement form, or both. */
+  section?: 'all' | 'plans' | 'placements';
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -76,91 +79,95 @@ export function PromoteBilling({
       )}
 
       {/* Plans */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Plans</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {plans.map((pl) => {
-            const current = currentPlanName === pl.name;
-            const isPaid = pl.price_cents > 0;
-            return (
-              <div
-                key={pl.id}
-                className={`rounded-card bg-surface flex flex-col border p-5 ${
-                  current ? 'border-primary' : 'border-border'
-                }`}
-              >
-                <div className="flex items-baseline justify-between">
-                  <h3 className="font-semibold">{pl.name}</h3>
-                  {current && <Badge tone="primary">Current</Badge>}
-                  {!current && isPaid && planPending && <Badge tone="muted">Requested</Badge>}
-                </div>
-                <p className="mt-1 text-sm font-medium">
-                  {isPaid ? `${formatPrice(pl.price_cents)}/mo` : 'Free forever'}
-                </p>
-                <ul className="mt-3 flex-1 space-y-1.5">
-                  {pl.features.map((f) => (
-                    <li key={f} className="text-muted flex items-start gap-1.5 text-xs">
-                      <Check className="text-primary mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                {!current && (
-                  <div className="mt-4">
+      {section !== 'placements' && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Plans</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {plans.map((pl) => {
+              const current = currentPlanName === pl.name;
+              const isPaid = pl.price_cents > 0;
+              return (
+                <div
+                  key={pl.id}
+                  className={`rounded-card bg-surface flex flex-col border p-5 ${
+                    current ? 'border-primary' : 'border-border'
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="font-semibold">{pl.name}</h3>
+                    {current && <Badge tone="primary">Current</Badge>}
+                    {!current && isPaid && planPending && <Badge tone="muted">Requested</Badge>}
+                  </div>
+                  <p className="mt-1 text-sm font-medium">
+                    {isPaid ? `${formatPrice(pl.price_cents)}/mo` : 'Free forever'}
+                  </p>
+                  <ul className="mt-3 flex-1 space-y-1.5">
+                    {pl.features.map((f) => (
+                      <li key={f} className="text-muted flex items-start gap-1.5 text-xs">
+                        <Check className="text-primary mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  {!current && (
+                    <div className="mt-4">
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        variant={isPaid ? 'primary' : 'outline'}
+                        disabled={pending || (isPaid && planPending)}
+                        onClick={() => {
+                          if (isPaid)
+                            track('plan_change_requested', {
+                              plan: pl.name,
+                              price_cents: pl.price_cents,
+                            });
+                          go(() => requestPlanChange(pl.id));
+                        }}
+                      >
+                        {isPaid
+                          ? planPending
+                            ? 'Request sent'
+                            : `Upgrade to ${pl.name}`
+                          : 'Switch to Free'}
+                      </Button>
+                      {isPaid && (
+                        <p className="text-muted mt-1.5 text-center text-[11px]">
+                          No card needed — our team sets up billing with you.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {current && isPaid && (
                     <Button
                       size="sm"
-                      className="w-full"
-                      variant={isPaid ? 'primary' : 'outline'}
-                      disabled={pending || (isPaid && planPending)}
-                      onClick={() => {
-                        if (isPaid)
-                          track('plan_change_requested', {
-                            plan: pl.name,
-                            price_cents: pl.price_cents,
-                          });
-                        go(() => requestPlanChange(pl.id));
-                      }}
+                      variant="outline"
+                      className="mt-4 w-full"
+                      disabled={pending}
+                      onClick={() => go(() => cancelPlan())}
                     >
-                      {isPaid
-                        ? planPending
-                          ? 'Request sent'
-                          : `Upgrade to ${pl.name}`
-                        : 'Switch to Free'}
+                      Cancel plan
                     </Button>
-                    {isPaid && (
-                      <p className="text-muted mt-1.5 text-center text-[11px]">
-                        No card needed — our team sets up billing with you.
-                      </p>
-                    )}
-                  </div>
-                )}
-                {current && isPaid && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="mt-4 w-full"
-                    disabled={pending}
-                    onClick={() => go(() => cancelPlan())}
-                  >
-                    Cancel plan
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Reserve a placement */}
-      <PlacementPurchase
-        pending={pending}
-        go={go}
-        city={city}
-        state={state}
-        deals={deals}
-        products={products}
-        creatives={creatives}
-      />
+      {section !== 'plans' && (
+        <PlacementPurchase
+          pending={pending}
+          go={go}
+          city={city}
+          state={state}
+          deals={deals}
+          products={products}
+          creatives={creatives}
+        />
+      )}
     </div>
   );
 }
