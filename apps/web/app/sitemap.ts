@@ -112,10 +112,11 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
       city: string | null;
       state: string;
       rating_count: number;
+      is_delivery: boolean;
     }>((f, t) =>
       supabase
         .from('dispensaries')
-        .select('city, state, rating_count')
+        .select('city, state, rating_count, is_delivery')
         .eq('status', 'active')
         .range(f, t),
     );
@@ -164,19 +165,29 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
     const stateSet = new Set<string>();
     const citySet = new Set<string>();
     // "Best of" pages only exist for cities with enough rated shops (≥3) — mirror
-    // the page's own gate so the sitemap never lists a URL that 404s.
+    // the page's own gate so the sitemap never lists a URL that 404s. Delivery
+    // rankings gate on rated shops that actually deliver.
     const ratedByCity = new Map<string, number>();
+    const ratedDeliveryByCity = new Map<string, number>();
     for (const d of dispensaryRows) {
       const st = d.state.toLowerCase();
       stateSet.add(st);
       if (d.city) {
         const loc = `${st}/${citySlug(d.city)}`;
         citySet.add(loc);
-        if (d.rating_count > 0) ratedByCity.set(loc, (ratedByCity.get(loc) ?? 0) + 1);
+        if (d.rating_count > 0) {
+          ratedByCity.set(loc, (ratedByCity.get(loc) ?? 0) + 1);
+          if (d.is_delivery) {
+            ratedDeliveryByCity.set(loc, (ratedDeliveryByCity.get(loc) ?? 0) + 1);
+          }
+        }
       }
     }
     const bestOfCitySet = new Set(
       [...ratedByCity.entries()].filter(([, n]) => n >= 3).map(([loc]) => loc),
+    );
+    const bestDeliveryCitySet = new Set(
+      [...ratedDeliveryByCity.entries()].filter(([, n]) => n >= 3).map(([loc]) => loc),
     );
 
     const locationRoutes: MetadataRoute.Sitemap = [
@@ -221,6 +232,12 @@ async function pagesSitemap(): Promise<MetadataRoute.Sitemap> {
       // "Best of" ranked city pages — high-intent, evergreen landing pages.
       ...[...bestOfCitySet].map((loc) => ({
         url: `${SITE_URL}/best-dispensaries/${loc}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      })),
+      ...[...bestDeliveryCitySet].map((loc) => ({
+        url: `${SITE_URL}/best-delivery/${loc}`,
         lastModified: now,
         changeFrequency: 'weekly' as const,
         priority: 0.7,
