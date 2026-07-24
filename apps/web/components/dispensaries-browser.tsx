@@ -20,6 +20,7 @@ import type { BrowseMapApi, BrowserShop, MapPinPoint } from './browse-map';
 import { DispensaryResultRow } from './dispensary-result-row';
 import { GeoSearch, type GeoPlace } from './geo-search';
 import { MapBottomSheet, type SheetSnap } from './map-bottom-sheet';
+import { MapResultsMirror } from './map-results-mirror';
 import { MediaImage } from './media-image';
 import { RowQuickActions } from './row-quick-actions';
 
@@ -269,6 +270,15 @@ export function DispensariesBrowser({
   const stripScrollDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const stripProgrammatic = useRef(false);
   const mapApi = useRef<BrowseMapApi | null>(null);
+  // T10 deep-link: a ?sel= slug from the opening URL, consumed once the map has
+  // loaded so a shared link reopens that store's popup. selectFnRef defers to
+  // the latest handleSelect without an ordering dependency.
+  const restoreSelRef = useRef<string | null>(
+    typeof window !== 'undefined' && syncUrl
+      ? new URLSearchParams(window.location.search).get('sel')
+      : null,
+  );
+  const selectFnRef = useRef<(slug: string | null) => void>(() => {});
 
   // Mobile map view: swiping the bottom card strip highlights + recenters on
   // the card closest to the strip's center (Weedmaps' mobile pattern).
@@ -614,10 +624,24 @@ export function DispensariesBrowser({
 
   // The map fits initialBounds to its own aspect ratio, so the viewport it
   // actually shows is wider than what we searched — treat that as the baseline.
-  const handleLoadBounds = useCallback((bounds: BBox) => {
-    viewBounds.current = bounds;
-    searchedBounds.current = bounds;
-  }, []);
+  const handleLoadBounds = useCallback(
+    (bounds: BBox) => {
+      viewBounds.current = bounds;
+      searchedBounds.current = bounds;
+      // Restore a deep-linked selection once (map is ready): open its popup and
+      // fly to frame it. Falls back to just opening the popup if it's off-page.
+      const sel = restoreSelRef.current;
+      if (sel) {
+        restoreSelRef.current = null;
+        selectFnRef.current(sel);
+        const s = shops.find((x) => x.slug === sel);
+        if (s && typeof s.lat === 'number' && typeof s.lng === 'number') {
+          mapApi.current?.flyTo({ lat: s.lat, lng: s.lng }, 14);
+        }
+      }
+    },
+    [shops],
+  );
 
   const handleMoveEnd = useCallback(
     (bounds: BBox) => {
@@ -723,6 +747,19 @@ export function DispensariesBrowser({
     },
     [shops, supabase, scrollStripTo],
   );
+  selectFnRef.current = handleSelect;
+
+  // T10 deep-link: reflect the open store into the URL (?sel=slug) so a shared
+  // or refreshed link reopens the same popup. Composes with the filter/viewport
+  // writers — they preserve unrelated params.
+  useEffect(() => {
+    if (!syncUrl || typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (popupShop) params.set('sel', popupShop.slug);
+    else params.delete('sel');
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+  }, [popupShop, syncUrl]);
 
   const pillClass = (active: boolean) =>
     cn(
@@ -1031,6 +1068,10 @@ export function DispensariesBrowser({
       {filtersBar}
 
       <div className="relative min-h-0 flex-1">
+        {/* T9 — visually-hidden, keyboard-navigable mirror of the map pins so
+            the canvas map is operable by assistive tech. */}
+        <MapResultsMirror shops={shops} onFocusShop={setHovered} onBlur={() => setHovered(null)} />
+
         {/* Result list — desktop only: a floating panel hovering over the left
             edge of the full-bleed map (Weedmaps pattern) so the map keeps ONE
             scroll/zoom surface. On mobile the list lives in the bottom sheet. */}
