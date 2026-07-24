@@ -15,7 +15,11 @@
  * thing we actually want shops to earn.
  */
 
-/** Mirrors GOOGLE_RATING_TTL_DAYS in the enrichment action. */
+/**
+ * How long a cached Google rating may be shown before it must be re-fetched.
+ * Single source of truth: the admin backfill imports this to build its refresh
+ * queue, and the read path below treats anything older as absent.
+ */
 export const GOOGLE_RATING_TTL_DAYS = 30;
 
 const TTL_MS = GOOGLE_RATING_TTL_DAYS * 24 * 60 * 60 * 1000;

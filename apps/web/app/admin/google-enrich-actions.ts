@@ -2,6 +2,9 @@
 
 import type { OperatingHours } from '@weedtip/shared';
 import { requireAdmin } from '@/lib/admin';
+// A 'use server' module may only export async functions, so the caching window
+// lives in lib/google-rating.ts — the same constant that enforces it at read time.
+import { GOOGLE_RATING_TTL_DAYS } from '@/lib/google-rating';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -267,14 +270,6 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
     remaining: count ?? 0,
   };
 }
-
-/**
- * How long a cached Google rating may be shown before it must be re-fetched.
- * Google Maps Platform permits only temporary caching of Places content (place
- * IDs excepted), so stale ratings are neither displayed nor ranked on — see
- * lib/google-rating.ts, which enforces the same window at read time.
- */
-export const GOOGLE_RATING_TTL_DAYS = 30;
 
 export type RatingBackfillResult =
   | {
