@@ -12,6 +12,12 @@ import { FaqSection } from '@/components/seo/faq-section';
 import { ScrollCarousel } from '@/components/home/scroll-carousel';
 import { JsonLd } from '@/components/seo/json-ld';
 import { dealBadge } from '@/lib/format';
+import {
+  browserRatingProps,
+  cardRatingProps,
+  displayRating,
+  GOOGLE_RATING_COLUMNS,
+} from '@/lib/google-rating';
 import { citySlug, itemListJsonLd, pageSeo, US_STATES } from '@/lib/seo';
 import { getRegionPlacements, resolveGeo, type ResolvedGeo } from '@/lib/ad-serving';
 import { RegionSearchBeacon } from '@/components/ads/region-search-beacon';
@@ -23,8 +29,7 @@ import { STATE_BOUNDS, US_BOUNDS, type BBox } from '@/lib/us-state-bounds';
 // Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
 export const revalidate = 3600;
 
-const LOCATION_SELECT =
-  'id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone,license_number';
+const LOCATION_SELECT = `id,slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,latitude,longitude,hours,timezone,license_number,${GOOGLE_RATING_COLUMNS}`;
 
 // Cached per request so generateMetadata + the page don't each run the query.
 const loadCity = cache(async function loadCity(state: string, city: string) {
@@ -49,6 +54,10 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
     featured: boolean;
     rating_avg: number;
     rating_count: number;
+    google_rating: number | null;
+    google_rating_count: number | null;
+    google_rating_at: string | null;
+    google_maps_uri: string | null;
     latitude: number | null;
     longitude: number | null;
     hours: unknown;
@@ -475,10 +484,16 @@ export default async function CityDispensariesPage({
       {/* Editorial rails before the exhaustive finder (Weedmaps pattern):
           the market's best-rated shops and today's live deals. */}
       {(() => {
-        const topRated = [...shops]
-          .filter((s) => s.rating_count > 0 && s.rating_avg >= 4)
-          .sort((a, b) => b.rating_avg - a.rating_avg || b.rating_count - a.rating_count)
-          .slice(0, 6);
+        // Rated on Weedtip reviews where we have them, on the imported Google
+        // rating otherwise — the card labels which (see lib/google-rating.ts).
+        const topRated = shops
+          .flatMap((s) => {
+            const shown = displayRating(s);
+            return shown && shown.rating >= 4 ? [{ s, shown }] : [];
+          })
+          .sort((a, b) => b.shown.rating - a.shown.rating || b.shown.count - a.shown.count)
+          .slice(0, 6)
+          .map((x) => x.s);
         if (topRated.length < 2) return null;
         return (
           <section className="mt-8">
@@ -502,8 +517,7 @@ export default async function CityDispensariesPage({
                     isMedical: s.is_medical,
                     isRecreational: s.is_recreational,
                     featured: s.featured,
-                    rating: s.rating_avg,
-                    reviewCount: s.rating_count,
+                    ...cardRatingProps(s),
                     licensed: !!s.license_number,
                     hours: (s.hours ?? null) as OperatingHours | null,
                     timezone: s.timezone,
@@ -576,8 +590,7 @@ export default async function CityDispensariesPage({
                       dispensaryId: s.id,
                     }
                   : undefined,
-              rating: s.rating_avg,
-              reviewCount: s.rating_count,
+              ...browserRatingProps(s),
               licensed: !!s.license_number,
               lat: s.latitude,
               lng: s.longitude,

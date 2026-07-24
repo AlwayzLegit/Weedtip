@@ -8,6 +8,7 @@ import { PlacementBeacon } from '@/components/placement-beacon';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { dealBadge } from '@/lib/format';
+import { cardRatingProps, GOOGLE_RATING_COLUMNS } from '@/lib/google-rating';
 import { pageSeo } from '@/lib/seo';
 import { createClient } from '@/lib/supabase/server';
 
@@ -171,7 +172,7 @@ export default async function DealsPage({
       ? await supabase
           .from('dispensaries')
           .select(
-            'slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone',
+            `slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,rating_avg,rating_count,hours,timezone,${GOOGLE_RATING_COLUMNS}`,
           )
           .eq('status', 'active')
           .not('cover_image_url', 'is', null)
@@ -275,8 +276,7 @@ export default async function DealsPage({
                   isMedical: s.is_medical,
                   isRecreational: s.is_recreational,
                   featured: s.featured,
-                  rating: s.rating_avg,
-                  reviewCount: s.rating_count,
+                  ...cardRatingProps(s),
                   hours: (s.hours ?? null) as OperatingHours | null,
                   timezone: s.timezone,
                 }}

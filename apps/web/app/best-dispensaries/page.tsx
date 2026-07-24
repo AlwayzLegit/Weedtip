@@ -12,7 +12,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = pageSeo({
   title: 'Best dispensaries by city',
   description:
-    'Weedtip rankings of the best cannabis dispensaries and delivery services, city by city — each ranked by verified customer reviews. Find the top-rated shops near you.',
+    'Weedtip rankings of the best cannabis dispensaries and delivery services, city by city — each ranked by customer ratings. Find the top-rated shops near you.',
   path: '/best-dispensaries',
 });
 
@@ -42,10 +42,11 @@ export default async function BestOfHubPage() {
       </div>
       <h1 className="mt-3 text-3xl font-bold tracking-tight">Best dispensaries, city by city</h1>
       <p className="text-muted mt-2 max-w-2xl leading-relaxed">
-        The top-rated cannabis dispensaries in every market with enough reviews to rank, scored by a
-        confidence-weighted average of verified customer ratings — so consistency, not a lone
-        five-star, decides the order. Rankings update as new reviews come in, and positions are
-        never sold.
+        The top-rated cannabis dispensaries in every market with enough rated shops to rank, scored
+        by a confidence-weighted average of their customer ratings — so consistency, not a lone
+        five-star, decides the order. Where a shop has been reviewed on Weedtip we rank on those
+        reviews; otherwise we use its Google rating, shown and linked as Google&apos;s. Rankings
+        update as new ratings come in, and positions are never sold.
       </p>
 
       {markets.length === 0 ? (
@@ -53,7 +54,7 @@ export default async function BestOfHubPage() {
           <EmptyState
             icon={Award}
             title="Rankings are on the way"
-            description="Markets appear here once they have enough reviewed dispensaries to rank credibly. Browse the full directory in the meantime."
+            description="Markets appear here once they have enough rated dispensaries to rank credibly. Browse the full directory in the meantime."
             action={{ label: 'Browse dispensaries', href: '/dispensaries' }}
           />
         </div>

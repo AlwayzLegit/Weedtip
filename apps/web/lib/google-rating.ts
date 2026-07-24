@@ -79,7 +79,61 @@ export function displayRating(shop: RatedShopFields): DisplayRating | null {
   return null;
 }
 
+/**
+ * PostgREST column fragment for everything `displayRating` reads from Google.
+ * Append to a dispensary select so a surface can show an attributed rating.
+ */
+export const GOOGLE_RATING_COLUMNS =
+  'google_rating,google_rating_count,google_rating_at,google_maps_uri';
+
+/**
+ * Rating props for a DispensaryCard, with provenance. Returns an unrated card
+ * (which falls back to the licensed/new-listing cue) when there's nothing
+ * honest to show.
+ */
+export function cardRatingProps(shop: RatedShopFields): {
+  rating: number | null;
+  reviewCount: number;
+  ratingSource?: RatingSource;
+} {
+  const shown = displayRating(shop);
+  if (!shown) return { rating: null, reviewCount: 0 };
+  return { rating: shown.rating, reviewCount: shown.count, ratingSource: shown.source };
+}
+
+/**
+ * Same, for the map browser's shop shape — it carries a plain number, where 0
+ * means unrated and the card falls back to its Licensed / New listing cue.
+ */
+export function browserRatingProps(shop: RatedShopFields): {
+  rating: number;
+  reviewCount: number;
+  ratingSource?: RatingSource;
+} {
+  const p = cardRatingProps(shop);
+  return { rating: p.rating ?? 0, reviewCount: p.reviewCount, ratingSource: p.ratingSource };
+}
+
+/**
+ * Narrows the `rating_source` text the search RPCs return. Anything unexpected
+ * (or null, meaning unrated) becomes undefined rather than a bogus label.
+ */
+export function ratingSourceOf(value: string | null | undefined): RatingSource | undefined {
+  return value === 'google' || value === 'weedtip' ? value : undefined;
+}
+
 /** Short, honest attribution label for a rating's source. */
 export function ratingSourceLabel(source: RatingSource): string {
   return source === 'google' ? 'Rating from Google' : 'Weedtip reviews';
+}
+
+/**
+ * Names the rating sources actually behind a ranked list, for on-page copy.
+ * A page that ranks partly on Google data can't call itself "ranked by verified
+ * customer reviews", so the sentence is built from the real mix instead.
+ */
+export function sourceMixPhrase(sources: { weedtip: number; google: number }): string {
+  if (sources.weedtip > 0 && sources.google > 0) return 'customer ratings from Weedtip and Google';
+  if (sources.google > 0) return 'customer ratings from Google';
+  return 'verified Weedtip reviews';
 }

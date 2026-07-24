@@ -3,6 +3,7 @@ import type { OperatingHours } from '@weedtip/shared';
 import Link from 'next/link';
 import { DispensaryCard } from '@/components/dispensary-card';
 import { getAuth } from '@/lib/auth';
+import { cardRatingProps, GOOGLE_RATING_COLUMNS } from '@/lib/google-rating';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Favorites' };
@@ -16,7 +17,7 @@ export default async function FavoritesPage() {
   const { data: favorites } = await supabase
     .from('favorites')
     .select(
-      'created_at, dispensary:dispensaries(slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,status,rating_avg,rating_count,hours,timezone)',
+      `created_at, dispensary:dispensaries(slug,name,city,state,cover_image_url,logo_url,is_delivery,is_pickup,is_medical,is_recreational,featured,status,rating_avg,rating_count,hours,timezone,${GOOGLE_RATING_COLUMNS})`,
     )
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
@@ -57,8 +58,7 @@ export default async function FavoritesPage() {
             isMedical: d.is_medical,
             isRecreational: d.is_recreational,
             featured: d.featured,
-            rating: d.rating_avg,
-            reviewCount: d.rating_count,
+            ...cardRatingProps(d),
             hours: (d.hours ?? null) as OperatingHours | null,
             timezone: d.timezone,
           }}

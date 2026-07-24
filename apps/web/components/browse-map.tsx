@@ -17,6 +17,7 @@ import { BadgeCheck, Loader2, MapPin, Navigation, Store, Truck } from 'lucide-re
 import type { OperatingHours } from '@weedtip/shared';
 import type { AdSlotMeta } from './ads/ad-slot-beacon';
 import { formatDistance } from '@/lib/format';
+import type { RatingSource } from '@/lib/google-rating';
 import { cn } from '@/lib/utils';
 import type { BBox } from '@/lib/us-state-bounds';
 import { LogoImage } from './logo-image';
@@ -45,6 +46,8 @@ export interface BrowserShop {
   sponsored?: boolean;
   rating: number;
   reviewCount: number;
+  /** Where the rating came from — Google-sourced ratings are labeled as Google's. */
+  ratingSource?: RatingSource;
   /** State cannabis license on file — powers the "Licensed" trust cue. */
   licensed?: boolean;
   lat: number | null;
@@ -588,6 +591,7 @@ export function BrowseMap({
                     <span className="text-muted">
                       {selected.rating.toFixed(1)}
                       {selected.reviewCount ? ` (${selected.reviewCount})` : ''}
+                      {selected.ratingSource === 'google' && ' on Google'}
                     </span>
                   </p>
                 ) : selected.licensed ? (
