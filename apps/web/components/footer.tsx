@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { Link } from 'next-view-transitions';
 import { getAuth } from '@/lib/auth';
+import { activeStateCounts } from '@/lib/locations';
 import { getPlatformSettings } from '@/lib/settings';
 import { DealAlertSignup } from './deal-alert-signup';
 import { Logo } from './brand/logo';
@@ -46,7 +47,10 @@ function Column({ title, links }: { title: string; links: { href: string; label:
         {links.map((l) => (
           <li key={l.href}>
             {/* -my/py grow the tap target to ~36px without changing spacing. */}
-            <Link href={l.href} className="text-muted hover:text-foreground -my-2 inline-block py-2">
+            <Link
+              href={l.href}
+              className="text-muted hover:text-foreground -my-2 inline-block py-2"
+            >
               {l.label}
             </Link>
           </li>
@@ -57,7 +61,15 @@ function Column({ title, links }: { title: string; links: { href: string; label:
 }
 
 export async function Footer() {
-  const [{ user }, settings] = await Promise.all([getAuth(), getPlatformSettings()]);
+  const [{ user }, settings, states] = await Promise.all([
+    getAuth(),
+    getPlatformSettings(),
+    // Top states by listing count — puts every state directory hub one click
+    // from any page so the state → city → shop tree is crawlable, not sitemap-
+    // only (SEO cause C). Cached hourly; "All locations" links the full index.
+    activeStateCounts(),
+  ]);
+  const topStates = states.slice(0, 12);
   // Localize the deal-alert copy to the visitor's chosen market (nav selector
   // writes the wt_state cookie). Falls back to a generic "near you".
   const marketState = (await cookies()).get('wt_state')?.value ?? null;
@@ -105,6 +117,31 @@ export async function Footer() {
             }
           />
         </div>
+        {topStates.length > 0 && (
+          <div className="border-border mt-10 border-t pt-8">
+            <p className="text-foreground mb-3 text-sm font-semibold">
+              Browse dispensaries by state
+            </p>
+            <nav className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
+              {topStates.map((s) => (
+                <Link
+                  key={s.code}
+                  href={`/dispensaries/${s.code.toLowerCase()}`}
+                  className="text-muted hover:text-foreground -my-1 inline-block py-1"
+                >
+                  {s.name}
+                </Link>
+              ))}
+              <Link
+                href="/dispensaries/locations"
+                className="text-primary -my-1 inline-block py-1 font-medium hover:underline"
+              >
+                All locations →
+              </Link>
+            </nav>
+          </div>
+        )}
+
         <div className="border-border text-muted mt-10 border-t pt-6 text-xs">
           <nav className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
             {LEGAL.map((l) => (
