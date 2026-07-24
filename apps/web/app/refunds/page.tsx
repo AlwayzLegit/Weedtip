@@ -5,7 +5,7 @@ import { getPlatformSettings } from '@/lib/settings';
 export const metadata: Metadata = {
   title: 'Refund & Cancellation Policy',
   description:
-    'How order cancellations, refunds, and returns work for purchases placed through Weedtip.',
+    'How order cancellations and refunds work for orders reserved through Weedtip — you pay the dispensary directly, and refunds are handled by the dispensary.',
   alternates: { canonical: '/refunds' },
 };
 
@@ -23,26 +23,29 @@ export default async function RefundsPage() {
 
       <h2>Cancelling an order</h2>
       <p>
-        You may cancel an order at no charge at any time <strong>before the dispensary begins
-        preparing it</strong>. To cancel, use the cancel option on your order page (under{' '}
-        <a href="/orders">Your orders</a>) or contact the dispensary directly using the phone number
-        on its listing. Once an order is marked as being prepared, out for delivery, or ready for
-        pickup, cancellation is at the dispensary&apos;s discretion, subject to applicable law.
+        You may cancel an order at no charge at any time{' '}
+        <strong>before the dispensary begins preparing it</strong>. To cancel, use the cancel option
+        on your order page (under <a href="/orders">Your orders</a>) or contact the dispensary
+        directly using the phone number on its listing. Once an order is marked as being prepared,
+        out for delivery, or ready for pickup, cancellation is at the dispensary&apos;s discretion,
+        subject to applicable law.
       </p>
 
-      <h2>Refunds</h2>
+      <h2>Payment &amp; refunds</h2>
       <p>
-        Approved refunds are issued to your original payment method. Depending on your bank, funds
-        typically appear within <strong>5–10 business days</strong> of approval. Refunds are issued
-        in full for orders cancelled before preparation, for items that were charged but never
-        received, and for orders the dispensary could not fulfill.
+        <strong>Weedtip never charges shoppers.</strong> You pay the dispensary directly — at the
+        counter for pickup, or to the dispensary&apos;s driver on delivery. Because no payment
+        passes through Weedtip, all refunds, exchanges, and store credits for purchases are issued
+        by the dispensary under its own posted policies and applicable state law. Cancelling an
+        order before you&apos;ve paid simply releases it — there is nothing to refund.
       </p>
       <p>
         If you receive an incorrect, defective, mislabeled, or unsafe product, contact the
-        dispensary and Weedtip support within <strong>48 hours</strong> of your purchase. State
-        cannabis regulations restrict returns of cannabis products once they leave the licensed
-        premises; where a physical return is not permitted, the dispensary may offer a refund,
-        replacement, or store credit consistent with its license and state law.
+        dispensary within <strong>48 hours</strong> of your purchase, and let Weedtip support know
+        so we can assist with the dispute. State cannabis regulations restrict returns of cannabis
+        products once they leave the licensed premises; where a physical return is not permitted,
+        the dispensary may offer a refund, replacement, or store credit consistent with its license
+        and state law.
       </p>
 
       <h2>Shipping &amp; fulfillment</h2>
@@ -58,17 +61,17 @@ export default async function RefundsPage() {
       <h2>Unfulfilled and failed orders</h2>
       <p>
         If a delivery cannot be completed because valid ID could not be verified at handoff, or the
-        recipient was unavailable, the dispensary&apos;s failed-delivery policy applies and a
-        restocking or delivery fee may be deducted where permitted. If a dispensary cancels your
-        order (for example, an item went out of stock), you will receive a full refund
-        automatically.
+        recipient was unavailable, the dispensary&apos;s failed-delivery policy applies — since
+        payment happens at handoff, an uncompleted order is simply cancelled. If a dispensary
+        cancels your order (for example, an item went out of stock), you owe nothing and will be
+        notified.
       </p>
 
       <h2>Fees, deals, and promotions</h2>
       <p>
-        Discounts and promotional pricing are applied at the time of order and refunded
-        proportionally. Delivery fees are refunded when an order is cancelled before dispatch or
-        when the dispensary is unable to fulfill it.
+        Discounts and promotional pricing shown on Weedtip are applied by the dispensary at the time
+        you pay. Delivery fees, minimums, and how they apply to cancelled orders are set by each
+        dispensary and shown on its listing.
       </p>
 
       <h2>Advertising and business services</h2>

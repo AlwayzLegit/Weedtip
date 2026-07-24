@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { type ButtonHTMLAttributes } from 'react';
+import { type ComponentProps } from 'react';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg' | 'icon';
@@ -23,7 +23,9 @@ const SIZES: Record<Size, string> = {
   icon: 'h-10 w-10',
 };
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// ComponentProps (not ButtonHTMLAttributes) so React 19's ref-as-prop types
+// flow through — callers can pass ref without a forwardRef wrapper.
+export interface ButtonProps extends ComponentProps<'button'> {
   variant?: Variant;
   size?: Size;
 }

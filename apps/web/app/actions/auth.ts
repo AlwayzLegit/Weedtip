@@ -34,9 +34,10 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: error.message };
 
-  // Only honor internal, single-slash paths to prevent open-redirects.
+  // Only honor internal paths ("\\" rejected too — /\evil.com resolves
+  // protocol-relative in browsers) to prevent open-redirects.
   const next = formData.get('next');
-  const dest = typeof next === 'string' && /^\/(?!\/)/.test(next) ? next : '/';
+  const dest = typeof next === 'string' && /^\/(?![/\\])/.test(next) ? next : '/';
 
   revalidatePath('/', 'layout');
   redirect(dest);
@@ -72,9 +73,9 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     return { error: 'You must be 21 or older to use Weedtip.' };
   }
 
-  // Internal single-slash paths only — same rule as sign-in.
+  // Internal paths only ("\\" rejected too) — same rule as sign-in.
   const nextRaw = formData.get('next');
-  const dest = typeof nextRaw === 'string' && /^\/(?!\/)/.test(nextRaw) ? nextRaw : '/';
+  const dest = typeof nextRaw === 'string' && /^\/(?![/\\])/.test(nextRaw) ? nextRaw : '/';
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
