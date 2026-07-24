@@ -4,11 +4,12 @@ import { tierAtLeast, tierFromRank, type PlanTier } from './plan';
 import { createClient } from './supabase/server';
 
 /**
- * Brand plan gating — the same Free/Basic/Growth ladder as dispensaries, resolved
- * by the brand_tier() RPC (active brand subscription ∨ grandfathered floor).
+ * Brand plan gating — the same two-tier Free/Paid ladder as dispensaries,
+ * resolved by the brand_tier() RPC (active brand subscription ∨ grandfathered
+ * floor). Legacy brand subscriptions collapse to `paid`.
  *
  * Free brand: the claim/verify basics — name, logo, and core details, so the
- * brand page still looks right. Basic unlocks the working Brand Studio.
+ * brand page still looks right. Weedtip Pro unlocks the working Brand Studio.
  *
  * NOTE: Promote and Featured bids are deliberately NOT gated. Those are ad
  * purchases — putting a subscription in front of someone trying to spend money
@@ -26,19 +27,19 @@ export const BRAND_FEATURES: {
     key: 'brand_complete_profile',
     label: 'Complete brand profile',
     description: 'Description, website, and the full brand page.',
-    minTier: 'basic',
+    minTier: 'paid',
   },
   {
     key: 'brand_analytics',
     label: 'Brand analytics',
     description: 'Views, followers, and catalog performance.',
-    minTier: 'basic',
+    minTier: 'paid',
   },
   {
     key: 'brand_updates',
     label: 'Brand updates',
     description: 'Broadcast news to your followers.',
-    minTier: 'basic',
+    minTier: 'paid',
   },
 ];
 
@@ -63,4 +64,4 @@ export async function canUseBrandFeature(brandId: string, key: BrandFeatureKey):
 
 /** Shared copy for the upgrade prompt on gated Brand Studio features. */
 export const BRAND_UPGRADE_MESSAGE =
-  'This is a Basic feature. Upgrade to Basic to complete your brand profile, post updates, and see your brand analytics.';
+  'This is a Weedtip Pro feature. Upgrade to complete your brand profile, post updates, and see your brand analytics.';

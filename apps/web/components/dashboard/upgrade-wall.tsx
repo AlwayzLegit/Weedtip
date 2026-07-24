@@ -2,12 +2,9 @@ import Link from 'next/link';
 import { Lock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-/**
- * Which plan a gated feature upgrades to. Kept as a local literal (not imported
- * from lib/plan, which is server-only) so this renders anywhere.
- */
-type UpgradeTier = 'basic' | 'growth';
-const TIER_NAME: Record<UpgradeTier, string> = { basic: 'Basic', growth: 'Growth' };
+// The single paid plan's name. Kept as a local literal (not imported from
+// lib/plan, which is server-only) so this renders anywhere.
+const PLAN_NAME = 'Weedtip Pro';
 
 /**
  * Full-page "upgrade to proceed" wall for a gated feature. Free owners still
@@ -17,16 +14,14 @@ const TIER_NAME: Record<UpgradeTier, string> = { basic: 'Basic', growth: 'Growth
 export function UpgradeWall({
   feature,
   description,
-  tier = 'growth',
   href = '/dashboard/promote',
 }: {
   feature: string;
   description?: string;
-  tier?: UpgradeTier;
   /** Where "Upgrade" goes — brands don't use the dispensary billing page. */
   href?: string;
 }) {
-  const plan = TIER_NAME[tier];
+  const plan = PLAN_NAME;
   return (
     <div className="rounded-card border-border bg-surface shadow-card border p-8 text-center sm:p-12">
       <div className="bg-primary-muted text-primary mx-auto flex h-14 w-14 items-center justify-center rounded-full">
@@ -54,15 +49,13 @@ export function UpgradeWall({
  */
 export function UpgradeBanner({
   message,
-  tier = 'growth',
   href = '/dashboard/promote',
 }: {
   message: string;
-  tier?: UpgradeTier;
   /** Where "Upgrade" goes — brands use their own Studio, not the dispensary billing page. */
   href?: string;
 }) {
-  const plan = TIER_NAME[tier];
+  const plan = PLAN_NAME;
   return (
     <div className="rounded-card border-primary/30 bg-primary-muted flex flex-wrap items-center justify-between gap-3 border p-4">
       <p className="text-primary flex items-center gap-2 text-sm">

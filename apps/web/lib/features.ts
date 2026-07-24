@@ -13,13 +13,13 @@ import { createClient } from './supabase/server';
  * one cover image, and manual product entry. Everything below is paid.
  */
 export type FeatureKey =
-  // Basic tier — the essentials
+  // Essentials
   | 'orders'
   | 'website'
   | 'google_sync'
   | 'complete_profile'
   | 'bulk_import'
-  // Growth tier — marketing + ops
+  // Marketing + ops
   | 'deals'
   | 'promos'
   | 'updates'
@@ -27,23 +27,25 @@ export type FeatureKey =
   | 'analytics'
   | 'team';
 
+// Every paid feature now sits at the single `paid` tier (Weedtip Pro). The
+// per-feature minTier is retained so the ladder can grow again without a rewrite.
 export const FEATURES: {
   key: FeatureKey;
   label: string;
   description: string;
   minTier: PlanTier;
 }[] = [
-  { key: 'orders', label: 'Online orders', description: 'Accept pickup and delivery orders from your listing.', minTier: 'basic' },
-  { key: 'website', label: 'Website link', description: 'Show your website on your public listing.', minTier: 'basic' },
-  { key: 'google_sync', label: 'Google Business sync', description: 'Pull hours, phone, and details from Google.', minTier: 'basic' },
-  { key: 'complete_profile', label: 'Complete profile', description: 'Description, amenities, photo gallery, video, and special hours.', minTier: 'basic' },
-  { key: 'bulk_import', label: 'Bulk import & sync', description: 'CSV import and syncing an existing store/POS menu.', minTier: 'basic' },
-  { key: 'deals', label: 'Deals & specials', description: 'Percentage, BOGO, and spend-and-save deals.', minTier: 'growth' },
-  { key: 'promos', label: 'In-store promos', description: 'Non-menu offers shown on the storefront.', minTier: 'growth' },
-  { key: 'updates', label: 'Follower updates', description: 'Broadcast news to followers.', minTier: 'growth' },
-  { key: 'taxes', label: 'Tax configuration', description: 'Custom taxes on orders + POS.', minTier: 'growth' },
-  { key: 'analytics', label: 'Advanced analytics', description: 'Product/brand/category breakdowns.', minTier: 'growth' },
-  { key: 'team', label: 'Team members', description: 'Invite managers + staff to help run the shop.', minTier: 'growth' },
+  { key: 'orders', label: 'Online orders', description: 'Accept pickup and delivery orders from your listing.', minTier: 'paid' },
+  { key: 'website', label: 'Website link', description: 'Show your website on your public listing.', minTier: 'paid' },
+  { key: 'google_sync', label: 'Google Business sync', description: 'Pull hours, phone, and details from Google.', minTier: 'paid' },
+  { key: 'complete_profile', label: 'Complete profile', description: 'Description, amenities, photo gallery, video, and special hours.', minTier: 'paid' },
+  { key: 'bulk_import', label: 'Bulk import & sync', description: 'CSV import and syncing an existing store/POS menu.', minTier: 'paid' },
+  { key: 'deals', label: 'Deals & specials', description: 'Percentage, BOGO, and spend-and-save deals.', minTier: 'paid' },
+  { key: 'promos', label: 'In-store promos', description: 'Non-menu offers shown on the storefront.', minTier: 'paid' },
+  { key: 'updates', label: 'Follower updates', description: 'Broadcast news to followers.', minTier: 'paid' },
+  { key: 'taxes', label: 'Tax configuration', description: 'Custom taxes on orders + POS.', minTier: 'paid' },
+  { key: 'analytics', label: 'Advanced analytics', description: 'Product/brand/category breakdowns.', minTier: 'paid' },
+  { key: 'team', label: 'Team members', description: 'Invite managers + staff to help run the shop.', minTier: 'paid' },
 ];
 
 const FEATURE_MAP = new Map(FEATURES.map((f) => [f.key, f]));

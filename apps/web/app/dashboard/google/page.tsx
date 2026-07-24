@@ -23,7 +23,6 @@ export default async function GoogleSyncPage() {
         </div>
         <UpgradeWall
           feature="Google Business sync"
-          tier="basic"
           description="Upgrade to Basic to import your hours, phone, and website from Google — and keep them in sync. Your listing stays free at 0% commission."
         />
       </div>

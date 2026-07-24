@@ -26,18 +26,15 @@ const CLAIM_TIERS = [
     bullets: ['Name, logo, phone & hours', 'Manual menu items', '0% commission, forever'],
   },
   {
-    value: 'basic',
-    name: 'Basic',
-    price: '$29/mo',
-    blurb: 'Run the shop online',
-    bullets: ['Online orders + website link', 'Complete profile & photo gallery', 'Google sync + menu imports'],
-  },
-  {
-    value: 'growth',
-    name: 'Growth',
-    price: '$99/mo',
-    blurb: 'Grow with marketing',
-    bullets: ['Everything in Basic', 'Deals, promo codes & updates', 'Analytics, taxes & team'],
+    value: 'paid',
+    name: 'Weedtip Pro',
+    price: '$39/mo',
+    blurb: 'Everything to run & grow',
+    bullets: [
+      'Online orders, website & Google sync',
+      'Deals, promos, updates, analytics & team',
+      'Featured placement in your region',
+    ],
   },
 ] as const;
 

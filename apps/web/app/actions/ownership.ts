@@ -17,7 +17,7 @@ const claimSchema = z.object({
   license_number: z.string().max(120).nullable(),
   document_path: z.string().max(400).nullable(),
   /** Tier-based funnel: starting plan picked with the claim (default free). */
-  plan_preference: z.enum(['free', 'basic', 'growth']).default('free'),
+  plan_preference: z.enum(['free', 'paid']).default('free'),
 });
 
 /** Loose license comparison: case/spacing/punctuation insensitive. */
@@ -154,11 +154,7 @@ export async function requestOwnership(_prev: FormState, fd: FormData): Promise<
 <li>Document uploaded: ${documentPath ? 'yes' : 'no'}</li>
 <li>Verification strength: <strong>${strength}</strong></li>
 <li>Plan interest: <strong>${parsed.data.plan_preference.toUpperCase()}</strong>${
-        parsed.data.plan_preference === 'growth'
-          ? ' ($99/mo)'
-          : parsed.data.plan_preference === 'basic'
-            ? ' ($29/mo)'
-            : ''
+        parsed.data.plan_preference === 'paid' ? ' (Weedtip Pro · $39/mo)' : ''
       }</li>
 </ul>
 <p>Review in /admin/claims.</p>`,
