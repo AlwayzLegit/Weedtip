@@ -87,3 +87,67 @@ export const loadBestOf = cache(async function loadBestOf(
     totalInScope: inScope.length,
   };
 });
+
+/** One city that qualifies for a "Best of" ranking (≥ MIN_RATED rated shops). */
+export type BestOfMarket = {
+  state: string;
+  stateName: string;
+  city: string;
+  citySlug: string;
+  ratedCount: number;
+  /** Whether this city also has enough rated *delivering* shops for a delivery ranking. */
+  hasDelivery: boolean;
+};
+
+/**
+ * Every city with a credible ranking, for the index hub. Groups active shops by
+ * city, keeps those with ≥ MIN_RATED rated shops, and flags delivery depth —
+ * mirroring the per-page and sitemap gates so the hub never links to a 404.
+ */
+export const loadBestOfMarkets = cache(async function loadBestOfMarkets(): Promise<BestOfMarket[]> {
+  const supabase = createStaticClient();
+  const rows = await fetchAll<{
+    city: string | null;
+    state: string;
+    rating_count: number;
+    is_delivery: boolean;
+  }>((from, to) =>
+    supabase
+      .from('dispensaries')
+      .select('city, state, rating_count, is_delivery')
+      .eq('status', 'active')
+      .range(from, to),
+  );
+
+  const agg = new Map<
+    string,
+    { state: string; city: string; rated: number; deliveryRated: number }
+  >();
+  for (const r of rows) {
+    if (!r.city || !US_STATES[r.state.toUpperCase()]) continue;
+    const key = `${r.state.toUpperCase()}/${citySlug(r.city)}`;
+    const cur = agg.get(key) ?? {
+      state: r.state.toUpperCase(),
+      city: r.city,
+      rated: 0,
+      deliveryRated: 0,
+    };
+    if (r.rating_count > 0) {
+      cur.rated += 1;
+      if (r.is_delivery) cur.deliveryRated += 1;
+    }
+    agg.set(key, cur);
+  }
+
+  return [...agg.values()]
+    .filter((m) => m.rated >= MIN_RATED)
+    .map((m) => ({
+      state: m.state,
+      stateName: US_STATES[m.state]!,
+      city: m.city,
+      citySlug: citySlug(m.city),
+      ratedCount: m.rated,
+      hasDelivery: m.deliveryRated >= MIN_RATED,
+    }))
+    .sort((a, b) => a.stateName.localeCompare(b.stateName) || a.city.localeCompare(b.city));
+});
