@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { cache } from 'react';
 import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
+import { Award } from 'lucide-react';
 import { PRODUCT_CATEGORIES, type OperatingHours } from '@weedtip/shared';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DealCard } from '@/components/deal-card';
@@ -33,15 +34,34 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
   const supabase = createStaticClient();
   // Page past the 1k cap: in large states a city's shops can all sort beyond
   // row 1,000, which previously 404'd valid (and sitemap-listed) city pages.
-  const data = await fetchAll<{ id: string; slug: string; name: string; city: string | null; state: string; cover_image_url: string | null; logo_url: string | null; is_delivery: boolean; is_pickup: boolean; is_medical: boolean; is_recreational: boolean; featured: boolean; rating_avg: number; rating_count: number; latitude: number | null; longitude: number | null; hours: unknown; timezone: string | null; license_number: string | null }>(
-    (from, to) =>
-      supabase
-        .from('dispensaries')
-        .select(LOCATION_SELECT)
-        .eq('status', 'active')
-        .eq('state', code)
-        .order('name')
-        .range(from, to),
+  const data = await fetchAll<{
+    id: string;
+    slug: string;
+    name: string;
+    city: string | null;
+    state: string;
+    cover_image_url: string | null;
+    logo_url: string | null;
+    is_delivery: boolean;
+    is_pickup: boolean;
+    is_medical: boolean;
+    is_recreational: boolean;
+    featured: boolean;
+    rating_avg: number;
+    rating_count: number;
+    latitude: number | null;
+    longitude: number | null;
+    hours: unknown;
+    timezone: string | null;
+    license_number: string | null;
+  }>((from, to) =>
+    supabase
+      .from('dispensaries')
+      .select(LOCATION_SELECT)
+      .eq('status', 'active')
+      .eq('state', code)
+      .order('name')
+      .range(from, to),
   );
   const shops = data.filter((s) => citySlug(s.city ?? '') === city.toLowerCase());
   const first = shops[0];
@@ -190,7 +210,9 @@ const loadCity = cache(async function loadCity(state: string, city: string) {
         // The sponsor may sit in another city of the same region — fetch it.
         const { data: sp } = await supabase
           .from('dispensaries')
-          .select('id,slug,name,city,state,cover_image_url,logo_url,rating_avg,rating_count,is_delivery,is_pickup,status')
+          .select(
+            'id,slug,name,city,state,cover_image_url,logo_url,rating_avg,rating_count,is_delivery,is_pickup,status',
+          )
           .eq('id', placements.exclusiveId)
           .eq('status', 'active')
           .maybeSingle();
@@ -416,6 +438,15 @@ export default async function CityDispensariesPage({
         {shops.length} {shops.length === 1 ? 'dispensary' : 'dispensaries'} in {cityName}.
       </p>
 
+      {shops.filter((s) => s.rating_count > 0).length >= 3 && (
+        <Link
+          href={`/best-dispensaries/${state.toLowerCase()}/${city.toLowerCase()}`}
+          className="border-primary/25 bg-primary-subtle text-primary hover:border-primary/50 focus-visible:ring-primary mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+        >
+          <Award className="h-4 w-4" /> See the best dispensaries in {cityName}, ranked →
+        </Link>
+      )}
+
       {geo && <RegionSearchBeacon regionId={geo.regionId} zoneId={geo.zoneId} />}
 
       {sponsor && geo && (
@@ -442,7 +473,10 @@ export default async function CityDispensariesPage({
         return (
           <section className="mt-8">
             <h2 className="mb-3 text-lg font-semibold">Top rated in {cityName}</h2>
-            <ScrollCarousel itemClassName="w-72" ariaLabel={`Top rated dispensaries in ${cityName}`}>
+            <ScrollCarousel
+              itemClassName="w-72"
+              ariaLabel={`Top rated dispensaries in ${cityName}`}
+            >
               {topRated.map((s) => (
                 <DispensaryCard
                   key={s.slug}
@@ -570,9 +604,7 @@ export default async function CityDispensariesPage({
       </section>
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="mb-2 text-lg font-semibold">
-          About cannabis dispensaries in {cityName}
-        </h2>
+        <h2 className="mb-2 text-lg font-semibold">About cannabis dispensaries in {cityName}</h2>
         {/* Generated from live listing data so every city page carries unique,
             factual copy instead of shared boilerplate. */}
         <div className="text-muted space-y-3 text-sm leading-relaxed">

@@ -156,6 +156,31 @@ export function itemListJsonLd(paths: string[]): Json | null {
 }
 
 /**
+ * Ranked ItemList schema for a "Best of" page — carries each item's name and
+ * position so the ordering is machine-readable (Google's ranked-list result).
+ * Returns null for an empty list (a bare ItemList is invalid markup).
+ */
+export function rankedItemListJsonLd(
+  items: { name: string; path: string }[],
+  listName?: string,
+): Json | null {
+  if (items.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    ...(listName ? { name: listName } : {}),
+    numberOfItems: items.length,
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      url: absoluteUrl(it.path),
+    })),
+  };
+}
+
+/**
  * Strain entity schema. There's no schema.org type for a cannabis cultivar.
  * Google's Product rich-result rules REQUIRE one of offers/review/
  * aggregateRating — an unrated strain as Product fails validation on every
