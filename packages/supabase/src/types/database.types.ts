@@ -1174,9 +1174,13 @@ export type Database = {
           featured_manual: boolean
           gallery_urls: string[]
           google_enriched_at: string | null
+          google_maps_uri: string | null
           google_photo_name: string | null
           google_photo_names: string[] | null
           google_place_id: string | null
+          google_rating: number | null
+          google_rating_at: string | null
+          google_rating_count: number | null
           grandfathered: boolean
           hours: Json | null
           id: string
@@ -1238,9 +1242,13 @@ export type Database = {
           featured_manual?: boolean
           gallery_urls?: string[]
           google_enriched_at?: string | null
+          google_maps_uri?: string | null
           google_photo_name?: string | null
           google_photo_names?: string[] | null
           google_place_id?: string | null
+          google_rating?: number | null
+          google_rating_at?: string | null
+          google_rating_count?: number | null
           grandfathered?: boolean
           hours?: Json | null
           id?: string
@@ -1302,9 +1310,13 @@ export type Database = {
           featured_manual?: boolean
           gallery_urls?: string[]
           google_enriched_at?: string | null
+          google_maps_uri?: string | null
           google_photo_name?: string | null
           google_photo_names?: string[] | null
           google_place_id?: string | null
+          google_rating?: number | null
+          google_rating_at?: string | null
+          google_rating_count?: number | null
           grandfathered?: boolean
           hours?: Json | null
           id?: string

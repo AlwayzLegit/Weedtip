@@ -14,6 +14,9 @@ type GooglePlaceDetails = {
   regularOpeningHours?: {
     periods?: { open: GooglePeriodPoint; close?: GooglePeriodPoint }[];
   };
+  rating?: number;
+  userRatingCount?: number;
+  googleMapsUri?: string;
 };
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
@@ -70,7 +73,8 @@ export async function syncFromGoogle(): Promise<GoogleSyncResult> {
   const res = await fetch(`https://places.googleapis.com/v1/places/${dispensary.google_place_id}`, {
     headers: {
       'X-Goog-Api-Key': key,
-      'X-Goog-FieldMask': 'nationalPhoneNumber,websiteUri,regularOpeningHours',
+      'X-Goog-FieldMask':
+        'nationalPhoneNumber,websiteUri,regularOpeningHours,rating,userRatingCount,googleMapsUri',
     },
     cache: 'no-store',
   });
@@ -84,6 +88,10 @@ export async function syncFromGoogle(): Promise<GoogleSyncResult> {
     phone?: string;
     website?: string;
     hours?: OperatingHours;
+    google_rating?: number | null;
+    google_rating_count?: number | null;
+    google_rating_at?: string;
+    google_maps_uri?: string;
   } = { last_google_sync: new Date().toISOString() };
   const updated: string[] = [];
   if (place.nationalPhoneNumber) {
@@ -99,6 +107,19 @@ export async function syncFromGoogle(): Promise<GoogleSyncResult> {
     patch.hours = toOperatingHours(periods);
     updated.push('hours');
   }
+  // Star rating — always stamped so the owner's sync also refreshes a rating
+  // that aged past the caching window. Shown attributed to Google, never merged
+  // into the shop's own Weedtip review score.
+  patch.google_rating_at = new Date().toISOString();
+  if (typeof place.rating === 'number' && (place.userRatingCount ?? 0) > 0) {
+    patch.google_rating = Math.round(place.rating * 10) / 10;
+    patch.google_rating_count = place.userRatingCount ?? 0;
+    updated.push('Google rating');
+  } else {
+    patch.google_rating = null;
+    patch.google_rating_count = null;
+  }
+  if (place.googleMapsUri) patch.google_maps_uri = place.googleMapsUri;
 
   const supabase = await createClient();
   const { error } = await supabase.from('dispensaries').update(patch).eq('id', dispensary.id);

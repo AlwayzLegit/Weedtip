@@ -26,10 +26,36 @@ const FIELD_MASK = [
 ].join(',');
 
 const STOP_WORDS = new Set([
-  'the', 'inc', 'llc', 'co', 'corp', 'cannabis', 'dispensary', 'weed', 'shop',
-  'collective', 'wellness', 'center', 'centre', 'group', 'healing', 'holistic',
-  'care', 'supply', 'club', 'organics', 'organic', 'gardens', 'garden', 'health',
-  'company', 'store', 'retail', 'delivery', 'and', 'of',
+  'the',
+  'inc',
+  'llc',
+  'co',
+  'corp',
+  'cannabis',
+  'dispensary',
+  'weed',
+  'shop',
+  'collective',
+  'wellness',
+  'center',
+  'centre',
+  'group',
+  'healing',
+  'holistic',
+  'care',
+  'supply',
+  'club',
+  'organics',
+  'organic',
+  'gardens',
+  'garden',
+  'health',
+  'company',
+  'store',
+  'retail',
+  'delivery',
+  'and',
+  'of',
 ]);
 
 function nameTokens(s: string | null): Set<string> {
@@ -68,7 +94,9 @@ const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 const hhmm = (p: GooglePeriodPoint) =>
   `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
 
-function toHours(periods: { open: GooglePeriodPoint; close?: GooglePeriodPoint }[]): OperatingHours {
+function toHours(
+  periods: { open: GooglePeriodPoint; close?: GooglePeriodPoint }[],
+): OperatingHours {
   const hours = Object.fromEntries(DAY_KEYS.map((d) => [d, null])) as OperatingHours;
   for (const p of periods) {
     const key = DAY_KEYS[p.open.day];
@@ -240,8 +268,135 @@ export async function enrichFromGoogleBatch(): Promise<EnrichBatchResult> {
   };
 }
 
+/**
+ * How long a cached Google rating may be shown before it must be re-fetched.
+ * Google Maps Platform permits only temporary caching of Places content (place
+ * IDs excepted), so stale ratings are neither displayed nor ranked on — see
+ * lib/google-rating.ts, which enforces the same window at read time.
+ */
+export const GOOGLE_RATING_TTL_DAYS = 30;
+
+export type RatingBackfillResult =
+  | {
+      ok: true;
+      processed: number;
+      rated: number;
+      unrated: number;
+      failed: number;
+      remaining: number;
+    }
+  | { ok: false; error: string };
+
+const RATING_BATCH = 60;
+const RATING_CONCURRENCY = 8;
+
+/**
+ * Pull the Google star rating for listings already matched to a Place, and
+ * refresh any whose cached rating has gone stale. One Place Details call per
+ * row (rating, userRatingCount, googleMapsUri).
+ *
+ * The Maps URI is stored so every surface that shows the rating can link back
+ * to the source listing — attribution is required, and it also lets a shopper
+ * verify the number themselves. Places with no ratings yet are stamped with a
+ * timestamp and null rating so they aren't re-billed until the TTL lapses.
+ */
+export async function backfillGoogleRatingsBatch(): Promise<RatingBackfillResult> {
+  await requireAdmin();
+  const key = process.env.GOOGLE_PLACES_API_KEY;
+  if (!key) return { ok: false, error: 'GOOGLE_PLACES_API_KEY is not configured here.' };
+
+  const supabase = await createClient();
+  const staleBefore = new Date(
+    Date.now() - GOOGLE_RATING_TTL_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  // Never fetched, or cached past the caching window.
+  const { data: rows } = await supabase
+    .from('dispensaries')
+    .select('id,google_place_id')
+    .not('google_place_id', 'is', null)
+    .or(`google_rating_at.is.null,google_rating_at.lt.${staleBefore}`)
+    .eq('status', 'active')
+    .order('google_rating_at', { nullsFirst: true })
+    .limit(RATING_BATCH);
+
+  const batch = rows ?? [];
+  let rated = 0;
+  let unrated = 0;
+  let failed = 0;
+
+  async function processOne(d: (typeof batch)[number]): Promise<void> {
+    try {
+      const res = await fetch(`https://places.googleapis.com/v1/places/${d.google_place_id}`, {
+        headers: {
+          'X-Goog-Api-Key': key as string,
+          'X-Goog-FieldMask': 'rating,userRatingCount,googleMapsUri',
+        },
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        // A dead place_id would retry forever — stamp it so it waits out the TTL.
+        if (res.status === 404) {
+          unrated += 1;
+          await supabase
+            .from('dispensaries')
+            .update({
+              google_rating: null,
+              google_rating_count: null,
+              google_rating_at: new Date().toISOString(),
+            })
+            .eq('id', d.id);
+          return;
+        }
+        failed += 1;
+        return;
+      }
+      const json = (await res.json()) as {
+        rating?: number;
+        userRatingCount?: number;
+        googleMapsUri?: string;
+      };
+      // Google omits `rating` entirely for places with no ratings yet.
+      const hasRating = typeof json.rating === 'number' && (json.userRatingCount ?? 0) > 0;
+      await supabase
+        .from('dispensaries')
+        .update({
+          google_rating: hasRating ? Math.round(json.rating! * 10) / 10 : null,
+          google_rating_count: hasRating ? (json.userRatingCount ?? 0) : null,
+          google_rating_at: new Date().toISOString(),
+          ...(json.googleMapsUri ? { google_maps_uri: json.googleMapsUri } : {}),
+        })
+        .eq('id', d.id);
+      if (hasRating) rated += 1;
+      else unrated += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  for (let i = 0; i < batch.length; i += RATING_CONCURRENCY) {
+    await Promise.all(batch.slice(i, i + RATING_CONCURRENCY).map(processOne));
+  }
+
+  const { count } = await supabase
+    .from('dispensaries')
+    .select('id', { count: 'exact', head: true })
+    .not('google_place_id', 'is', null)
+    .or(`google_rating_at.is.null,google_rating_at.lt.${staleBefore}`)
+    .eq('status', 'active');
+
+  return { ok: true, processed: batch.length, rated, unrated, failed, remaining: count ?? 0 };
+}
+
 export type PhotoBackfillResult =
-  | { ok: true; processed: number; withPhotos: number; noPhotos: number; failed: number; remaining: number }
+  | {
+      ok: true;
+      processed: number;
+      withPhotos: number;
+      noPhotos: number;
+      failed: number;
+      remaining: number;
+    }
   | { ok: false; error: string };
 
 const PHOTO_BATCH = 60;
