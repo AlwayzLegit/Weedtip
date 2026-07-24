@@ -61,6 +61,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: '/admin', label: 'Overview', icon: Shield },
   { href: '/admin/ownership', label: 'Ownership', icon: UserCog },
   { href: '/admin/dispensaries', label: 'Dispensaries', icon: Store },
+  { href: '/admin/shop-lookup', label: 'Shop lookup', icon: MapPin },
   { href: '/admin/billing', label: 'Billing', icon: CreditCard },
   { href: '/admin/ads-desk', label: 'Ad desk', icon: Gavel },
   { href: '/admin/promotions', label: 'Promotions', icon: Megaphone },
