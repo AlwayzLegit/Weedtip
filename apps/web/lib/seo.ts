@@ -35,6 +35,21 @@ export function pageSeo({
   };
 }
 
+/**
+ * Cap a page-level <title> so the full rendered title — including the root
+ * layout's " · Weedtip" suffix (~10 chars) — stays within Google's ~60-char
+ * display limit (Semrush "title too long"). The default max of 50 leaves room
+ * for that suffix. Truncates on a word boundary, adding an ellipsis.
+ */
+export function clampTitle(title: string, max = 50): string {
+  const t = title.trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  const base = lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return `${base.trimEnd()}…`;
+}
+
 /** FAQPage schema from question/answer pairs. */
 export function faqJsonLd(items: { question: string; answer: string }[]): Json {
   return {

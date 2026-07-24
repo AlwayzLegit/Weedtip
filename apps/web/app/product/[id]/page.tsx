@@ -17,6 +17,7 @@ import { ProductReviewForm } from '@/components/product-review-form';
 import { RatingStars } from '@/components/rating-stars';
 import { JsonLd } from '@/components/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
+import { clampTitle } from '@/lib/seo';
 import { CATALOG_IMAGE_EMBED, cardImageUrl } from '@/lib/catalog';
 import { dealBadge, formatPrice } from '@/lib/format';
 import type { OperatingHours } from '@weedtip/shared';
@@ -46,7 +47,11 @@ export async function generateMetadata({
     .maybeSingle();
   if (!data) return { title: 'Product' };
 
-  const title = data.brand ? `${data.name} by ${data.brand}` : data.name;
+  // Keep the full title (+ " · Weedtip" suffix) under Google's ~60-char cap:
+  // prefer "name by brand" when it fits, else the name alone, truncated if the
+  // product name itself is very long (Semrush "title too long").
+  const withBrand = data.brand ? `${data.name} by ${data.brand}` : data.name;
+  const title = withBrand.length <= 50 ? withBrand : clampTitle(data.name);
   const description =
     data.description?.slice(0, 160) ??
     `Buy ${data.name}${data.brand ? ` by ${data.brand}` : ''} — browse price, THC/CBD, reviews, and which dispensaries carry it on Weedtip.`;
