@@ -15,6 +15,7 @@ import { FaqSection } from '@/components/seo/faq-section';
 import { pageSeo, strainJsonLd } from '@/lib/seo';
 import { strainArtUrl } from '@/lib/strain-art';
 import { strainFaqs, strainIntro } from '@/lib/strain-copy';
+import { terpeneSlugForName } from '@/lib/terpenes';
 import { createStaticClient } from '@/lib/supabase/static';
 
 // Public, anon-only page — serve cached HTML and refresh every 60 min (ISR).
@@ -317,11 +318,22 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
               Terpenes
             </h2>
             <div className="flex flex-wrap gap-2">
-              {strain.terpenes.map((t) => (
-                <Badge key={t} tone="outline">
-                  {t}
-                </Badge>
-              ))}
+              {strain.terpenes.map((t) => {
+                const tSlug = terpeneSlugForName(t);
+                return tSlug ? (
+                  <Link
+                    key={t}
+                    href={`/terpene/${tSlug}`}
+                    className="border-border bg-surface hover:border-primary/50 hover:text-primary focus-visible:ring-primary inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+                  >
+                    {t}
+                  </Link>
+                ) : (
+                  <Badge key={t} tone="outline">
+                    {t}
+                  </Badge>
+                );
+              })}
             </div>
           </section>
         )}

@@ -55,7 +55,14 @@ export default async function StrainsPage({
           <p className="eyebrow mb-1">Discover</p>
           <h1 className="text-2xl font-bold sm:text-3xl">Strains</h1>
           <p className="text-muted mt-1">
-            Explore effects, flavors, and where to find each strain.
+            Explore effects, flavors, and where to find each strain — or browse by{' '}
+            <Link
+              href="/terpenes"
+              className="text-primary focus-visible:ring-primary rounded font-medium hover:underline focus-visible:outline-none focus-visible:ring-2"
+            >
+              terpene
+            </Link>
+            .
           </p>
         </div>
         <form className="relative w-full sm:w-64">
