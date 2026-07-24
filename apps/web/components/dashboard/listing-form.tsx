@@ -36,7 +36,6 @@ export function ListingForm({
 
       {!canComplete && (
         <UpgradeBanner
-          tier="basic"
           message="Your free listing covers the basics — name, logo, cover photo, phone, hours, and address. Upgrade to Basic to add a description, website, photo gallery, amenities, video, and special hours."
         />
       )}

@@ -174,7 +174,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   // Online ordering is a Basic-tier feature — free shops list their menu but
   // don't take orders through Weedtip.
   const ordersEnabled = dispensary
-    ? tierAtLeast(await getDispensaryTier(dispensary.id), 'basic')
+    ? tierAtLeast(await getDispensaryTier(dispensary.id), 'paid')
     : false;
   const strain = product.strain as {
     slug: string;

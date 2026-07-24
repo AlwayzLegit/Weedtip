@@ -24,7 +24,6 @@ export default async function MenuSyncPage() {
         <h1 className="text-2xl font-bold">Menu sync</h1>
         <UpgradeWall
           feature="Store & POS sync"
-          tier="basic"
           description="Upgrade to Basic to keep your menu in step with your existing store or POS automatically. Adding products by hand is always free."
         />
       </div>

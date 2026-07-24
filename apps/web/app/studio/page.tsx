@@ -24,7 +24,12 @@ export default async function StudioProfile() {
         .eq('dispensary.status', 'active'),
       // Owner's own catalog products (drives the "add your first product" step).
       supabase.from('brand_products').select('id,brand_id').in('brand_id', ids),
-      supabase.from('plans').select('id, price_cents').eq('slug', 'basic').eq('is_active', true).maybeSingle(),
+      supabase
+        .from('plans')
+        .select('id, price_cents')
+        .eq('slug', 'pro')
+        .eq('is_active', true)
+        .maybeSingle(),
       supabase.from('brand_subscriptions').select('brand_id, status').in('brand_id', ids),
       Promise.all(brands.map(async (b) => [b.id, await getBrandTier(b.id)] as const)),
     ]);

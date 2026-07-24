@@ -21,7 +21,6 @@ export default async function StudioAnalytics() {
         <h1 className="text-2xl font-bold">Analytics</h1>
         <UpgradeWall
           feature="Brand analytics"
-          tier="basic"
           href="/studio"
           description="Upgrade to Basic to see your brand's views, followers, and where your products are stocked. Your brand page stays live for free."
         />

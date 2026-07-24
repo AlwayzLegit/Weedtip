@@ -363,7 +363,9 @@ async function followUpClaimPlanPreference(requestId: string): Promise<void> {
     .select('plan_preference, dispensary_id, business_email, dispensary:dispensaries(name)')
     .eq('id', requestId)
     .maybeSingle();
-  const tier = req?.plan_preference === 'growth' ? 2 : req?.plan_preference === 'basic' ? 1 : 0;
+  // Two-tier model: any non-free preference (incl. legacy basic/growth rows)
+  // maps to the single paid plan (tier 1, Weedtip Pro).
+  const tier = req?.plan_preference && req.plan_preference !== 'free' ? 1 : 0;
   if (!req || tier === 0) return;
 
   const [{ data: existing }, { data: plan }] = await Promise.all([

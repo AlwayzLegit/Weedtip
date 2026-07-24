@@ -22,7 +22,6 @@ export default async function ImportProductsPage() {
       {!entitled ? (
         <UpgradeWall
           feature="CSV import"
-          tier="basic"
           description="Upgrade to Basic to bulk-import your menu from a CSV or sync it from your existing store. Adding products by hand is always free."
         />
       ) : (

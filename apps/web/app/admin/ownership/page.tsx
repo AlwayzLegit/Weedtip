@@ -17,8 +17,7 @@ import { TIER_LABEL, type PlanTier } from '@/lib/plan';
 export const metadata: Metadata = { title: 'Ownership · Admin' };
 
 const TIER_TONE: Record<PlanTier, 'primary' | 'default' | 'muted'> = {
-  growth: 'primary',
-  basic: 'default',
+  paid: 'primary',
   free: 'muted',
 };
 

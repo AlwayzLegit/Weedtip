@@ -117,8 +117,7 @@ export default async function AdminClaims() {
                         {/* Sales signal: the plan they picked while claiming. */}
                         {r.plan_preference && r.plan_preference !== 'free' && (
                           <span className="border-primary/30 bg-primary-muted text-primary ml-1.5 inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
-                            wants {r.plan_preference}
-                            {r.plan_preference === 'growth' ? ' · $99/mo' : ' · $29/mo'}
+                            wants Pro · $39/mo
                           </span>
                         )}
                         <ul className="text-xs">

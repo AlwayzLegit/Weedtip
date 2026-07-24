@@ -41,7 +41,6 @@ export function BrandManageForm({
 
       {!canComplete && (
         <UpgradeBanner
-          tier="basic"
           href="/studio"
           message="Your logo is editable for free. Upgrade to Basic to add a description and link your website on your brand page."
         />
