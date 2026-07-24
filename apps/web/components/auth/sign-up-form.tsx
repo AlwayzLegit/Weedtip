@@ -29,10 +29,14 @@ export function SignUpForm({
 
   return (
     <form action={action} className="space-y-4">
-      {/* OAuth can't carry the dispensary_owner role in metadata (the profile
-          trigger would default them to consumer), so Google is offered for the
-          shopper/brand personas only — owners keep the email path. */}
-      {role === 'consumer' && <OAuthButtons next={nextValue} />}
+      {/* OAuth still can't carry the dispensary_owner role through the profile
+          trigger, so a Google sign-up always lands as a consumer. That used to
+          mean owners had no choice but email — and a confirmation-email wall in
+          the middle of the funnel. They can now promote their own account (see
+          20260724230000_self_serve_business_account.sql), which the wizard's
+          account step offers in one click, so Google is worth the trade: a
+          pre-verified address and no waiting on an inbox. */}
+      <OAuthButtons next={persona === 'dispensary_owner' ? (next ?? '/get-started') : nextValue} />
       <FormMessage state={state} />
 
       <input type="hidden" name="role" value={role} />

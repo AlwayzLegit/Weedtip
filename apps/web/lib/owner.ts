@@ -53,7 +53,10 @@ export async function manageableDispensaries(
 }
 
 /** Pick the active dispensary from the cookie, falling back to the first. */
-function pickActive(list: ManageableDispensary[], cookieId: string | undefined): ManageableDispensary | null {
+function pickActive(
+  list: ManageableDispensary[],
+  cookieId: string | undefined,
+): ManageableDispensary | null {
   if (list.length === 0) return null;
   return list.find((x) => x.dispensary.id === cookieId) ?? list[0]!;
 }
@@ -100,10 +103,18 @@ export const getOwnerContext = cache(
   },
 );
 
-/** Like getOwnerContext, but requires a dispensary to exist (redirects to create). */
+/**
+ * Like getOwnerContext, but requires a dispensary to exist.
+ *
+ * Sends them to the onboarding wizard rather than straight to the create-listing
+ * form: an owner waiting on a claim has no business filling in a NEW listing,
+ * and that misroute was the single most confusing moment in the old funnel. The
+ * wizard reads their actual state and shows the right screen — claim status,
+ * business picker, or the create form.
+ */
 export async function requireOwnerDispensary() {
   const ctx = await getOwnerContext();
-  if (!ctx.dispensary) redirect('/dashboard/listing');
+  if (!ctx.dispensary) redirect('/get-started');
   return { ...ctx, dispensary: ctx.dispensary };
 }
 

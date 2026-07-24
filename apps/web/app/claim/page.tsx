@@ -68,32 +68,16 @@ export default function ClaimPage() {
         ))}
       </ol>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/dispensaries">
+      <div className="mt-8">
+        <Link href="/get-started">
           <Button size="lg">
-            <Store className="h-4 w-4" /> Find your dispensary
+            <Store className="h-4 w-4" /> Start now
           </Button>
         </Link>
-        <Link href="/sign-up?role=dispensary_owner">
-          <Button size="lg" variant="outline">
-            Create a business account
-          </Button>
-        </Link>
-      </div>
-
-      <div className="rounded-card border-border bg-surface-2 mt-8 flex flex-wrap items-center justify-between gap-3 border p-5">
-        <div>
-          <p className="font-semibold">Shop not in our directory?</p>
-          <p className="text-muted mt-1 text-sm">
-            Newly licensed or missing? Add your dispensary from scratch — it goes live after a quick
-            review.
-          </p>
-        </div>
-        <Link href="/dashboard/listing">
-          <Button variant="outline">
-            <Store className="h-4 w-4" /> Create your listing
-          </Button>
-        </Link>
+        <p className="text-muted mt-2 text-sm">
+          We&apos;ll walk you through it — find your shop, set up an account, and verify. Not listed
+          yet? The same flow adds you.
+        </p>
       </div>
 
       <p className="text-muted mt-8 text-sm">

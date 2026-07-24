@@ -29,8 +29,9 @@ const DISCOVER = [
 // No public Advertise link: rate cards are for accounts with listings
 // (owners reach /advertise from their dashboard). Acquisition paths stay.
 const BUSINESS = [
-  { href: '/claim', label: 'List your shop' },
-  { href: '/for-brands', label: 'For brands' },
+  { href: '/get-started', label: 'List your shop' },
+  { href: '/get-started/brand', label: 'For brands' },
+  { href: '/claim', label: 'How claiming works' },
 ];
 
 const LEGAL = [
