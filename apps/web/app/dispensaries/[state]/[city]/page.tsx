@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { cache } from 'react';
 import { Link } from 'next-view-transitions';
 import { notFound } from 'next/navigation';
-import { Award } from 'lucide-react';
+import { Award, Truck } from 'lucide-react';
 import { PRODUCT_CATEGORIES, type OperatingHours } from '@weedtip/shared';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { DealCard } from '@/components/deal-card';
@@ -438,14 +438,24 @@ export default async function CityDispensariesPage({
         {shops.length} {shops.length === 1 ? 'dispensary' : 'dispensaries'} in {cityName}.
       </p>
 
-      {shops.filter((s) => s.rating_count > 0).length >= 3 && (
-        <Link
-          href={`/best-dispensaries/${state.toLowerCase()}/${city.toLowerCase()}`}
-          className="border-primary/25 bg-primary-subtle text-primary hover:border-primary/50 focus-visible:ring-primary mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
-        >
-          <Award className="h-4 w-4" /> See the best dispensaries in {cityName}, ranked →
-        </Link>
-      )}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {shops.filter((s) => s.rating_count > 0).length >= 3 && (
+          <Link
+            href={`/best-dispensaries/${state.toLowerCase()}/${city.toLowerCase()}`}
+            className="border-primary/25 bg-primary-subtle text-primary hover:border-primary/50 focus-visible:ring-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+          >
+            <Award className="h-4 w-4" /> Best dispensaries in {cityName}, ranked →
+          </Link>
+        )}
+        {shops.filter((s) => s.rating_count > 0 && s.is_delivery).length >= 3 && (
+          <Link
+            href={`/best-delivery/${state.toLowerCase()}/${city.toLowerCase()}`}
+            className="border-border bg-surface text-muted hover:border-primary/50 hover:text-primary focus-visible:ring-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+          >
+            <Truck className="h-4 w-4" /> Best delivery in {cityName} →
+          </Link>
+        )}
+      </div>
 
       {geo && <RegionSearchBeacon regionId={geo.regionId} zoneId={geo.zoneId} />}
 
