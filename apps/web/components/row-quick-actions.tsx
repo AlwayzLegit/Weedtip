@@ -30,7 +30,7 @@ export function RowQuickActions({
   onToggleFavorite: (dispensaryId: string, slug: string) => void;
 }) {
   const pill =
-    'border-border bg-surface text-muted hover:text-foreground hover:border-primary/50 inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-[11px] font-medium transition-colors';
+    'border-border bg-surface text-muted hover:text-foreground hover:border-primary/50 focus-visible:ring-primary inline-flex h-8 items-center gap-1 rounded-full border px-3 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2';
   return (
     <>
       <button

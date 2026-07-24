@@ -460,7 +460,12 @@ export function BrowseMap({
             aria-label={p.name}
             onMouseEnter={() => onHover(p.slug)}
             onMouseLeave={() => onHover(null)}
-            onKeyDown={(e) => e.key === 'Enter' && onSelect(p.slug)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelect(p.slug);
+              }
+            }}
             className={cn(
               'flex cursor-pointer flex-col items-center transition-transform',
               hoveredSlug === p.slug && 'scale-110',

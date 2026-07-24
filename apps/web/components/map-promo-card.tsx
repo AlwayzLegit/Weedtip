@@ -76,7 +76,7 @@ export function MapPromoCard({
   const go = (d: number) => setI((p) => (((p + d) % n) + n) % n);
 
   return (
-    <div className="pointer-events-none absolute inset-x-3 bottom-24 z-20 flex justify-center sm:inset-x-auto sm:bottom-4 sm:right-4 sm:block">
+    <div className="pointer-events-none absolute inset-x-3 bottom-36 z-20 flex justify-center sm:inset-x-auto sm:bottom-4 sm:right-4 sm:block">
       <div
         className="rounded-card border-border bg-surface shadow-card pointer-events-auto relative w-full max-w-[300px] overflow-hidden border"
         onMouseEnter={() => setPaused(true)}
@@ -88,7 +88,7 @@ export function MapPromoCard({
           type="button"
           aria-label="Dismiss ad"
           onClick={() => setDismissed(true)}
-          className="bg-background/70 hover:bg-background absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full backdrop-blur transition-colors"
+          className="bg-background/70 hover:bg-background focus-visible:ring-primary absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full backdrop-blur transition-colors focus-visible:outline-none focus-visible:ring-2"
         >
           <X className="h-3.5 w-3.5" />
         </button>

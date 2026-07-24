@@ -165,6 +165,7 @@ export default async function DeliveriesPage({
           initialBounds={bounds}
           initialFilters={filters}
           initialOrigin={origin}
+          noun={{ one: 'delivery service', many: 'delivery services' }}
           variant="page"
           syncUrl
         />
