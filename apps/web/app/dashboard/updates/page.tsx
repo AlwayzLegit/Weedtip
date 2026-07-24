@@ -52,7 +52,7 @@ export default async function DashboardUpdates() {
       ) : (
         <UpgradeWall
           feature="Follower updates"
-          description="Broadcast news, drops, and events to everyone who follows your shop. Upgrade to Growth to post updates — your listing stays free at 0% commission."
+          description="Broadcast news, drops, and events to everyone who follows your shop. Upgrade to Weedtip Pro to post updates — your listing stays free at 0% commission."
         />
       )}
 
@@ -75,7 +75,10 @@ export default async function DashboardUpdates() {
                     {new Date(u.expires_at).toLocaleDateString()}
                   </p>
                 </div>
-                <DeleteButton action={deleteDispensaryUpdate.bind(null, u.id)} confirmText="Delete this update?" />
+                <DeleteButton
+                  action={deleteDispensaryUpdate.bind(null, u.id)}
+                  confirmText="Delete this update?"
+                />
               </div>
             ))}
           </div>
@@ -101,7 +104,10 @@ export default async function DashboardUpdates() {
                     {new Date(u.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <DeleteButton action={deleteDispensaryUpdate.bind(null, u.id)} confirmText="Delete this update?" />
+                <DeleteButton
+                  action={deleteDispensaryUpdate.bind(null, u.id)}
+                  confirmText="Delete this update?"
+                />
               </div>
             ))}
           </div>

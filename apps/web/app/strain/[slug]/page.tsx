@@ -118,20 +118,8 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
     for (const s of sales ?? []) saleMap.set(s.product_id, s.sale_cents);
   }
 
-  // Is the current user signed in / has they saved this strain?
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  let saved = false;
-  if (user) {
-    const { data: fav } = await supabase
-      .from('strain_favorites')
-      .select('strain_id')
-      .eq('strain_id', strain.id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-    saved = !!fav;
-  }
+  // Auth + saved state resolve client-side in StrainFavoriteButton: this page
+  // is static/ISR on a cookieless client, so getUser() here is always null.
 
   // Per-strain prose + FAQ (thickens pages that lack an editorial description;
   // paired with FAQPage schema for content depth — SEO cause B).
@@ -223,9 +211,7 @@ export default async function StrainPage({ params }: { params: Promise<{ slug: s
               <StrainFavoriteButton
                 strainId={strain.id}
                 slug={strain.slug}
-                initialSaved={saved}
                 initialCount={strain.saves_count}
-                isAuthed={!!user}
               />
             </div>
           </div>

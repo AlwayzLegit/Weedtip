@@ -41,7 +41,8 @@ function SectionHeading({
       </div>
       {href && (
         <Link href={href} className="shrink-0">
-          <Button variant="ghost" size="sm">
+          {/* h-11 on mobile: this ghost link is the rail's only funnel exit. */}
+          <Button variant="ghost" size="sm" className="h-11 sm:h-9">
             View all <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>
@@ -221,7 +222,6 @@ export default async function HomePage() {
     .sort((a, b) => b.dispensaryCount - a.dispensaryCount)
     .slice(0, 8);
 
-
   return (
     <main>
       {/* Organization + WebSite JSON-LD now render sitewide from the root layout. */}
@@ -302,23 +302,23 @@ export default async function HomePage() {
         {/* Featured brands */}
         {topBrands.length > 0 && (
           <Reveal>
-          <section>
-            <SectionHeading eyebrow="Official lineups" title="Featured brands" href="/brands" />
-            {/* Weedmaps-style square logo tiles — artwork-forward, name below. */}
-            <ScrollCarousel itemClassName="w-44 sm:w-52" ariaLabel="Popular brands">
-              {topBrands.map((b) => (
-                <BrandTile
-                  key={b.slug}
-                  slug={b.slug}
-                  name={b.name}
-                  logoUrl={b.logo_url}
-                  rating={b.rating_avg}
-                  ratingCount={b.rating_count}
-                  sub={b.products > 0 ? `${b.products} products` : null}
-                />
-              ))}
-            </ScrollCarousel>
-          </section>
+            <section>
+              <SectionHeading eyebrow="Official lineups" title="Featured brands" href="/brands" />
+              {/* Weedmaps-style square logo tiles — artwork-forward, name below. */}
+              <ScrollCarousel itemClassName="w-44 sm:w-52" ariaLabel="Popular brands">
+                {topBrands.map((b) => (
+                  <BrandTile
+                    key={b.slug}
+                    slug={b.slug}
+                    name={b.name}
+                    logoUrl={b.logo_url}
+                    rating={b.rating_avg}
+                    ratingCount={b.rating_count}
+                    sub={b.products > 0 ? `${b.products} products` : null}
+                  />
+                ))}
+              </ScrollCarousel>
+            </section>
           </Reveal>
         )}
 
@@ -326,120 +326,124 @@ export default async function HomePage() {
             discovery surface, not a buried hub page) */}
         {strains && strains.length > 0 && (
           <Reveal>
-          <section>
-            <SectionHeading eyebrow="Know your high" title="Popular strains" href="/strains" />
-            <ScrollCarousel itemClassName="w-64" ariaLabel="Popular strains">
-              {strains.map((s) => (
-                <StrainCard
-                  key={s.slug}
-                  s={{
-                    slug: s.slug,
-                    name: s.name,
-                    type: s.type,
-                    effects: s.effects ?? [],
-                    thcLow: s.thc_low,
-                    thcHigh: s.thc_high,
-                  }}
-                />
-              ))}
-            </ScrollCarousel>
-          </section>
+            <section>
+              <SectionHeading eyebrow="Know your high" title="Popular strains" href="/strains" />
+              <ScrollCarousel itemClassName="w-64" ariaLabel="Popular strains">
+                {strains.map((s) => (
+                  <StrainCard
+                    key={s.slug}
+                    s={{
+                      slug: s.slug,
+                      name: s.name,
+                      type: s.type,
+                      effects: s.effects ?? [],
+                      thcLow: s.thc_low,
+                      thcHigh: s.thc_high,
+                    }}
+                  />
+                ))}
+              </ScrollCarousel>
+            </section>
           </Reveal>
         )}
 
         {/* Popular products */}
         {popular && popular.length > 0 && (
           <Reveal>
-          <section>
-            <SectionHeading eyebrow="Trending" title="Popular products" href="/products" />
-            <ScrollCarousel itemClassName="w-52" ariaLabel="Popular products">
-              {popular.map((p) => {
-                const disp = p.dispensary as { slug: string } | null;
-                return (
-                  <ProductCard
-                    key={p.id}
-                    p={{
-                      name: p.name,
-                      brand: p.brand,
-                      priceCents: p.price_cents,
-                      imageUrl: cardImageUrl(p),
-                      categorySlug: p.category?.slug,
-                      strainType: p.strain_type,
-                      thcPercentage: p.thc_percentage,
-                      inStock: p.in_stock,
-                      rating: p.rating_avg,
-                      reviewCount: p.rating_count,
-                      productId: p.id,
-                      dispensarySlug: disp?.slug,
-                    }}
-                  />
-                );
-              })}
-            </ScrollCarousel>
-          </section>
+            <section>
+              <SectionHeading eyebrow="Trending" title="Popular products" href="/products" />
+              <ScrollCarousel itemClassName="w-52" ariaLabel="Popular products">
+                {popular.map((p) => {
+                  const disp = p.dispensary as { slug: string } | null;
+                  return (
+                    <ProductCard
+                      key={p.id}
+                      p={{
+                        name: p.name,
+                        brand: p.brand,
+                        priceCents: p.price_cents,
+                        imageUrl: cardImageUrl(p),
+                        categorySlug: p.category?.slug,
+                        strainType: p.strain_type,
+                        thcPercentage: p.thc_percentage,
+                        inStock: p.in_stock,
+                        rating: p.rating_avg,
+                        reviewCount: p.rating_count,
+                        productId: p.id,
+                        dispensarySlug: disp?.slug,
+                      }}
+                    />
+                  );
+                })}
+              </ScrollCarousel>
+            </section>
           </Reveal>
         )}
 
         {/* Learn rail (editorial content, Weedmaps pattern) */}
         <Reveal>
-        <section>
-          <SectionHeading eyebrow="Cannabis 101" title="New here? Start with the basics" href="/learn" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {ARTICLES.slice(0, 4).map((a) => (
-              <ArticleCard key={a.slug} a={a} />
-            ))}
-          </div>
-        </section>
+          <section>
+            <SectionHeading
+              eyebrow="Cannabis 101"
+              title="New here? Start with the basics"
+              href="/learn"
+            />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {ARTICLES.slice(0, 4).map((a) => (
+                <ArticleCard key={a.slug} a={a} />
+              ))}
+            </div>
+          </section>
         </Reveal>
 
         {/* Geo directory, Weedmaps-style: a curated row of big markets up
             front, the full SEO link grid collapsed out of the visual flow. */}
         {regionEntries.length > 0 && (
           <Reveal>
-          <section>
-            <SectionHeading
-              eyebrow="Shop your market"
-              title="Popular destinations"
-              href="/dispensaries"
-            />
-            {popularCities.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {popularCities.map((c) => (
-                  <Link
-                    key={`${c.state}-${c.city}`}
-                    href={`/dispensaries/${c.state.toLowerCase()}/${citySlug(c.city)}`}
-                    className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors"
-                  >
-                    <MapPin className="text-muted h-3.5 w-3.5" />
-                    {c.city}, {c.state}
-                  </Link>
-                ))}
-              </div>
-            )}
-            {topStates.length > 0 && (
-              <div className="text-muted mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
-                {topStates.map((r) => (
-                  <Link
-                    key={r.state}
-                    href={`/dispensaries/${r.state.toLowerCase()}`}
-                    className="hover:text-primary transition-colors"
-                  >
-                    {US_STATES[r.state] ?? r.state}
-                    <span className="text-muted/60"> ({r.dispensaryCount.toLocaleString()})</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-            <details className="group mt-5">
-              <summary className="text-primary inline-flex cursor-pointer list-none items-center gap-1 text-sm font-medium hover:underline">
-                Browse all states and cities
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
-              </summary>
-              <div className="mt-5">
-                <RegionGrid regions={regionEntries} />
-              </div>
-            </details>
-          </section>
+            <section>
+              <SectionHeading
+                eyebrow="Shop your market"
+                title="Popular destinations"
+                href="/dispensaries"
+              />
+              {popularCities.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {popularCities.map((c) => (
+                    <Link
+                      key={`${c.state}-${c.city}`}
+                      href={`/dispensaries/${c.state.toLowerCase()}/${citySlug(c.city)}`}
+                      className="border-border bg-surface hover:border-primary/50 hover:text-primary inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors"
+                    >
+                      <MapPin className="text-muted h-3.5 w-3.5" />
+                      {c.city}, {c.state}
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {topStates.length > 0 && (
+                <div className="text-muted mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+                  {topStates.map((r) => (
+                    <Link
+                      key={r.state}
+                      href={`/dispensaries/${r.state.toLowerCase()}`}
+                      className="hover:text-primary transition-colors"
+                    >
+                      {US_STATES[r.state] ?? r.state}
+                      <span className="text-muted/60"> ({r.dispensaryCount.toLocaleString()})</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              <details className="group mt-5">
+                <summary className="text-primary inline-flex cursor-pointer list-none items-center gap-1 text-sm font-medium hover:underline">
+                  Browse all states and cities
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+                </summary>
+                <div className="mt-5">
+                  <RegionGrid regions={regionEntries} />
+                </div>
+              </details>
+            </section>
           </Reveal>
         )}
 

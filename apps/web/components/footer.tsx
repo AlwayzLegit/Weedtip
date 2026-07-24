@@ -100,6 +100,14 @@ export async function Footer() {
               )}
               {settings.addressLine}
             </address>
+            {/* The B2B acquisition entry — rendered on every page, so it earns
+                emphasis over the plain link buried in the For-business column. */}
+            <Link
+              href="/get-started"
+              className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
+            >
+              List your shop →
+            </Link>
           </div>
           <Column title="Discover" links={DISCOVER} />
           <Column title="For business" links={BUSINESS} />
@@ -124,7 +132,7 @@ export async function Footer() {
             <p className="text-foreground mb-3 text-sm font-semibold">
               Browse dispensaries by state
             </p>
-            <nav className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
+            <nav className="flex flex-wrap gap-x-4 gap-y-2.5 text-sm">
               {topStates.map((s) => (
                 <Link
                   key={s.code}
@@ -145,7 +153,7 @@ export async function Footer() {
         )}
 
         <div className="border-border text-muted mt-10 border-t pt-6 text-xs">
-          <nav className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
+          <nav className="mb-3 flex flex-wrap gap-x-4 gap-y-2">
             {LEGAL.map((l) => (
               <Link key={l.href} href={l.href} className="hover:text-foreground -my-2 py-2">
                 {l.label}

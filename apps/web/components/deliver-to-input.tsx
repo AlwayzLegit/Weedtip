@@ -113,7 +113,7 @@ export function DeliverToInput({ className }: { className?: string }) {
               placeholder="Street address or ZIP…"
               aria-label="Your address or ZIP"
               autoComplete="postal-code"
-              className="border-border bg-background focus:border-primary h-10 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition-colors"
+              className="border-border bg-background focus:border-primary h-10 w-full rounded-full border pl-9 pr-3 text-base outline-none transition-colors sm:text-sm"
             />
           </div>
           <button

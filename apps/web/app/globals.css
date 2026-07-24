@@ -20,12 +20,7 @@ body {
 
 /* Ambient brand tint anchored to the top of the page — subtle pastel depth. */
 body {
-  background-image: radial-gradient(
-    70% 40% at 50% -10%,
-    rgba(4, 120, 87, 0.06),
-    transparent 70%
-  );
-  background-attachment: fixed;
+  background-image: radial-gradient(70% 40% at 50% -10%, rgba(4, 120, 87, 0.06), transparent 70%);
   background-repeat: no-repeat;
 }
 
@@ -71,7 +66,7 @@ body {
 @layer components {
   /* Elevated surface — the canonical card. */
   .card {
-    @apply rounded-card border-border bg-surface border shadow-card;
+    @apply rounded-card border-border bg-surface shadow-card border;
   }
 
   /* Interactive card: lifts and highlights its border on hover, dips on press. */
@@ -87,7 +82,7 @@ body {
 
   /* Frosted panel for overlays / sticky bars. */
   .glass {
-    @apply border-border/70 border bg-surface/80 backdrop-blur-xl;
+    @apply border-border/70 bg-surface/80 border backdrop-blur-xl;
   }
 
   /* Green gradient text for hero accents (deep → medium emerald, AA on light). */

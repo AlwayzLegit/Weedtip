@@ -90,7 +90,8 @@ export default async function ProductsPage({
     placementId: string;
   };
   let sponsored: SponsoredProduct[] = [];
-  if ((params.page ?? 1) === 1) {
+  // page is 0-based (productSearchSchema defaults to 0) — the first page is 0.
+  if (params.page === 0) {
     // Featured products serve entirely from the unified region ad-slot system.
     const regionIds = await listingRegionIds(supabase);
     const regionProductIds = await regionFeaturedProductIds(supabase, regionIds);
@@ -265,6 +266,42 @@ export default async function ProductsPage({
               }}
             />
           ))}
+        </div>
+      )}
+
+      {/* Menu-grid pagination (0-based `page`) — without it everything past the
+          first RPC page was unreachable despite the total in the header. */}
+      {total > params.page_size && (
+        <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+          {params.page > 0 && (
+            <a
+              href={`?${new URLSearchParams({
+                ...Object.fromEntries(
+                  Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === 'string'),
+                ),
+                page: String(params.page - 1),
+              }).toString()}`}
+              className="border-border bg-surface hover:border-primary/50 rounded-full border px-4 py-2 font-medium transition-colors"
+            >
+              ← Previous
+            </a>
+          )}
+          <span className="text-muted">
+            Page {params.page + 1} of {Math.ceil(total / params.page_size)}
+          </span>
+          {(params.page + 1) * params.page_size < total && (
+            <a
+              href={`?${new URLSearchParams({
+                ...Object.fromEntries(
+                  Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === 'string'),
+                ),
+                page: String(params.page + 1),
+              }).toString()}`}
+              className="border-border bg-surface hover:border-primary/50 rounded-full border px-4 py-2 font-medium transition-colors"
+            >
+              Next →
+            </a>
+          )}
         </div>
       )}
 

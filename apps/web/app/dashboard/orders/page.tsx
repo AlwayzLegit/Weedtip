@@ -126,7 +126,7 @@ export default async function DashboardOrders() {
       </div>
 
       {!dispensary.accepting_orders && (
-        <div className="rounded-card border-amber-500/40 bg-amber-500/10 border p-3 text-sm text-amber-700 dark:text-amber-400">
+        <div className="rounded-card border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700">
           Online ordering is paused — shoppers can’t place new orders until you resume.
         </div>
       )}

@@ -1,35 +1,64 @@
 'use client';
 
 import { Link } from 'next-view-transitions';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Heart } from 'lucide-react';
 import { toggleStrainFavorite } from '@/app/actions/strains';
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics';
+import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 
+/**
+ * Save button on the strain page. The page is static/ISR and renders with a
+ * cookieless client, so auth and the viewer's saved state must resolve HERE in
+ * the browser — a server-passed isAuthed would bake "signed out" into the
+ * cached HTML for every visitor and bounce logged-in users to /sign-in.
+ */
 export function StrainFavoriteButton({
   strainId,
   slug,
-  initialSaved,
   initialCount,
-  isAuthed,
 }: {
   strainId: string;
   slug: string;
-  initialSaved: boolean;
   initialCount: number;
-  isAuthed: boolean;
 }) {
-  const [saved, setSaved] = useState(initialSaved);
+  const [saved, setSaved] = useState(false);
+  // null = still resolving; render the signed-out link until proven otherwise.
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const [count, setCount] = useState(initialCount);
   const [pending, start] = useTransition();
 
-  if (!isAuthed) {
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (cancelled) return;
+      setAuthed(!!user);
+      if (user) {
+        const { data: fav } = await supabase
+          .from('strain_favorites')
+          .select('strain_id')
+          .eq('strain_id', strainId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (!cancelled) setSaved(!!fav);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [strainId]);
+
+  if (!authed) {
     return (
       <Link
         href={`/sign-in?next=/strain/${slug}`}
-        className="border-border hover:bg-surface-2 hover:border-border-strong inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors"
+        className="border-border hover:bg-surface-2 hover:border-border-strong inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors"
       >
         <Heart className="h-4 w-4" />
         Save · {count}

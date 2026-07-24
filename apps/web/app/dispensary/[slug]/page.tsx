@@ -1169,7 +1169,12 @@ export default async function DispensaryPage({ params }: { params: Promise<{ slu
               )}
               {!user && (
                 <p className="text-muted mb-6 text-sm">
-                  <Link href="/sign-in" className="text-primary hover:underline">
+                  {/* Carry the return path — landing on / after auth loses the
+                      shop and the review intent. */}
+                  <Link
+                    href={`/sign-in?next=${encodeURIComponent(`/dispensary/${d.slug}`)}`}
+                    className="text-primary hover:underline"
+                  >
                     Sign in
                   </Link>{' '}
                   to leave a review.

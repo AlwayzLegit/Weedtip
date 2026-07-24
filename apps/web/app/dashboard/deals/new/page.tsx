@@ -17,7 +17,7 @@ export default async function NewDealPage() {
         <h1 className="text-2xl font-bold">Create deal</h1>
         <UpgradeWall
           feature="Deals"
-          description="Run percentage, BOGO, and spend-and-save deals that show across Weedtip. Upgrade to Growth to publish deals — your listing stays free at 0% commission."
+          description="Run percentage, BOGO, and spend-and-save deals that show across Weedtip. Upgrade to Weedtip Pro to publish deals — your listing stays free at 0% commission."
         />
       </div>
     );

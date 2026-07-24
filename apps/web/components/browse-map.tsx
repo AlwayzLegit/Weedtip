@@ -176,8 +176,8 @@ const pinLabelLayer: LayerProps = {
     'text-optional': true,
   },
   paint: {
-    'text-color': '#d7dde4',
-    'text-halo-color': '#0b0e13',
+    'text-color': '#1f2937',
+    'text-halo-color': '#ffffff',
     'text-halo-width': 1.2,
   },
 };
@@ -389,7 +389,7 @@ export function BrowseMap({
         bounds: initialBounds,
         fitBoundsOptions: { padding: 48, maxZoom: 15 },
       }}
-      mapStyle="mapbox://styles/mapbox/dark-v11"
+      mapStyle="mapbox://styles/mapbox/light-v11"
       style={{ width: '100%', height: '100%' }}
       interactiveLayerIds={['clusters', 'unclustered-point', 'pin-ranks']}
       onClick={onClick}

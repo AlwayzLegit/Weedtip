@@ -17,7 +17,7 @@ export default async function NewPromoPage() {
       ) : (
         <UpgradeWall
           feature="In-store promos"
-          description="Highlight in-store-only offers on your storefront. Upgrade to Growth to publish promos — your listing stays free at 0% commission."
+          description="Highlight in-store-only offers on your storefront. Upgrade to Weedtip Pro to publish promos — your listing stays free at 0% commission."
         />
       )}
     </div>

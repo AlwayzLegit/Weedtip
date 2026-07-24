@@ -88,7 +88,7 @@ export default async function DashboardDeals() {
       <DealsTabs active="list" />
 
       {!isPaid && (
-        <UpgradeBanner message="Deals are a Growth feature. You can view existing deals, but publishing new ones needs an upgrade." />
+        <UpgradeBanner message="Deals are a Weedtip Pro feature. You can view existing deals, but publishing new ones needs an upgrade." />
       )}
 
       {!deals || deals.length === 0 ? (

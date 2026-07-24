@@ -47,7 +47,9 @@ export default async function StudioProfile() {
   // Description + website are Basic-tier ("complete profile") per brand.
   const canCompleteByBrand = new Map(
     await Promise.all(
-      brands.map(async (b) => [b.id, await canUseBrandFeature(b.id, 'brand_complete_profile')] as const),
+      brands.map(
+        async (b) => [b.id, await canUseBrandFeature(b.id, 'brand_complete_profile')] as const,
+      ),
     ),
   );
 
@@ -84,7 +86,7 @@ export default async function StudioProfile() {
                   View public page →
                 </Link>
               ) : (
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700">
                   <Clock className="h-3.5 w-3.5" /> Pending review
                 </span>
               )}
@@ -121,8 +123,8 @@ export default async function StudioProfile() {
 
             <div className="border-border border-t pt-4">
               <h3 className="text-muted mb-2 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide">
-                <Store className="h-4 w-4" /> Carried at ({c?.shops.size ?? 0} shops · {c?.products ?? 0}{' '}
-                products)
+                <Store className="h-4 w-4" /> Carried at ({c?.shops.size ?? 0} shops ·{' '}
+                {c?.products ?? 0} products)
               </h3>
               {c && c.shops.size > 0 ? (
                 <div className="flex flex-wrap gap-2">
