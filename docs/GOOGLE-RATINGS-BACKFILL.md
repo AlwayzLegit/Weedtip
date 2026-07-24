@@ -54,6 +54,11 @@ Ctrl-C is safe at any point — progress is written per row, and re-running pick
 up whatever is still queued. Budget ~15–25 min for a full run at 8 concurrent
 requests.
 
+The script paces itself under Google's per-minute `GetPlaceRequest` quota
+(default budget 550/min; override with `PACE_PER_MIN=`). A `429` backs off one
+quota window and retries once — the 2026-07 initial run predated this and needed
+manual re-run loops; a full run now completes in a single invocation.
+
 ### B. In-app admin console
 
 `/admin/integrations` → **Import ratings** in the _Import & refresh Google
