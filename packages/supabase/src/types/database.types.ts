@@ -14,96 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      page_index_status: {
-        Row: {
-          checked_at: string
-          coverage_state: string | null
-          google_canonical: string | null
-          in_sitemap: boolean | null
-          indexing_state: string | null
-          last_crawl_time: string | null
-          page_fetch_state: string | null
-          referring_urls: number | null
-          robots_txt_state: string | null
-          url: string
-          user_canonical: string | null
-          verdict: string | null
-        }
-        Insert: {
-          checked_at?: string
-          coverage_state?: string | null
-          google_canonical?: string | null
-          in_sitemap?: boolean | null
-          indexing_state?: string | null
-          last_crawl_time?: string | null
-          page_fetch_state?: string | null
-          referring_urls?: number | null
-          robots_txt_state?: string | null
-          url: string
-          user_canonical?: string | null
-          verdict?: string | null
-        }
-        Update: {
-          checked_at?: string
-          coverage_state?: string | null
-          google_canonical?: string | null
-          in_sitemap?: boolean | null
-          indexing_state?: string | null
-          last_crawl_time?: string | null
-          page_fetch_state?: string | null
-          referring_urls?: number | null
-          robots_txt_state?: string | null
-          url?: string
-          user_canonical?: string | null
-          verdict?: string | null
-        }
-        Relationships: []
-      }
-      ad_events: {
-        Row: {
-          created_at: string
-          dispensary_id: string | null
-          event: string
-          id: string
-          region_id: string
-          slot_type: Database["public"]["Enums"]["ad_slot_type"] | null
-          zone_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          dispensary_id?: string | null
-          event: string
-          id?: string
-          region_id: string
-          slot_type?: Database["public"]["Enums"]["ad_slot_type"] | null
-          zone_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          dispensary_id?: string | null
-          event?: string
-          id?: string
-          region_id?: string
-          slot_type?: Database["public"]["Enums"]["ad_slot_type"] | null
-          zone_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ad_events_region_id_fkey"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "ad_regions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ad_events_zone_id_fkey"
-            columns: ["zone_id"]
-            isOneToOne: false
-            referencedRelation: "ad_zones"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ad_creatives: {
         Row: {
           body: string | null
@@ -137,17 +47,69 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "ad_creatives_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ad_creatives_dispensary_id_fkey"
             columns: ["dispensary_id"]
             isOneToOne: false
             referencedRelation: "dispensaries"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      ad_events: {
+        Row: {
+          created_at: string
+          dispensary_id: string | null
+          event: string
+          id: string
+          region_id: string
+          slot_type: Database["public"]["Enums"]["ad_slot_type"] | null
+          zone_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dispensary_id?: string | null
+          event: string
+          id?: string
+          region_id: string
+          slot_type?: Database["public"]["Enums"]["ad_slot_type"] | null
+          zone_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dispensary_id?: string | null
+          event?: string
+          id?: string
+          region_id?: string
+          slot_type?: Database["public"]["Enums"]["ad_slot_type"] | null
+          zone_id?: string | null
+        }
+        Relationships: [
           {
-            foreignKeyName: "ad_creatives_brand_id_fkey"
-            columns: ["brand_id"]
+            foreignKeyName: "ad_events_dispensary_id_fkey"
+            columns: ["dispensary_id"]
             isOneToOne: false
-            referencedRelation: "brands"
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_events_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "ad_regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_events_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "ad_zones"
             referencedColumns: ["id"]
           },
         ]
@@ -202,7 +164,7 @@ export type Database = {
       }
       ad_regions: {
         Row: {
-          boundary: unknown | null
+          boundary: unknown
           created_at: string
           exclusive_price_max: number | null
           exclusive_price_min: number | null
@@ -215,7 +177,7 @@ export type Database = {
           tier: Database["public"]["Enums"]["region_tier"]
         }
         Insert: {
-          boundary?: unknown | null
+          boundary?: unknown
           created_at?: string
           exclusive_price_max?: number | null
           exclusive_price_min?: number | null
@@ -228,7 +190,7 @@ export type Database = {
           tier: Database["public"]["Enums"]["region_tier"]
         }
         Update: {
-          boundary?: unknown | null
+          boundary?: unknown
           created_at?: string
           exclusive_price_max?: number | null
           exclusive_price_min?: number | null
@@ -333,6 +295,7 @@ export type Database = {
           ends_at: string | null
           id: string
           is_house: boolean
+          plan_included: boolean
           price_paid: number
           product_id: string | null
           renewal_offered_at: string | null
@@ -349,6 +312,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           is_house?: boolean
+          plan_included?: boolean
           price_paid: number
           product_id?: string | null
           renewal_offered_at?: string | null
@@ -365,6 +329,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           is_house?: boolean
+          plan_included?: boolean
           price_paid?: number
           product_id?: string | null
           renewal_offered_at?: string | null
@@ -413,8 +378,8 @@ export type Database = {
       }
       ad_zones: {
         Row: {
-          boundary: unknown | null
-          centroid: unknown | null
+          boundary: unknown
+          centroid: unknown
           created_at: string
           id: string
           name: string
@@ -422,8 +387,8 @@ export type Database = {
           slug: string
         }
         Insert: {
-          boundary?: unknown | null
-          centroid?: unknown | null
+          boundary?: unknown
+          centroid?: unknown
           created_at?: string
           id?: string
           name: string
@@ -431,8 +396,8 @@ export type Database = {
           slug: string
         }
         Update: {
-          boundary?: unknown | null
-          centroid?: unknown | null
+          boundary?: unknown
+          centroid?: unknown
           created_at?: string
           id?: string
           name?: string
@@ -674,37 +639,50 @@ export type Database = {
           },
         ]
       }
-      brand_updates: {
+      brand_reviews: {
         Row: {
+          author_name: string | null
           body: string | null
           brand_id: string
           created_at: string
-          expires_at: string
           id: string
-          title: string
+          rating: number
+          updated_at: string
+          user_id: string
         }
         Insert: {
+          author_name?: string | null
           body?: string | null
           brand_id: string
           created_at?: string
-          expires_at?: string
           id?: string
-          title: string
+          rating: number
+          updated_at?: string
+          user_id: string
         }
         Update: {
+          author_name?: string | null
           body?: string | null
           brand_id?: string
           created_at?: string
-          expires_at?: string
           id?: string
-          title?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "brand_updates_brand_id_fkey"
+            foreignKeyName: "brand_reviews_brand_id_fkey"
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -754,50 +732,37 @@ export type Database = {
           },
         ]
       }
-      brand_reviews: {
+      brand_updates: {
         Row: {
-          author_name: string | null
           body: string | null
           brand_id: string
           created_at: string
+          expires_at: string
           id: string
-          rating: number
-          updated_at: string
-          user_id: string
+          title: string
         }
         Insert: {
-          author_name?: string | null
           body?: string | null
           brand_id: string
           created_at?: string
+          expires_at?: string
           id?: string
-          rating: number
-          updated_at?: string
-          user_id: string
+          title: string
         }
         Update: {
-          author_name?: string | null
           body?: string | null
           brand_id?: string
           created_at?: string
+          expires_at?: string
           id?: string
-          rating?: number
-          updated_at?: string
-          user_id?: string
+          title?: string
         }
         Relationships: [
           {
-            foreignKeyName: "brand_reviews_brand_id_fkey"
+            foreignKeyName: "brand_updates_brand_id_fkey"
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "brand_reviews_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -861,59 +826,6 @@ export type Database = {
           },
         ]
       }
-      claim_invites: {
-        Row: {
-          claimed_at: string | null
-          created_at: string
-          dispensary_id: string
-          campaign: string | null
-          contact_source: string
-          email: string
-          id: string
-          opened_at: string | null
-          reminder_sent_at: string | null
-          sent_at: string | null
-          token: string
-          unsubscribed_at: string | null
-        }
-        Insert: {
-          claimed_at?: string | null
-          created_at?: string
-          dispensary_id: string
-          campaign?: string | null
-          contact_source?: string
-          email: string
-          id?: string
-          opened_at?: string | null
-          reminder_sent_at?: string | null
-          sent_at?: string | null
-          token?: string
-          unsubscribed_at?: string | null
-        }
-        Update: {
-          claimed_at?: string | null
-          created_at?: string
-          dispensary_id?: string
-          campaign?: string | null
-          contact_source?: string
-          email?: string
-          id?: string
-          opened_at?: string | null
-          reminder_sent_at?: string | null
-          sent_at?: string | null
-          token?: string
-          unsubscribed_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "claim_invites_dispensary_id_fkey"
-            columns: ["dispensary_id"]
-            isOneToOne: true
-            referencedRelation: "dispensaries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       categories: {
         Row: {
           icon: string | null
@@ -935,6 +847,83 @@ export type Database = {
           name?: string
           slug?: string
           sort_order?: number
+        }
+        Relationships: []
+      }
+      claim_invites: {
+        Row: {
+          campaign: string | null
+          claimed_at: string | null
+          contact_source: string
+          created_at: string
+          dispensary_id: string
+          email: string
+          id: string
+          opened_at: string | null
+          reminder_sent_at: string | null
+          sent_at: string | null
+          token: string
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          campaign?: string | null
+          claimed_at?: string | null
+          contact_source?: string
+          created_at?: string
+          dispensary_id: string
+          email: string
+          id?: string
+          opened_at?: string | null
+          reminder_sent_at?: string | null
+          sent_at?: string | null
+          token?: string
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          campaign?: string | null
+          claimed_at?: string | null
+          contact_source?: string
+          created_at?: string
+          dispensary_id?: string
+          email?: string
+          id?: string
+          opened_at?: string | null
+          reminder_sent_at?: string | null
+          sent_at?: string | null
+          token?: string
+          unsubscribed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_invites_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: true
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_alert_signups: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string | null
+          state: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string | null
+          state?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string | null
+          state?: string | null
         }
         Relationships: []
       }
@@ -1166,15 +1155,6 @@ export type Database = {
       dispensaries: {
         Row: {
           accepting_orders: boolean
-          grandfathered: boolean
-          gallery_urls: string[]
-          post_order_message: string | null
-          require_id: boolean
-          reviews_summary: string | null
-          reviews_summary_at: string | null
-          reviews_summary_count: number | null
-          special_hours: Json
-          video_url: string | null
           address: string | null
           amenities: string[]
           announcement: string | null
@@ -1183,19 +1163,21 @@ export type Database = {
           county: string | null
           cover_image_url: string | null
           created_at: string
+          dcc_email: string | null
+          dcc_phone: string | null
           delivery_eta_minutes: number | null
           delivery_fee_cents: number | null
           delivery_minimum_cents: number | null
-          dcc_email: string | null
-          dcc_phone: string | null
           description: string | null
           email: string | null
           featured: boolean
           featured_manual: boolean
+          gallery_urls: string[]
           google_enriched_at: string | null
           google_photo_name: string | null
           google_photo_names: string[] | null
           google_place_id: string | null
+          grandfathered: boolean
           hours: Json | null
           id: string
           is_delivery: boolean
@@ -1214,31 +1196,29 @@ export type Database = {
           owner_id: string | null
           phone: string | null
           pos_addon: boolean
+          post_order_message: string | null
           rating_atmosphere: number
           rating_avg: number
           rating_count: number
           rating_quality: number
           rating_service: number
+          require_id: boolean
+          reviews_summary: string | null
+          reviews_summary_at: string | null
+          reviews_summary_count: number | null
           search_vector: unknown
           slug: string
+          special_hours: Json
           state: string
           status: Database["public"]["Enums"]["dispensary_status"]
           timezone: string | null
           updated_at: string
+          video_url: string | null
           website: string | null
           zip: string | null
         }
         Insert: {
           accepting_orders?: boolean
-          grandfathered?: boolean
-          gallery_urls?: string[]
-          post_order_message?: string | null
-          require_id?: boolean
-          reviews_summary?: string | null
-          reviews_summary_at?: string | null
-          reviews_summary_count?: number | null
-          special_hours?: Json
-          video_url?: string | null
           address?: string | null
           amenities?: string[]
           announcement?: string | null
@@ -1247,19 +1227,21 @@ export type Database = {
           county?: string | null
           cover_image_url?: string | null
           created_at?: string
+          dcc_email?: string | null
+          dcc_phone?: string | null
           delivery_eta_minutes?: number | null
           delivery_fee_cents?: number | null
           delivery_minimum_cents?: number | null
-          dcc_email?: string | null
-          dcc_phone?: string | null
           description?: string | null
           email?: string | null
           featured?: boolean
           featured_manual?: boolean
+          gallery_urls?: string[]
           google_enriched_at?: string | null
           google_photo_name?: string | null
           google_photo_names?: string[] | null
           google_place_id?: string | null
+          grandfathered?: boolean
           hours?: Json | null
           id?: string
           is_delivery?: boolean
@@ -1278,31 +1260,29 @@ export type Database = {
           owner_id?: string | null
           phone?: string | null
           pos_addon?: boolean
+          post_order_message?: string | null
           rating_atmosphere?: number
           rating_avg?: number
           rating_count?: number
           rating_quality?: number
           rating_service?: number
+          require_id?: boolean
+          reviews_summary?: string | null
+          reviews_summary_at?: string | null
+          reviews_summary_count?: number | null
           search_vector?: unknown
           slug: string
+          special_hours?: Json
           state: string
           status?: Database["public"]["Enums"]["dispensary_status"]
           timezone?: string | null
           updated_at?: string
+          video_url?: string | null
           website?: string | null
           zip?: string | null
         }
         Update: {
           accepting_orders?: boolean
-          grandfathered?: boolean
-          gallery_urls?: string[]
-          post_order_message?: string | null
-          require_id?: boolean
-          reviews_summary?: string | null
-          reviews_summary_at?: string | null
-          reviews_summary_count?: number | null
-          special_hours?: Json
-          video_url?: string | null
           address?: string | null
           amenities?: string[]
           announcement?: string | null
@@ -1311,19 +1291,21 @@ export type Database = {
           county?: string | null
           cover_image_url?: string | null
           created_at?: string
+          dcc_email?: string | null
+          dcc_phone?: string | null
           delivery_eta_minutes?: number | null
           delivery_fee_cents?: number | null
           delivery_minimum_cents?: number | null
-          dcc_email?: string | null
-          dcc_phone?: string | null
           description?: string | null
           email?: string | null
           featured?: boolean
           featured_manual?: boolean
+          gallery_urls?: string[]
           google_enriched_at?: string | null
           google_photo_name?: string | null
           google_photo_names?: string[] | null
           google_place_id?: string | null
+          grandfathered?: boolean
           hours?: Json | null
           id?: string
           is_delivery?: boolean
@@ -1342,17 +1324,24 @@ export type Database = {
           owner_id?: string | null
           phone?: string | null
           pos_addon?: boolean
+          post_order_message?: string | null
           rating_atmosphere?: number
           rating_avg?: number
           rating_count?: number
           rating_quality?: number
           rating_service?: number
+          require_id?: boolean
+          reviews_summary?: string | null
+          reviews_summary_at?: string | null
+          reviews_summary_count?: number | null
           search_vector?: unknown
           slug?: string
+          special_hours?: Json
           state?: string
           status?: Database["public"]["Enums"]["dispensary_status"]
           timezone?: string | null
           updated_at?: string
+          video_url?: string | null
           website?: string | null
           zip?: string | null
         }
@@ -1390,17 +1379,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "dispensary_audit_log_dispensary_id_fkey"
-            columns: ["dispensary_id"]
-            isOneToOne: false
-            referencedRelation: "dispensaries"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "dispensary_audit_log_actor_id_fkey"
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispensary_audit_log_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
             referencedColumns: ["id"]
           },
         ]
@@ -1469,59 +1458,6 @@ export type Database = {
           },
         ]
       }
-      dispensary_taxes: {
-        Row: {
-          apply_all_categories: boolean
-          category_ids: string[]
-          created_at: string
-          dispensary_id: string
-          enabled: boolean
-          id: string
-          name: string
-          rate_bps: number
-          sort_order: number
-          tax_type: string
-          updated_at: string
-          use_type: string
-        }
-        Insert: {
-          apply_all_categories?: boolean
-          category_ids?: string[]
-          created_at?: string
-          dispensary_id: string
-          enabled?: boolean
-          id?: string
-          name: string
-          rate_bps: number
-          sort_order?: number
-          tax_type?: string
-          updated_at?: string
-          use_type?: string
-        }
-        Update: {
-          apply_all_categories?: boolean
-          category_ids?: string[]
-          created_at?: string
-          dispensary_id?: string
-          enabled?: boolean
-          id?: string
-          name?: string
-          rate_bps?: number
-          sort_order?: number
-          tax_type?: string
-          updated_at?: string
-          use_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dispensary_taxes_dispensary_id_fkey"
-            columns: ["dispensary_id"]
-            isOneToOne: false
-            referencedRelation: "dispensaries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       dispensary_members: {
         Row: {
           accepted_at: string | null
@@ -1562,6 +1498,20 @@ export type Database = {
             columns: ["dispensary_id"]
             isOneToOne: false
             referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispensary_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispensary_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1679,6 +1629,59 @@ export type Database = {
           },
         ]
       }
+      dispensary_taxes: {
+        Row: {
+          apply_all_categories: boolean
+          category_ids: string[]
+          created_at: string
+          dispensary_id: string
+          enabled: boolean
+          id: string
+          name: string
+          rate_bps: number
+          sort_order: number
+          tax_type: string
+          updated_at: string
+          use_type: string
+        }
+        Insert: {
+          apply_all_categories?: boolean
+          category_ids?: string[]
+          created_at?: string
+          dispensary_id: string
+          enabled?: boolean
+          id?: string
+          name: string
+          rate_bps: number
+          sort_order?: number
+          tax_type?: string
+          updated_at?: string
+          use_type?: string
+        }
+        Update: {
+          apply_all_categories?: boolean
+          category_ids?: string[]
+          created_at?: string
+          dispensary_id?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          rate_bps?: number
+          sort_order?: number
+          tax_type?: string
+          updated_at?: string
+          use_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispensary_taxes_dispensary_id_fkey"
+            columns: ["dispensary_id"]
+            isOneToOne: false
+            referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispensary_updates: {
         Row: {
           body: string | null
@@ -1713,30 +1716,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      deal_alert_signups: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          source: string | null
-          state: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          source?: string | null
-          state?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          source?: string | null
-          state?: string | null
-        }
-        Relationships: []
       }
       favorites: {
         Row: {
@@ -1907,13 +1886,13 @@ export type Database = {
           id: string
           items: Json
           notes: string | null
-          ready_eta_minutes: number | null
           order_type: Database["public"]["Enums"]["order_type"]
           paid_at: string | null
           payment_method: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps: number
           platform_fee_cents: number
+          ready_eta_minutes: number | null
           sold_by_staff: string | null
           source: string
           status: Database["public"]["Enums"]["order_status"]
@@ -1934,13 +1913,13 @@ export type Database = {
           id?: string
           items: Json
           notes?: string | null
-          ready_eta_minutes?: number | null
           order_type: Database["public"]["Enums"]["order_type"]
           paid_at?: string | null
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps?: number
           platform_fee_cents?: number
+          ready_eta_minutes?: number | null
           sold_by_staff?: string | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
@@ -1961,13 +1940,13 @@ export type Database = {
           id?: string
           items?: Json
           notes?: string | null
-          ready_eta_minutes?: number | null
           order_type?: Database["public"]["Enums"]["order_type"]
           paid_at?: string | null
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           platform_fee_bps?: number
           platform_fee_cents?: number
+          ready_eta_minutes?: number | null
           sold_by_staff?: string | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
@@ -1978,13 +1957,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "orders_driver_id_fkey"
-            columns: ["driver_id"]
-            isOneToOne: false
-            referencedRelation: "dispensary_drivers"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "orders_deal_id_fkey"
             columns: ["deal_id"]
@@ -1997,6 +1969,13 @@ export type Database = {
             columns: ["dispensary_id"]
             isOneToOne: false
             referencedRelation: "dispensaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "dispensary_drivers"
             referencedColumns: ["id"]
           },
           {
@@ -2017,14 +1996,14 @@ export type Database = {
       }
       ownership_requests: {
         Row: {
+          business_email: string | null
+          business_phone: string | null
+          claimant_role: string | null
           created_at: string
           dispensary_id: string
           document_path: string | null
           email_domain_match: boolean
           id: string
-          business_email: string | null
-          business_phone: string | null
-          claimant_role: string | null
           license_match: boolean
           license_number: string | null
           message: string | null
@@ -2034,14 +2013,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          business_email?: string | null
+          business_phone?: string | null
+          claimant_role?: string | null
           created_at?: string
           dispensary_id: string
           document_path?: string | null
           email_domain_match?: boolean
           id?: string
-          business_email?: string | null
-          business_phone?: string | null
-          claimant_role?: string | null
           license_match?: boolean
           license_number?: string | null
           message?: string | null
@@ -2051,12 +2030,14 @@ export type Database = {
           user_id: string
         }
         Update: {
-          created_at?: string
-          dispensary_id?: string
-          id?: string
           business_email?: string | null
           business_phone?: string | null
           claimant_role?: string | null
+          created_at?: string
+          dispensary_id?: string
+          document_path?: string | null
+          email_domain_match?: boolean
+          id?: string
           license_match?: boolean
           license_number?: string | null
           message?: string | null
@@ -2082,6 +2063,51 @@ export type Database = {
           },
         ]
       }
+      page_index_status: {
+        Row: {
+          checked_at: string
+          coverage_state: string | null
+          google_canonical: string | null
+          in_sitemap: boolean | null
+          indexing_state: string | null
+          last_crawl_time: string | null
+          page_fetch_state: string | null
+          referring_urls: number | null
+          robots_txt_state: string | null
+          url: string
+          user_canonical: string | null
+          verdict: string | null
+        }
+        Insert: {
+          checked_at?: string
+          coverage_state?: string | null
+          google_canonical?: string | null
+          in_sitemap?: boolean | null
+          indexing_state?: string | null
+          last_crawl_time?: string | null
+          page_fetch_state?: string | null
+          referring_urls?: number | null
+          robots_txt_state?: string | null
+          url: string
+          user_canonical?: string | null
+          verdict?: string | null
+        }
+        Update: {
+          checked_at?: string
+          coverage_state?: string | null
+          google_canonical?: string | null
+          in_sitemap?: boolean | null
+          indexing_state?: string | null
+          last_crawl_time?: string | null
+          page_fetch_state?: string | null
+          referring_urls?: number | null
+          robots_txt_state?: string | null
+          url?: string
+          user_canonical?: string | null
+          verdict?: string | null
+        }
+        Relationships: []
+      }
       placement_events: {
         Row: {
           created_at: string
@@ -2102,13 +2128,6 @@ export type Database = {
           placement_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "placement_events_placement_id_fkey"
-            columns: ["placement_id"]
-            isOneToOne: false
-            referencedRelation: "active_placements"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "placement_events_placement_id_fkey"
             columns: ["placement_id"]
@@ -2178,17 +2197,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "placements_creative_id_fkey"
-            columns: ["creative_id"]
-            isOneToOne: false
-            referencedRelation: "ad_creatives"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "placements_brand_id_fkey"
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placements_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "ad_creatives"
             referencedColumns: ["id"]
           },
           {
@@ -2203,7 +2222,6 @@ export type Database = {
       plans: {
         Row: {
           commission_bps: number
-          tier: number
           created_at: string
           description: string | null
           features: Json
@@ -2213,10 +2231,10 @@ export type Database = {
           price_cents: number
           slug: string
           sort_order: number
+          tier: number
         }
         Insert: {
           commission_bps?: number
-          tier?: number
           created_at?: string
           description?: string | null
           features?: Json
@@ -2226,10 +2244,10 @@ export type Database = {
           price_cents?: number
           slug: string
           sort_order?: number
+          tier?: number
         }
         Update: {
           commission_bps?: number
-          tier?: number
           created_at?: string
           description?: string | null
           features?: Json
@@ -2239,6 +2257,91 @@ export type Database = {
           price_cents?: number
           slug?: string
           sort_order?: number
+          tier?: number
+        }
+        Relationships: []
+      }
+      platform_secrets: {
+        Row: {
+          name: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          name: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          name?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          address_line: string | null
+          address_locality: string | null
+          address_region: string | null
+          ads_email: string
+          brand_color: string
+          brand_name: string
+          country: string
+          email_from: string
+          id: number
+          legal_name: string | null
+          ordering_enabled: boolean
+          phone_display: string | null
+          phone_e164: string | null
+          postal_code: string | null
+          privacy_email: string
+          sales_email: string
+          support_email: string
+          tagline: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_line?: string | null
+          address_locality?: string | null
+          address_region?: string | null
+          ads_email?: string
+          brand_color?: string
+          brand_name?: string
+          country?: string
+          email_from?: string
+          id?: number
+          legal_name?: string | null
+          ordering_enabled?: boolean
+          phone_display?: string | null
+          phone_e164?: string | null
+          postal_code?: string | null
+          privacy_email?: string
+          sales_email?: string
+          support_email?: string
+          tagline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_line?: string | null
+          address_locality?: string | null
+          address_region?: string | null
+          ads_email?: string
+          brand_color?: string
+          brand_name?: string
+          country?: string
+          email_from?: string
+          id?: number
+          legal_name?: string | null
+          ordering_enabled?: boolean
+          phone_display?: string | null
+          phone_e164?: string | null
+          postal_code?: string | null
+          privacy_email?: string
+          sales_email?: string
+          support_email?: string
+          tagline?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2356,90 +2459,6 @@ export type Database = {
           },
         ]
       }
-      platform_secrets: {
-        Row: {
-          name: string
-          updated_at: string
-          value: string
-        }
-        Insert: {
-          name: string
-          updated_at?: string
-          value: string
-        }
-        Update: {
-          name?: string
-          updated_at?: string
-          value?: string
-        }
-        Relationships: []
-      }
-      platform_settings: {
-        Row: {
-          id: number
-          brand_name: string
-          legal_name: string | null
-          tagline: string | null
-          support_email: string
-          sales_email: string
-          ads_email: string
-          privacy_email: string
-          email_from: string
-          phone_display: string | null
-          phone_e164: string | null
-          address_line: string | null
-          address_locality: string | null
-          address_region: string | null
-          postal_code: string | null
-          country: string
-          brand_color: string
-          ordering_enabled: boolean
-          updated_at: string
-        }
-        Insert: {
-          id?: number
-          brand_name?: string
-          legal_name?: string | null
-          tagline?: string | null
-          support_email?: string
-          sales_email?: string
-          ads_email?: string
-          privacy_email?: string
-          email_from?: string
-          phone_display?: string | null
-          phone_e164?: string | null
-          address_line?: string | null
-          address_locality?: string | null
-          address_region?: string | null
-          postal_code?: string | null
-          country?: string
-          brand_color?: string
-          ordering_enabled?: boolean
-          updated_at?: string
-        }
-        Update: {
-          id?: number
-          brand_name?: string
-          legal_name?: string | null
-          tagline?: string | null
-          support_email?: string
-          sales_email?: string
-          ads_email?: string
-          privacy_email?: string
-          email_from?: string
-          phone_display?: string | null
-          phone_e164?: string | null
-          address_line?: string | null
-          address_locality?: string | null
-          address_region?: string | null
-          postal_code?: string | null
-          country?: string
-          brand_color?: string
-          ordering_enabled?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
       product_reviews: {
         Row: {
           author_name: string | null
@@ -2498,8 +2517,8 @@ export type Database = {
           cbd_percentage: number | null
           created_at: string
           description: string | null
-          external_id: string | null
           dispensary_id: string
+          external_id: string | null
           id: string
           image_urls: string[]
           in_stock: boolean
@@ -2527,8 +2546,8 @@ export type Database = {
           cbd_percentage?: number | null
           created_at?: string
           description?: string | null
-          external_id?: string | null
           dispensary_id: string
+          external_id?: string | null
           id?: string
           image_urls?: string[]
           in_stock?: boolean
@@ -2556,8 +2575,8 @@ export type Database = {
           cbd_percentage?: number | null
           created_at?: string
           description?: string | null
-          external_id?: string | null
           dispensary_id?: string
+          external_id?: string | null
           id?: string
           image_urls?: string[]
           in_stock?: boolean
@@ -2677,6 +2696,13 @@ export type Database = {
             referencedRelation: "reviews"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "review_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reviews: {
@@ -2688,8 +2714,8 @@ export type Database = {
           dispensary_id: string
           dispute_reason: string | null
           disputed_at: string | null
-          id: string
           helpful_count: number
+          id: string
           owner_reply: string | null
           owner_reply_at: string | null
           photo_urls: string[]
@@ -2708,8 +2734,8 @@ export type Database = {
           dispensary_id: string
           dispute_reason?: string | null
           disputed_at?: string | null
-          id?: string
           helpful_count?: number
+          id?: string
           owner_reply?: string | null
           owner_reply_at?: string | null
           photo_urls?: string[]
@@ -2728,8 +2754,8 @@ export type Database = {
           dispensary_id?: string
           dispute_reason?: string | null
           disputed_at?: string | null
-          id?: string
           helpful_count?: number
+          id?: string
           owner_reply?: string | null
           owner_reply_at?: string | null
           photo_urls?: string[]
@@ -2873,72 +2899,6 @@ export type Database = {
       }
     }
     Views: {
-      active_placements: {
-        Row: {
-          brand_id: string | null
-          created_at: string | null
-          dispensary_id: string | null
-          ends_at: string | null
-          id: string | null
-          is_active: boolean | null
-          notes: string | null
-          price_cents: number | null
-          priority: number | null
-          scope_city: string | null
-          scope_state: string | null
-          starts_at: string | null
-          target_id: string | null
-          type: Database["public"]["Enums"]["placement_type"] | null
-        }
-        Insert: {
-          brand_id?: string | null
-          created_at?: string | null
-          dispensary_id?: string | null
-          ends_at?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          notes?: string | null
-          price_cents?: number | null
-          priority?: number | null
-          scope_city?: string | null
-          scope_state?: string | null
-          starts_at?: string | null
-          target_id?: string | null
-          type?: Database["public"]["Enums"]["placement_type"] | null
-        }
-        Update: {
-          brand_id?: string | null
-          created_at?: string | null
-          dispensary_id?: string | null
-          ends_at?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          notes?: string | null
-          price_cents?: number | null
-          priority?: number | null
-          scope_city?: string | null
-          scope_state?: string | null
-          starts_at?: string | null
-          target_id?: string | null
-          type?: Database["public"]["Enums"]["placement_type"] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "placements_brand_id_fkey"
-            columns: ["brand_id"]
-            isOneToOne: false
-            referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placements_dispensary_id_fkey"
-            columns: ["dispensary_id"]
-            isOneToOne: false
-            referencedRelation: "dispensaries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       placement_stats: {
         Row: {
           clicks: number | null
@@ -2950,13 +2910,6 @@ export type Database = {
             foreignKeyName: "placement_events_placement_id_fkey"
             columns: ["placement_id"]
             isOneToOne: false
-            referencedRelation: "active_placements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_events_placement_id_fkey"
-            columns: ["placement_id"]
-            isOneToOne: false
             referencedRelation: "placements"
             referencedColumns: ["id"]
           },
@@ -2964,17 +2917,11 @@ export type Database = {
       }
     }
     Functions: {
-      seo_coverage_summary: {
-        Args: never
-        Returns: {
-          coverage_state: string
-          n: number
-        }[]
+      accept_dispensary_invite: {
+        Args: { p_member_id: string }
+        Returns: boolean
       }
-      activate_brand_bid: {
-        Args: { p_bid_id: string }
-        Returns: undefined
-      }
+      activate_brand_bid: { Args: { p_bid_id: string }; Returns: undefined }
       ad_region_zone_names: {
         Args: never
         Returns: {
@@ -2982,27 +2929,45 @@ export type Database = {
           zone_names: string[]
         }[]
       }
-      claim_invite_open: {
-        Args: { p_token: string }
-        Returns: {
-          slug: string
-        }[]
-      }
-      claim_invite_unsubscribe: {
-        Args: { p_token: string }
-        Returns: boolean
-      }
       ad_slot_availability: {
         Args: never
         Returns: {
-          region_id: string
           exclusive_open: boolean
           featured_open: number
           premium_open: number
+          region_id: string
         }[]
       }
       add_pos_staff: {
         Args: { p_dispensary_id: string; p_name: string; p_pin: string }
+        Returns: string
+      }
+      admin_cancel_ad_subscription: {
+        Args: { p_subscription_id: string }
+        Returns: undefined
+      }
+      admin_comp_slot: {
+        Args: { p_dispensary_id: string; p_price: number; p_slot_id: string }
+        Returns: string
+      }
+      admin_delete_dispensary: { Args: { p_id: string }; Returns: undefined }
+      admin_merge_dispensaries: {
+        Args: { p_dup: string; p_keep: string }
+        Returns: undefined
+      }
+      admin_set_ad_boundary: {
+        Args: { p_geojson: string; p_id: string; p_kind: string }
+        Returns: undefined
+      }
+      admin_upsert_ad_zone: {
+        Args: {
+          p_id?: string
+          p_lat: number
+          p_lng: number
+          p_name: string
+          p_region_id: string
+          p_slug: string
+        }
         Returns: string
       }
       approve_brand_claim: { Args: { p_claim_id: string }; Returns: undefined }
@@ -3029,23 +2994,6 @@ export type Database = {
           your_bid_id: string
         }[]
       }
-      admin_delete_dispensary: { Args: { p_id: string }; Returns: undefined }
-      admin_merge_dispensaries: {
-        Args: { p_keep: string; p_dup: string }
-        Returns: undefined
-      }
-      checkout_rules: {
-        Args: { p_dispensary_id: string }
-        Returns: {
-          state: string
-          tax_rate: number
-          is_recreational_legal: boolean
-          is_medical_legal: boolean
-          medical_only: boolean
-          can_order: boolean
-          block_reason: string | null
-        }[]
-      }
       brand_featured_states: {
         Args: never
         Returns: {
@@ -3053,54 +3001,34 @@ export type Database = {
         }[]
       }
       brand_follower_count: { Args: { p_brand_id: string }; Returns: number }
+      brand_tier: { Args: { p_brand_id: string }; Returns: number }
       cancel_brand_bid: { Args: { p_bid_id: string }; Returns: undefined }
-      claim_slot: {
-        Args: { p_slot_id: string; p_dispensary_id: string; p_price: number }
-        Returns: string
-      }
-      admin_cancel_ad_subscription: {
-        Args: { p_subscription_id: string }
-        Returns: undefined
-      }
-      admin_comp_slot: {
-        Args: { p_slot_id: string; p_dispensary_id: string; p_price: number }
-        Returns: string
-      }
-      admin_set_ad_boundary: {
-        Args: { p_kind: string; p_id: string; p_geojson: string }
-        Returns: undefined
-      }
-      admin_upsert_ad_zone: {
-        Args: {
-          p_region_id: string
-          p_slug: string
-          p_name: string
-          p_lng: number
-          p_lat: number
-          p_id?: string | null
-        }
-        Returns: string
-      }
-      record_ad_event: {
-        Args: {
-          p_region_id: string
-          p_event: string
-          p_zone_id?: string | null
-          p_dispensary_id?: string | null
-          p_slot_type?: Database["public"]["Enums"]["ad_slot_type"] | null
-        }
-        Returns: undefined
-      }
-      region_metrics: {
-        Args: { p_days?: number }
+      checkout_rules: {
+        Args: { p_dispensary_id: string }
         Returns: {
-          region_id: string
-          searches: number
-          impressions: number
-          clicks: number
-          live_subs: number
-          active_revenue_cents: number
+          block_reason: string
+          can_order: boolean
+          is_medical_legal: boolean
+          is_recreational_legal: boolean
+          medical_only: boolean
+          state: string
+          tax_rate: number
         }[]
+      }
+      claim_invite_open: {
+        Args: { p_token: string }
+        Returns: {
+          slug: string
+        }[]
+      }
+      claim_invite_unsubscribe: { Args: { p_token: string }; Returns: boolean }
+      claim_plan_slot: {
+        Args: { p_dispensary_id: string; p_slot_id: string }
+        Returns: string
+      }
+      claim_slot: {
+        Args: { p_dispensary_id: string; p_price: number; p_slot_id: string }
+        Returns: string
       }
       compute_auto_order_discount: {
         Args: { p_dispensary_id: string; p_subtotal_cents: number }
@@ -3154,23 +3082,27 @@ export type Database = {
       deliveries_serving_county: {
         Args: { p_county: string; p_state: string }
         Returns: {
+          county: string
+          cover_image_url: string
+          delivery_eta_minutes: number
+          delivery_fee_cents: number
+          delivery_minimum_cents: number
+          featured: boolean
           id: string
-          slug: string
-          name: string
-          county: string | null
-          state: string
-          cover_image_url: string | null
-          logo_url: string | null
           is_medical: boolean
           is_recreational: boolean
+          licensed: boolean
+          logo_url: string
+          name: string
           rating_avg: number
           rating_count: number
-          licensed: boolean
-          featured: boolean
-          delivery_minimum_cents: number | null
-          delivery_fee_cents: number | null
-          delivery_eta_minutes: number | null
+          slug: string
+          state: string
         }[]
+      }
+      dispensary_effective_tax_bps: {
+        Args: { p_dispensary_id: string }
+        Returns: number
       }
       dispensary_follower_count: {
         Args: { p_dispensary_id: string }
@@ -3185,30 +3117,12 @@ export type Database = {
           sale_cents: number
         }[]
       }
+      dispensary_tier: { Args: { p_dispensary_id: string }; Returns: number }
       dispute_review: {
         Args: { p_reason: string; p_review_id: string }
         Returns: undefined
       }
-      accept_dispensary_invite: {
-        Args: { p_member_id: string }
-        Returns: boolean
-      }
-      dispensary_effective_tax_bps: {
-        Args: { p_dispensary_id: string }
-        Returns: number
-      }
-      brand_tier: {
-        Args: { p_brand_id: string }
-        Returns: number
-      }
-      dispensary_tier: {
-        Args: { p_dispensary_id: string }
-        Returns: number
-      }
-      effective_tax_rate: {
-        Args: { p_dispensary_id: string }
-        Returns: number
-      }
+      effective_tax_rate: { Args: { p_dispensary_id: string }; Returns: number }
       effective_unit_price: {
         Args: { p_product_id: string }
         Returns: {
@@ -3218,49 +3132,49 @@ export type Database = {
         }[]
       }
       get_active_dispensary_state_count: { Args: never; Returns: number }
-      get_region_hero: {
-        Args: { p_state?: string; p_city?: string }
-        Returns: {
-          placement_id: string
-          kind: string
-          slug: string
-          name: string
-          city: string | null
-          state: string | null
-          cover_url: string | null
-          logo_url: string | null
-          headline: string | null
-          rating: number | null
-          review_count: number | null
-          specificity: number
-        }[]
-      }
-      get_region_placements: {
-        Args: { p_region_id: string }
-        Returns: {
-          slot_type: Database["public"]["Enums"]["ad_slot_type"]
-          position: number
-          dispensary_id: string
-          is_house: boolean
-        }[]
-      }
       get_region_featured_brands: {
         Args: { p_region_id: string }
         Returns: {
           brand_id: string
-          position: number
+          creative_id: string
           is_house: boolean
-          creative_id: string | null
+          position: number
         }[]
       }
       get_region_featured_products: {
         Args: { p_region_id: string }
         Returns: {
-          product_id: string
-          position: number
+          advertiser_brand_id: string
+          advertiser_dispensary_id: string
           is_house: boolean
-          advertiser_dispensary_id: string | null
-          advertiser_brand_id: string | null
+          position: number
+          product_id: string
+        }[]
+      }
+      get_region_hero: {
+        Args: { p_city?: string; p_state?: string }
+        Returns: {
+          city: string
+          cover_url: string
+          headline: string
+          kind: string
+          logo_url: string
+          name: string
+          placement_id: string
+          rating: number
+          review_count: number
+          slug: string
+          specificity: number
+          state: string
+        }[]
+      }
+      get_region_placements: {
+        Args: { p_region_id: string }
+        Returns: {
+          dispensary_id: string
+          is_house: boolean
+          position: number
+          slot_type: Database["public"]["Enums"]["ad_slot_type"]
         }[]
       }
       grant_pos_addon: {
@@ -3269,42 +3183,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_dispensary_open: {
-        Args: { at_ts?: string; hours: Json }
+        Args: { at_ts?: string; hours: Json; tz?: string }
         Returns: boolean
       }
       is_paid_listing: { Args: { p_dispensary_id: string }; Returns: boolean }
-      owns_brand: { Args: { p_brand_id: string }; Returns: boolean }
-      owns_dispensary: {
-        Args: { target_dispensary_id: string }
-        Returns: boolean
-      }
-      place_brand_bid: {
-        Args: { p_bid_cents: number; p_brand_id: string; p_region_id: string }
-        Returns: undefined
-      }
-      post_brand_update: {
-        Args: { p_body: string; p_brand_id: string; p_title: string }
-        Returns: string
-      }
-      post_dispensary_update: {
-        Args: { p_body: string; p_dispensary_id: string; p_title: string }
-        Returns: string
-      }
-      recalc_dispensary_rating: {
-        Args: { target_id: string }
-        Returns: undefined
-      }
-      recalc_product_rating: { Args: { target_id: string }; Returns: undefined }
-      record_placement_event: {
-        Args: { p_placement_id: string; p_type: string }
-        Returns: undefined
-      }
-      region_featured_brands: {
-        Args: { p_state: string }
-        Returns: {
-          brand_id: string
-        }[]
-      }
       map_pins_bounds: {
         Args: {
           filter_amenities?: string[]
@@ -3336,6 +3218,51 @@ export type Database = {
           slug: string
         }[]
       }
+      member_can: {
+        Args: { cap: string; target_dispensary_id: string }
+        Returns: boolean
+      }
+      owns_brand: { Args: { p_brand_id: string }; Returns: boolean }
+      owns_dispensary: {
+        Args: { target_dispensary_id: string }
+        Returns: boolean
+      }
+      place_brand_bid: {
+        Args: { p_bid_cents: number; p_brand_id: string; p_region_id: string }
+        Returns: undefined
+      }
+      post_brand_update: {
+        Args: { p_body: string; p_brand_id: string; p_title: string }
+        Returns: string
+      }
+      post_dispensary_update: {
+        Args: { p_body: string; p_dispensary_id: string; p_title: string }
+        Returns: string
+      }
+      promo_ineligibility_reason: {
+        Args: { p_deal_id: string; p_dispensary_id: string }
+        Returns: string
+      }
+      recalc_brand_rating: { Args: { target_id: string }; Returns: undefined }
+      recalc_dispensary_rating: {
+        Args: { target_id: string }
+        Returns: undefined
+      }
+      recalc_product_rating: { Args: { target_id: string }; Returns: undefined }
+      record_ad_event: {
+        Args: {
+          p_dispensary_id?: string
+          p_event: string
+          p_region_id: string
+          p_slot_type?: Database["public"]["Enums"]["ad_slot_type"]
+          p_zone_id?: string
+        }
+        Returns: undefined
+      }
+      record_placement_event: {
+        Args: { p_placement_id: string; p_type: string }
+        Returns: undefined
+      }
       region_directory: {
         Args: { top_cities_limit?: number }
         Returns: {
@@ -3344,26 +3271,11 @@ export type Database = {
           top_cities: Json
         }[]
       }
-      reject_brand_claim: { Args: { p_claim_id: string }; Returns: undefined }
-      reject_ownership_request: {
-        Args: { p_request_id: string }
-        Returns: undefined
-      }
-      release_stale_ad_claims: { Args: never; Returns: number }
-      resolve_geo: {
-        Args: { lng: number; lat: number }
+      region_featured_brands: {
+        Args: { p_state: string }
         Returns: {
-          zone_id: string
-          zone_slug: string
-          zone_name: string
-          region_id: string
-          region_slug: string
-          region_name: string
+          brand_id: string
         }[]
-      }
-      reply_to_review: {
-        Args: { p_reply: string; p_review_id: string }
-        Returns: undefined
       }
       region_house_candidates: {
         Args: { p_limit?: number; p_region_id: string }
@@ -3376,6 +3288,38 @@ export type Database = {
           slug: string
         }[]
       }
+      region_metrics: {
+        Args: { p_days?: number }
+        Returns: {
+          active_revenue_cents: number
+          clicks: number
+          impressions: number
+          live_subs: number
+          region_id: string
+          searches: number
+        }[]
+      }
+      reject_brand_claim: { Args: { p_claim_id: string }; Returns: undefined }
+      reject_ownership_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      release_stale_ad_claims: { Args: never; Returns: number }
+      reply_to_review: {
+        Args: { p_reply: string; p_review_id: string }
+        Returns: undefined
+      }
+      resolve_geo: {
+        Args: { lat: number; lng: number }
+        Returns: {
+          region_id: string
+          region_name: string
+          region_slug: string
+          zone_id: string
+          zone_name: string
+          zone_slug: string
+        }[]
+      }
       sale_prices_for: {
         Args: { p_product_ids: string[] }
         Returns: {
@@ -3384,13 +3328,6 @@ export type Database = {
           product_id: string
           sale_cents: number
         }[]
-      }
-      slot_price_cents: {
-        Args: {
-          p_region_id: string
-          p_slot_type: Database["public"]["Enums"]["ad_slot_type"]
-        }
-        Returns: number
       }
       search_dispensaries: {
         Args: {
@@ -3501,13 +3438,6 @@ export type Database = {
           subtitle: string
         }[]
       }
-      state_listing_counts: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          state: string
-          count: number
-        }[]
-      }
       search_products: {
         Args: {
           filter_category_slug?: string
@@ -3545,19 +3475,54 @@ export type Database = {
           weight_grams: number
         }[]
       }
+      seo_coverage_summary: {
+        Args: never
+        Returns: {
+          coverage_state: string
+          n: number
+        }[]
+      }
+      slot_price_cents: {
+        Args: {
+          p_region_id: string
+          p_slot_type: Database["public"]["Enums"]["ad_slot_type"]
+        }
+        Returns: number
+      }
+      state_listing_counts: {
+        Args: never
+        Returns: {
+          count: number
+          state: string
+        }[]
+      }
       sync_featured_flags: {
         Args: { p_dispensary_id?: string }
         Returns: undefined
       }
-      update_owned_brand: {
-        Args: {
-          p_brand_id: string
-          p_cover_image_url?: string
-          p_description: string
-          p_logo_url: string
-          p_website: string
-        }
-        Returns: undefined
+      update_owned_brand:
+        | {
+            Args: {
+              p_brand_id: string
+              p_description: string
+              p_logo_url: string
+              p_website: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_brand_id: string
+              p_cover_image_url?: string
+              p_description: string
+              p_logo_url: string
+              p_website: string
+            }
+            Returns: undefined
+          }
+      us_state_timezone: {
+        Args: { p_lng?: number; p_state: string }
+        Returns: string
       }
       verify_pos_staff: {
         Args: { p_dispensary_id: string; p_pin: string }
@@ -3597,13 +3562,13 @@ export type Database = {
         | "cancelled"
       order_type: "pickup" | "delivery"
       payment_status: "unpaid" | "paid" | "refunded"
-      region_tier: "A_PLUS" | "A" | "B_PLUS" | "B"
       placement_type:
         | "featured"
         | "hero"
         | "promoted_deal"
         | "promoted_product"
         | "promoted_brand"
+      region_tier: "A_PLUS" | "A" | "B_PLUS" | "B"
       strain_type: "indica" | "sativa" | "hybrid" | "cbd"
       user_role: "consumer" | "dispensary_owner" | "admin"
     }
@@ -3733,6 +3698,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ad_slot_type: [
+        "exclusive",
+        "featured",
+        "premium",
+        "standard",
+        "hero",
+        "brand",
+        "product",
+      ],
+      ad_sub_status: ["pending", "active", "past_due", "canceled"],
       deal_kind: [
         "percentage",
         "fixed_amount",
@@ -3745,7 +3720,14 @@ export const Constants = {
       deal_target_scope: ["menu", "category", "brand", "products"],
       discount_type: ["percentage", "fixed", "bogo"],
       dispensary_status: ["pending", "active", "suspended"],
-      order_status: ["pending", "confirmed", "ready", "out_for_delivery", "completed", "cancelled"],
+      order_status: [
+        "pending",
+        "confirmed",
+        "ready",
+        "out_for_delivery",
+        "completed",
+        "cancelled",
+      ],
       order_type: ["pickup", "delivery"],
       payment_status: ["unpaid", "paid", "refunded"],
       placement_type: [
@@ -3755,6 +3737,7 @@ export const Constants = {
         "promoted_product",
         "promoted_brand",
       ],
+      region_tier: ["A_PLUS", "A", "B_PLUS", "B"],
       strain_type: ["indica", "sativa", "hybrid", "cbd"],
       user_role: ["consumer", "dispensary_owner", "admin"],
     },

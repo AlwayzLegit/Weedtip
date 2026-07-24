@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/admin';
 import { notifyUser } from '@/lib/notify';
+import { grantPlanFeaturedSlot, releasePlanFeaturedSlot } from '@/lib/plan-placement';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 
@@ -19,7 +20,12 @@ async function notifyDispensaryOwner(
     .eq('id', dispensaryId)
     .maybeSingle();
   if (shop?.owner_id) {
-    await notifyUser(shop.owner_id, { type: 'billing_update', title, body, href: '/dashboard/promote' });
+    await notifyUser(shop.owner_id, {
+      type: 'billing_update',
+      title,
+      body,
+      href: '/dashboard/promote',
+    });
   }
 }
 
@@ -69,8 +75,9 @@ export async function activatePlanRequest(dispensaryId: string): Promise<void> {
   }
 
   // POS is bundled with the paid plan — gate on PRICE, not a plan slug, so this
-  // works across the prod (`plus`) and post-reset (`growth`) price books.
-  if (((sub.plan as { price_cents: number } | null)?.price_cents ?? 0) > 0) {
+  // works across every historical price book.
+  const isPaidPlan = ((sub.plan as { price_cents: number } | null)?.price_cents ?? 0) > 0;
+  if (isPaidPlan) {
     // Service client: grant_pos_addon's EXECUTE is service_role-only (the
     // authenticated role gets permission-denied even for admins).
     const service = createServiceClient();
@@ -79,13 +86,35 @@ export async function activatePlanRequest(dispensaryId: string): Promise<void> {
       p_enabled: true,
     });
     if (posErr) {
-      throw new Error(`Plan activated but POS grant failed: ${posErr.message} — grant it manually.`);
+      throw new Error(
+        `Plan activated but POS grant failed: ${posErr.message} — grant it manually.`,
+      );
     }
   }
+
+  // Weedtip Pro bundles a Featured placement in the shop's own region — grant it
+  // here rather than making the owner reserve it and an admin activate it. The
+  // helper notifies the owner (granted vs waitlisted) and is idempotent, so a
+  // shop that already holds Featured there keeps what it has. Never let a
+  // placement hiccup roll back an activated plan.
+  let placementNote = '';
+  if (isPaidPlan) {
+    try {
+      const res = await grantPlanFeaturedSlot(dispensaryId);
+      if (res.status === 'granted')
+        placementNote = ` Your Featured spot in ${res.regionName} is live.`;
+      else if (res.status === 'waitlisted') {
+        placementNote = ` Featured is full in ${res.regionName} — you're first in line for the next opening.`;
+      }
+    } catch {
+      // Logged by the caller's error surface; the plan itself is already active.
+    }
+  }
+
   await notifyDispensaryOwner(
     dispensaryId,
-    'Your Growth plan is active',
-    'Your plan was activated — marketing tools, POS, and advanced analytics are unlocked.',
+    'Your Weedtip Pro plan is active',
+    `Your plan was activated — every listing tool, POS, and advanced analytics are unlocked.${placementNote}`,
   );
   refresh();
 }
@@ -139,10 +168,12 @@ export async function rejectPlanRequest(dispensaryId: string): Promise<void> {
     .update({ status: 'canceled', updated_at: new Date().toISOString() })
     .eq('dispensary_id', dispensaryId)
     .eq('status', 'pending');
-  // A pending request may have replaced a formerly-active Growth sub — make
-  // sure no paid entitlement outlives the rejection.
+  // A pending request may have replaced a formerly-active paid sub — make sure
+  // no paid entitlement outlives the rejection, including the plan-included
+  // Featured placement (a slot they bought a-la-carte is untouched).
   const service = createServiceClient();
   await service.rpc('grant_pos_addon', { p_dispensary_id: dispensaryId, p_enabled: false });
+  await releasePlanFeaturedSlot(dispensaryId);
   refresh();
 }
 

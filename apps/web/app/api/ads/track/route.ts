@@ -40,13 +40,14 @@ export async function POST(request: Request) {
   await supabase.rpc('record_ad_event', {
     p_region_id: region_id,
     p_event: event,
-    p_zone_id: typeof zone_id === 'string' && UUID.test(zone_id) ? zone_id : null,
+    // Optional RPC args: omit (undefined) when the beacon didn't supply them.
+    p_zone_id: typeof zone_id === 'string' && UUID.test(zone_id) ? zone_id : undefined,
     p_dispensary_id:
-      typeof dispensary_id === 'string' && UUID.test(dispensary_id) ? dispensary_id : null,
+      typeof dispensary_id === 'string' && UUID.test(dispensary_id) ? dispensary_id : undefined,
     p_slot_type:
       typeof slot_type === 'string' && SLOTS.has(slot_type)
         ? (slot_type as 'exclusive' | 'featured' | 'premium')
-        : null,
+        : undefined,
   });
   return new Response(null, { status: 204 });
 }

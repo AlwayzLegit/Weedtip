@@ -104,7 +104,8 @@ export async function upsertAdZone(_prev: FormState, fd: FormData): Promise<Form
     p_name: name,
     p_lng: lng,
     p_lat: lat,
-    p_id: str(fd, 'id') ?? null,
+    // Optional RPC arg: omit (undefined) rather than pass null on create.
+    p_id: str(fd, 'id') ?? undefined,
   });
   if (error) {
     return error.code === '23505'
@@ -135,7 +136,9 @@ export async function setAdBoundary(_prev: FormState, fd: FormData): Promise<For
   });
   if (error) return formError(error.message);
   revalidatePath('/admin/ad-regions');
-  return formSuccess(geojson ? 'Boundary updated (validated with ST_IsValid).' : 'Boundary cleared.');
+  return formSuccess(
+    geojson ? 'Boundary updated (validated with ST_IsValid).' : 'Boundary cleared.',
+  );
 }
 
 export async function compSlot(_prev: FormState, fd: FormData): Promise<FormState> {
