@@ -50,7 +50,7 @@ function DealTile({
   return (
     <Link
       href={dispensary ? `/dispensary/${dispensary.slug}` : '#'}
-      className="rounded-card border-primary/25 bg-primary-subtle hover:border-primary/60 hover:shadow-card-hover flex items-start justify-between gap-3 border p-5 transition-all duration-200 hover:-translate-y-0.5"
+      className="rounded-card border-primary/25 bg-primary-subtle hover:border-primary/60 hover:shadow-card-hover focus-visible:ring-primary flex items-start justify-between gap-3 border p-5 transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2"
     >
       {placementId && <PlacementBeacon placementId={placementId} />}
       <div className="min-w-0">
@@ -154,12 +154,9 @@ export default async function DealsPage({
 
   // Order sponsored by placement priority and keep them out of the main grid.
   const priorityOf = new Map((promos ?? []).map((p) => [p.target_id, p.priority] as const));
-  const placementOf = new Map(
-    (promos ?? []).map((p) => [p.target_id, p.id] as const),
-  );
+  const placementOf = new Map((promos ?? []).map((p) => [p.target_id, p.id] as const));
   const matchesMode = (d: DealRow) =>
-    !mode ||
-    (mode === 'delivery' ? !!d.dispensary?.is_delivery : !!d.dispensary?.is_pickup);
+    !mode || (mode === 'delivery' ? !!d.dispensary?.is_delivery : !!d.dispensary?.is_pickup);
   const sponsored = ((sponsoredDeals as DealRow[]) ?? [])
     .filter(matchesMode)
     .sort((a, b) => (priorityOf.get(b.id) ?? 0) - (priorityOf.get(a.id) ?? 0));
@@ -188,8 +185,8 @@ export default async function DealsPage({
       <div className="mb-6">
         <p className="eyebrow mb-1">Save today</p>
         <h1 className="text-2xl font-bold sm:text-3xl">Deals</h1>
-      <MarketBanner hrefPrefix="/deals" label="deals" />
         <p className="text-muted mt-1">Live discounts from dispensaries near you.</p>
+        <MarketBanner hrefPrefix="/deals" label="deals" />
       </div>
 
       {/* Fulfilment toggles (Weedmaps-style) — plain links so the page stays server-rendered. */}
@@ -205,7 +202,7 @@ export default async function DealsPage({
             key={label}
             href={value ? `/deals?fulfillment=${value}` : '/deals'}
             className={cn(
-              'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+              'focus-visible:ring-primary rounded-full border px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2',
               mode === value
                 ? 'border-primary bg-primary-muted text-primary'
                 : 'border-border text-muted hover:text-foreground',
@@ -230,10 +227,22 @@ export default async function DealsPage({
       )}
 
       {rest.length === 0 && sponsored.length === 0 ? (
-        <div className="rounded-card border-border bg-surface border p-10 text-center">
+        <div className="rounded-card border-border bg-surface border border-dashed p-10 text-center">
           <Tag className="text-muted mx-auto h-8 w-8" />
-          <p className="mt-2 font-medium">No active deals right now</p>
-          <p className="text-muted mt-1 text-sm">Check back soon for fresh offers.</p>
+          <p className="mt-2 font-medium">No {mode ? `${mode} ` : ''}deals right now</p>
+          <p className="text-muted mt-1 text-sm">
+            {mode
+              ? 'Try all deals, or check back soon for fresh offers.'
+              : 'Check back soon for fresh offers.'}
+          </p>
+          {mode && (
+            <Link
+              href="/deals"
+              className="border-primary text-primary hover:bg-primary-muted focus-visible:ring-primary mt-4 inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2"
+            >
+              View all deals
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -247,8 +256,8 @@ export default async function DealsPage({
         <section className="mt-12" aria-label="Popular dispensaries">
           <h2 className="text-xl font-semibold">Shops worth following</h2>
           <p className="text-muted mt-1 text-sm">
-            New deals land on dispensary pages first — these are the most popular shops on
-            Weedtip right now.
+            New deals land on dispensary pages first — these are the most popular shops on Weedtip
+            right now.
           </p>
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {fallbackShops.map((s) => (
@@ -278,8 +287,8 @@ export default async function DealsPage({
             <div>
               <p className="font-medium">Run a dispensary?</p>
               <p className="text-muted text-sm">
-                Post deals free from your dashboard — they show up here, on your listing, and on
-                the map.
+                Post deals free from your dashboard — they show up here, on your listing, and on the
+                map.
               </p>
             </div>
             <Link
