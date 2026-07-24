@@ -26,6 +26,10 @@ export function MapResultsMirror({
 }) {
   const [active, setActive] = useState(0);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  // A search can shrink the result set below the stored `active` index; clamp so
+  // exactly one item always carries tabIndex 0 (otherwise the whole mirror drops
+  // out of the tab order and keyboard users can't reach it).
+  const activeIndex = Math.min(active, shops.length - 1);
 
   function focusItem(i: number) {
     const clamped = Math.max(0, Math.min(i, shops.length - 1));
@@ -66,7 +70,7 @@ export function MapResultsMirror({
                 itemRefs.current[i] = el;
               }}
               href={`/dispensary/${s.slug}`}
-              tabIndex={i === active ? 0 : -1}
+              tabIndex={i === activeIndex ? 0 : -1}
               aria-label={label(s, i + 1)}
               onFocus={() => {
                 setActive(i);
